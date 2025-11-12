@@ -10,34 +10,43 @@ import (
 	"github.com/aid297/aid/operation/operationV2"
 )
 
-type (
-	File struct {
-		IsRel     bool         // 是否使用相对路径
-		Error     error        // 错误信息
-		Name      string       // 文件名
-		BasePath  string       // 基础路径
-		FullPath  string       // 完整路径
-		Size      int64        // 文件大小
-		Info      os.FileInfo  // 文件信息
-		Mode      os.FileMode  // 文件权限
-		Exist     bool         // 文件是否存在
-		mu        sync.RWMutex // 读写锁
-		Extension string       // 文件扩展名
-		Fileinfo  os.FileInfo  // 文件信息
-		Mime      string       // 文件Mime类型
-	}
-)
+type File struct {
+	IsRel     bool         // 是否使用相对路径
+	Error     error        // 错误信息
+	Name      string       // 文件名
+	BasePath  string       // 基础路径
+	FullPath  string       // 完整路径
+	Size      int64        // 文件大小
+	Info      os.FileInfo  // 文件信息
+	Mode      os.FileMode  // 文件权限
+	Exist     bool         // 文件是否存在
+	mu        sync.RWMutex // 读写锁
+	Extension string       // 文件扩展名
+	Fileinfo  os.FileInfo  // 文件信息
+	Mime      string       // 文件Mime类型
+}
 
 var (
 	DefaultCreateMode = os.O_APPEND | os.O_CREATE | os.O_WRONLY
 	DefaultReadMode   = os.O_RDWR
 )
 
-func NewFile(attrs ...FileAttributer) *File {
-	file := &File{mu: sync.RWMutex{}}
-	return file.SetAttrs(attrs...).refresh()
+// New 实例化
+func (*File) New(attrs ...FileAttributer) *File {
+	return (&File{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
 }
 
+// Abs 实例化：绝对路径
+func (*File) Abs(attrs ...FileAttributer) *File {
+	return APP.File.New(FileIsAbs()).SetAttrs(attrs...).refresh()
+}
+
+// Rel 实例化：相对路径
+func (*File) Rel(attrs ...FileAttributer) *File {
+	return APP.File.New(FileIsRel()).SetAttrs(attrs...).refresh()
+}
+
+// SetAttrs 设置属性
 func (my *File) SetAttrs(attrs ...FileAttributer) *File {
 	for idx := range attrs {
 		attrs[idx].Register(my)
@@ -45,12 +54,13 @@ func (my *File) SetAttrs(attrs ...FileAttributer) *File {
 	return my
 }
 
+// refresh 刷新文件信息
 func (my *File) refresh() *File {
 	var err error
 
 	if my.FullPath != "" {
 		if my.Fileinfo, err = os.Stat(my.FullPath); err != nil {
-			if os.IsNotExist(my.Error) {
+			if os.IsNotExist(err) {
 				my.Name = ""
 				my.Size = 0
 				my.Mode = 0
@@ -78,38 +88,38 @@ func (my *File) refresh() *File {
 	return my
 }
 
+// Lock 加锁 → 写
 func (my *File) Lock() *File {
 	my.mu.Lock()
 	return my
 }
 
+// Unlock 解锁 → 写
 func (my *File) Unlock() *File {
 	my.mu.Unlock()
 	return my
 }
 
+// RLock 加锁 → 读
 func (my *File) RLock() *File {
 	my.mu.RLock()
 	return my
 }
 
+// RUnlock 解锁 → 读
 func (my *File) RUnlock() *File {
 	my.mu.RUnlock()
 	return my
 }
 
+// Join 连接路径
 func (my *File) Join(dirs ...string) *File {
-	allDirs := []string{my.FullPath}
-	if len(dirs) == 0 {
-		return my
-	}
-	allDirs = append(allDirs, dirs...)
-
-	return NewFile(FileIsAbs(), FilePath(allDirs...))
+	return my.SetAttrs(FileIsAbs(), FilePath(append([]string{my.FullPath}, dirs...)...)).refresh()
 }
 
+// Create 创建文件
 func (my *File) Create(attrs ...FileOperationAttributer) *File {
-	if dir := NewDir(DirIsAbs(), DirPath(my.BasePath)); !dir.Exist {
+	if dir := APP.Dir.Abs(DirPath(my.BasePath)); !dir.Exist {
 		if err := dir.Create().Error; err != nil {
 			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		}
@@ -120,6 +130,7 @@ func (my *File) Create(attrs ...FileOperationAttributer) *File {
 	return nil
 }
 
+// 向文件内写入内容
 func (my *File) Write(content []byte, attrs ...FileOperationAttributer) *File {
 	var (
 		err           error
@@ -127,7 +138,7 @@ func (my *File) Write(content []byte, attrs ...FileOperationAttributer) *File {
 		file          *os.File
 	)
 
-	if dir := NewDir(DirIsAbs(), DirPath(my.BasePath)); !dir.Exist {
+	if dir := APP.Dir.Abs(DirPath(my.BasePath)); !dir.Exist {
 		if err := dir.Create().Error; err != nil {
 			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		}
@@ -148,13 +159,14 @@ func (my *File) Write(content []byte, attrs ...FileOperationAttributer) *File {
 		return my
 	}
 
-	return my
+	return my.refresh()
 }
 
+// Rename 重命名文件
 func (my *File) Rename(newName string) *File {
 	var (
 		err     error
-		newFile = NewFile(FileIsAbs(), FilePath(my.BasePath, newName))
+		newFile = APP.File.New(FileIsAbs(), FilePath(my.BasePath, newName))
 	)
 
 	if err = os.Rename(my.FullPath, newFile.FullPath); err != nil {
@@ -162,9 +174,10 @@ func (my *File) Rename(newName string) *File {
 		return my
 	}
 
-	return newFile
+	return newFile.refresh()
 }
 
+// Remove 删除文件
 func (my *File) Remove() *File {
 	var err error
 
@@ -181,6 +194,7 @@ func (my *File) Remove() *File {
 	return my.refresh()
 }
 
+// Read 读取文件内容
 func (my *File) Read(attrs ...FileOperationAttributer) ([]byte, error) {
 	var (
 		fileOperation = new(FileOperation).SetAttrs(attrs...)
@@ -204,11 +218,8 @@ func (my *File) Read(attrs ...FileOperationAttributer) ([]byte, error) {
 	return content, nil
 }
 
-func (my *File) CopyTo(dstPath string) *File {
-	var (
-		err      error
-		src, dst *os.File
-	)
+// CopyTo 复制文件到指定路径
+func (my *File) CopyTo(isRel bool, dstPaths ...string) *File {
 	if my.FullPath == "" {
 		my.Error = ErrMissFullPath
 		return my
@@ -219,31 +230,13 @@ func (my *File) CopyTo(dstPath string) *File {
 		return my
 	}
 
-	if src, err = os.Open(my.FullPath); err != nil {
-		my.Error = fmt.Errorf("%w:%w", ErrOpenFile, err)
-		return my
-	}
-	defer func() { _ = src.Close() }()
-
-	dstFile := NewFile(FileIsAbs(), FilePath(dstPath))
-	if err = dstFile.Create(FileMode(my.Mode)).Error; err != nil {
-		my.Error = fmt.Errorf("%w:%w", ErrCreateFile, err)
-		return my
-	}
-
-	if dst, err = os.Create(dstFile.FullPath); err != nil {
-		my.Error = fmt.Errorf("%w:%w", ErrOpenFile, err)
-		return my
-	}
-	defer func() { _ = dst.Close() }()
-
-	if _, err = io.Copy(dst, src); err != nil {
-		my.Error = fmt.Errorf("%w:%w", ErrWriteFile, err)
-		return my
-	}
+	my.Error = copyFileTo(my.FullPath, APP.File.New(FileSetRel(isRel), FilePath(dstPaths...)).Join(my.Name).FullPath)
 
 	return my
 }
+
+// Copy 复制文件实例
+func (my *File) Copy() *File { return APP.File.Abs(FilePath(my.FullPath)) }
 
 // ******************** 管理器属性 ******************** //
 type (
@@ -260,7 +253,7 @@ func (my AttrFilePath) Register(dir *File) {
 	).GetByValue(dir.IsRel)
 }
 
-func FileSetRel(isRel bool) AttrDirIsRel    { return AttrDirIsRel{isRel: isRel} }
+func FileSetRel(isRel bool) AttrFileIsRel   { return AttrFileIsRel{isRel: isRel} }
 func FileIsAbs() AttrFileIsRel              { return AttrFileIsRel{isRel: false} }
 func FileIsRel() AttrFileIsRel              { return AttrFileIsRel{isRel: true} }
 func (my AttrFileIsRel) Register(dir *File) { dir.IsRel = my.isRel }
