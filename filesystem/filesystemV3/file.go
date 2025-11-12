@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"sync"
 
@@ -31,19 +32,17 @@ var (
 	DefaultReadMode   = os.O_RDWR
 )
 
-// New 实例化
-func (*File) New(attrs ...FileAttributer) *File {
+// NewFile 实例化
+func NewFile(attrs ...FileAttributer) *File {
 	return (&File{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
 }
 
-// Abs 实例化：绝对路径
-func (*File) Abs(attrs ...FileAttributer) *File {
-	return APP.File.New(FileIsAbs()).SetAttrs(attrs...).refresh()
-}
+// NewFileAbs 实例化：绝对路径
+func NewFileAbs(attrs ...FileAttributer) *File { return NewFile(append(attrs, FileIsAbs())...) }
 
-// Rel 实例化：相对路径
-func (*File) Rel(attrs ...FileAttributer) *File {
-	return APP.File.New(FileIsRel()).SetAttrs(attrs...).refresh()
+// NewFileRel 实例化：相对路径
+func NewFileRel(attrs ...FileAttributer) *File {
+	return NewFile(append([]FileAttributer{FileIsRel()}, attrs...)...)
 }
 
 // SetAttrs 设置属性
@@ -78,10 +77,11 @@ func (my *File) refresh() *File {
 		my.Name = my.Fileinfo.Name()
 		my.Size = my.Fileinfo.Size()
 		my.Mode = my.Fileinfo.Mode()
+		my.BasePath = path.Dir(my.FullPath)
 		my.Exist = true
 		my.Error = nil
 	} else {
-		my.Error = fmt.Errorf("%w:%w", ErrMissFullPath, err)
+		my.Error = ErrMissFullPath
 		return my
 	}
 
@@ -119,7 +119,7 @@ func (my *File) Join(dirs ...string) *File {
 
 // Create 创建文件
 func (my *File) Create(attrs ...FileOperationAttributer) *File {
-	if dir := APP.Dir.Abs(DirPath(my.BasePath)); !dir.Exist {
+	if dir := NewDirAbs(DirPath(my.BasePath)); !dir.Exist {
 		if err := dir.Create().Error; err != nil {
 			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		}
@@ -138,7 +138,7 @@ func (my *File) Write(content []byte, attrs ...FileOperationAttributer) *File {
 		file          *os.File
 	)
 
-	if dir := APP.Dir.Abs(DirPath(my.BasePath)); !dir.Exist {
+	if dir := NewDirAbs(DirPath(my.BasePath)); !dir.Exist {
 		if err := dir.Create().Error; err != nil {
 			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		}
@@ -166,7 +166,7 @@ func (my *File) Write(content []byte, attrs ...FileOperationAttributer) *File {
 func (my *File) Rename(newName string) *File {
 	var (
 		err     error
-		newFile = APP.File.New(FileIsAbs(), FilePath(my.BasePath, newName))
+		newFile = NewFile(FileIsAbs(), FilePath(my.BasePath, newName))
 	)
 
 	if err = os.Rename(my.FullPath, newFile.FullPath); err != nil {
@@ -230,13 +230,24 @@ func (my *File) CopyTo(isRel bool, dstPaths ...string) *File {
 		return my
 	}
 
-	my.Error = copyFileTo(my.FullPath, APP.File.New(FileSetRel(isRel), FilePath(dstPaths...)).Join(my.Name).FullPath)
+	a := NewDir(DirSetRel(isRel), DirPath(dstPaths...)).Up()
+	print(a.FullPath)
+
+	b := NewDirAbs(DirPath(my.BasePath))
+	print(b.FullPath)
+
+	if my.Error = NewDir(DirSetRel(isRel), DirPath(dstPaths...)).Up().Create(DirMode(NewDirAbs(DirPath(my.BasePath)).Info.Mode())).Error; my.Error != nil {
+		return my
+	}
+
+	dst := NewFile(FileSetRel(isRel), FilePath(dstPaths...)).FullPath
+	my.Error = copyFileTo(my.FullPath, dst)
 
 	return my
 }
 
 // Copy 复制文件实例
-func (my *File) Copy() *File { return APP.File.Abs(FilePath(my.FullPath)) }
+func (my *File) Copy() *File { return NewFileAbs(FilePath(my.FullPath)) }
 
 // ******************** 管理器属性 ******************** //
 type (
@@ -246,11 +257,11 @@ type (
 )
 
 func FilePath(dirs ...string) AttrFilePath { return AttrFilePath{dirs: dirs} }
-func (my AttrFilePath) Register(dir *File) {
-	dir.FullPath = operationV2.NewTernary(
+func (my AttrFilePath) Register(file *File) {
+	file.FullPath = operationV2.NewTernary(
 		operationV2.TrueFn(func() string { return getRootPath(filepath.Join(my.dirs...)) }),
 		operationV2.FalseFn(func() string { return filepath.Join(my.dirs...) }),
-	).GetByValue(dir.IsRel)
+	).GetByValue(file.IsRel)
 }
 
 func FileSetRel(isRel bool) AttrFileIsRel   { return AttrFileIsRel{isRel: isRel} }

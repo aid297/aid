@@ -25,19 +25,17 @@ type Dir struct {
 	Dirs     []*Dir       // 子目录列表
 }
 
-// New 实例化
-func (*Dir) New(attrs ...DirAttributer) *Dir {
+// NewDir 实例化
+func NewDir(attrs ...DirAttributer) *Dir {
 	return (&Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0)}).SetAttrs(attrs...).refresh()
 }
 
-// Abs 实例化：绝对路径
-func (*Dir) Abs(attrs ...DirAttributer) *Dir {
-	return APP.Dir.New(DirIsAbs()).SetAttrs(attrs...).refresh()
-}
+// NewDirAbs 实例化：绝对路径
+func NewDirAbs(attrs ...DirAttributer) *Dir { return NewDir(append(attrs, DirIsAbs())...) }
 
-// Rel 实例化：相对路径
-func (*Dir) Rel(attrs ...DirAttributer) *Dir {
-	return APP.Dir.New(DirIsRel()).SetAttrs(append([]DirAttributer{DirPath(".")}, attrs...)...).refresh()
+// NewDirRel 实例化：相对路径
+func NewDirRel(attrs ...DirAttributer) *Dir {
+	return NewDir(append([]DirAttributer{DirPath("."), DirIsRel()}, attrs...)...)
 }
 
 // SetAttrs 设置属性
@@ -98,7 +96,7 @@ func (my *Dir) refresh() *Dir {
 		my.Exist = true
 		my.Error = nil
 	} else {
-		my.Error = fmt.Errorf("%w:%w", ErrMissFullPath, err)
+		my.Error = ErrMissFullPath
 		return my
 	}
 
@@ -145,7 +143,7 @@ func (my *Dir) Rename(newName string) *Dir {
 		return my
 	}
 
-	return APP.Dir.Abs(DirPath(newPath))
+	return NewDirAbs(DirPath(newPath))
 }
 
 // Remove 删除目录
@@ -201,10 +199,10 @@ func (my *Dir) LS() *Dir {
 
 	for _, entry := range entries {
 		if entry.IsDir() {
-			d := APP.Dir.Abs(DirPath(my.FullPath)).Join(entry.Name())
+			d := NewDirAbs(DirPath(my.FullPath)).Join(entry.Name())
 			my.Dirs = append(my.Dirs, d.LS())
 		} else {
-			my.Files = append(my.Files, APP.File.Abs(FilePath(my.FullPath, entry.Name())))
+			my.Files = append(my.Files, NewFileAbs(FilePath(my.FullPath, entry.Name())))
 		}
 	}
 
@@ -232,7 +230,7 @@ func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = APP.Dir.New(DirSetRel(isRel), DirPath(dstPaths...)).Create(DirMode(my.Mode)); dst.Error != nil {
+	if dst = NewDir(DirSetRel(isRel), DirPath(dstPaths...)).Create(DirMode(my.Mode)); dst.Error != nil {
 		my.Error = dst.Error
 		return my
 	}
@@ -265,7 +263,7 @@ func (my *Dir) CopyDirsTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = APP.Dir.New(DirSetRel(isRel), DirPath(dstPaths...)); dst.Error != nil {
+	if dst = NewDir(DirSetRel(isRel), DirPath(dstPaths...)); dst.Error != nil {
 		my.Error = dst.Error
 		return my
 	}
@@ -295,7 +293,7 @@ func (my *Dir) CopyAllTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = APP.Dir.New(DirSetRel(isRel), DirPath(dstPaths...)); !dst.Exist {
+	if dst = NewDir(DirSetRel(isRel), DirPath(dstPaths...)); !dst.Exist {
 		dst.Create(DirMode(my.Mode))
 	}
 
@@ -312,7 +310,7 @@ func (my *Dir) CopyAllTo(isRel bool, dstPaths ...string) *Dir {
 }
 
 // Copy 复制当前对象
-func (my *Dir) Copy() *Dir { return APP.Dir.Abs(DirPath(my.FullPath)) }
+func (my *Dir) Copy() *Dir { return NewDirAbs(DirPath(my.FullPath)) }
 
 // Up 向上一级目录
 func (my *Dir) Up() *Dir { return my.SetAttrs(DirIsAbs(), DirPath(my.BasePath)).refresh() }
