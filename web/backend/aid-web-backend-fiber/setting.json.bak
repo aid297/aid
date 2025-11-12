@@ -1,0 +1,24 @@
+{
+	"system": {
+		"debug":true,
+		"version":"v1.0.0",
+		"daemon":false
+	},
+	"web-service":{
+		"port":19000,
+		"cors":true
+	},
+	"log":{
+		"daemon":"./storage/log/daemon.log",
+		"zap":{
+			"level":"info",
+			"encoder-type":"console",
+			"extension":".log",
+			"in-console":true,
+			"max-size":100,
+			"max-day":180,
+			"dir-abs":true,
+			"dir":"./storage/log"
+		}
+	}
+}

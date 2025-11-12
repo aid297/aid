@@ -1,0 +1,26 @@
+system:
+  debug: false
+  version: v1.0.0
+  daemon: false
+  timezone: Asia/Shanghai
+web-service:
+  port: "9900"
+  cors: true
+  static-dir:
+  - url: /page
+    dir: resource/html/spa
+log:
+  daemon: 
+    dir: storage/runtime/log
+    filename: daemon.log
+  zap:
+    level: debug
+    encoder-type: console
+    extension: .log
+    in-console: true
+    dir: storage/runtime/log/system
+    dir-abs: false
+    max-size: 100
+    max-day: 10
+rezip:
+  out-dir: storage/runtime/rezip
