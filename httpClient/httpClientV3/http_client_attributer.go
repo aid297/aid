@@ -20,11 +20,12 @@ import (
 	"github.com/aid297/aid/str"
 )
 
+// ******************** HTTP客户端属性 ******************** //
 type (
 	HTTPClientAttributer interface {
 		Register(req *HTTPClient)
 		Error() error
-		ImplHttpClientAttributer()
+		ImplHTTPClientAttributer()
 	}
 
 	AttrURL                struct{ url string }
@@ -44,6 +45,11 @@ type (
 	AttrTransportDefault struct{ transport *http.Transport }
 	AttrCert             struct{ cert []byte }
 	AttrAutoCopyResBody  struct{ autoCopy bool }
+	AttrRetryCount       struct{ retryCount uint }
+	AttrRetryInterval    struct{ retryInterval time.Duration }
+	AttrRetryCondition   struct {
+		retryCondition func(statusCode int, err error) bool
+	}
 )
 
 func URL(urls ...string) HTTPClientAttributer {
@@ -65,7 +71,7 @@ func (my *AttrURL) Register(req *HTTPClient) { req.url = my.url }
 
 func (my *AttrURL) Error() error { return nil }
 
-func (*AttrURL) ImplHttpClientAttributer() {}
+func (*AttrURL) ImplHTTPClientAttributer() {}
 
 func Queries(queries map[string]any) *AttrQueries {
 	if queries == nil {
@@ -92,7 +98,7 @@ func (my *AttrQueries) Register(req *HTTPClient) { req.queries = my.queries }
 
 func (my *AttrQueries) Error() error { return nil }
 
-func (*AttrQueries) ImplHttpClientAttributer() {}
+func (*AttrQueries) ImplHTTPClientAttributer() {}
 
 func Method(method string) *AttrMethod {
 	return &AttrMethod{method: method}
@@ -102,7 +108,7 @@ func (my *AttrMethod) Register(req *HTTPClient) { req.method = my.method }
 
 func (my *AttrMethod) Error() error { return nil }
 
-func (*AttrMethod) ImplHttpClientAttributer() {}
+func (*AttrMethod) ImplHTTPClientAttributer() {}
 
 func AppendHeaderValue(headers map[string]string) *AttrAppendHeaderValue {
 	if headers == nil {
@@ -210,7 +216,7 @@ func (my *AttrAppendHeaderValues) Register(req *HTTPClient) {
 
 func (my *AttrAppendHeaderValues) Error() error { return nil }
 
-func (*AttrAppendHeaderValues) ImplHttpClientAttributer() {}
+func (*AttrAppendHeaderValues) ImplHTTPClientAttributer() {}
 
 func SetHeaderValue(headers map[string]string) *AttrSetHeaderValue {
 	if headers == nil {
@@ -282,7 +288,7 @@ func (my *AttrSetHeaderValues) Register(req *HTTPClient) {
 
 func (my *AttrSetHeaderValues) Error() error { return nil }
 
-func (*AttrSetHeaderValues) ImplHttpClientAttributer() {}
+func (*AttrSetHeaderValues) ImplHTTPClientAttributer() {}
 
 func JSON(body any) *AttrBody {
 	ins := &AttrBody{}
@@ -454,7 +460,7 @@ func (my *AttrBody) Register(req *HTTPClient) {
 
 func (my *AttrBody) Error() error { return my.err }
 
-func (*AttrBody) ImplHttpClientAttributer() {}
+func (*AttrBody) ImplHTTPClientAttributer() {}
 
 func Timeout(timeout time.Duration) *AttrTimeout {
 	if timeout <= 0 {
@@ -468,7 +474,7 @@ func (my *AttrTimeout) Register(req *HTTPClient) { req.timeout = my.timeout }
 
 func (*AttrTimeout) Error() error { return nil }
 
-func (*AttrTimeout) ImplHttpClientAttributer() {}
+func (*AttrTimeout) ImplHTTPClientAttributer() {}
 
 func Transport(transport *http.Transport) *AttrTransport {
 	return &AttrTransport{transport: transport}
@@ -478,7 +484,7 @@ func (my *AttrTransport) Register(req *HTTPClient) { req.transport = my.transpor
 
 func (my *AttrTransport) Error() error { return nil }
 
-func (*AttrTransport) ImplHttpClientAttributer() {}
+func (*AttrTransport) ImplHTTPClientAttributer() {}
 
 func TransportDefault() *AttrTransportDefault {
 	return &AttrTransportDefault{transport: &http.Transport{
@@ -501,7 +507,7 @@ func (my *AttrCert) Register(req *HTTPClient) { req.cert = my.cert }
 
 func (my *AttrCert) Error() error { return nil }
 
-func (*AttrCert) ImplHttpClientAttributer() {}
+func (*AttrCert) ImplHTTPClientAttributer() {}
 
 func AutoCopy(autoCopy bool) *AttrAutoCopyResBody { return &AttrAutoCopyResBody{autoCopy: autoCopy} }
 
@@ -509,4 +515,29 @@ func (my *AttrAutoCopyResBody) Register(req *HTTPClient) { req.autoCopy = my.aut
 
 func (*AttrAutoCopyResBody) Error() error { return nil }
 
-func (*AttrAutoCopyResBody) ImplHttpClientAttributer() {}
+func (*AttrAutoCopyResBody) ImplHTTPClientAttributer() {}
+
+// ******************** HTTP客户端重试属性 ******************** //
+
+func RetryCount(count uint) AttrRetryCount                { return AttrRetryCount{retryCount: count} }
+func (my AttrRetryCount) Register(httpClient *HTTPClient) { httpClient.retryCount = my.retryCount }
+func (my AttrRetryCount) Error() error                    { return nil }
+func (my AttrRetryCount) ImplHTTPClientRetryAttributer()  {}
+
+func RetryInterval(interval time.Duration) AttrRetryInterval {
+	return AttrRetryInterval{retryInterval: interval}
+}
+func (my AttrRetryInterval) Register(httpClient *HTTPClient) {
+	httpClient.retryInterval = my.retryInterval
+}
+func (my AttrRetryInterval) Error() error                   { return nil }
+func (my AttrRetryInterval) ImplHTTPClientRetryAttributer() {}
+
+func RetryCondition(retryCondition func(statusCode int, err error) bool) AttrRetryCondition {
+	return AttrRetryCondition{retryCondition: retryCondition}
+}
+func (my AttrRetryCondition) Register(httpClient *HTTPClient) {
+	httpClient.retryCondition = my.retryCondition
+}
+func (my AttrRetryCondition) Error() error                   { return nil }
+func (my AttrRetryCondition) ImplHTTPClientRetryAttributer() {}

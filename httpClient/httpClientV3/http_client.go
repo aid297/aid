@@ -36,6 +36,9 @@ type (
 		client                    *http.Client
 		autoCopy                  bool
 		lock                      sync.RWMutex
+		retryCount                uint
+		retryInterval             time.Duration
+		retryCondition            func(statusCode int, err error) bool
 	}
 
 	HTTPClientBuilder struct {
@@ -270,11 +273,44 @@ func (my *HTTPClient) send() *HTTPClient {
 	return my
 }
 
-func (my *HTTPClient) Send() *HTTPClient {
+func (my *HTTPClient) Send(attrs ...HTTPClientAttributer) *HTTPClient {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
-	return my.send()
+	return my.SetAttrs(attrs...).send()
+}
+
+func (my *HTTPClient) SendWithRetry(attrs ...HTTPClientAttributer) *HTTPClient {
+	my.lock.Lock()
+	defer my.lock.Unlock()
+
+	if my.SetAttrs(attrs...).send().Error() != nil {
+		return my
+	}
+
+	if my.retryCount > 0 && my.retryInterval > 0 && my.retryCondition != nil {
+		var (
+			maxAttempts uint = my.retryCount + 1 // 首次尝试 + 重试次数
+			shouldRetry      = false
+		)
+
+		for attempt := uint(0); attempt < maxAttempts; attempt++ {
+			time.Sleep(my.retryInterval)
+
+			shouldRetry = my.retryCondition(my.rawResponse.StatusCode, my.err)
+
+			if !shouldRetry || attempt == maxAttempts-1 {
+				break
+			}
+
+			if my.rawResponse != nil && my.rawResponse.Body != nil {
+				_ = my.rawResponse.Body.Close()
+				my.rawResponse = nil
+			}
+		}
+	}
+
+	return my
 }
 
 func (my *HTTPClient) parseBody() {
