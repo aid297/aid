@@ -1,8 +1,6 @@
 package httpClientV2
 
-var (
-	APP struct {
-		HttpClient        HttpClient
-		HttpClientBuilder HttpClientBuilder
-	}
-)
+var APP struct {
+	HttpClient        HttpClient
+	HttpClientBuilder HttpClientBuilder
+}
