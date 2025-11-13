@@ -21,10 +21,10 @@ import (
 )
 
 type (
-	HttpClientAttributer interface {
+	HTTPClientAttributer interface {
 		Register(req *HTTPClient)
 		Error() error
-		ImplHttpClientAttributer()
+		ImplHTTPClientAttributer()
 	}
 
 	AttrURL                struct{ url string }
@@ -46,7 +46,7 @@ type (
 	AttrAutoCopyResBody  struct{ autoCopy bool }
 )
 
-func URL(urls ...string) HttpClientAttributer {
+func URL(urls ...string) HTTPClientAttributer {
 	ins := &AttrURL{url: ""}
 	switch {
 
@@ -65,7 +65,7 @@ func (my *AttrURL) Register(req *HTTPClient) { req.url = my.url }
 
 func (my *AttrURL) Error() error { return nil }
 
-func (*AttrURL) ImplHttpClientAttributer() {}
+func (*AttrURL) ImplHTTPClientAttributer() {}
 
 func Queries(queries map[string]any) *AttrQueries {
 	if queries == nil {
@@ -92,7 +92,7 @@ func (my *AttrQueries) Register(req *HTTPClient) { req.queries = my.queries }
 
 func (my *AttrQueries) Error() error { return nil }
 
-func (*AttrQueries) ImplHttpClientAttributer() {}
+func (*AttrQueries) ImplHTTPClientAttributer() {}
 
 func Method(method string) *AttrMethod {
 	return &AttrMethod{method: method}
@@ -102,7 +102,7 @@ func (my *AttrMethod) Register(req *HTTPClient) { req.method = my.method }
 
 func (my *AttrMethod) Error() error { return nil }
 
-func (*AttrMethod) ImplHttpClientAttributer() {}
+func (*AttrMethod) ImplHTTPClientAttributer() {}
 
 func AppendHeaderValue(headers map[string]string) *AttrAppendHeaderValue {
 	if headers == nil {
@@ -210,7 +210,7 @@ func (my *AttrAppendHeaderValues) Register(req *HTTPClient) {
 
 func (my *AttrAppendHeaderValues) Error() error { return nil }
 
-func (*AttrAppendHeaderValues) ImplHttpClientAttributer() {}
+func (*AttrAppendHeaderValues) ImplHTTPClientAttributer() {}
 
 func SetHeaderValue(headers map[string]string) *AttrSetHeaderValue {
 	if headers == nil {
@@ -282,7 +282,7 @@ func (my *AttrSetHeaderValues) Register(req *HTTPClient) {
 
 func (my *AttrSetHeaderValues) Error() error { return nil }
 
-func (*AttrSetHeaderValues) ImplHttpClientAttributer() {}
+func (*AttrSetHeaderValues) ImplHTTPClientAttributer() {}
 
 func JSON(body any) *AttrBody {
 	ins := &AttrBody{}
@@ -292,7 +292,7 @@ func JSON(body any) *AttrBody {
 	return ins
 }
 
-func XML(body any) HttpClientAttributer {
+func XML(body any) HTTPClientAttributer {
 	ins := &AttrBody{}
 	ins.body, ins.err = xml.Marshal(body)
 	ins.contentType = ContentTypeXML
@@ -454,7 +454,7 @@ func (my *AttrBody) Register(req *HTTPClient) {
 
 func (my *AttrBody) Error() error { return my.err }
 
-func (*AttrBody) ImplHttpClientAttributer() {}
+func (*AttrBody) ImplHTTPClientAttributer() {}
 
 func Timeout(timeout time.Duration) *AttrTimeout {
 	if timeout <= 0 {
@@ -468,7 +468,7 @@ func (my *AttrTimeout) Register(req *HTTPClient) { req.timeout = my.timeout }
 
 func (*AttrTimeout) Error() error { return nil }
 
-func (*AttrTimeout) ImplHttpClientAttributer() {}
+func (*AttrTimeout) ImplHTTPClientAttributer() {}
 
 func Transport(transport *http.Transport) *AttrTransport {
 	return &AttrTransport{transport: transport}
@@ -478,7 +478,7 @@ func (my *AttrTransport) Register(req *HTTPClient) { req.transport = my.transpor
 
 func (my *AttrTransport) Error() error { return nil }
 
-func (*AttrTransport) ImplHttpClientAttributer() {}
+func (*AttrTransport) ImplHTTPClientAttributer() {}
 
 func TransportDefault() *AttrTransportDefault {
 	return &AttrTransportDefault{transport: &http.Transport{
@@ -501,7 +501,7 @@ func (my *AttrCert) Register(req *HTTPClient) { req.cert = my.cert }
 
 func (my *AttrCert) Error() error { return nil }
 
-func (*AttrCert) ImplHttpClientAttributer() {}
+func (*AttrCert) ImplHTTPClientAttributer() {}
 
 func AutoCopy(autoCopy bool) *AttrAutoCopyResBody { return &AttrAutoCopyResBody{autoCopy: autoCopy} }
 
@@ -509,4 +509,4 @@ func (my *AttrAutoCopyResBody) Register(req *HTTPClient) { req.autoCopy = my.aut
 
 func (*AttrAutoCopyResBody) Error() error { return nil }
 
-func (*AttrAutoCopyResBody) ImplHttpClientAttributer() {}
+func (*AttrAutoCopyResBody) ImplHTTPClientAttributer() {}

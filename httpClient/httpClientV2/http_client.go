@@ -39,11 +39,11 @@ type (
 	}
 
 	HTTPClientBuilder struct {
-		options []HttpClientAttributer
+		options []HTTPClientAttributer
 	}
 )
 
-func (*HTTPClient) init(method string, attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) init(method string, attrs ...HTTPClientAttributer) *HTTPClient {
 	ins := new(HTTPClient)
 	ins.SetAttrs(Method(method))
 	ins.SetAttrs(AppendHeaderValues(map[string][]string{}))
@@ -51,7 +51,7 @@ func (*HTTPClient) init(method string, attrs ...HttpClientAttributer) *HTTPClien
 	return ins.SetAttrs(attrs...)
 }
 
-func (*HTTPClientBuilder) New(options ...HttpClientAttributer) *HTTPClientBuilder {
+func (*HTTPClientBuilder) New(options ...HTTPClientAttributer) *HTTPClientBuilder {
 	return &HTTPClientBuilder{options: options}
 }
 
@@ -59,43 +59,43 @@ func (my *HTTPClientBuilder) GetClient() *HTTPClient {
 	return new(HTTPClient).init(http.MethodGet, my.options...)
 }
 
-func (*HTTPClient) New(attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) New(attrs ...HTTPClientAttributer) *HTTPClient {
 	return new(HTTPClient).init(http.MethodGet, attrs...)
 }
 
-func (*HTTPClient) NewGet(attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) GET(attrs ...HTTPClientAttributer) *HTTPClient {
 	return new(HTTPClient).init(http.MethodGet, attrs...)
 }
 
-func (*HTTPClient) NewPost(attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) POST(attrs ...HTTPClientAttributer) *HTTPClient {
 	return new(HTTPClient).init(http.MethodPost, attrs...)
 }
 
-func (*HTTPClient) NewPut(attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) PUT(attrs ...HTTPClientAttributer) *HTTPClient {
 	return new(HTTPClient).init(http.MethodPut, attrs...)
 }
 
-func (*HTTPClient) NewPatch(attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) PATCH(attrs ...HTTPClientAttributer) *HTTPClient {
 	return new(HTTPClient).init(http.MethodPatch, attrs...)
 }
 
-func (*HTTPClient) NewDelete(attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) DELETE(attrs ...HTTPClientAttributer) *HTTPClient {
 	return new(HTTPClient).init(http.MethodDelete, attrs...)
 }
 
-func (*HTTPClient) NewHead(attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) HEAD(attrs ...HTTPClientAttributer) *HTTPClient {
 	return new(HTTPClient).init(http.MethodHead, attrs...)
 }
 
-func (*HTTPClient) NewOptions(attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) OPTIONS(attrs ...HTTPClientAttributer) *HTTPClient {
 	return new(HTTPClient).init(http.MethodOptions, attrs...)
 }
 
-func (*HTTPClient) NewTrace(attrs ...HttpClientAttributer) *HTTPClient {
+func (*HTTPClient) TRACE(attrs ...HTTPClientAttributer) *HTTPClient {
 	return new(HTTPClient).init(http.MethodTrace, attrs...)
 }
 
-func (my *HTTPClient) set(attrs ...HttpClientAttributer) {
+func (my *HTTPClient) set(attrs ...HTTPClientAttributer) {
 	if len(attrs) > 0 {
 		for _, option := range attrs {
 			option.Register(my)
@@ -106,7 +106,7 @@ func (my *HTTPClient) set(attrs ...HttpClientAttributer) {
 	}
 }
 
-func (my *HTTPClient) SetAttrs(attrs ...HttpClientAttributer) *HTTPClient {
+func (my *HTTPClient) SetAttrs(attrs ...HTTPClientAttributer) *HTTPClient {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
