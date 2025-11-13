@@ -278,7 +278,7 @@ func (my *AttrSetHeaderValues) Error() error { return nil }
 func JSON(body any) *AttrBody {
 	ins := &AttrBody{}
 	ins.body, ins.err = json.Marshal(body)
-	ins.contentType = ContentTypeJson
+	ins.contentType = ContentTypeJSON
 
 	return ins
 }
@@ -286,7 +286,7 @@ func JSON(body any) *AttrBody {
 func XML(body any) HTTPClientAttributer {
 	ins := &AttrBody{}
 	ins.body, ins.err = xml.Marshal(body)
-	ins.contentType = ContentTypeXml
+	ins.contentType = ContentTypeXML
 
 	return ins
 }
@@ -298,7 +298,7 @@ func Form(body map[string]any) *AttrBody {
 		params.Add(k, cast.ToString(v))
 	}
 	ins.body = []byte(params.Encode())
-	ins.contentType = ContentTypeXWwwFormUrlencoded
+	ins.contentType = ContentTypeXWwwFormURLencoded
 
 	return ins
 }
@@ -355,7 +355,7 @@ func Plain(body string) *AttrBody {
 func HTML(body string) *AttrBody {
 	ins := &AttrBody{}
 	ins.body = []byte(body)
-	ins.contentType = ContentTypeXml
+	ins.contentType = ContentTypeXML
 
 	return ins
 }
@@ -363,7 +363,7 @@ func HTML(body string) *AttrBody {
 func CSS(body string) *AttrBody {
 	ins := &AttrBody{}
 	ins.body = []byte(body)
-	ins.contentType = ContentTypeCss
+	ins.contentType = ContentTypeCSS
 
 	return ins
 }

@@ -6,43 +6,43 @@ type (
 )
 
 var (
-	ContentTypeJson               ContentType = "json"
-	ContentTypeXml                ContentType = "xml"
-	ContentTypeXWwwFormUrlencoded ContentType = "form"
+	ContentTypeJSON               ContentType = "json"
+	ContentTypeXML                ContentType = "xml"
+	ContentTypeXWwwFormURLencoded ContentType = "form"
 	ContentTypeFormData           ContentType = "form-data"
 	ContentTypePlain              ContentType = "plain"
-	ContentTypeHtml               ContentType = "html"
-	ContentTypeCss                ContentType = "css"
+	ContentTypeHTML               ContentType = "html"
+	ContentTypeCSS                ContentType = "css"
 	ContentTypeJavascript         ContentType = "javascript"
 	ContentTypeSteam              ContentType = "steam"
 
 	ContentTypes = map[ContentType]string{
-		ContentTypeJson:               "application/json",
-		ContentTypeXml:                "application/xml",
-		ContentTypeXWwwFormUrlencoded: "application/x-www-form-urlencoded",
+		ContentTypeJSON:               "application/json",
+		ContentTypeXML:                "application/xml",
+		ContentTypeXWwwFormURLencoded: "application/x-www-form-urlencoded",
 		ContentTypeFormData:           "form-data",
 		ContentTypePlain:              "text/plain",
-		ContentTypeHtml:               "text/html",
-		ContentTypeCss:                "text/css",
+		ContentTypeHTML:               "text/html",
+		ContentTypeCSS:                "text/css",
 		ContentTypeJavascript:         "text/javascript",
 		ContentTypeSteam:              "application/octet-stream",
 	}
 
-	AcceptJson       Accept = "json"
-	AcceptXml        Accept = "xml"
+	AcceptJSON       Accept = "json"
+	AcceptXML        Accept = "xml"
 	AcceptPlain      Accept = "plain"
-	AcceptHtml       Accept = "html"
-	AcceptCss        Accept = "css"
+	AcceptHTML       Accept = "html"
+	AcceptCSS        Accept = "css"
 	AcceptJavascript Accept = "javascript"
 	AcceptSteam      Accept = "steam"
 	AcceptAny        Accept = "any"
 
 	Accepts = map[Accept]string{
-		AcceptJson:       "application/json",
-		AcceptXml:        "application/xml",
+		AcceptJSON:       "application/json",
+		AcceptXML:        "application/xml",
 		AcceptPlain:      "text/plain",
-		AcceptHtml:       "text/html",
-		AcceptCss:        "text/css",
+		AcceptHTML:       "text/html",
+		AcceptCSS:        "text/css",
 		AcceptJavascript: "text/javascript",
 		AcceptSteam:      "application/octet-stream",
 		AcceptAny:        "*/*",
