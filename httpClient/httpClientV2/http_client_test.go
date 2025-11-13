@@ -8,12 +8,12 @@ import (
 
 func Test1(t *testing.T) {
 	t.Run("http client request init", func(t *testing.T) {
-		hc := APP.HttpClient.New(
+		hc := APP.HTTPClient.New(
 			URL("http://www", ".baidu", ".com"),
 			Method(http.MethodGet),
 			Queries(map[string]any{"name": "张三", "age": 18}),
-			AppendHeaderValues(nil).Authorization("username", "password", "Basic").Accept(AcceptJson).ContentType(ContentTypeJson),
-			SetHeaderValues(nil).ContentType(ContentTypeJson).Accept(AcceptJson),
+			AppendHeaderValues(nil).Authorization("username", "password", "Basic").Accept(AcceptJSON).ContentType(ContentTypeJSON),
+			SetHeaderValues(nil).ContentType(ContentTypeJSON).Accept(AcceptJSON),
 			JSON(map[string]any{"李四": 20, "王五": 30, "赵六": 40}),
 			Timeout(5*time.Minute),
 			Transport(&http.Transport{

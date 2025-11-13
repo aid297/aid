@@ -22,7 +22,7 @@ import (
 
 type (
 	HttpClientAttributer interface {
-		Register(req *HttpClient)
+		Register(req *HTTPClient)
 		Error() error
 		ImplHttpClientAttributer()
 	}
@@ -61,7 +61,7 @@ func URL(urls ...string) HttpClientAttributer {
 	return ins
 }
 
-func (my *AttrURL) Register(req *HttpClient) { req.url = my.url }
+func (my *AttrURL) Register(req *HTTPClient) { req.url = my.url }
 
 func (my *AttrURL) Error() error { return nil }
 
@@ -88,7 +88,7 @@ func (my *AttrQueries) AppendOne(key string, value any) *AttrQueries {
 	return my
 }
 
-func (my *AttrQueries) Register(req *HttpClient) { req.queries = my.queries }
+func (my *AttrQueries) Register(req *HTTPClient) { req.queries = my.queries }
 
 func (my *AttrQueries) Error() error { return nil }
 
@@ -98,7 +98,7 @@ func Method(method string) *AttrMethod {
 	return &AttrMethod{method: method}
 }
 
-func (my *AttrMethod) Register(req *HttpClient) { req.method = my.method }
+func (my *AttrMethod) Register(req *HTTPClient) { req.method = my.method }
 
 func (my *AttrMethod) Error() error { return nil }
 
@@ -140,7 +140,7 @@ func (my *AttrAppendHeaderValue) Authorization(username, password, title string)
 	return my
 }
 
-func (my *AttrAppendHeaderValue) Register(req *HttpClient) {
+func (my *AttrAppendHeaderValue) Register(req *HTTPClient) {
 	if req.headers == nil {
 		req.headers = map[string][]string{}
 	} else {
@@ -194,7 +194,7 @@ func (my *AttrAppendHeaderValues) Authorization(username, password, title string
 	return my
 }
 
-func (my *AttrAppendHeaderValues) Register(req *HttpClient) {
+func (my *AttrAppendHeaderValues) Register(req *HTTPClient) {
 	if req.headers == nil {
 		req.headers = my.headers
 	} else {
@@ -235,7 +235,7 @@ func (my *AttrSetHeaderValue) Authorization(username, password, title string) *A
 	return my
 }
 
-func (my *AttrSetHeaderValue) Register(req *HttpClient) {
+func (my *AttrSetHeaderValue) Register(req *HTTPClient) {
 	if req.headers == nil {
 		req.headers = map[string][]string{}
 	} else {
@@ -272,7 +272,7 @@ func (my *AttrSetHeaderValues) Authorization(username, password, title string) *
 	return my
 }
 
-func (my *AttrSetHeaderValues) Register(req *HttpClient) {
+func (my *AttrSetHeaderValues) Register(req *HTTPClient) {
 	if req.headers == nil {
 		req.headers = my.headers
 	} else {
@@ -287,7 +287,7 @@ func (*AttrSetHeaderValues) ImplHttpClientAttributer() {}
 func JSON(body any) *AttrBody {
 	ins := &AttrBody{}
 	ins.body, ins.err = json.Marshal(body)
-	ins.contentType = ContentTypeJson
+	ins.contentType = ContentTypeJSON
 
 	return ins
 }
@@ -295,7 +295,7 @@ func JSON(body any) *AttrBody {
 func XML(body any) HttpClientAttributer {
 	ins := &AttrBody{}
 	ins.body, ins.err = xml.Marshal(body)
-	ins.contentType = ContentTypeXml
+	ins.contentType = ContentTypeXML
 
 	return ins
 }
@@ -307,7 +307,7 @@ func Form(body map[string]any) *AttrBody {
 		params.Add(k, cast.ToString(v))
 	}
 	ins.body = []byte(params.Encode())
-	ins.contentType = ContentTypeXWwwFormUrlencoded
+	ins.contentType = ContentTypeXWwwFormURLencoded
 
 	return ins
 }
@@ -364,7 +364,7 @@ func Plain(body string) *AttrBody {
 func HTML(body string) *AttrBody {
 	ins := &AttrBody{}
 	ins.body = []byte(body)
-	ins.contentType = ContentTypeXml
+	ins.contentType = ContentTypeXML
 
 	return ins
 }
@@ -372,7 +372,7 @@ func HTML(body string) *AttrBody {
 func CSS(body string) *AttrBody {
 	ins := &AttrBody{}
 	ins.body = []byte(body)
-	ins.contentType = ContentTypeCss
+	ins.contentType = ContentTypeCSS
 
 	return ins
 }
@@ -444,7 +444,7 @@ func File(filename string) *AttrBody {
 	return ins
 }
 
-func (my *AttrBody) Register(req *HttpClient) {
+func (my *AttrBody) Register(req *HTTPClient) {
 	req.requestBody = my.body
 	if my.contentType != "" {
 		req.headers["Content-Type"] = []string{ContentTypes[my.contentType]}
@@ -464,7 +464,7 @@ func Timeout(timeout time.Duration) *AttrTimeout {
 	return &AttrTimeout{timeout: timeout}
 }
 
-func (my *AttrTimeout) Register(req *HttpClient) { req.timeout = my.timeout }
+func (my *AttrTimeout) Register(req *HTTPClient) { req.timeout = my.timeout }
 
 func (*AttrTimeout) Error() error { return nil }
 
@@ -474,7 +474,7 @@ func Transport(transport *http.Transport) *AttrTransport {
 	return &AttrTransport{transport: transport}
 }
 
-func (my *AttrTransport) Register(req *HttpClient) { req.transport = my.transport }
+func (my *AttrTransport) Register(req *HTTPClient) { req.transport = my.transport }
 
 func (my *AttrTransport) Error() error { return nil }
 
@@ -489,7 +489,7 @@ func TransportDefault() *AttrTransportDefault {
 	}}
 }
 
-func (my *AttrTransportDefault) Register(req *HttpClient) { req.transport = my.transport }
+func (my *AttrTransportDefault) Register(req *HTTPClient) { req.transport = my.transport }
 
 func (my *AttrTransportDefault) Error() error { return nil }
 
@@ -497,7 +497,7 @@ func (*AttrTransportDefault) ImplHttpClientAttributer() {}
 
 func Cert(cert []byte) *AttrCert { return &AttrCert{cert: cert} }
 
-func (my *AttrCert) Register(req *HttpClient) { req.cert = my.cert }
+func (my *AttrCert) Register(req *HTTPClient) { req.cert = my.cert }
 
 func (my *AttrCert) Error() error { return nil }
 
@@ -505,7 +505,7 @@ func (*AttrCert) ImplHttpClientAttributer() {}
 
 func AutoCopy(autoCopy bool) *AttrAutoCopyResBody { return &AttrAutoCopyResBody{autoCopy: autoCopy} }
 
-func (my *AttrAutoCopyResBody) Register(req *HttpClient) { req.autoCopy = my.autoCopy }
+func (my *AttrAutoCopyResBody) Register(req *HTTPClient) { req.autoCopy = my.autoCopy }
 
 func (*AttrAutoCopyResBody) Error() error { return nil }
 

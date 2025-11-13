@@ -21,7 +21,7 @@ import (
 )
 
 type (
-	HttpClient struct {
+	HTTPClient struct {
 		err                       error
 		url                       string
 		queries                   map[string]any
@@ -38,64 +38,64 @@ type (
 		lock                      sync.RWMutex
 	}
 
-	HttpClientBuilder struct {
+	HTTPClientBuilder struct {
 		options []HttpClientAttributer
 	}
 )
 
-func (*HttpClient) init(method string, attrs ...HttpClientAttributer) *HttpClient {
-	ins := new(HttpClient)
+func (*HTTPClient) init(method string, attrs ...HttpClientAttributer) *HTTPClient {
+	ins := new(HTTPClient)
 	ins.SetAttrs(Method(method))
 	ins.SetAttrs(AppendHeaderValues(map[string][]string{}))
 
 	return ins.SetAttrs(attrs...)
 }
 
-func (*HttpClientBuilder) New(options ...HttpClientAttributer) *HttpClientBuilder {
-	return &HttpClientBuilder{options: options}
+func (*HTTPClientBuilder) New(options ...HttpClientAttributer) *HTTPClientBuilder {
+	return &HTTPClientBuilder{options: options}
 }
 
-func (my *HttpClientBuilder) GetClient() *HttpClient {
-	return new(HttpClient).init(http.MethodGet, my.options...)
+func (my *HTTPClientBuilder) GetClient() *HTTPClient {
+	return new(HTTPClient).init(http.MethodGet, my.options...)
 }
 
-func (*HttpClient) New(attrs ...HttpClientAttributer) *HttpClient {
-	return new(HttpClient).init(http.MethodGet, attrs...)
+func (*HTTPClient) New(attrs ...HttpClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodGet, attrs...)
 }
 
-func (*HttpClient) NewGet(attrs ...HttpClientAttributer) *HttpClient {
-	return new(HttpClient).init(http.MethodGet, attrs...)
+func (*HTTPClient) NewGet(attrs ...HttpClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodGet, attrs...)
 }
 
-func (*HttpClient) NewPost(attrs ...HttpClientAttributer) *HttpClient {
-	return new(HttpClient).init(http.MethodPost, attrs...)
+func (*HTTPClient) NewPost(attrs ...HttpClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodPost, attrs...)
 }
 
-func (*HttpClient) NewPut(attrs ...HttpClientAttributer) *HttpClient {
-	return new(HttpClient).init(http.MethodPut, attrs...)
+func (*HTTPClient) NewPut(attrs ...HttpClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodPut, attrs...)
 }
 
-func (*HttpClient) NewPatch(attrs ...HttpClientAttributer) *HttpClient {
-	return new(HttpClient).init(http.MethodPatch, attrs...)
+func (*HTTPClient) NewPatch(attrs ...HttpClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodPatch, attrs...)
 }
 
-func (*HttpClient) NewDelete(attrs ...HttpClientAttributer) *HttpClient {
-	return new(HttpClient).init(http.MethodDelete, attrs...)
+func (*HTTPClient) NewDelete(attrs ...HttpClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodDelete, attrs...)
 }
 
-func (*HttpClient) NewHead(attrs ...HttpClientAttributer) *HttpClient {
-	return new(HttpClient).init(http.MethodHead, attrs...)
+func (*HTTPClient) NewHead(attrs ...HttpClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodHead, attrs...)
 }
 
-func (*HttpClient) NewOptions(attrs ...HttpClientAttributer) *HttpClient {
-	return new(HttpClient).init(http.MethodOptions, attrs...)
+func (*HTTPClient) NewOptions(attrs ...HttpClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodOptions, attrs...)
 }
 
-func (*HttpClient) NewTrace(attrs ...HttpClientAttributer) *HttpClient {
-	return new(HttpClient).init(http.MethodTrace, attrs...)
+func (*HTTPClient) NewTrace(attrs ...HttpClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodTrace, attrs...)
 }
 
-func (my *HttpClient) set(attrs ...HttpClientAttributer) {
+func (my *HTTPClient) set(attrs ...HttpClientAttributer) {
 	if len(attrs) > 0 {
 		for _, option := range attrs {
 			option.Register(my)
@@ -106,7 +106,7 @@ func (my *HttpClient) set(attrs ...HttpClientAttributer) {
 	}
 }
 
-func (my *HttpClient) SetAttrs(attrs ...HttpClientAttributer) *HttpClient {
+func (my *HTTPClient) SetAttrs(attrs ...HttpClientAttributer) *HTTPClient {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
@@ -115,14 +115,14 @@ func (my *HttpClient) SetAttrs(attrs ...HttpClientAttributer) *HttpClient {
 	return my
 }
 
-func (my *HttpClient) GetURL() string {
+func (my *HTTPClient) GetURL() string {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getURL()
 }
 
-func (my *HttpClient) getURL() string {
+func (my *HTTPClient) getURL() string {
 	queries := url.Values{}
 	if len(my.queries) > 0 {
 		for k, v := range my.queries {
@@ -137,97 +137,97 @@ func (my *HttpClient) getURL() string {
 	return my.url
 }
 
-func (my *HttpClient) GetQueries() map[string]any {
+func (my *HTTPClient) GetQueries() map[string]any {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getQueries()
 }
 
-func (my *HttpClient) getQueries() map[string]any { return my.queries }
+func (my *HTTPClient) getQueries() map[string]any { return my.queries }
 
-func (my *HttpClient) GetMethod() string {
+func (my *HTTPClient) GetMethod() string {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getMethod()
 }
 
-func (my *HttpClient) getMethod() string { return my.method }
+func (my *HTTPClient) getMethod() string { return my.method }
 
-func (my *HttpClient) GetHeaders() map[string][]string {
+func (my *HTTPClient) GetHeaders() map[string][]string {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getHeaders()
 }
 
-func (my *HttpClient) getHeaders() map[string][]string { return my.headers }
+func (my *HTTPClient) getHeaders() map[string][]string { return my.headers }
 
-func (my *HttpClient) GetBody() []byte {
+func (my *HTTPClient) GetBody() []byte {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getBody()
 }
 
-func (my *HttpClient) getBody() []byte { return my.requestBody }
+func (my *HTTPClient) getBody() []byte { return my.requestBody }
 
-func (my *HttpClient) GetTimeout() time.Duration {
+func (my *HTTPClient) GetTimeout() time.Duration {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getTimeout()
 }
 
-func (my *HttpClient) getTimeout() time.Duration { return my.timeout }
+func (my *HTTPClient) getTimeout() time.Duration { return my.timeout }
 
-func (my *HttpClient) GetTransport() *http.Transport {
+func (my *HTTPClient) GetTransport() *http.Transport {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getTransport()
 }
 
-func (my *HttpClient) getTransport() *http.Transport { return my.transport }
+func (my *HTTPClient) getTransport() *http.Transport { return my.transport }
 
-func (my *HttpClient) GetCert() []byte {
+func (my *HTTPClient) GetCert() []byte {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getCert()
 }
 
-func (my *HttpClient) getCert() []byte { return my.cert }
+func (my *HTTPClient) getCert() []byte { return my.cert }
 
-func (my *HttpClient) GetRawRequest() *http.Request {
+func (my *HTTPClient) GetRawRequest() *http.Request {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getRawRequest()
 }
 
-func (my *HttpClient) getRawRequest() *http.Request { return my.rawRequest }
+func (my *HTTPClient) getRawRequest() *http.Request { return my.rawRequest }
 
-func (my *HttpClient) GetRawResponse() *http.Response {
+func (my *HTTPClient) GetRawResponse() *http.Response {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getRawResponse()
 }
 
-func (my *HttpClient) getRawResponse() *http.Response { return my.rawResponse }
+func (my *HTTPClient) getRawResponse() *http.Response { return my.rawResponse }
 
-func (my *HttpClient) GetClient() *http.Client {
+func (my *HTTPClient) GetClient() *http.Client {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getClient()
 }
 
-func (my *HttpClient) getClient() *http.Client { return my.client }
+func (my *HTTPClient) getClient() *http.Client { return my.client }
 
-func (my *HttpClient) send() *HttpClient {
+func (my *HTTPClient) send() *HTTPClient {
 	if my.err != nil {
 		return my
 	}
@@ -274,14 +274,50 @@ func (my *HttpClient) send() *HttpClient {
 	return my
 }
 
-func (my *HttpClient) Send() *HttpClient {
+func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) *HTTPClient {
+	my.lock.Lock()
+	defer my.lock.Unlock()
+
+	if my.send().Error() != nil {
+		return my
+	}
+
+	if count > 0 && interval > 0 {
+		var (
+			maxAttempts uint = count + 1 // 首次尝试 + 重试次数
+			shouldRetry      = false
+		)
+
+		for attempt := uint(0); attempt < maxAttempts; attempt++ {
+			time.Sleep(interval)
+
+			if condition == nil {
+				condition = func(statusCode int, err error) bool { return statusCode > 399 || err != nil }
+			}
+			shouldRetry = condition(my.rawResponse.StatusCode, my.err)
+
+			if !shouldRetry || attempt == maxAttempts-1 {
+				break
+			}
+
+			if my.rawResponse != nil && my.rawResponse.Body != nil {
+				_ = my.rawResponse.Body.Close()
+				my.rawResponse = nil
+			}
+		}
+	}
+
+	return my
+}
+
+func (my *HTTPClient) Send() *HTTPClient {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
 	return my.send()
 }
 
-func (my *HttpClient) parseBody() {
+func (my *HTTPClient) parseBody() {
 	var (
 		buffer  = bytes.NewBuffer([]byte{})
 		written int64
@@ -316,7 +352,7 @@ func (my *HttpClient) parseBody() {
 	}
 }
 
-func (my *HttpClient) ToJson(target any, keys ...any) *HttpClient {
+func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 	defer func() { _ = my.rawResponse.Body.Close() }()
@@ -335,17 +371,17 @@ func (my *HttpClient) ToJson(target any, keys ...any) *HttpClient {
 
 	return operation.TernaryFuncAll(
 		func() bool { return len(keys) > 0 },
-		func() *HttpClient {
+		func() *HTTPClient {
 			jsonIter.Get(my.responseBody, keys...).ToVal(&target)
 			return my
-		}, func() *HttpClient {
+		}, func() *HTTPClient {
 			my.err = json.Unmarshal(my.responseBody, &target)
 			return my
 		},
 	)
 }
 
-func (my *HttpClient) ToXml(target any) *HttpClient {
+func (my *HTTPClient) ToXML(target any) *HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 	defer func() { _ = my.rawResponse.Body.Close() }()
@@ -367,7 +403,7 @@ func (my *HttpClient) ToXml(target any) *HttpClient {
 	return my
 }
 
-func (my *HttpClient) ToBytes() []byte {
+func (my *HTTPClient) ToBytes() []byte {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 	defer func() { _ = my.rawResponse.Body.Close() }()
@@ -387,7 +423,7 @@ func (my *HttpClient) ToBytes() []byte {
 	return my.responseBody
 }
 
-func (my *HttpClient) ToWriter(writer http.ResponseWriter) *HttpClient {
+func (my *HTTPClient) ToWriter(writer http.ResponseWriter) *HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 	defer func() { _ = my.rawResponse.Body.Close() }()
@@ -400,7 +436,7 @@ func (my *HttpClient) ToWriter(writer http.ResponseWriter) *HttpClient {
 	return my
 }
 
-func (my *HttpClient) Error() error {
+func (my *HTTPClient) Error() error {
 	var err error
 	defer func() { my.err = nil }()
 
