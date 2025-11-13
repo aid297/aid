@@ -17,6 +17,7 @@ import (
 
 	"github.com/spf13/cast"
 
+	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
 )
 
@@ -30,10 +31,10 @@ type (
 	AttrURL                struct{ url string }
 	AttrQueries            struct{ queries map[string]any }
 	AttrMethod             struct{ method string }
-	AttrAppendHeaderValues struct{ headers map[string][]string }
-	AttrAppendHeaderValue  struct{ headers map[string]string }
-	AttrSetHeaderValues    struct{ headers map[string][]string }
-	AttrSetHeaderValue     struct{ headers map[string]string }
+	AttrAppendHeaderValues struct{ headers map[string][]any }
+	AttrAppendHeaderValue  struct{ headers map[string]any }
+	AttrSetHeaderValues    struct{ headers map[string][]any }
+	AttrSetHeaderValue     struct{ headers map[string]any }
 	AttrBody               struct {
 		err         error
 		body        []byte
@@ -46,16 +47,16 @@ type (
 	AttrAutoCopyResBody  struct{ autoCopy bool }
 )
 
-func URL(urls ...string) HTTPClientAttributer {
+func URL(urls ...any) HTTPClientAttributer {
 	ins := &AttrURL{url: ""}
 	switch {
 
 	}
 	if len(urls) == 0 {
 	} else if len(urls) == 1 {
-		ins.url = urls[0]
+		ins.url = cast.ToString(urls[0])
 	} else {
-		ins.url = str.APP.Buffer.JoinString(urls...)
+		ins.url = str.APP.Buffer.JoinString(cast.ToStringSlice(urls)...)
 	}
 
 	return ins
@@ -104,15 +105,15 @@ func (my *AttrMethod) Error() error { return nil }
 
 func (*AttrMethod) ImplHTTPClientAttributer() {}
 
-func AppendHeaderValue(headers map[string]string) *AttrAppendHeaderValue {
+func AppendHeaderValue(headers map[string]any) *AttrAppendHeaderValue {
 	if headers == nil {
-		headers = map[string]string{}
+		headers = map[string]any{}
 	}
 
 	return &AttrAppendHeaderValue{headers: headers}
 }
 
-func (my *AttrAppendHeaderValue) Append(headers map[string]string) *AttrAppendHeaderValue {
+func (my *AttrAppendHeaderValue) Append(headers map[string]any) *AttrAppendHeaderValue {
 	if len(headers) > 0 {
 		maps.Copy(my.headers, headers)
 	}
@@ -120,7 +121,7 @@ func (my *AttrAppendHeaderValue) Append(headers map[string]string) *AttrAppendHe
 	return my
 }
 
-func (my *AttrAppendHeaderValue) AppendOne(key string, value string) *AttrAppendHeaderValue {
+func (my *AttrAppendHeaderValue) AppendOne(key string, value any) *AttrAppendHeaderValue {
 	my.headers[key] = value
 	return my
 }
@@ -142,13 +143,13 @@ func (my *AttrAppendHeaderValue) Authorization(username, password, title string)
 
 func (my *AttrAppendHeaderValue) Register(req *HTTPClient) {
 	if req.headers == nil {
-		req.headers = map[string][]string{}
+		req.headers = map[string][]any{}
 	} else {
 		for key, values := range my.headers {
 			if _, exists := req.headers[key]; !exists {
-				req.headers[key] = []string{values}
+				req.headers[key] = []any{values}
 			} else {
-				req.headers[key] = append(req.headers[key], []string{values}...)
+				req.headers[key] = append(req.headers[key], []any{values}...)
 			}
 		}
 	}
@@ -158,15 +159,11 @@ func (my *AttrAppendHeaderValue) Error() error { return nil }
 
 func (*AttrAppendHeaderValue) ImplHTTPClientAttributer() {}
 
-func AppendHeaderValues(headers map[string][]string) *AttrAppendHeaderValues {
-	if headers == nil {
-		headers = map[string][]string{}
-	}
-
-	return &AttrAppendHeaderValues{headers: headers}
+func AppendHeaderValues(headers map[string][]any) *AttrAppendHeaderValues {
+	return operationV2.NewTernary(operationV2.TrueValue(&AttrAppendHeaderValues{headers})).GetByValue(len(headers) > 0)
 }
 
-func (my *AttrAppendHeaderValues) Append(headers map[string][]string) *AttrAppendHeaderValues {
+func (my *AttrAppendHeaderValues) Append(headers map[string][]any) *AttrAppendHeaderValues {
 	if len(headers) > 0 {
 		maps.Copy(my.headers, headers)
 	}
@@ -174,23 +171,23 @@ func (my *AttrAppendHeaderValues) Append(headers map[string][]string) *AttrAppen
 	return my
 }
 
-func (my *AttrAppendHeaderValues) AppendOne(key string, values ...string) *AttrAppendHeaderValues {
+func (my *AttrAppendHeaderValues) AppendOne(key string, values ...any) *AttrAppendHeaderValues {
 	my.headers[key] = values
 	return my
 }
 
 func (my *AttrAppendHeaderValues) ContentType(contentType ContentType) *AttrAppendHeaderValues {
-	my.headers["Content-Type"] = []string{ContentTypes[contentType]}
+	my.headers["Content-Type"] = []any{ContentTypes[contentType]}
 	return my
 }
 
 func (my *AttrAppendHeaderValues) Accept(accept Accept) *AttrAppendHeaderValues {
-	my.headers["Accept"] = []string{Accepts[accept]}
+	my.headers["Accept"] = []any{Accepts[accept]}
 	return my
 }
 
 func (my *AttrAppendHeaderValues) Authorization(username, password, title string) *AttrAppendHeaderValues {
-	my.headers["Authorization"] = []string{str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
+	my.headers["Authorization"] = []any{str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
 	return my
 }
 
@@ -212,12 +209,8 @@ func (my *AttrAppendHeaderValues) Error() error { return nil }
 
 func (*AttrAppendHeaderValues) ImplHTTPClientAttributer() {}
 
-func SetHeaderValue(headers map[string]string) *AttrSetHeaderValue {
-	if headers == nil {
-		headers = map[string]string{}
-	}
-
-	return &AttrSetHeaderValue{headers: headers}
+func SetHeaderValue(headers map[string]any) *AttrSetHeaderValue {
+	return operationV2.NewTernary(operationV2.TrueValue(&AttrSetHeaderValue{headers})).GetByValue(len(headers) > 0)
 }
 
 func (my *AttrSetHeaderValue) ContentType(contentType ContentType) *AttrSetHeaderValue {
@@ -237,10 +230,10 @@ func (my *AttrSetHeaderValue) Authorization(username, password, title string) *A
 
 func (my *AttrSetHeaderValue) Register(req *HTTPClient) {
 	if req.headers == nil {
-		req.headers = map[string][]string{}
+		req.headers = map[string][]any{}
 	} else {
 		for idx := range my.headers {
-			req.headers[idx] = []string{my.headers[idx]}
+			req.headers[idx] = []any{my.headers[idx]}
 		}
 	}
 }
@@ -249,26 +242,22 @@ func (my *AttrSetHeaderValue) Error() error { return nil }
 
 func (*AttrSetHeaderValue) ImplHTTPClientAttributer() {}
 
-func SetHeaderValues(headers map[string][]string) *AttrSetHeaderValues {
-	if headers == nil {
-		headers = map[string][]string{}
-	}
-
-	return &AttrSetHeaderValues{headers: headers}
+func SetHeaderValues(headers map[string][]any) *AttrSetHeaderValues {
+	return operationV2.NewTernary(operationV2.TrueValue(&AttrSetHeaderValues{headers: headers})).GetByValue(len(headers) > 0)
 }
 
 func (my *AttrSetHeaderValues) ContentType(contentType ContentType) *AttrSetHeaderValues {
-	my.headers["Content-Type"] = []string{ContentTypes[contentType]}
+	my.headers["Content-Type"] = []any{ContentTypes[contentType]}
 	return my
 }
 
 func (my *AttrSetHeaderValues) Accept(accept Accept) *AttrSetHeaderValues {
-	my.headers["Accept"] = []string{Accepts[accept]}
+	my.headers["Accept"] = []any{Accepts[accept]}
 	return my
 }
 
 func (my *AttrSetHeaderValues) Authorization(username, password, title string) *AttrSetHeaderValues {
-	my.headers["Authorization"] = []string{str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
+	my.headers["Authorization"] = []any{str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
 	return my
 }
 
@@ -447,7 +436,7 @@ func File(filename string) *AttrBody {
 func (my *AttrBody) Register(req *HTTPClient) {
 	req.requestBody = my.body
 	if my.contentType != "" {
-		req.headers["Content-Type"] = []string{ContentTypes[my.contentType]}
+		req.headers["Content-Type"] = []any{ContentTypes[my.contentType]}
 	}
 	req.err = my.err
 }

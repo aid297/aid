@@ -26,7 +26,7 @@ type (
 		url                       string
 		queries                   map[string]any
 		method                    string
-		headers                   map[string][]string
+		headers                   map[string][]any
 		requestBody, responseBody []byte
 		timeout                   time.Duration
 		transport                 *http.Transport
@@ -39,24 +39,20 @@ type (
 	}
 
 	HTTPClientBuilder struct {
-		options []HTTPClientAttributer
+		attrs []HTTPClientAttributer
 	}
 )
 
 func (*HTTPClient) init(method string, attrs ...HTTPClientAttributer) *HTTPClient {
-	ins := new(HTTPClient)
-	ins.SetAttrs(Method(method))
-	ins.SetAttrs(AppendHeaderValues(map[string][]string{}))
-
-	return ins.SetAttrs(attrs...)
+	return new(HTTPClient).SetAttrs(Method(method), AppendHeaderValues(map[string][]any{})).SetAttrs(attrs...)
 }
 
-func (*HTTPClientBuilder) New(options ...HTTPClientAttributer) *HTTPClientBuilder {
-	return &HTTPClientBuilder{options: options}
+func (*HTTPClientBuilder) New(attrs ...HTTPClientAttributer) *HTTPClientBuilder {
+	return &HTTPClientBuilder{attrs: attrs}
 }
 
 func (my *HTTPClientBuilder) GetClient() *HTTPClient {
-	return new(HTTPClient).init(http.MethodGet, my.options...)
+	return new(HTTPClient).init(http.MethodGet, my.attrs...)
 }
 
 func (*HTTPClient) New(attrs ...HTTPClientAttributer) *HTTPClient {
@@ -155,14 +151,14 @@ func (my *HTTPClient) GetMethod() string {
 
 func (my *HTTPClient) getMethod() string { return my.method }
 
-func (my *HTTPClient) GetHeaders() map[string][]string {
+func (my *HTTPClient) GetHeaders() map[string][]any {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getHeaders()
 }
 
-func (my *HTTPClient) getHeaders() map[string][]string { return my.headers }
+func (my *HTTPClient) getHeaders() map[string][]any { return my.headers }
 
 func (my *HTTPClient) GetBody() []byte {
 	my.lock.RLock()
@@ -237,7 +233,11 @@ func (my *HTTPClient) send() *HTTPClient {
 	}
 
 	for key, values := range my.headers {
-		my.rawRequest.Header[key] = append(my.rawRequest.Header[key], values...)
+		v := make([]string, 0, len(values))
+		for idx := range values {
+			v = append(v, cast.ToString(values[idx]))
+		}
+		my.rawRequest.Header[key] = append(my.rawRequest.Header[key], v...)
 	}
 
 	if len(my.cert) > 0 {
