@@ -17,8 +17,7 @@ type AnyDict[K comparable, V any] struct {
 }
 
 func New[K comparable, V any](attrs ...Attributer[K, V]) AnyDict[K, V] {
-	ins := AnyDict[K, V]{data: make(map[K]V), mu: &sync.RWMutex{}}
-	return ins.SetAttrs(attrs...)
+	return AnyDict[K, V]{data: make(map[K]V), mu: &sync.RWMutex{}}.SetAttrs(attrs...)
 }
 
 func (my AnyDict[K, V]) SetAttrs(attrs ...Attributer[K, V]) AnyDict[K, V] {
