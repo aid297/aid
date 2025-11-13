@@ -160,7 +160,7 @@ func (my *AttrAppendHeaderValue) Error() error { return nil }
 func (*AttrAppendHeaderValue) ImplHTTPClientAttributer() {}
 
 func AppendHeaderValues(headers map[string][]any) *AttrAppendHeaderValues {
-	return operationV2.NewTernary(operationV2.TrueValue(&AttrAppendHeaderValues{headers})).GetByValue(len(headers) > 0)
+	return operationV2.NewTernary(operationV2.TrueValue(&AttrAppendHeaderValues{headers}), operationV2.FalseValue(&AttrAppendHeaderValues{headers: map[string][]any{}})).GetByValue(len(headers) > 0)
 }
 
 func (my *AttrAppendHeaderValues) Append(headers map[string][]any) *AttrAppendHeaderValues {
@@ -210,7 +210,7 @@ func (my *AttrAppendHeaderValues) Error() error { return nil }
 func (*AttrAppendHeaderValues) ImplHTTPClientAttributer() {}
 
 func SetHeaderValue(headers map[string]any) *AttrSetHeaderValue {
-	return operationV2.NewTernary(operationV2.TrueValue(&AttrSetHeaderValue{headers})).GetByValue(len(headers) > 0)
+	return operationV2.NewTernary(operationV2.TrueValue(&AttrSetHeaderValue{headers}), operationV2.FalseValue(&AttrSetHeaderValue{headers: map[string]any{}})).GetByValue(len(headers) > 0)
 }
 
 func (my *AttrSetHeaderValue) ContentType(contentType ContentType) *AttrSetHeaderValue {
@@ -243,7 +243,7 @@ func (my *AttrSetHeaderValue) Error() error { return nil }
 func (*AttrSetHeaderValue) ImplHTTPClientAttributer() {}
 
 func SetHeaderValues(headers map[string][]any) *AttrSetHeaderValues {
-	return operationV2.NewTernary(operationV2.TrueValue(&AttrSetHeaderValues{headers: headers})).GetByValue(len(headers) > 0)
+	return operationV2.NewTernary(operationV2.TrueValue(&AttrSetHeaderValues{headers: headers}), operationV2.FalseValue(&AttrSetHeaderValues{headers: map[string][]any{}})).GetByValue(len(headers) > 0)
 }
 
 func (my *AttrSetHeaderValues) ContentType(contentType ContentType) *AttrSetHeaderValues {
