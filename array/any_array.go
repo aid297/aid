@@ -322,9 +322,6 @@ func (my *AnyArray[T]) intersection(other *AnyArray[T]) {
 
 // Intersection 取交集
 func (my *AnyArray[T]) Intersection(other *AnyArray[T]) *AnyArray[T] {
-	my.mu.Lock()
-	defer my.mu.Unlock()
-
 	my.intersection(other)
 	return my
 }
