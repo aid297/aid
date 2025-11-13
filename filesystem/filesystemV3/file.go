@@ -263,6 +263,10 @@ func (my AttrFilePath) Register(file *File) {
 		operationV2.FalseFn(func() string { return filepath.Join(my.dirs...) }),
 	).GetByValue(file.IsRel)
 }
+func (my AttrFilePath) Join(dirs ...string) AttrFilePath {
+	my.dirs = append(my.dirs, dirs...)
+	return my
+}
 
 func FileSetRel(isRel bool) AttrFileIsRel   { return AttrFileIsRel{isRel: isRel} }
 func FileIsAbs() AttrFileIsRel              { return AttrFileIsRel{isRel: false} }

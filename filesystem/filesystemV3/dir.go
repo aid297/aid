@@ -331,6 +331,10 @@ func (my AttrDirPath) Register(dir *Dir) {
 		operationV2.FalseFn(func() string { return filepath.Join(my.dirs...) }),
 	).GetByValue(dir.IsRel)
 }
+func (my AttrDirPath) Join(dirs ...string) AttrDirPath {
+	my.dirs = append(my.dirs, dirs...)
+	return my
+}
 
 func DirSetRel(isRel bool) AttrDirIsRel   { return AttrDirIsRel{isRel: isRel} }
 func DirIsAbs() AttrDirIsRel              { return AttrDirIsRel{isRel: false} }
