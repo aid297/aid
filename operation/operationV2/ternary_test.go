@@ -2,7 +2,7 @@ package operationV2
 
 import "testing"
 
-func Test1(t *testing.T) {
+func TestTernary1(t *testing.T) {
 	t1 := NewTernary(TrueValue("真"), FalseValue("假"))
 	a1 := t1.GetByValue(true)
 	if a1 != "真" {
