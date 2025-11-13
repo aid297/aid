@@ -156,7 +156,7 @@ func (my *AttrAppendHeaderValue) Register(req *HTTPClient) {
 
 func (my *AttrAppendHeaderValue) Error() error { return nil }
 
-func (*AttrAppendHeaderValue) ImplHttpClientAttributer() {}
+func (*AttrAppendHeaderValue) ImplHTTPClientAttributer() {}
 
 func AppendHeaderValues(headers map[string][]string) *AttrAppendHeaderValues {
 	if headers == nil {
@@ -247,7 +247,7 @@ func (my *AttrSetHeaderValue) Register(req *HTTPClient) {
 
 func (my *AttrSetHeaderValue) Error() error { return nil }
 
-func (*AttrSetHeaderValue) ImplHttpClientAttributer() {}
+func (*AttrSetHeaderValue) ImplHTTPClientAttributer() {}
 
 func SetHeaderValues(headers map[string][]string) *AttrSetHeaderValues {
 	if headers == nil {
@@ -493,7 +493,7 @@ func (my *AttrTransportDefault) Register(req *HTTPClient) { req.transport = my.t
 
 func (my *AttrTransportDefault) Error() error { return nil }
 
-func (*AttrTransportDefault) ImplHttpClientAttributer() {}
+func (*AttrTransportDefault) ImplHTTPClientAttributer() {}
 
 func Cert(cert []byte) *AttrCert { return &AttrCert{cert: cert} }
 

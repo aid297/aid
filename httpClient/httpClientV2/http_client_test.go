@@ -12,8 +12,8 @@ func Test1(t *testing.T) {
 			URL("http://www", ".baidu", ".com"),
 			Method(http.MethodGet),
 			Queries(map[string]any{"name": "张三", "age": 18}),
-			AppendHeaderValues(nil).Authorization("username", "password", "Basic").Accept(AcceptJSON).ContentType(ContentTypeJSON),
-			SetHeaderValues(nil).ContentType(ContentTypeJSON).Accept(AcceptJSON),
+			SetHeaderValue(nil).Authorization("username", "password", "Basic").Accept(AcceptJSON).ContentType(ContentTypeJSON),
+			SetHeaderValue(nil).ContentType(ContentTypeJSON).Accept(AcceptJSON),
 			JSON(map[string]any{"李四": 20, "王五": 30, "赵六": 40}),
 			Timeout(5*time.Minute),
 			Transport(&http.Transport{
