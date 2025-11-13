@@ -50,7 +50,9 @@ type (
 		retryCondition func(statusCode int, err error) bool
 	}
 
-	FormItems struct{ data []FormItem }
+	FormItems struct {
+		data []FormItem
+	}
 
 	FormItem struct {
 		Key string
@@ -64,6 +66,8 @@ func (my *FormItems) Add(key string, val any) *FormItems {
 	my.data = append(my.data, FormItem{key, val})
 	return my
 }
+
+func (my *FormItems) Data() []FormItem { return my.data }
 
 func URL(urls ...string) HTTPClientAttributer {
 	ins := &AttrURL{url: ""}
