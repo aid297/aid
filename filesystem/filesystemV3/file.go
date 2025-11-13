@@ -45,6 +45,19 @@ func NewFileRel(attrs ...FileAttributer) *File {
 	return NewFile(append([]FileAttributer{FileIsRel()}, attrs...)...)
 }
 
+// New 实例化
+func (*File) New(attrs ...FileAttributer) *File {
+	return (&File{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
+}
+
+// Abs 实例化：绝对路径
+func (*File) Abs(attrs ...FileAttributer) *File { return APP.File.New(append(attrs, FileIsAbs())...) }
+
+// Rel 实例化：相对路径
+func (*File) Rel(attrs ...FileAttributer) *File {
+	return APP.File.New(append([]FileAttributer{FileIsRel()}, attrs...)...)
+}
+
 // SetAttrs 设置属性
 func (my *File) SetAttrs(attrs ...FileAttributer) *File {
 	for idx := range attrs {

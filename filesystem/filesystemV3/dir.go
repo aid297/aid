@@ -38,6 +38,21 @@ func NewDirRel(attrs ...DirAttributer) *Dir {
 	return NewDir(append([]DirAttributer{DirPath("."), DirIsRel()}, attrs...)...)
 }
 
+// New 实例化
+func (*Dir) New(attrs ...DirAttributer) *Dir {
+	return (&Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0)}).SetAttrs(attrs...).refresh()
+}
+
+// Abs 实例化：绝对路径
+func (*Dir) Abs(attrs ...DirAttributer) *Dir {
+	return APP.Dir.New(append([]DirAttributer{DirPath("."), DirIsRel()}, attrs...)...)
+}
+
+// Rel 实例化：相对路径
+func (*Dir) Rel(attrs ...DirAttributer) *Dir {
+	return APP.Dir.New(append([]DirAttributer{DirPath("."), DirIsRel()}, attrs...)...)
+}
+
 // SetAttrs 设置属性
 func (my *Dir) SetAttrs(attrs ...DirAttributer) *Dir {
 	for idx := range attrs {
