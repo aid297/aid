@@ -49,7 +49,21 @@ type (
 	AttrRetryCondition   struct {
 		retryCondition func(statusCode int, err error) bool
 	}
+
+	FormItems struct{ data []FormItem }
+
+	FormItem struct {
+		Key string
+		Val any
+	}
 )
+
+func (my *FormItems) New() *FormItems { return &FormItems{data: make([]FormItem, 0)} }
+
+func (my *FormItems) Add(key string, val any) *FormItems {
+	my.data = append(my.data, FormItem{key, val})
+	return my
+}
 
 func URL(urls ...string) HTTPClientAttributer {
 	ins := &AttrURL{url: ""}
@@ -287,6 +301,18 @@ func XML(body any) HTTPClientAttributer {
 	ins := &AttrBody{}
 	ins.body, ins.err = xml.Marshal(body)
 	ins.contentType = ContentTypeXML
+
+	return ins
+}
+
+func FormSlice(bodies []FormItem) *AttrBody {
+	ins := &AttrBody{}
+	params := url.Values{}
+	for _, body := range bodies {
+		params.Add(body.Key, cast.ToString(body.Val))
+	}
+	ins.body = []byte(params.Encode())
+	ins.contentType = ContentTypeXWwwFormURLencoded
 
 	return ins
 }
