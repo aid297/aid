@@ -39,7 +39,7 @@ type HTTPClient struct {
 
 // init 初始化
 func (HTTPClient) init(method string, attrs ...HTTPClientAttributer) HTTPClient {
-	return HTTPClient{lock: &sync.RWMutex{}}.SetAttrs(Method(method), AppendHeaderValues(map[string][]any{})).SetAttrs(attrs...)
+	return HTTPClient{lock: &sync.RWMutex{}, autoLock: true}.SetAttrs(Method(method), AppendHeaderValues(map[string][]any{})).SetAttrs(attrs...)
 }
 
 // New 实例化：HTTP客户端
