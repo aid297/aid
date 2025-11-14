@@ -33,6 +33,7 @@ type HTTPClient struct {
 	rawResponse               *http.Response
 	client                    *http.Client
 	autoCopy                  bool
+	autoLock                  bool
 	lock                      *sync.RWMutex
 }
 
@@ -90,15 +91,39 @@ func (my HTTPClient) setAttrs(attrs ...HTTPClientAttributer) HTTPClient {
 }
 
 func (my HTTPClient) SetAttrs(attrs ...HTTPClientAttributer) HTTPClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.setAttrs(attrs...)
 }
 
-func (my HTTPClient) GetURL() string {
+func (my HTTPClient) Lock() HTTPClient {
+	my.lock.Lock()
+	return my
+}
+
+func (my HTTPClient) Unlock() HTTPClient {
+	my.lock.Unlock()
+	return my
+}
+
+func (my HTTPClient) RLock() HTTPClient {
 	my.lock.RLock()
-	defer my.lock.RUnlock()
+	return my
+}
+
+func (my HTTPClient) RUnlock() HTTPClient {
+	my.lock.RUnlock()
+	return my
+}
+
+func (my HTTPClient) GetURL() string {
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getURL()
 }
@@ -119,8 +144,10 @@ func (my HTTPClient) getURL() string {
 }
 
 func (my HTTPClient) GetQueries() map[string]any {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getQueries()
 }
@@ -128,8 +155,10 @@ func (my HTTPClient) GetQueries() map[string]any {
 func (my HTTPClient) getQueries() map[string]any { return my.queries }
 
 func (my HTTPClient) GetMethod() string {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getMethod()
 }
@@ -137,8 +166,10 @@ func (my HTTPClient) GetMethod() string {
 func (my HTTPClient) getMethod() string { return my.method }
 
 func (my HTTPClient) GetHeaders() map[string][]any {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getHeaders()
 }
@@ -146,8 +177,10 @@ func (my HTTPClient) GetHeaders() map[string][]any {
 func (my HTTPClient) getHeaders() map[string][]any { return my.headers }
 
 func (my HTTPClient) GetBody() []byte {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getBody()
 }
@@ -155,8 +188,10 @@ func (my HTTPClient) GetBody() []byte {
 func (my HTTPClient) getBody() []byte { return my.requestBody }
 
 func (my HTTPClient) GetTimeout() time.Duration {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getTimeout()
 }
@@ -164,8 +199,10 @@ func (my HTTPClient) GetTimeout() time.Duration {
 func (my HTTPClient) getTimeout() time.Duration { return my.timeout }
 
 func (my HTTPClient) GetTransport() *http.Transport {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getTransport()
 }
@@ -173,8 +210,10 @@ func (my HTTPClient) GetTransport() *http.Transport {
 func (my HTTPClient) getTransport() *http.Transport { return my.transport }
 
 func (my HTTPClient) GetCert() []byte {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getCert()
 }
@@ -182,8 +221,10 @@ func (my HTTPClient) GetCert() []byte {
 func (my HTTPClient) getCert() []byte { return my.cert }
 
 func (my HTTPClient) GetRawRequest() *http.Request {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getRawRequest()
 }
@@ -191,8 +232,10 @@ func (my HTTPClient) GetRawRequest() *http.Request {
 func (my HTTPClient) getRawRequest() *http.Request { return my.rawRequest }
 
 func (my HTTPClient) GetRawResponse() *http.Response {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getRawResponse()
 }
@@ -200,8 +243,10 @@ func (my HTTPClient) GetRawResponse() *http.Response {
 func (my HTTPClient) getRawResponse() *http.Response { return my.rawResponse }
 
 func (my HTTPClient) GetClient() *http.Client {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 
 	return my.getClient()
 }
@@ -341,8 +386,10 @@ func (my HTTPClient) parseBody() HTTPClient {
 }
 
 func (my HTTPClient) ToJSON(target any, keys ...any) HTTPClient {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 	defer func() {
 		if my.rawResponse != nil {
 			_ = my.rawResponse.Body.Close()
@@ -374,8 +421,10 @@ func (my HTTPClient) ToJSON(target any, keys ...any) HTTPClient {
 }
 
 func (my HTTPClient) ToXML(target any) HTTPClient {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 	defer func() {
 		if my.rawResponse != nil {
 			_ = my.rawResponse.Body.Close()
@@ -400,8 +449,10 @@ func (my HTTPClient) ToXML(target any) HTTPClient {
 }
 
 func (my HTTPClient) ToBytes() []byte {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 	defer func() {
 		if my.rawResponse != nil {
 			_ = my.rawResponse.Body.Close()
@@ -424,8 +475,10 @@ func (my HTTPClient) ToBytes() []byte {
 }
 
 func (my HTTPClient) ToWriter(writer http.ResponseWriter) HTTPClient {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
+	if my.autoLock {
+		my.lock.Lock()
+		defer my.lock.Unlock()
+	}
 	defer func() {
 		if my.rawResponse != nil {
 			_ = my.rawResponse.Body.Close()

@@ -45,6 +45,7 @@ type (
 	AttrTransportDefault struct{ transport *http.Transport }
 	AttrCert             struct{ cert []byte }
 	AttrAutoCopyResBody  struct{ autoCopy bool }
+	AttrAutoLock         struct{ autoLock bool }
 )
 
 func URL(urls ...any) HTTPClientAttributer {
@@ -61,17 +62,13 @@ func URL(urls ...any) HTTPClientAttributer {
 
 	return ins
 }
-
 func (my AttrURL) Register(req *HTTPClient) { req.url = my.url }
-
-func (my AttrURL) Error() error { return nil }
-
-func (AttrURL) ImplHTTPClientAttributer() {}
+func (my AttrURL) Error() error             { return nil }
+func (AttrURL) ImplHTTPClientAttributer()   {}
 
 func Queries(queries map[string]any) AttrQueries {
 	return AttrQueries{operationV2.NewTernary(operationV2.TrueValue(queries), operationV2.FalseValue(map[string]any{})).GetByValue(len(queries) > 0)}
 }
-
 func (my AttrQueries) Append(queries map[string]any) AttrQueries {
 	if len(queries) > 0 {
 		maps.Copy(my.queries, queries)
@@ -79,30 +76,22 @@ func (my AttrQueries) Append(queries map[string]any) AttrQueries {
 
 	return my
 }
-
 func (my AttrQueries) AppendOne(key string, value any) AttrQueries {
 	my.queries[key] = value
 	return my
 }
-
 func (my AttrQueries) Register(req *HTTPClient) { req.queries = my.queries }
+func (my AttrQueries) Error() error             { return nil }
+func (AttrQueries) ImplHTTPClientAttributer()   {}
 
-func (my AttrQueries) Error() error { return nil }
-
-func (AttrQueries) ImplHTTPClientAttributer() {}
-
-func Method(method string) AttrMethod { return AttrMethod{method} }
-
+func Method(method string) AttrMethod          { return AttrMethod{method} }
 func (my AttrMethod) Register(req *HTTPClient) { req.method = my.method }
-
-func (my AttrMethod) Error() error { return nil }
-
-func (AttrMethod) ImplHTTPClientAttributer() {}
+func (my AttrMethod) Error() error             { return nil }
+func (AttrMethod) ImplHTTPClientAttributer()   {}
 
 func AppendHeaderValue(headers map[string]any) AttrAppendHeaderValue {
 	return AttrAppendHeaderValue{operationV2.NewTernary(operationV2.TrueValue(headers), operationV2.FalseValue(map[string]any{})).GetByValue(len(headers) > 0)}
 }
-
 func (my AttrAppendHeaderValue) Append(headers map[string]any) AttrAppendHeaderValue {
 	if len(headers) > 0 {
 		maps.Copy(my.headers, headers)
@@ -110,27 +99,22 @@ func (my AttrAppendHeaderValue) Append(headers map[string]any) AttrAppendHeaderV
 
 	return my
 }
-
 func (my AttrAppendHeaderValue) AppendOne(key string, value any) AttrAppendHeaderValue {
 	my.headers[key] = value
 	return my
 }
-
 func (my AttrAppendHeaderValue) ContentType(contentType ContentType) AttrAppendHeaderValue {
 	my.headers["Content-Type"] = ContentTypes[contentType]
 	return my
 }
-
 func (my AttrAppendHeaderValue) Accept(accept Accept) AttrAppendHeaderValue {
 	my.headers["Accept"] = Accepts[accept]
 	return my
 }
-
 func (my AttrAppendHeaderValue) Authorization(username, password, title string) AttrAppendHeaderValue {
 	my.headers["Authorization"] = str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()
 	return my
 }
-
 func (my AttrAppendHeaderValue) Register(req *HTTPClient) {
 	if req.headers == nil {
 		req.headers = map[string][]any{}
@@ -144,15 +128,12 @@ func (my AttrAppendHeaderValue) Register(req *HTTPClient) {
 		}
 	}
 }
-
-func (my AttrAppendHeaderValue) Error() error { return nil }
-
+func (my AttrAppendHeaderValue) Error() error           { return nil }
 func (AttrAppendHeaderValue) ImplHTTPClientAttributer() {}
 
 func AppendHeaderValues(headers map[string][]any) AttrAppendHeaderValues {
 	return operationV2.NewTernary(operationV2.TrueValue(AttrAppendHeaderValues{headers}), operationV2.FalseValue(AttrAppendHeaderValues{headers: map[string][]any{}})).GetByValue(len(headers) > 0)
 }
-
 func (my AttrAppendHeaderValues) Append(headers map[string][]any) AttrAppendHeaderValues {
 	if len(headers) > 0 {
 		maps.Copy(my.headers, headers)
@@ -160,27 +141,22 @@ func (my AttrAppendHeaderValues) Append(headers map[string][]any) AttrAppendHead
 
 	return my
 }
-
 func (my AttrAppendHeaderValues) AppendOne(key string, values ...any) AttrAppendHeaderValues {
 	my.headers[key] = values
 	return my
 }
-
 func (my AttrAppendHeaderValues) ContentType(contentType ContentType) AttrAppendHeaderValues {
 	my.headers["Content-Type"] = []any{ContentTypes[contentType]}
 	return my
 }
-
 func (my AttrAppendHeaderValues) Accept(accept Accept) AttrAppendHeaderValues {
 	my.headers["Accept"] = []any{Accepts[accept]}
 	return my
 }
-
 func (my AttrAppendHeaderValues) Authorization(username, password, title string) AttrAppendHeaderValues {
 	my.headers["Authorization"] = []any{str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
 	return my
 }
-
 func (my AttrAppendHeaderValues) Register(req *HTTPClient) {
 	if req.headers == nil {
 		req.headers = my.headers
@@ -194,30 +170,24 @@ func (my AttrAppendHeaderValues) Register(req *HTTPClient) {
 		}
 	}
 }
-
-func (my AttrAppendHeaderValues) Error() error { return nil }
-
+func (my AttrAppendHeaderValues) Error() error           { return nil }
 func (AttrAppendHeaderValues) ImplHTTPClientAttributer() {}
 
 func SetHeaderValue(headers map[string]any) AttrSetHeaderValue {
 	return operationV2.NewTernary(operationV2.TrueValue(AttrSetHeaderValue{headers}), operationV2.FalseValue(AttrSetHeaderValue{headers: map[string]any{}})).GetByValue(len(headers) > 0)
 }
-
 func (my AttrSetHeaderValue) ContentType(contentType ContentType) AttrSetHeaderValue {
 	my.headers["Content-Type"] = ContentTypes[contentType]
 	return my
 }
-
 func (my AttrSetHeaderValue) Accept(accept Accept) AttrSetHeaderValue {
 	my.headers["Accept"] = Accepts[accept]
 	return my
 }
-
 func (my AttrSetHeaderValue) Authorization(username, password, title string) AttrSetHeaderValue {
 	my.headers["Authorization"] = str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()
 	return my
 }
-
 func (my AttrSetHeaderValue) Register(req *HTTPClient) {
 	if req.headers == nil {
 		req.headers = map[string][]any{}
@@ -227,30 +197,24 @@ func (my AttrSetHeaderValue) Register(req *HTTPClient) {
 		}
 	}
 }
-
-func (my AttrSetHeaderValue) Error() error { return nil }
-
+func (my AttrSetHeaderValue) Error() error           { return nil }
 func (AttrSetHeaderValue) ImplHTTPClientAttributer() {}
 
 func SetHeaderValues(headers map[string][]any) AttrSetHeaderValues {
 	return operationV2.NewTernary(operationV2.TrueValue(AttrSetHeaderValues{headers: headers}), operationV2.FalseValue(AttrSetHeaderValues{headers: map[string][]any{}})).GetByValue(len(headers) > 0)
 }
-
 func (my AttrSetHeaderValues) ContentType(contentType ContentType) AttrSetHeaderValues {
 	my.headers["Content-Type"] = []any{ContentTypes[contentType]}
 	return my
 }
-
 func (my AttrSetHeaderValues) Accept(accept Accept) AttrSetHeaderValues {
 	my.headers["Accept"] = []any{Accepts[accept]}
 	return my
 }
-
 func (my AttrSetHeaderValues) Authorization(username, password, title string) AttrSetHeaderValues {
 	my.headers["Authorization"] = []any{str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
 	return my
 }
-
 func (my AttrSetHeaderValues) Register(req *HTTPClient) {
 	if req.headers == nil {
 		req.headers = my.headers
@@ -258,9 +222,7 @@ func (my AttrSetHeaderValues) Register(req *HTTPClient) {
 		maps.Copy(req.headers, my.headers)
 	}
 }
-
-func (my AttrSetHeaderValues) Error() error { return nil }
-
+func (my AttrSetHeaderValues) Error() error           { return nil }
 func (AttrSetHeaderValues) ImplHTTPClientAttributer() {}
 
 func JSON(body any) AttrBody {
@@ -270,7 +232,6 @@ func JSON(body any) AttrBody {
 
 	return ins
 }
-
 func XML(body any) HTTPClientAttributer {
 	ins := AttrBody{}
 	ins.body, ins.err = xml.Marshal(body)
@@ -278,7 +239,6 @@ func XML(body any) HTTPClientAttributer {
 
 	return ins
 }
-
 func Form(body map[string]any) AttrBody {
 	ins := AttrBody{}
 	params := url.Values{}
@@ -290,7 +250,6 @@ func Form(body map[string]any) AttrBody {
 
 	return ins
 }
-
 func FormData(fields, files map[string]string) AttrBody {
 	var (
 		e      error
@@ -331,7 +290,6 @@ func FormData(fields, files map[string]string) AttrBody {
 
 	return ins
 }
-
 func Plain(body string) AttrBody {
 	ins := AttrBody{}
 	ins.body = []byte(body)
@@ -339,7 +297,6 @@ func Plain(body string) AttrBody {
 
 	return ins
 }
-
 func HTML(body string) AttrBody {
 	ins := AttrBody{}
 	ins.body = []byte(body)
@@ -347,7 +304,6 @@ func HTML(body string) AttrBody {
 
 	return ins
 }
-
 func CSS(body string) AttrBody {
 	ins := AttrBody{}
 	ins.body = []byte(body)
@@ -355,7 +311,6 @@ func CSS(body string) AttrBody {
 
 	return ins
 }
-
 func Javascript(body string) AttrBody {
 	ins := AttrBody{}
 	ins.body = []byte(body)
@@ -363,13 +318,11 @@ func Javascript(body string) AttrBody {
 
 	return ins
 }
-
 func Bytes(body []byte) AttrBody {
 	ins := AttrBody{body: body}
 
 	return ins
 }
-
 func Reader(body io.ReadCloser) AttrBody {
 	var (
 		ins    = AttrBody{}
@@ -387,7 +340,6 @@ func Reader(body io.ReadCloser) AttrBody {
 
 	return ins
 }
-
 func File(filename string) AttrBody {
 	var (
 		ins    = AttrBody{}
@@ -422,7 +374,6 @@ func File(filename string) AttrBody {
 
 	return ins
 }
-
 func (my AttrBody) Register(req *HTTPClient) {
 	req.requestBody = my.body
 	if my.contentType != "" {
@@ -430,30 +381,22 @@ func (my AttrBody) Register(req *HTTPClient) {
 	}
 	req.err = my.err
 }
-
-func (my AttrBody) Error() error { return my.err }
-
+func (my AttrBody) Error() error           { return my.err }
 func (AttrBody) ImplHTTPClientAttributer() {}
 
 func Timeout(timeout time.Duration) AttrTimeout {
 	return AttrTimeout{operationV2.NewTernary(operationV2.TrueValue(timeout), operationV2.FalseValue(time.Duration(0))).GetByValue(timeout < 0)}
 }
-
 func (my AttrTimeout) Register(req *HTTPClient) { req.timeout = my.timeout }
-
-func (AttrTimeout) Error() error { return nil }
-
-func (AttrTimeout) ImplHTTPClientAttributer() {}
+func (AttrTimeout) Error() error                { return nil }
+func (AttrTimeout) ImplHTTPClientAttributer()   {}
 
 func Transport(transport *http.Transport) AttrTransport {
 	return AttrTransport{transport: transport}
 }
-
 func (my AttrTransport) Register(req *HTTPClient) { req.transport = my.transport }
-
-func (my AttrTransport) Error() error { return nil }
-
-func (AttrTransport) ImplHTTPClientAttributer() {}
+func (my AttrTransport) Error() error             { return nil }
+func (AttrTransport) ImplHTTPClientAttributer()   {}
 
 func TransportDefault() *AttrTransportDefault {
 	return &AttrTransportDefault{transport: &http.Transport{
@@ -463,25 +406,21 @@ func TransportDefault() *AttrTransportDefault {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}}
 }
-
 func (my AttrTransportDefault) Register(req *HTTPClient) { req.transport = my.transport }
+func (my AttrTransportDefault) Error() error             { return nil }
+func (AttrTransportDefault) ImplHTTPClientAttributer()   {}
 
-func (my AttrTransportDefault) Error() error { return nil }
-
-func (AttrTransportDefault) ImplHTTPClientAttributer() {}
-
-func Cert(cert []byte) AttrCert { return AttrCert{cert: cert} }
-
+func Cert(cert []byte) AttrCert              { return AttrCert{cert: cert} }
 func (my AttrCert) Register(req *HTTPClient) { req.cert = my.cert }
+func (my AttrCert) Error() error             { return nil }
+func (AttrCert) ImplHTTPClientAttributer()   {}
 
-func (my AttrCert) Error() error { return nil }
-
-func (AttrCert) ImplHTTPClientAttributer() {}
-
-func AutoCopy(autoCopy bool) AttrAutoCopyResBody { return AttrAutoCopyResBody{autoCopy: autoCopy} }
-
+func AutoCopy(autoCopy bool) AttrAutoCopyResBody        { return AttrAutoCopyResBody{autoCopy: autoCopy} }
 func (my AttrAutoCopyResBody) Register(req *HTTPClient) { req.autoCopy = my.autoCopy }
+func (AttrAutoCopyResBody) Error() error                { return nil }
+func (AttrAutoCopyResBody) ImplHTTPClientAttributer()   {}
 
-func (AttrAutoCopyResBody) Error() error { return nil }
-
-func (AttrAutoCopyResBody) ImplHTTPClientAttributer() {}
+func AutoLock(autoLock bool) AttrAutoLock        { return AttrAutoLock{autoLock: autoLock} }
+func (my AttrAutoLock) Register(req *HTTPClient) { req.autoLock = my.autoLock }
+func (AttrAutoLock) Error() error                { return nil }
+func (AttrAutoLock) ImplHTTPClientAttributer()   {}
