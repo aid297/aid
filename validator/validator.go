@@ -103,13 +103,13 @@ func New[T any](data T, prefixNames ...string) *ValidatorApp[T] {
 }
 
 // WithGinPtr 执行验证，使用gin.Context(返回指针)
-func WithGinPtr[T any](c *gin.Context, fns ...func(*T) error) (*T, error) {
+func WithGinPtr[T any](c *gin.Context, fns ...func(ins *T) error) (*T, error) {
 	ins, err := WithGin(c, fns...)
 	return &ins, err
 }
 
 // WithGin 执行验证，使用gin.Context(返回值)
-func WithGin[T any](c *gin.Context, fns ...func(*T) error) (T, error) {
+func WithGin[T any](c *gin.Context, fns ...func(ins *T) error) (T, error) {
 	var (
 		err error
 		ins = new(T)
@@ -126,13 +126,13 @@ func WithGin[T any](c *gin.Context, fns ...func(*T) error) (T, error) {
 	return *ins, nil
 }
 
-func WithFiberPtr[T any](c *fiber.Ctx, fns ...func(*T) error) (*T, error) {
+func WithFiberPtr[T any](c *fiber.Ctx, fns ...func(ins *T) error) (*T, error) {
 	ins, err := WithFiber(c, fns...)
 	return &ins, err
 }
 
 // WithFiber 执行验证，使用fiber.Ctx(返回值)
-func WithFiber[T any](c *fiber.Ctx, fns ...func(*T) error) (T, error) {
+func WithFiber[T any](c *fiber.Ctx, fns ...func(ins *T) error) (T, error) {
 	var (
 		err error
 		ins = new(T)
