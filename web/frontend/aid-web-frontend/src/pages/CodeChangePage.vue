@@ -9,6 +9,8 @@
           <div class="col q-gutter-md">
             <q-btn square label="压缩json" color="purple" @click="compressJSON" />
             <q-btn square label="格式化json" color="purple" @click="uncompressJSON" />
+            <q-btn square label="正序json" color="purple" @click="sortJSON(false)" />
+            <q-btn square label="倒序json" color="purple" @click="sortJSON(true)" />
           </div>
           <div class="col q-gutter-md">
             <q-btn square label="json → yaml" color="amber" @click="jsonToYAML" />
@@ -41,12 +43,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue"
-import { Loading } from "quasar"
 import { dump, load } from "js-yaml"
+import JSON5 from "json5"
+import { Loading } from "quasar"
 import notify from "src/utils/notify"
 import stripJsonComments from "strip-json-comments"
-import JSON5 from "json5"
+import { onBeforeUnmount, onMounted, ref } from "vue"
 
 const containerJSON = ref(null)
 const containerYAML = ref(null)
@@ -58,7 +60,7 @@ let monacoJSON = null
 let monacoYAML = null
 let monacoTOML = null
 
-const codeJSON = `{"hello": "Quasar"}`
+const codeJSON = `{"hello": "aid"}`
 const codeYAML = ""
 const codeTOML = ""
 let currentTheme = "vs-dark"
@@ -322,6 +324,56 @@ const uncompressJSON = () => {
     notify.ok("格式化完成（4 空格缩进）")
   } catch (e) {
     notify.error(`格式化失败：${e.message || e}`)
+  }
+}
+
+const sortJSON = (reverse = false) => {
+  try {
+    const srcText = editorJSON ? editorJSON.getValue() : ""
+    if (!srcText) {
+      notify.warning("JSON 编辑器内容为空")
+      return
+    }
+
+    let obj
+    try {
+      obj = parseLenientJSON(srcText)
+    } catch (e) {
+      notify.error(`解析 JSON 失败：${e.message || e}`)
+      return
+    }
+
+    // 递归排序对象的所有键
+    const sortObjectKeys = (input) => {
+      if (Array.isArray(input)) {
+        // 如果是数组,递归处理数组中的每个元素
+        return input.map(item => sortObjectKeys(item))
+      } else if (input !== null && typeof input === "object") {
+        // 如果是对象,按键排序并递归处理值
+        const keys = Object.keys(input)
+        const sortedKeys = reverse
+          ? keys.sort((a, b) => b.localeCompare(a)) // 倒序
+          : keys.sort() // 正序
+
+        return sortedKeys.reduce((sorted, key) => {
+          sorted[key] = sortObjectKeys(input[key])
+          return sorted
+        }, {})
+      }
+      // 基本类型直接返回
+      return input
+    }
+
+    const sortedObj = sortObjectKeys(obj)
+    const sortedJSON = JSON.stringify(sortedObj, null, 4) // 使用 4 空格缩进
+
+    if (editorJSON) {
+      editorJSON.setValue(sortedJSON)
+    }
+
+    notify.ok("JSON 键已按字母顺序排序")
+  } catch (e) {
+    notify.error(`排序失败：${e.message || e}`)
   }
 }
 
