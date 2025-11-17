@@ -1,0 +1,73 @@
+package validatorV2
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/aid297/aid/array/anyArrayV2"
+	"github.com/spf13/cast"
+)
+
+type CheckerSlicePtr struct {
+	original *[]any
+	required bool
+	noZero   bool
+	eq       *int
+	notEq    *int
+	min      *int
+	max      *int
+	in       []any
+	notIn    []any
+}
+
+func (my CheckerSlicePtr) Check() error {
+	if my.required {
+		if len(*my.original) == 0 {
+			return ErrRequired
+		}
+	}
+
+	if my.noZero {
+		if len(*my.original) == 0 {
+			return ErrNoZero
+		}
+	}
+
+	if my.min != nil {
+		if len(*my.original) < *my.min {
+			return fmt.Errorf("长度不能小于：%d", *my.min)
+		}
+	}
+
+	if my.max != nil {
+		if len(*my.original) > *my.max {
+			return fmt.Errorf("长度不能大于：%d", *my.max)
+		}
+	}
+
+	if my.eq != nil {
+		if len(*my.original) != *my.eq {
+			return fmt.Errorf("%w:%v", ErrEq, *my.eq)
+		}
+	}
+
+	if my.notEq != nil {
+		if len(*my.original) == *my.notEq {
+			return fmt.Errorf("%w:%v", ErrNotEq, *my.notEq)
+		}
+	}
+
+	if len(my.in) > 0 {
+		if !anyArrayV2.NewList(my.in).In(*my.original...) {
+			return fmt.Errorf("%w:%v", ErrIn, strings.Join(cast.ToStringSlice(my.in), ","))
+		}
+	}
+
+	if len(my.notIn) > 0 {
+		if anyArrayV2.NewList(my.notIn).In(*my.original...) {
+			return fmt.Errorf("%w:%v", ErrNotIn, strings.Join(cast.ToStringSlice(my.in), ","))
+		}
+	}
+
+	return nil
+}
