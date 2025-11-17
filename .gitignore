@@ -20,8 +20,9 @@ vendor
 # Go workspace file
 go.work
 
-.idea
-.vscode
+*/**/.idea
+*/**/.vscode
+*/**/.VSCodeCounter
 .DS_Store
 */.DS_Store
 **/.DS_Store
