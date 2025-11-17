@@ -2,19 +2,27 @@ package validatorV2
 
 import (
 	"reflect"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type Validator struct {
 	Errors          []error
 	ValidatorFields []ValidatorField
 	prefixNames     []string
+	original        any
 }
+
+type ExFunc func(ins *Validator) error
 
 func (Validator) New(original any, prefixNames ...string) Validator {
 	var (
-		ins = Validator{prefixNames: make([]string, 0, len(prefixNames)+1)}
+		ins = Validator{original: original, prefixNames: make([]string, 0)}
 		ref = reflect.ValueOf(original)
 	)
+	ins.prefixNames = append(ins.prefixNames, prefixNames...)
 
 	if ref.Kind() == reflect.Ptr {
 		ref = ref.Elem()
@@ -48,7 +56,7 @@ func (Validator) New(original any, prefixNames ...string) Validator {
 			continue
 		}
 
-		ins.ValidatorFields = append(ins.ValidatorFields, APP.ValidatorField.New(val, field))
+		ins.ValidatorFields = append(ins.ValidatorFields, APP.ValidatorField.New(val, field, strings.Join(append(ins.prefixNames, vName), ".")))
 	}
 
 	if len(ins.ValidatorFields) > 0 {
@@ -59,4 +67,48 @@ func (Validator) New(original any, prefixNames ...string) Validator {
 	}
 
 	return ins
+}
+
+func (my Validator) Ex(funcs ...ExFunc) Validator {
+	wrongs := make([]error, 0, len(funcs))
+	for idx := range funcs {
+		if err := funcs[idx](&my); err != nil {
+			wrongs = append(wrongs, err)
+		}
+	}
+
+	my.Errors = append(my.Errors, wrongs...)
+	return my
+}
+
+func WithGin[T any](val T, c *gin.Context, funcs ...ExFunc) (T, []error) {
+	var (
+		t   T
+		err error
+		v   Validator
+	)
+
+	if err = c.ShouldBind(&t); err != nil {
+		return t, []error{err}
+	}
+
+	v = APP.Validator.New(val)
+
+	return t, v.Ex(funcs...).Errors
+}
+
+func WithFiber[T any](val T, c *fiber.Ctx, funcs ...ExFunc) (T, []error) {
+	var (
+		t   T
+		err error
+		v   Validator
+	)
+
+	if err = c.BodyParser(t); err != nil {
+		return t, []error{err}
+	}
+
+	v = APP.Validator.New(val)
+
+	return t, v.Ex(funcs...).Errors
 }

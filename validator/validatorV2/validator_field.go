@@ -27,7 +27,7 @@ type (
 	}
 )
 
-func (ValidatorField) New(value reflect.Value, field reflect.StructField) ValidatorField {
+func (ValidatorField) New(value reflect.Value, field reflect.StructField, vName string) ValidatorField {
 	var (
 		ins ValidatorField = ValidatorField{
 			refValue: value,
@@ -39,7 +39,7 @@ func (ValidatorField) New(value reflect.Value, field reflect.StructField) Valida
 			indirect: reflect.Indirect(value),
 			vType:    field.Tag.Get("v-type"),
 			vRule:    field.Tag.Get("v-rule"),
-			vName:    field.Tag.Get("v-name"),
+			vName:    value.Type().Name(),
 		}
 		checker Checker
 		err     error
