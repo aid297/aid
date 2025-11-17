@@ -1,7 +1,6 @@
 package validatorV2
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -336,7 +335,7 @@ func (my ValidatorField) parseRuleFloat64Ptr(rules []string) Checker {
 }
 
 func (my ValidatorField) parseRuleBool(rules []string) Checker {
-	r := CheckerBool{original: my.refValue.Bool()}
+	r := CheckerBool{original: cast.ToBool(my.refValue.Interface())}
 
 	for idx := range rules {
 		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
@@ -352,7 +351,7 @@ func (my ValidatorField) parseRuleBool(rules []string) Checker {
 }
 
 func (my ValidatorField) parseRuleBoolPtr(rules []string) Checker {
-	r := CheckerBoolPtr{original: ptr.New(my.refValue.Bool())}
+	r := CheckerBoolPtr{original: ptr.New(cast.ToBool(my.refValue.Interface()))}
 
 	for idx := range rules {
 		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
@@ -465,19 +464,34 @@ func (my ValidatorField) parseRule() (Checker, error) {
 	if !my.isPtr {
 		switch my.refType.Kind() {
 		case reflect.String:
-			if my.vType != "string" {
-				return nil, errors.New("类型不匹配")
+			if my.vType != "" && my.vType != "string" {
+				return nil, ErrInvalidType
 			}
 			return my.parseRuleString(rules), nil
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if my.vType != "" && my.vType != "int" {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleInt64(rules), nil
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			if my.vType != "" && my.vType != "uint" {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleUint64(rules), nil
 		case reflect.Float32, reflect.Float64:
+			if my.vType != "" && my.vType != "float" {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleFloat64(rules), nil
 		case reflect.Bool:
+			if my.vType != "" && my.vType != "bool" {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleBool(rules), nil
 		case reflect.Array, reflect.Slice:
+			if my.vType != "" && (my.vType != "array" && my.vType != "slice") {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleSlice(rules, my.refValue), nil
 		case reflect.Map:
 		case reflect.Struct:
@@ -486,16 +500,34 @@ func (my ValidatorField) parseRule() (Checker, error) {
 	} else {
 		switch my.indirect.Kind() {
 		case reflect.String:
+			if my.vType != "" && my.vType != "string" {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleStringPtr(rules), nil
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if my.vType != "" && my.vType != "int" {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleInt64Ptr(rules), nil
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			if my.vType != "" && my.vType != "uint" {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleUint64Ptr(rules), nil
 		case reflect.Float32, reflect.Float64:
+			if my.vType != "" && my.vType != "float" {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleFloat64Ptr(rules), nil
 		case reflect.Bool:
+			if my.vType != "" && my.vType != "bool" {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleBoolPtr(rules), nil
 		case reflect.Array, reflect.Slice:
+			if my.vType != "" && (my.vType != "array" && my.vType != "slice") {
+				return nil, ErrInvalidType
+			}
 			return my.parseRuleSlicePtr(rules, my.refValue), nil
 		case reflect.Map:
 		case reflect.Struct:
