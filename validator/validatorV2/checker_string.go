@@ -21,6 +21,7 @@ type CheckerString struct {
 	in       []string
 	notIn    []string
 	regex    *string
+	vType    string
 }
 
 func (my CheckerString) Check() error {
@@ -34,6 +35,10 @@ func (my CheckerString) Check() error {
 		if my.original == "" {
 			return ErrNoZero
 		}
+	}
+
+	if my.vType != "" {
+
 	}
 
 	if my.min != nil {

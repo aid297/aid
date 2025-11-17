@@ -21,6 +21,7 @@ type CheckerStringPtr struct {
 	in       []string
 	notIn    []string
 	regex    *string
+	vType    string
 }
 
 func (my CheckerStringPtr) Check() error {

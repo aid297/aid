@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/aid297/aid/array/anyArrayV2"
 	"github.com/aid297/aid/ptr"
 	"github.com/aid297/aid/regexp"
 	"github.com/spf13/cast"
@@ -55,7 +56,7 @@ func (ValidatorField) New(value reflect.Value, field reflect.StructField, vName 
 }
 
 func (my ValidatorField) parseRuleString(rules []string) CheckerString {
-	r := CheckerString{original: my.refValue.String()}
+	r := CheckerString{original: my.refValue.String(), vType: my.vType}
 
 	for idx := range rules {
 		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
@@ -91,7 +92,7 @@ func (my ValidatorField) parseRuleString(rules []string) CheckerString {
 }
 
 func (my ValidatorField) parseRuleStringPtr(rules []string) Checker {
-	r := CheckerStringPtr{original: my.refValue.Interface().(*string)}
+	r := CheckerStringPtr{original: my.refValue.Interface().(*string), vType: my.vType}
 
 	for idx := range rules {
 		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
@@ -231,7 +232,7 @@ func (my ValidatorField) parseRuleUint64(rules []string) Checker {
 }
 
 func (my ValidatorField) parseRuleUint64Ptr(rules []string) Checker {
-	r := CheckerUint64Ptr{original: ptr.New(my.refValue.Uint())}
+	r := CheckerUint64Ptr{original: my.refValue.Interface().(*uint64)}
 
 	for idx := range rules {
 		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
@@ -303,7 +304,7 @@ func (my ValidatorField) parseRuleFloat64(rules []string) Checker {
 }
 
 func (my ValidatorField) parseRuleFloat64Ptr(rules []string) Checker {
-	r := CheckerFloat64Ptr{original: ptr.New(my.refValue.Float())}
+	r := CheckerFloat64Ptr{original: my.refValue.Interface().(*float64)}
 
 	for idx := range rules {
 		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
@@ -464,7 +465,7 @@ func (my ValidatorField) parseRule() (Checker, error) {
 	if !my.isPtr {
 		switch my.refType.Kind() {
 		case reflect.String:
-			if my.vType != "" && my.vType != "string" {
+			if my.vType != "" && anyArrayV2.NewList([]string{"string", "email", "datetime", "date", "time"}).In(my.vType) {
 				return nil, ErrInvalidType
 			}
 			return my.parseRuleString(rules), nil
@@ -500,7 +501,7 @@ func (my ValidatorField) parseRule() (Checker, error) {
 	} else {
 		switch my.indirect.Kind() {
 		case reflect.String:
-			if my.vType != "" && my.vType != "string" {
+			if my.vType != "" && anyArrayV2.NewList([]string{"string", "email", "datetime", "date", "time"}).In(my.vType) {
 				return nil, ErrInvalidType
 			}
 			return my.parseRuleStringPtr(rules), nil
