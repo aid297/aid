@@ -64,19 +64,26 @@ func TestDatabase(t *testing.T) {
 	}
 	
 	// 验证表是否重新加载
-	if _, exists := newDb.parser.Tables["users"]; !exists {
+	table, exists := newDb.parser.Tables["users"]
+	if !exists {
 		t.Error("Table 'users' was not loaded from disk")
+		return
 	}
 	
 	// 验证数据是否重新加载
-	if len(newDb.parser.Tables["users"].Rows) != 2 {
-		t.Errorf("Expected 2 rows after reload, got %d", len(newDb.parser.Tables["users"].Rows))
+	if table == nil {
+		t.Error("Table 'users' is nil after loading")
+		return
+	}
+	
+	if len(table.Rows) != 2 {
+		t.Errorf("Expected 2 rows after reload, got %d", len(table.Rows))
 	}
 	
 	// 验证重新加载的数据
-	if newDb.parser.Tables["users"].Rows[0].Values[0] != 1 ||
-	   newDb.parser.Tables["users"].Rows[0].Values[1] != "Alice" ||
-	   newDb.parser.Tables["users"].Rows[0].Values[2] != 25 {
+	if len(table.Rows) > 0 && (table.Rows[0].Values[0] != 1 ||
+	   table.Rows[0].Values[1] != "Alice" ||
+	   table.Rows[0].Values[2] != 25) {
 		t.Error("Reloaded data doesn't match expected values")
 	}
 }

@@ -54,6 +54,25 @@ func (dt DataType) String() string {
 	}
 }
 
+// MarshalJSON 实现JSON序列化
+func (dt DataType) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + dt.String() + `"`), nil
+}
+
+// UnmarshalJSON 实现JSON反序列化
+func (dt *DataType) UnmarshalJSON(data []byte) error {
+	// 去除引号
+	str := strings.Trim(string(data), `"`)
+	
+	parsed, err := ParseDataType(str)
+	if err != nil {
+		return err
+	}
+	
+	*dt = parsed
+	return nil
+}
+
 // ParseDataType 从字符串解析数据类型
 func ParseDataType(s string) (DataType, error) {
 	switch strings.ToUpper(s) {

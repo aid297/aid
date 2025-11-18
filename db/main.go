@@ -39,16 +39,19 @@ func (db *Database) loadExistingTables() error {
 	// 列出所有schema文件
 	entries, err := os.ReadDir(db.dataDir)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// 目录不存在，这不是错误
+			return nil
+		}
 		return err
 	}
 	
 	for _, entry := range entries {
-		if !entry.IsDir() && len(entry.Name()) > 13 && entry.Name()[len(entry.Name())-13:] == ".schema.json" {
-			tableName := entry.Name()[:len(entry.Name())-13]
+		if !entry.IsDir() && len(entry.Name()) > 12 && entry.Name()[len(entry.Name())-12:] == ".schema.json" {
+			tableName := entry.Name()[:len(entry.Name())-12]
 			table, err := db.storageEngine.LoadTable(tableName)
 			if err != nil {
-				fmt.Printf("Warning: failed to load table '%s': %v\n", tableName, err)
-				continue
+				return fmt.Errorf("failed to load table '%s': %v", tableName, err)
 			}
 			db.parser.Tables[tableName] = table
 		}

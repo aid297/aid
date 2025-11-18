@@ -43,12 +43,7 @@ func (s *StorageEngine) SaveTable(table *Table) error {
 func (s *StorageEngine) saveTableSchema(table *Table) error {
 	schemaPath := filepath.Join(s.dataDir, table.Name+".schema.json")
 	
-	schema := map[string]interface{}{
-		"name":    table.Name,
-		"columns": table.Columns,
-	}
-	
-	data, err := json.MarshalIndent(schema, "", "  ")
+	data, err := json.MarshalIndent(table, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal schema: %v", err)
 	}
@@ -155,27 +150,19 @@ func (s *StorageEngine) LoadTable(tableName string) (*Table, error) {
 		return nil, fmt.Errorf("failed to read schema file: %v", err)
 	}
 	
-	var schema struct {
-		Name    string   `json:"name"`
-		Columns []Column `json:"columns"`
-	}
-	
-	if err := json.Unmarshal(schemaData, &schema); err != nil {
+	var table Table
+	if err := json.Unmarshal(schemaData, &table); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal schema: %v", err)
 	}
 	
-	table := &Table{
-		Name:    schema.Name,
-		Columns: schema.Columns,
-		Rows:    make([]Row, 0),
-	}
+	table.Rows = make([]Row, 0)
 	
 	// 加载表数据
 	dataPath := filepath.Join(s.dataDir, tableName+".data")
 	file, err := os.Open(dataPath)
 	if err != nil {
 		// 如果数据文件不存在，返回空表
-		return table, nil
+		return &table, nil
 	}
 	defer file.Close()
 	
@@ -194,7 +181,7 @@ func (s *StorageEngine) LoadTable(tableName string) (*Table, error) {
 		table.Rows = append(table.Rows, row)
 	}
 	
-	return table, nil
+	return &table, nil
 }
 
 // readRow 从文件读取一行数据

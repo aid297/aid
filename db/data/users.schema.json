@@ -1,0 +1,43 @@
+{
+  "Name": "users",
+  "Columns": [
+    {
+      "Name": "id",
+      "Type": "INT",
+      "Nullable": true
+    },
+    {
+      "Name": "name",
+      "Type": "VARCHAR",
+      "Nullable": true
+    },
+    {
+      "Name": "age",
+      "Type": "INT",
+      "Nullable": true
+    }
+  ],
+  "Rows": [
+    {
+      "Values": [
+        1,
+        "Alice",
+        25
+      ]
+    },
+    {
+      "Values": [
+        2,
+        "Bob",
+        30
+      ]
+    },
+    {
+      "Values": [
+        3,
+        "Charlie",
+        35
+      ]
+    }
+  ]
+}
