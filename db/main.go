@@ -19,18 +19,18 @@ func NewDatabase(dataDir string) (*Database, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage engine: %v", err)
 	}
-	
+
 	db := &Database{
 		parser:        NewSQLParser(),
 		storageEngine: storageEngine,
 		dataDir:       dataDir,
 	}
-	
+
 	// 加载已存在的表
 	if err := db.loadExistingTables(); err != nil {
 		return nil, fmt.Errorf("failed to load existing tables: %v", err)
 	}
-	
+
 	return db, nil
 }
 
@@ -45,7 +45,7 @@ func (db *Database) loadExistingTables() error {
 		}
 		return err
 	}
-	
+
 	for _, entry := range entries {
 		if !entry.IsDir() && len(entry.Name()) > 12 && entry.Name()[len(entry.Name())-12:] == ".schema.json" {
 			tableName := entry.Name()[:len(entry.Name())-12]
@@ -56,7 +56,7 @@ func (db *Database) loadExistingTables() error {
 			db.parser.Tables[tableName] = table
 		}
 	}
-	
+
 	return nil
 }
 
@@ -65,14 +65,14 @@ func (db *Database) Execute(sql string) error {
 	if err := db.parser.ParseAndExecute(sql); err != nil {
 		return err
 	}
-	
+
 	// 自动保存表数据
 	for tableName, table := range db.parser.Tables {
 		if err := db.storageEngine.SaveTable(table); err != nil {
 			return fmt.Errorf("failed to save table '%s': %v", tableName, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -90,7 +90,7 @@ func (db *Database) ShowTableSchema(tableName string) error {
 	if !exists {
 		return fmt.Errorf("table '%s' does not exist", tableName)
 	}
-	
+
 	fmt.Printf("Table: %s\n", table.Name)
 	fmt.Println("Columns:")
 	for _, col := range table.Columns {
@@ -100,7 +100,7 @@ func (db *Database) ShowTableSchema(tableName string) error {
 		}
 		fmt.Printf("- %s %s %s\n", col.Name, col.Type.String(), nullable)
 	}
-	
+
 	fmt.Printf("Rows: %d\n", len(table.Rows))
 	return nil
 }
@@ -108,22 +108,22 @@ func (db *Database) ShowTableSchema(tableName string) error {
 // RunInteractive 运行交互式命令行界面
 func (db *Database) RunInteractive() {
 	scanner := bufio.NewScanner(os.Stdin)
-	
+
 	fmt.Println("Simple MySQL-like Database")
 	fmt.Println("Type 'help' for available commands or 'exit' to quit")
 	fmt.Println()
-	
+
 	for {
 		fmt.Print("db> ")
 		if !scanner.Scan() {
 			break
 		}
-		
+
 		input := scanner.Text()
 		if input == "" {
 			continue
 		}
-		
+
 		if input == "exit" || input == "quit" {
 			break
 		} else if input == "help" {
@@ -145,12 +145,12 @@ func (db *Database) RunInteractive() {
 			}
 			continue
 		}
-		
+
 		if err := db.Execute(input); err != nil {
 			fmt.Printf("Error: %v\n", err)
 		}
 	}
-	
+
 	if err := scanner.Err(); err != nil {
 		fmt.Printf("Input error: %v\n", err)
 	}
@@ -164,7 +164,7 @@ func main() {
 		fmt.Printf("Failed to create database: %v\n", err)
 		return
 	}
-	
+
 	// 运行交互式界面
 	db.RunInteractive()
 }
