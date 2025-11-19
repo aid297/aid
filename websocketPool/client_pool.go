@@ -20,12 +20,7 @@ type (
 	}
 )
 
-func (*ClientPool) Once() *ClientPool { return OnceClientPool() }
-
-// OnceClientPool 单例化：websocket 客户端连接池
-//
-//go:fix 推荐使用：Once方法
-func OnceClientPool() *ClientPool {
+func (*ClientPool) Once() *ClientPool {
 	clientPoolOnce.Do(func() {
 		clientPoolIns = &ClientPool{}
 		clientPoolIns.clientInsList = dict.Make[string, *ClientIns]()

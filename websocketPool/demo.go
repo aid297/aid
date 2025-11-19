@@ -21,7 +21,7 @@ func ClientDemo() {
 		wg  sync.WaitGroup
 	)
 
-	wcp = OnceClientPool().
+	wcp = APP.ClientPool.Once().
 		SetOnConnect(func(insName, clientName string) {
 			str.NewTerminalLog("[client] 链接成功：%s").Info(clientName)
 		}).
