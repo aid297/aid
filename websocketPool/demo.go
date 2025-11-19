@@ -25,7 +25,7 @@ func ClientDemo() {
 		SetOnConnect(func(insName, clientName string) {
 			str.NewTerminalLog("[client] 链接成功：%s").Info(clientName)
 		}).
-		SetOnConnectErr(func(insName, clientName string, err error) {
+		SetOnConnectWrong(func(insName, clientName string, err error) {
 			str.NewTerminalLog("[client] 链接失败：%s；%v").Wrong(clientName, err)
 		}).
 		SetOnReceiveMsgWrong(func(insName, clientName string, bytes []byte, err error) {
@@ -34,7 +34,7 @@ func ClientDemo() {
 		SetOnSendMsgWrong(func(insName, clientName string, err error) {
 			str.NewTerminalLog("[client] 发送消息失败：%v").Wrong(err)
 		}).
-		SetOnCloseClientErr(func(insName, clientName string, err error) {
+		SetOnCloseClientWrong(func(insName, clientName string, err error) {
 			str.NewTerminalLog("[client] 关闭客户端：%s失败；%v").Wrong(clientName, err)
 		})
 

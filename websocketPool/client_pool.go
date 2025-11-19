@@ -41,15 +41,15 @@ func (*ClientPool) SetOnConnect(fn func(insName, clientName string)) *ClientPool
 	return clientPoolIns
 }
 
-// SetOnConnectErr 设置回调：链接错误
-func (*ClientPool) SetOnConnectErr(fn func(insName, clientName string, err error)) *ClientPool {
+// SetOnConnectWrong 设置回调：链接错误
+func (*ClientPool) SetOnConnectWrong(fn func(insName, clientName string, err error)) *ClientPool {
 	clientPoolIns.onConnectWrong = fn
 
 	return clientPoolIns
 }
 
-// SetOnCloseClientErr 设置回调：关闭客户端链接错
-func (*ClientPool) SetOnCloseClientErr(fn func(insName, clientName string, err error)) *ClientPool {
+// SetOnCloseClientWrong 设置回调：关闭客户端链接错
+func (*ClientPool) SetOnCloseClientWrong(fn func(insName, clientName string, err error)) *ClientPool {
 	clientPoolIns.onCloseWrong = fn
 
 	return clientPoolIns
