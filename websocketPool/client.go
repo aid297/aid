@@ -13,15 +13,15 @@ import (
 type (
 	// Client websocket 客户端链接
 	Client struct {
-		url                url.URL
-		InstanceName, Name string
-		Conn               *websocket.Conn
-		mu                 sync.Mutex    // 同步锁
-		closeChan          chan struct{} // 关闭信号
-		syncChan           chan []byte   // 同步消息
-		onReceiveMsg       func(instanceName, clientName string, prototypeMsg []byte) ([]byte, error)
-		heart              *Heart
-		timeout            *MessageTimeout
+		url           url.URL
+		insName, Name string
+		Conn          *websocket.Conn
+		mu            sync.Mutex    // 同步锁
+		closeChan     chan struct{} // 关闭信号
+		syncChan      chan []byte   // 同步消息
+		onReceiveMsg  func(insName, clientName string, prototypeMsg []byte) ([]byte, error)
+		heart         *Heart
+		timeout       *MessageTimeout
 	}
 
 	// PendingRequest 待处理请求
@@ -36,18 +36,18 @@ type (
 var ClientApp Client
 
 func (*Client) New(
-	instanceName, name, host, path string,
-	receiveMessageFunc func(instanceName, clientName string, prototypeMsg []byte) ([]byte, error),
+	insName, name, host, path string,
+	receiveMessageFunc func(insName, clientName string, prototypeMsg []byte) ([]byte, error),
 ) (*Client, error) {
-	return NewClient(instanceName, name, host, path, receiveMessageFunc)
+	return NewClient(insName, name, host, path, receiveMessageFunc)
 }
 
 // NewClient 实例化：websocket 客户端链接
 //
 //go:fix 推荐使用：推荐使用New方法
 func NewClient(
-	instanceName, name, host, path string,
-	receiveMessageFunc func(instanceName, clientName string, prototypeMsg []byte) ([]byte, error),
+	insName, name, host, path string,
+	receiveMessageFunc func(insName, clientName string, prototypeMsg []byte) ([]byte, error),
 ) (*Client, error) {
 	u := url.URL{
 		Scheme: "ws",
@@ -60,7 +60,7 @@ func NewClient(
 	}
 
 	c := &Client{
-		InstanceName: instanceName,
+		insName:      insName,
 		Name:         name,
 		url:          u,
 		Conn:         client,
@@ -90,8 +90,8 @@ func (my *Client) SendMsg(msgType int, msg []byte) ([]byte, error) {
 
 	err = my.Conn.WriteMessage(msgType, msg)
 	if err != nil {
-		if clientPoolIns.onSendMsgErr != nil {
-			clientPoolIns.onSendMsgErr(my.InstanceName, my.Name, err)
+		if clientPoolIns.onSendMsgWrong != nil {
+			clientPoolIns.onSendMsgWrong(my.insName, my.Name, err)
 		}
 		clientPoolIns.Error = err
 		return nil, err
@@ -104,7 +104,7 @@ func (my *Client) SendMsg(msgType int, msg []byte) ([]byte, error) {
 		return nil, errors.New("请求超时")
 	case res = <-my.syncChan:
 		if my.onReceiveMsg != nil {
-			return my.onReceiveMsg(my.InstanceName, my.Name, res)
+			return my.onReceiveMsg(my.insName, my.Name, res)
 		}
 		return res, nil
 	}
@@ -121,8 +121,8 @@ func (my *Client) Close() error {
 	}
 
 	if err = my.Conn.Close(); err != nil {
-		if clientPoolIns.onCloseErr != nil {
-			clientPoolIns.onCloseErr(my.InstanceName, my.Name, err)
+		if clientPoolIns.onCloseWrong != nil {
+			clientPoolIns.onCloseWrong(my.insName, my.Name, err)
 		}
 		my.closeChan <- struct{}{}
 		return err

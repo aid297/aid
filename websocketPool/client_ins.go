@@ -6,28 +6,19 @@ import (
 	"github.com/aid297/aid/dict"
 )
 
-// ClientInstance websocket 客户端链接实例
-type ClientInstance struct {
+// ClientIns websocket 客户端链接实例
+type ClientIns struct {
 	Name    string
 	Clients *dict.AnyDict[string, *Client]
 }
 
-var ClientInstanceApp ClientInstance
-
 // New 实例化：websocket客户端实例
-func (*ClientInstance) New(instanceName string) *ClientInstance {
-	return NewClientInstance(instanceName)
-}
-
-// NewClientInstance 实例化：websocket 客户端实例
-//
-//go:fix 推荐使用：推荐使用New方法
-func NewClientInstance(instanceName string) *ClientInstance {
-	return &ClientInstance{Name: instanceName, Clients: dict.Make[string, *Client]()}
+func (*ClientIns) New(insName string) *ClientIns {
+	return &ClientIns{Name: insName, Clients: dict.Make[string, *Client]()}
 }
 
 // GetClient 获取websocket客户端链接
-func (my *ClientInstance) GetClient(clientName string) (*Client, bool) {
+func (my *ClientIns) GetClient(clientName string) (*Client, bool) {
 	websocketClient, exist := my.Clients.Get(clientName)
 	if !exist {
 		return nil, exist
@@ -37,9 +28,9 @@ func (my *ClientInstance) GetClient(clientName string) (*Client, bool) {
 }
 
 // SetClient 创建新链接
-func (my *ClientInstance) SetClient(
+func (my *ClientIns) SetClient(
 	clientName, host, path string,
-	receiveMessageFn func(instanceName, clientName string, propertyMessage []byte) ([]byte, error),
+	receiveMessageFn func(insName, clientName string, propertyMessage []byte) ([]byte, error),
 	heart *Heart,
 	timeout *MessageTimeout,
 ) (*Client, error) {
@@ -91,8 +82,8 @@ func (my *ClientInstance) SetClient(
 				}
 			default:
 				if _, prototypeMsg, err = client.Conn.ReadMessage(); err != nil {
-					if clientPoolIns.onReceiveMsgErr != nil {
-						clientPoolIns.onReceiveMsgErr(my.Name, clientName, prototypeMsg, err)
+					if clientPoolIns.onReceiveMsgWrong != nil {
+						clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
 					}
 				} else {
 					client.syncChan <- prototypeMsg
@@ -105,7 +96,7 @@ func (my *ClientInstance) SetClient(
 }
 
 // SendMsgByName 发送消息：通过名称
-func (my *ClientInstance) SendMsgByName(clientName string, msgType int, msg []byte) ([]byte, error) {
+func (my *ClientIns) SendMsgByName(clientName string, msgType int, msg []byte) ([]byte, error) {
 	var (
 		exist  bool
 		client *Client
@@ -113,8 +104,8 @@ func (my *ClientInstance) SendMsgByName(clientName string, msgType int, msg []by
 
 	client, exist = my.Clients.Get(clientName)
 	if !exist {
-		if clientPoolIns.onSendMsgErr != nil {
-			clientPoolIns.onSendMsgErr(my.Name, clientName, errors.New("没有找到客户端链接"))
+		if clientPoolIns.onSendMsgWrong != nil {
+			clientPoolIns.onSendMsgWrong(my.Name, clientName, errors.New("没有找到客户端链接"))
 		}
 	}
 
@@ -122,11 +113,11 @@ func (my *ClientInstance) SendMsgByName(clientName string, msgType int, msg []by
 }
 
 // Close 关闭客户端实例
-func (my *ClientInstance) Close() {
+func (my *ClientIns) Close() {
 	my.Clients.Each(func(key string, value *Client) {
 		_ = value.Close()
 	})
 
 	my.Clients.Clean()
-	clientPoolIns.clientInstances.RemoveByKey(my.Name)
+	clientPoolIns.clientInsList.RemoveByKey(my.Name)
 }

@@ -17,33 +17,33 @@ func ClientDemo() {
 	var (
 		err error
 		wcp *ClientPool
-		wci *ClientInstance
+		wci *ClientIns
 		wg  sync.WaitGroup
 	)
 
 	wcp = OnceClientPool().
-		SetOnConnect(func(instanceName, clientName string) {
+		SetOnConnect(func(insName, clientName string) {
 			str.NewTerminalLog("[client] 链接成功：%s").Info(clientName)
 		}).
-		SetOnConnectErr(func(instanceName, clientName string, err error) {
+		SetOnConnectErr(func(insName, clientName string, err error) {
 			str.NewTerminalLog("[client] 链接失败：%s；%v").Wrong(clientName, err)
 		}).
-		SetOnReceiveMsgErr(func(instanceName, clientName string, bytes []byte, err error) {
+		SetOnReceiveMsgWrong(func(insName, clientName string, bytes []byte, err error) {
 			str.NewTerminalLog("[client] 收到消息失败：%s；%v").Wrong(clientName, err)
 		}).
-		SetOnSendMsgErr(func(instanceName, clientName string, err error) {
+		SetOnSendMsgWrong(func(insName, clientName string, err error) {
 			str.NewTerminalLog("[client] 发送消息失败：%v").Wrong(err)
 		}).
-		SetOnCloseClientErr(func(instanceName, clientName string, err error) {
+		SetOnCloseClientErr(func(insName, clientName string, err error) {
 			str.NewTerminalLog("[client] 关闭客户端：%s失败；%v").Wrong(clientName, err)
 		})
 
-	wci, err = wcp.SetClientInstance("timeout")
+	wci, err = wcp.SetClientIns("timeout")
 	if err != nil {
 		str.NewTerminalLog("[client] 创建实例失败：%v").Error(err)
 	}
 
-	_, err = wci.SetClient("timeout", "127.0.0.1:44444", "", func(instanceName, clientName string, propertyMessage []byte) ([]byte, error) {
+	_, err = wci.SetClient("timeout", "127.0.0.1:44444", "", func(insName, clientName string, propertyMessage []byte) ([]byte, error) {
 		str.NewTerminalLog("[client timeout] 收到消息：%s；文本消息：%s；原始消息：%v").Info(clientName, string(propertyMessage), propertyMessage)
 		return propertyMessage, nil
 	}, DefaultHeart(), DefaultMessageTimeout())
@@ -60,7 +60,7 @@ func ClientDemo() {
 		"01",
 		"127.0.0.1:41111",
 		"",
-		func(instanceName, clientName string, prototypeMsg []byte) ([]byte, error) {
+		func(insName, clientName string, prototypeMsg []byte) ([]byte, error) {
 			str.NewTerminalLog("[client] 收到消息：%s；文本消息：%s；原始消息：%v").Info(clientName, string(prototypeMsg), prototypeMsg)
 			return prototypeMsg, nil
 		},
@@ -76,7 +76,7 @@ func ClientDemo() {
 		"02",
 		"127.0.0.1:42222",
 		"",
-		func(instanceName, clientName string, prototypeMsg []byte) ([]byte, error) {
+		func(insName, clientName string, prototypeMsg []byte) ([]byte, error) {
 			str.NewTerminalLog("[client] 收到消息：%s；文本消息：%s；原始消息：%v").Info(clientName, string(prototypeMsg), prototypeMsg)
 			return prototypeMsg, nil
 		},
@@ -92,7 +92,7 @@ func ClientDemo() {
 		"03",
 		"127.0.0.1:43333",
 		"",
-		func(instanceName, clientName string, prototypeMsg []byte) ([]byte, error) {
+		func(insName, clientName string, prototypeMsg []byte) ([]byte, error) {
 			str.NewTerminalLog("[client] 收到消息：%s；文本消息：%s；原始消息：%v").Info(clientName, string(prototypeMsg), prototypeMsg)
 			return prototypeMsg, nil
 		},
@@ -139,7 +139,7 @@ func (ResponseWrt) Write([]byte) (int, error) { return 0, nil }
 func (ResponseWrt) WriteHeader(statusCode int) {}
 
 func ServerDemo() {
-	wsp := ServerPoolApp.
+	wsp := APP.ServerPool.
 		Once().
 		SetOnConnect(func(conn *websocket.Conn) {
 			str.NewTerminalLog("[server] 链接成功：%s").Info(conn.RemoteAddr().String())

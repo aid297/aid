@@ -13,8 +13,8 @@ func online() {
 		"client-test1",
 		"127.0.0.1:8080",
 		"ws",
-		func(instanceName, clientName string, prototypeMsg []byte) ([]byte, error) {
-			log.Printf("收到消息[%s:%s]：%s", instanceName, clientName, prototypeMsg)
+		func(insName, clientName string, prototypeMsg []byte) ([]byte, error) {
+			log.Printf("收到消息[%s:%s]：%s", insName, clientName, prototypeMsg)
 			return prototypeMsg, nil
 		},
 	)
