@@ -14,12 +14,10 @@ import (
 	"github.com/aid297/aid/operation/operationV2"
 )
 
-type (
-	AnyArray[T any] struct {
-		data []T
-		mu   sync.RWMutex
-	}
-)
+type AnyArray[T any] struct {
+	data []T
+	mu   sync.RWMutex
+}
 
 // New 实例化
 func New[T any](list []T) *AnyArray[T] { return &AnyArray[T]{data: list, mu: sync.RWMutex{}} }

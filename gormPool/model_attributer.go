@@ -9,12 +9,10 @@ import (
 type (
 	// Modeler 接口：模型
 	Modeler interface {
-		ImplModeler()
 		TableName() string
 	}
 
 	ModelAttributer interface {
-		ImplModelAttributer()
 		Register(model Modeler, db *gorm.DB) *gorm.DB
 	}
 
@@ -48,23 +46,17 @@ func DefaultFinder[model Modeler](db *gorm.DB, attrs ...ModelAttributer) *Finder
 
 func Table(table string) *AttrTable { return &AttrTable{table: table} }
 
-func (*AttrTable) ImplModelAttributer() {}
-
 func (my *AttrTable) Register(model Modeler, db *gorm.DB) *gorm.DB {
 	return db.Table(str.APP.Buffer.JoinStringLimit(" ", model.TableName(), "as", my.table))
 }
 
 func Joins(join string, args ...any) *AttrJoins { return &AttrJoins{join: join, args: args} }
 
-func (*AttrJoins) ImplModelAttributer() {}
-
 func (my *AttrJoins) Register(model Modeler, db *gorm.DB) *gorm.DB {
 	return db.Joins(my.join, my.args...)
 }
 
 func Preload(preloads ...string) *AttrPreload { return &AttrPreload{preloads: preloads} }
-
-func (*AttrPreload) ImplModelAttributer() {}
 
 func (my *AttrPreload) Register(model Modeler, db *gorm.DB) *gorm.DB {
 	for _, preload := range my.preloads {
@@ -75,15 +67,11 @@ func (my *AttrPreload) Register(model Modeler, db *gorm.DB) *gorm.DB {
 
 func Select(query any, args ...any) *AttrSelect { return &AttrSelect{query: query, args: args} }
 
-func (*AttrSelect) ImplModelAttributer() {}
-
 func (my *AttrSelect) Register(model Modeler, db *gorm.DB) *gorm.DB {
 	return db.Select(my.query, my.args...)
 }
 
 func Distinct(args ...any) *AttrDistinct { return &AttrDistinct{args: args} }
-
-func (*AttrDistinct) ImplModelAttributer() {}
 
 func (my *AttrDistinct) Register(model Modeler, db *gorm.DB) *gorm.DB {
 	return db.Distinct(my.args...)
