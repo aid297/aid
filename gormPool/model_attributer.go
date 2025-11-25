@@ -8,9 +8,7 @@ import (
 
 type (
 	// Modeler 接口：模型
-	Modeler interface {
-		TableName() string
-	}
+	Modeler interface{ TableName() string }
 
 	ModelAttributer interface {
 		Register(model Modeler, db *gorm.DB) *gorm.DB
