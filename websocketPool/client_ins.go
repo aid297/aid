@@ -3,8 +3,9 @@ package websocketPool
 import (
 	"errors"
 
-	"github.com/aid297/aid/dict"
 	"github.com/gorilla/websocket"
+
+	"github.com/aid297/aid/dict"
 )
 
 // ClientIns websocket 客户端链接实例
@@ -83,13 +84,16 @@ func (my *ClientIns) SetClient(
 				}
 			default:
 				if _, prototypeMsg, err = client.Conn.ReadMessage(); err != nil {
-					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-						client.closeChan <- struct{}{} // 链接被意外关闭
-					} else {
-						if clientPoolIns.onReceiveMsgWrong != nil {
-							clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
-						}
+					if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) && clientPoolIns.onReceiveMsgWrong != nil {
+						clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
 					}
+					// if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					// 	client.closeChan <- struct{}{} // 链接被意外关闭
+					// } else {
+					// 	if clientPoolIns.onReceiveMsgWrong != nil {
+					// 		clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
+					// 	}
+					// }
 					continue
 				} else {
 					client.syncChan <- prototypeMsg
