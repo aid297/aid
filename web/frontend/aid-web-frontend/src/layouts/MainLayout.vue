@@ -41,8 +41,8 @@
                     </q-item-section>
                 </q-item>
 
-                <q-item dense clickable v-ripple @click="hrefTo(router, '/base64ToImage')"
-                    :class="{ 'bg-orange': isActive('/base64ToImage'), 'text-white': isActive('/base64ToImage') }">
+                <q-item dense clickable v-ripple @click="hrefTo(router, '/')"
+                    :class="{ 'bg-orange': isActive('/'), 'text-white': isActive('/') }">
                     <q-item-section avatar class="q-mt-md q-mb-md">
                         <i class="fa-solid fa-image" :style="{ fontSize: '18px' }">&nbsp;Base64转换图片</i>
                     </q-item-section>
@@ -62,8 +62,8 @@
                     </q-item-section>
                 </q-item>
 
-                <q-item dense clickable v-ripple @click="hrefTo(router, '/')"
-                    :class="{ 'bg-orange': isActive('/'), 'text-white': isActive('/') }">
+                <q-item dense clickable v-ripple @click="hrefTo(router, '/clockingIn')"
+                    :class="{ 'bg-orange': isActive('/clockingIn'), 'text-white': isActive('/clockingIn') }">
                     <q-item-section avatar class="q-mt-md q-mb-md">
                         <i class="fa-solid fa-calendar-week" :style="{ fontSize: '18px' }">&nbsp;考勤统计</i>
                     </q-item-section>
