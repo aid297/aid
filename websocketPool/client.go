@@ -33,8 +33,6 @@ type (
 	}
 )
 
-var ClientApp Client
-
 func (*Client) New(
 	insName, name, host, path string,
 	receiveMessageFunc func(insName, clientName string, prototypeMsg []byte) ([]byte, error),
