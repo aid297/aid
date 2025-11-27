@@ -1,65 +1,64 @@
-import { app, BrowserWindow } from 'electron'
-import path from 'node:path'
-import os from 'node:os'
-import { fileURLToPath } from 'node:url'
+import { app, BrowserWindow } from "electron";
+import path from "node:path";
+import os from "node:os";
+import { fileURLToPath } from "node:url";
 
 // needed in case process is undefined under Linux
-const platform = process.platform || os.platform()
+const platform = process.platform || os.platform();
 
-const currentDir = fileURLToPath(new URL('.', import.meta.url))
+const currentDir = fileURLToPath(new URL(".", import.meta.url));
 
-let mainWindow
+let mainWindow;
 
 async function createWindow() {
-  /**
-   * Initial window options
-   */
-  mainWindow = new BrowserWindow({
-    icon: path.resolve(currentDir, 'icons/icon.png'), // tray icon
-    width: 1920,
-    height: 1080,
-    useContentSize: true,
-    webPreferences: {
-      contextIsolation: true,
-      // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
-      preload: path.resolve(
-        currentDir,
-        path.join(process.env.QUASAR_ELECTRON_PRELOAD_FOLDER, 'electron-preload' + process.env.QUASAR_ELECTRON_PRELOAD_EXTENSION)
-      )
+    /**
+     * Initial window options
+     */
+    mainWindow = new BrowserWindow({
+        icon: path.resolve(currentDir, "icons/icon.png"), // tray icon
+        width: 1920,
+        height: 1080,
+        useContentSize: true,
+        webPreferences: {
+            contextIsolation: true,
+            // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
+            preload: path.resolve(currentDir, path.join(process.env.QUASAR_ELECTRON_PRELOAD_FOLDER, "electron-preload" + process.env.QUASAR_ELECTRON_PRELOAD_EXTENSION)),
+        },
+    });
+    mainWindow.maximize();
+    mainWindow.show();
+
+    if (process.env.DEV) {
+        await mainWindow.loadURL(process.env.APP_URL);
+    } else {
+        await mainWindow.loadFile("index.html");
     }
-  })
 
-  if (process.env.DEV) {
-    await mainWindow.loadURL(process.env.APP_URL)
-  } else {
-    await mainWindow.loadFile('index.html')
-  }
+    if (process.env.DEBUGGING) {
+        // if on DEV or Production with debug enabled
+        mainWindow.webContents.openDevTools();
+    } else {
+        // we're on production; no access to devtools pls
+        mainWindow.webContents.on("devtools-opened", () => {
+            mainWindow.webContents.closeDevTools();
+        });
+    }
 
-  if (process.env.DEBUGGING) {
-    // if on DEV or Production with debug enabled
-    mainWindow.webContents.openDevTools()
-  } else {
-    // we're on production; no access to devtools pls
-    mainWindow.webContents.on('devtools-opened', () => {
-      mainWindow.webContents.closeDevTools()
-    })
-  }
-
-  mainWindow.on('closed', () => {
-    mainWindow = null
-  })
+    mainWindow.on("closed", () => {
+        mainWindow = null;
+    });
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(createWindow);
 
-app.on('window-all-closed', () => {
-  if (platform !== 'darwin') {
-    app.quit()
-  }
-})
+app.on("window-all-closed", () => {
+    if (platform !== "darwin") {
+        app.quit();
+    }
+});
 
-app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow()
-  }
-})
+app.on("activate", () => {
+    if (mainWindow === null) {
+        createWindow();
+    }
+});
