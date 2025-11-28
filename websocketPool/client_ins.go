@@ -91,17 +91,16 @@ func (my *ClientIns) SetClient(
 					}
 
 					continue
-				} else {
-					if prototypeMsg, err = io.ReadAll(reader); err != nil {
-						if clientPoolIns.onReceiveMsgWrong != nil {
-							clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
-						}
-
-						continue
+				}
+				if prototypeMsg, err = io.ReadAll(reader); err != nil {
+					if clientPoolIns.onReceiveMsgWrong != nil {
+						clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
 					}
 
-					client.syncChan <- prototypeMsg
+					continue
 				}
+
+				client.syncChan <- prototypeMsg
 
 				// if _, prototypeMsg, err = client.Conn.ReadMessage(); err != nil {
 				// 	if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) && clientPoolIns.onReceiveMsgWrong != nil {
