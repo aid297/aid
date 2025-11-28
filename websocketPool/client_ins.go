@@ -2,6 +2,7 @@ package websocketPool
 
 import (
 	"errors"
+	"io"
 
 	"github.com/gorilla/websocket"
 
@@ -83,21 +84,40 @@ func (my *ClientIns) SetClient(
 					client.heart.fn(client)
 				}
 			default:
-				if _, prototypeMsg, err = client.Conn.ReadMessage(); err != nil {
+				var reader io.Reader
+				if _, reader, err = client.Conn.NextReader(); err != nil {
 					if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) && clientPoolIns.onReceiveMsgWrong != nil {
 						clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
 					}
-					// if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					// 	client.closeChan <- struct{}{} // 链接被意外关闭
-					// } else {
-					// 	if clientPoolIns.onReceiveMsgWrong != nil {
-					// 		clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
-					// 	}
-					// }
+
 					continue
 				} else {
+					if prototypeMsg, err = io.ReadAll(reader); err != nil {
+						if clientPoolIns.onReceiveMsgWrong != nil {
+							clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
+						}
+
+						continue
+					}
+
 					client.syncChan <- prototypeMsg
 				}
+
+				// if _, prototypeMsg, err = client.Conn.ReadMessage(); err != nil {
+				// 	if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) && clientPoolIns.onReceiveMsgWrong != nil {
+				// 		clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
+				// 	}
+				// 	// if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				// 	// 	client.closeChan <- struct{}{} // 链接被意外关闭
+				// 	// } else {
+				// 	// 	if clientPoolIns.onReceiveMsgWrong != nil {
+				// 	// 		clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
+				// 	// 	}
+				// 	// }
+				// 	continue
+				// } else {
+				// 	client.syncChan <- prototypeMsg
+				// }
 			}
 		}
 	}()
