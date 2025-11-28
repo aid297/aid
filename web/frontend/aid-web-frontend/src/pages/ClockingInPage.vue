@@ -197,7 +197,8 @@
 
                 <div class="row q-gutter-md q-mt-sm">
                     <div class="col">
-                        <q-toggle v-model="isAutoDownloadStatisticsExcel" label="是否自动下载" class="full-width" />
+                        <q-toggle v-model="isAutoDownloadStatisticsExcel" label="是否自动下载" />&emsp;&emsp;
+                        <q-btn square label="手动下载" type="submit" color="primary" @click="generateExcel" />
                         <q-uploader url="#" color="purple" label="5. 选择考勤表" flat bordered style="width: 100%"
                             @added="onUploadedClockInExcel" />
                     </div>
@@ -330,7 +331,7 @@ const onUploadedClockInExcel = async files => {
 
             console.log("# 获取考勤数据（分析后）", finalStatistic);
 
-            if (isAutoDownloadStatisticsExcel.value) await generateExcel(finalStatistic, `统计：${startYear.value}-${parseInt(startMonth.value) + 1}.xlsx`)  // 保存统计文件到本地
+            if (isAutoDownloadStatisticsExcel.value) await generateExcel()  // 保存统计文件到本地
         } catch (error) {
             console.error("解析Excel失败：", error);
         }
@@ -439,13 +440,20 @@ const onUploadedStatisticExcel = async files => {
             // 日志
             log = value.log.map((item, idx) => `${(idx + 1).toString().padStart(3, "0")}、${item}`).join("\r\n");
 
+            const logLines = value.log.length;
+            const currentRow = originalSheet.getRow(lineNum);
+            currentRow.height = Math.max(25, logLines * 16); // 每行约16像素，最小25
+
             const colNameOvertime = `${col.overtime}${lineNum}`;
             const colNameCompensatoryLeave = `${col.compensatoryLeave}${lineNum}`;
             const colNameNote = `${col.note}${lineNum}`;
 
+            originalSheet.getColumn(col.note).width = 140;
             originalSheet.getCell(colNameOvertime).value = overtime;
             originalSheet.getCell(colNameCompensatoryLeave).value = compensatoryLeave;
-            originalSheet.getCell(colNameNote).value = log;
+            const cell = originalSheet.getCell(colNameNote);
+            cell.value = log;
+            cell.alignment = { wrapText: true, vertical: "middle", horizontal: "left" };
         }
 
         const buffer = await workbook.xlsx.writeBuffer();
@@ -458,7 +466,7 @@ const onUploadedStatisticExcel = async files => {
     fileReader.readAsArrayBuffer(file);
 };
 
-const generateExcel = async (finalStatisticStore = {}, filename = "") => {
+const generateExcel = async () => {
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet("Sheet1")
     const defaultBorder = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
@@ -536,7 +544,7 @@ const generateExcel = async (finalStatisticStore = {}, filename = "") => {
     headerRow.eachCell(cell => (cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" }))
 
     // 添加数据
-    Object.entries(finalStatisticStore).
+    Object.entries(finalStatistic).
         forEach(([name, row]) => {
             worksheet
                 .addRow({
@@ -600,6 +608,7 @@ const generateExcel = async (finalStatisticStore = {}, filename = "") => {
     // 生成 Blob 并下载
     const buffer = await workbook.xlsx.writeBuffer()
     const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+    const filename = `统计：${startYear.value}-${parseInt(startMonth.value) + 1}.xlsx`;
     saveAs(blob, filename)
     notify.ok(`文件已保存：${filename}`)
 
