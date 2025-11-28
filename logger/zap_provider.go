@@ -11,6 +11,7 @@ import (
 
 	"github.com/aid297/aid/filesystem"
 	"github.com/aid297/aid/operation"
+	"github.com/aid297/aid/operation/operationV2"
 )
 
 // ZapProvider Zap日志服务提供者
@@ -56,7 +57,7 @@ func NewZapProvider(config *zapConfig) (*zap.Logger, error) {
 		zapCores        = make([]zapcore.Core, 0, 7)
 		zapLoggerConfig = zapcore.EncoderConfig{
 			MessageKey:    "message",
-			LevelKey:      "level",
+			LevelKey:      "logLevel",
 			TimeKey:       "time",
 			NameKey:       "logger",
 			CallerKey:     "caller",
@@ -90,20 +91,30 @@ func NewZapProvider(config *zapConfig) (*zap.Logger, error) {
 		config.Level = zapcore.FatalLevel
 	}
 
-	for _, logLevel := range []zapcore.Level{zapcore.DebugLevel, zapcore.InfoLevel, zapcore.WarnLevel, zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel} {
-		if config.Level >= logLevel {
-			writer := getWriteSync(config, fs.Copy().Join(logLevel.String()+config.Extension).GetDir())
-			zapCores = append(zapCores, zapcore.NewCore(encoderTypes[config.EncoderType](zapLoggerConfig), writer, logLevel))
-		}
+	for logLevel := config.Level; logLevel <= zapcore.FatalLevel; logLevel++ {
+		writer := getWriteSync(config, fs.Copy().Join(logLevel.String()+config.Extension).GetDir())
+		zapCores = append(zapCores, zapcore.NewCore(encoderTypes[config.EncoderType](zapLoggerConfig), writer, logLevel))
 	}
 
+	// for _, logLevel := range []zapcore.Level{zapcore.DebugLevel, zapcore.InfoLevel, zapcore.WarnLevel, zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel} {
+	// 	if config.Level >= logLevel {
+	// 		writer := getWriteSync(config, fs.Copy().Join(logLevel.String()+config.Extension).GetDir())
+	// 		zapCores = append(zapCores, zapcore.NewCore(encoderTypes[config.EncoderType](zapLoggerConfig), writer, logLevel))
+	// 	}
+	// }
+
 	zapLogger = zap.New(zapcore.NewTee(zapCores...))
+	// if config.InConsole {
+	// 	zapLogger = zapLogger.WithOptions(zap.AddCaller())
+	// }
+	zapLogger = operationV2.NewTernary(operationV2.TrueFn(func() *zap.Logger { return zapLogger.WithOptions(zap.AddCaller()) }), operationV2.FalseValue(zapLogger)).GetByValue(config.InConsole)
 
 	defer func() {
-		if config.InConsole {
-			return
-		}
-		err = zapLogger.Sync()
+		_ = operationV2.NewTernary(operationV2.TrueFn(func() error { return nil }), operationV2.FalseFn(func() error { return zapLogger.Sync() })).GetByValue(config.InConsole)
+		// if config.InConsole {
+		// 	return
+		// }
+		// err = zapLogger.Sync()
 	}()
 
 	return zapLogger, err
