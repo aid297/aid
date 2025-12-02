@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/aid297/aid/operation"
+	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
 )
 
@@ -442,4 +443,12 @@ func (my *HTTPClient) Error() error {
 
 	err = my.err
 	return err
+}
+
+func (my *HTTPClient) GetStatusCode() int {
+	return operationV2.NewTernary(operationV2.TrueFn(func() int { return my.GetRawResponse().StatusCode })).GetByValue(my.GetRawResponse() != nil)
+}
+
+func (my *HTTPClient) GetStatus() string {
+	return operationV2.NewTernary(operationV2.TrueFn(func() string { return my.GetRawResponse().Status })).GetByValue(my.GetRawResponse() != nil)
 }
