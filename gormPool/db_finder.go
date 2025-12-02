@@ -18,11 +18,8 @@ type (
 
 	// FinderCondition 查询条件
 	FinderCondition struct {
-		Table   *string `json:"table,omitempty"`
-		Queries []struct {
-			Option     *string     `json:"option,omitempty"`     // 操作：and、or、not
-			Conditions []Condition `json:"conditions,omitempty"` // 条件
-		} `json:"queries,omitempty"` // 查询条件
+		Table    *string  `json:"table,omitempty"`
+		Queries  []Query  `json:"queries,omitempty"`  // 查询条件
 		Orders   []string `json:"orders,omitempty"`   // 排序
 		Preloads []string `json:"preloads,omitempty"` // 预加载
 		Page     int      `json:"page,omitempty"`     // 页码
@@ -34,6 +31,12 @@ type (
 		Key      string `json:"key"`      // SQL字段名称，如果有别名则需要带有别名
 		Operator string `json:"operator"` // 操作符：=、>、<、!=、<=、>=、<>、in、not in、between、not between、like、like%、%like、raw、join
 		Values   []any  `json:"values"`   // 查询条件值
+	}
+
+	// Query 查询
+	Query struct {
+		Option     *string     `json:"option,omitempty"`     // 操作：and、or、not
+		Conditions []Condition `json:"conditions,omitempty"` // 条件
 	}
 )
 
@@ -327,41 +330,41 @@ func (my *Finder) QueryUseCondition(finderCondition *FinderCondition) *Finder {
 
 	// 设置查询条件
 	if len(finderCondition.Queries) > 0 {
-		for _, query := range finderCondition.Queries {
-			for _, condition := range query.Conditions {
+		for idx := range finderCondition.Queries {
+			for _, condition := range finderCondition.Queries[idx].Conditions {
 				if condition.Key != "" {
 					switch condition.Operator {
 					case "=", ">", "<", "!=", "<=", ">=", "<>":
 						// {key:"fieldName", operator:"=", values:["value"]}
 						// my.TryQuery(*query.Option, fmt.Sprintf("%s %s ?", condition.Key, condition.Operator), condition.Values[0])
-						my.TryQuery(*query.Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "?"), condition.Values[0])
+						my.TryQuery(*finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "?"), condition.Values[0])
 					case "in", "not in":
 						// {key:"fieldName", operator:"in", values:["value1", "value2"]}
 						// my.TryQuery(*query.Option, fmt.Sprintf("%s %s (?)", condition.Key, condition.Operator), condition.Values[0])
-						my.TryQuery(*query.Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "(?)"), condition.Values[0])
+						my.TryQuery(*finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "(?)"), condition.Values[0])
 					case "between", "not between":
 						// {key:"fieldName", operator:"between", values:["value1", "value2"]}
 						// my.TryQuery(*query.Option, fmt.Sprintf("%s %s ? and ?", condition.Key, condition.Operator), condition.Values...)
-						my.TryQuery(*query.Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "?", "and", "?"), condition.Values...)
+						my.TryQuery(*finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "?", "and", "?"), condition.Values...)
 					case "like":
 						// {key:"fieldName", operator:"like", values:["value"]}
 						// my.TryQuery(*query.Option, fmt.Sprintf("%s like ?", condition.Key), fmt.Sprintf("%%%s%%", condition.Values[0]))
-						my.TryQuery(*query.Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString("%", cast.ToString(condition.Values[0]), "%"))
+						my.TryQuery(*finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString("%", cast.ToString(condition.Values[0]), "%"))
 					case "like%":
 						// {key:"fieldName", operator:"like%", values:["value"]}
 						// my.TryQuery(*query.Option, fmt.Sprintf("%s like ?", condition.Key), fmt.Sprintf("%s%%", condition.Values[0]))
-						my.TryQuery(*query.Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString(cast.ToString(condition.Values[0]), "%"))
+						my.TryQuery(*finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString(cast.ToString(condition.Values[0]), "%"))
 					case "%like":
 						// {key:"fieldName", operator:"%like", values:["value"]}
 						// my.TryQuery(*query.Option, fmt.Sprintf("%s like ?", condition.Key), fmt.Sprintf("%%%s", condition.Values[0]))
-						my.TryQuery(*query.Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString("%", cast.ToString(condition.Values[0])))
+						my.TryQuery(*finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString("%", cast.ToString(condition.Values[0])))
 					case "join", "left join", "right join", "inner join", "outer join":
 						// {key:"otherName o", operator:"join", values["o.xxx = tableName.xxx where xxx = ? and yyy = ?","xxx-value","yyy-value"]}
 						// my.TryQuery(*query.Option, fmt.Sprintf("%s %s", condition.Operator, condition.Key), condition.Values...)
-						my.TryQuery(*query.Option, str.APP.Buffer.JoinStringLimit(" ", condition.Operator, condition.Key), condition.Values...)
+						my.TryQuery(*finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Operator, condition.Key), condition.Values...)
 					case "raw":
 						// {key:"fieldName", operator:"raw", values:["> ?", 100]}
-						my.TryQuery(*query.Option, condition.Key, condition.Values...)
+						my.TryQuery(*finderCondition.Queries[idx].Option, condition.Key, condition.Values...)
 					}
 				}
 			}
