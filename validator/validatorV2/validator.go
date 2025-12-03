@@ -3,19 +3,50 @@ package validatorV2
 import (
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 )
 
-type Validator struct {
-	Errors          []error
-	ValidatorFields []ValidatorField
-	prefixNames     []string
-	original        any
+type (
+	Validator struct {
+		Errors          []error
+		ValidatorFields []ValidatorField
+		prefixNames     []string
+		original        any
+	}
+
+	ExFunc func(ins *Validator) error
+
+	ValidatorExFuncs struct{ funcs map[string]ExFunc }
+)
+
+var (
+	validatorExFuncsOnce sync.Once
+	validatorExFuncsIns  *ValidatorExFuncs
+	defaultExFuncs       = map[string]ExFunc{
+		"email": func (ins *Validator) error {
+			ins.original.(string)
+		}
+	}
+)
+
+func (ValidatorExFuncs) Register(funcs map[string]ExFunc) *ValidatorExFuncs {
+	validatorExFuncsOnce.Do(func() { validatorExFuncsIns = &ValidatorExFuncs{funcs: make(map[string]ExFunc, 0)} })
+	for idx := range funcs {
+		validatorExFuncsIns.funcs[idx] = funcs[idx]
+	}
+
+	return validatorExFuncsIns
 }
 
-type ExFunc func(ins *Validator) error
+func (ValidatorExFuncs) Get(key string) ExFunc {
+	if _, ok := validatorExFuncsIns.funcs[key]; !ok {
+		return nil
+	}
+	return validatorExFuncsIns.funcs[key]
+}
 
 func (Validator) New(original any, prefixNames ...string) Validator {
 	var (
@@ -62,7 +93,9 @@ func (Validator) New(original any, prefixNames ...string) Validator {
 	if len(ins.ValidatorFields) > 0 {
 		ins.Errors = make([]error, 0, len(ins.ValidatorFields))
 		for idx := range ins.ValidatorFields {
-			ins.Errors = append(ins.Errors, ins.ValidatorFields[idx].Error)
+			if ins.ValidatorFields[idx].Error != nil {
+				ins.Errors = append(ins.Errors, ins.ValidatorFields[idx].Error)
+			}
 		}
 	}
 

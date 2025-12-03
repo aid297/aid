@@ -29,7 +29,7 @@ type (
 
 func (ValidatorField) New(value reflect.Value, field reflect.StructField, vName string) ValidatorField {
 	var (
-		ins ValidatorField = ValidatorField{
+		ins = ValidatorField{
 			refValue: value,
 			refType:  value.Type(),
 			refField: field,
@@ -37,25 +37,25 @@ func (ValidatorField) New(value reflect.Value, field reflect.StructField, vName 
 			isNil:    value.Kind() == reflect.Ptr && value.IsNil(),
 			isZero:   value.IsZero(),
 			indirect: reflect.Indirect(value),
-			vType:    field.Tag.Get("v-type"),
-			vRule:    field.Tag.Get("v-rule"),
-			vName:    value.Type().Name(),
+			vType:    strings.ToLower(field.Tag.Get("v-type")),
+			vRule:    strings.ToLower(field.Tag.Get("v-rule")),
+			vName:    vName,
 		}
 		checker Checker
 		err     error
 	)
 
 	if checker, err = ins.parseRule(); err != nil {
-		ins.Error = fmt.Errorf(`"%s"%w`, ins.vName, err)
+		ins.Error = fmt.Errorf(`[%s] %w`, ins.vName, err)
 	} else if checker != nil {
 		if err := checker.Check(); err != nil {
-			ins.Error = fmt.Errorf(`"%s"%w`, ins.vName, err)
+			ins.Error = fmt.Errorf(`[%s] %w`, ins.vName, err)
 		}
 	}
 	return ins
 }
 
-func (my ValidatorField) parseRuleString(rules []string) CheckerString {
+func (my ValidatorField) parseRuleForString(rules []string) CheckerString {
 	r := CheckerString{original: my.refValue.String(), vType: my.vType}
 
 	for idx := range rules {
@@ -65,6 +65,14 @@ func (my ValidatorField) parseRuleString(rules []string) CheckerString {
 
 		if regexp.APP.Regexp.New(`not-zero;`, regexp.TargetString(rules[idx])).Contains() {
 			r.noZero = true
+		}
+
+		if after, ok := strings.CutPrefix(rules[idx], "eq:"); ok {
+			r.eq = ptr.New(after)
+		}
+
+		if after, ok := strings.CutPrefix(rules[idx], "not-eq:"); ok {
+			r.notEq = ptr.New(after)
 		}
 
 		if after, ok := strings.CutPrefix(rules[idx], "min:"); ok {
@@ -103,6 +111,14 @@ func (my ValidatorField) parseRuleStringPtr(rules []string) Checker {
 			r.noZero = true
 		}
 
+		if after, ok := strings.CutPrefix(rules[idx], "eq:"); ok {
+			r.eq = ptr.New(after)
+		}
+
+		if after, ok := strings.CutPrefix(rules[idx], "not-eq:"); ok {
+			r.notEq = ptr.New(after)
+		}
+
 		if after, ok := strings.CutPrefix(rules[idx], "min:"); ok {
 			r.min = ptr.New(cast.ToInt(after))
 		}
@@ -127,16 +143,16 @@ func (my ValidatorField) parseRuleStringPtr(rules []string) Checker {
 	return r
 }
 
-func (my ValidatorField) parseRuleInt64(rules []string) Checker {
+func (my ValidatorField) parseRuleForInt(rules []string) Checker {
 	r := CheckerInt64{original: my.refValue.Int()}
 
 	for idx := range rules {
-		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
-			r.required = true
+		if after, ok := strings.CutPrefix(rules[idx], "eq:"); ok {
+			r.eq = ptr.New(cast.ToInt64(after))
 		}
 
-		if regexp.APP.Regexp.New(`not-zero;`, regexp.TargetString(rules[idx])).Contains() {
-			r.noZero = true
+		if after, ok := strings.CutPrefix(rules[idx], "not-eq:"); ok {
+			r.notEq = ptr.New(cast.ToInt64(after))
 		}
 
 		if after, ok := strings.CutPrefix(rules[idx], "min:"); ok {
@@ -160,15 +176,15 @@ func (my ValidatorField) parseRuleInt64(rules []string) Checker {
 }
 
 func (my ValidatorField) parseRuleInt64Ptr(rules []string) Checker {
-	r := CheckerInt64Ptr{original: my.refValue.Interface().(*int64)}
+	r := CheckerInt64Ptr{original: (*int64)(my.refValue.UnsafePointer())}
 
 	for idx := range rules {
-		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
-			r.required = true
+		if after, ok := strings.CutPrefix(rules[idx], "eq:"); ok {
+			r.eq = ptr.New(cast.ToInt64(after))
 		}
 
-		if regexp.APP.Regexp.New(`not-zero;`, regexp.TargetString(rules[idx])).Contains() {
-			r.noZero = true
+		if after, ok := strings.CutPrefix(rules[idx], "not-eq:"); ok {
+			r.notEq = ptr.New(cast.ToInt64(after))
 		}
 
 		if after, ok := strings.CutPrefix(rules[idx], "min:"); ok {
@@ -191,16 +207,16 @@ func (my ValidatorField) parseRuleInt64Ptr(rules []string) Checker {
 	return r
 }
 
-func (my ValidatorField) parseRuleUint64(rules []string) Checker {
+func (my ValidatorField) parseRuleForUint(rules []string) Checker {
 	r := CheckerUint64{original: my.refValue.Uint()}
 
 	for idx := range rules {
-		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
-			r.required = true
+		if after, ok := strings.CutPrefix(rules[idx], "eq:"); ok {
+			r.eq = ptr.New(cast.ToUint64(after))
 		}
 
-		if regexp.APP.Regexp.New(`not-zero;`, regexp.TargetString(rules[idx])).Contains() {
-			r.noZero = true
+		if after, ok := strings.CutPrefix(rules[idx], "not-eq:"); ok {
+			r.notEq = ptr.New(cast.ToUint64(after))
 		}
 
 		if after, ok := strings.CutPrefix(rules[idx], "min:"); ok {
@@ -232,15 +248,15 @@ func (my ValidatorField) parseRuleUint64(rules []string) Checker {
 }
 
 func (my ValidatorField) parseRuleUint64Ptr(rules []string) Checker {
-	r := CheckerUint64Ptr{original: my.refValue.Interface().(*uint64)}
+	r := CheckerUint64Ptr{original: (*uint64)(my.refValue.UnsafePointer())}
 
 	for idx := range rules {
-		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
-			r.required = true
+		if after, ok := strings.CutPrefix(rules[idx], "eq:"); ok {
+			r.eq = ptr.New(cast.ToUint64(after))
 		}
 
-		if regexp.APP.Regexp.New(`not-zero;`, regexp.TargetString(rules[idx])).Contains() {
-			r.noZero = true
+		if after, ok := strings.CutPrefix(rules[idx], "not-eq:"); ok {
+			r.notEq = ptr.New(cast.ToUint64(after))
 		}
 
 		if after, ok := strings.CutPrefix(rules[idx], "min:"); ok {
@@ -271,16 +287,16 @@ func (my ValidatorField) parseRuleUint64Ptr(rules []string) Checker {
 	return r
 }
 
-func (my ValidatorField) parseRuleFloat64(rules []string) Checker {
+func (my ValidatorField) parseRuleForFloat(rules []string) Checker {
 	r := CheckerFloat64{original: my.refValue.Float()}
 
 	for idx := range rules {
-		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
-			r.required = true
+		if after, ok := strings.CutPrefix(rules[idx], "eq:"); ok {
+			r.eq = ptr.New(cast.ToFloat64(after))
 		}
 
-		if regexp.APP.Regexp.New(`not-zero;`, regexp.TargetString(rules[idx])).Contains() {
-			r.noZero = true
+		if after, ok := strings.CutPrefix(rules[idx], "not-eq:"); ok {
+			r.notEq = ptr.New(cast.ToFloat64(after))
 		}
 
 		if after, ok := strings.CutPrefix(rules[idx], "min:"); ok {
@@ -304,17 +320,9 @@ func (my ValidatorField) parseRuleFloat64(rules []string) Checker {
 }
 
 func (my ValidatorField) parseRuleFloat64Ptr(rules []string) Checker {
-	r := CheckerFloat64Ptr{original: my.refValue.Interface().(*float64)}
+	r := CheckerFloat64Ptr{original: (*float64)(my.refValue.UnsafePointer())}
 
 	for idx := range rules {
-		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
-			r.required = true
-		}
-
-		if regexp.APP.Regexp.New(`not-zero;`, regexp.TargetString(rules[idx])).Contains() {
-			r.noZero = true
-		}
-
 		if after, ok := strings.CutPrefix(rules[idx], "min:"); ok {
 			r.min = ptr.New(cast.ToFloat64(after))
 		}
@@ -335,16 +343,16 @@ func (my ValidatorField) parseRuleFloat64Ptr(rules []string) Checker {
 	return r
 }
 
-func (my ValidatorField) parseRuleBool(rules []string) Checker {
+func (my ValidatorField) parseRuleForBool(rules []string) Checker {
 	r := CheckerBool{original: cast.ToBool(my.refValue.Interface())}
 
 	for idx := range rules {
-		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
-			r.required = true
+		if after, ok := strings.CutPrefix(rules[idx], "eq:"); ok {
+			r.eq = ptr.New(cast.ToBool(after))
 		}
 
-		if regexp.APP.Regexp.New(`not-zero;`, regexp.TargetString(rules[idx])).Contains() {
-			r.noZero = true
+		if after, ok := strings.CutPrefix(rules[idx], "not-eq:"); ok {
+			r.notEq = ptr.New(cast.ToBool(after))
 		}
 	}
 
@@ -352,22 +360,22 @@ func (my ValidatorField) parseRuleBool(rules []string) Checker {
 }
 
 func (my ValidatorField) parseRuleBoolPtr(rules []string) Checker {
-	r := CheckerBoolPtr{original: ptr.New(cast.ToBool(my.refValue.Interface()))}
+	r := CheckerBoolPtr{original: (*bool)(my.refValue.UnsafePointer())}
 
 	for idx := range rules {
-		if regexp.APP.Regexp.New(`required;`, regexp.TargetString(rules[idx])).Contains() {
-			r.required = true
+		if after, ok := strings.CutPrefix(rules[idx], "eq:"); ok {
+			r.eq = ptr.New(cast.ToBool(after))
 		}
 
-		if regexp.APP.Regexp.New(`not-zero;`, regexp.TargetString(rules[idx])).Contains() {
-			r.noZero = true
+		if after, ok := strings.CutPrefix(rules[idx], "not-eq:"); ok {
+			r.notEq = ptr.New(cast.ToBool(after))
 		}
 	}
 
 	return r
 }
 
-func (my ValidatorField) parseRuleSlice(rules []string, ref reflect.Value) Checker {
+func (my ValidatorField) parseRuleForSlice(rules []string, ref reflect.Value) Checker {
 	target := make([]any, 0, ref.Len())
 
 	for idx := range ref.Len() {
@@ -465,35 +473,35 @@ func (my ValidatorField) parseRule() (Checker, error) {
 	if !my.isPtr {
 		switch my.refType.Kind() {
 		case reflect.String:
-			if my.vType != "" && anyArrayV2.NewList([]string{"string", "email", "datetime", "date", "time"}).In(my.vType) {
+			if my.vType != "" && anyArrayV2.NewList([]string{"string", "email", "datetime", "date", "time"}).NotIn(my.vType) {
 				return nil, ErrInvalidType
 			}
-			return my.parseRuleString(rules), nil
+			return my.parseRuleForString(rules), nil
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			if my.vType != "" && my.vType != "int" {
 				return nil, ErrInvalidType
 			}
-			return my.parseRuleInt64(rules), nil
+			return my.parseRuleForInt(rules), nil
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			if my.vType != "" && my.vType != "uint" {
 				return nil, ErrInvalidType
 			}
-			return my.parseRuleUint64(rules), nil
+			return my.parseRuleForUint(rules), nil
 		case reflect.Float32, reflect.Float64:
 			if my.vType != "" && my.vType != "float" {
 				return nil, ErrInvalidType
 			}
-			return my.parseRuleFloat64(rules), nil
+			return my.parseRuleForFloat(rules), nil
 		case reflect.Bool:
 			if my.vType != "" && my.vType != "bool" {
 				return nil, ErrInvalidType
 			}
-			return my.parseRuleBool(rules), nil
+			return my.parseRuleForBool(rules), nil
 		case reflect.Array, reflect.Slice:
 			if my.vType != "" && (my.vType != "array" && my.vType != "slice") {
 				return nil, ErrInvalidType
 			}
-			return my.parseRuleSlice(rules, my.refValue), nil
+			return my.parseRuleForSlice(rules, my.refValue), nil
 		case reflect.Map:
 		case reflect.Struct:
 		case reflect.Func:
@@ -501,7 +509,7 @@ func (my ValidatorField) parseRule() (Checker, error) {
 	} else {
 		switch my.indirect.Kind() {
 		case reflect.String:
-			if my.vType != "" && anyArrayV2.NewList([]string{"string", "email", "datetime", "date", "time"}).In(my.vType) {
+			if my.vType != "" && anyArrayV2.NewList([]string{"string", "email", "datetime", "date", "time"}).NotIn(my.vType) {
 				return nil, ErrInvalidType
 			}
 			return my.parseRuleStringPtr(rules), nil

@@ -12,4 +12,9 @@ var (
 	ErrRegex       = errors.New("内容不匹配")
 	ErrParseData   = errors.New("解析数据错误")
 	ErrInvalidType = errors.New("无效的类型")
+
+	TooShort = "长度不能小于"
+	TooLong  = "长度不能大于"
+	TooSmall = "不能小于"
+	TooBig   = "不能大于"
 )
