@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
+	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
 )
 
@@ -387,9 +388,10 @@ func (my *Finder) QueryUseCondition(finderCondition *FinderCondition) *Finder {
 // FindUseMap 自动填充查询条件并查询：使用map[string][]any
 func (my *Finder) FindUseMap(queries map[string][]any, preloads []string, orders []string, page, size int, ret any) *Finder {
 	my.QueryUseMap(queries).TryPagination(page, size).TryOrder(orders...).Find(ret, preloads...)
-	if my.total == -1 {
-		my.total = 0
-	}
+	my.total = operationV2.NewTernary(operationV2.TrueValue[int64](0), operationV2.FalseValue(my.total)).GetByValue(my.total == -1)
+	// if my.total == -1 {
+	// 	my.total = 0
+	// }
 	return my
 }
 
@@ -400,17 +402,20 @@ func (my *Finder) FindUseCondition(finderCondition *FinderCondition, page, size 
 		size = finderCondition.Limit
 	}
 	my.QueryUseCondition(finderCondition).TryPagination(page, size).Find(ret)
-	if my.total == -1 {
-		my.total = 0
-	}
+	my.total = operationV2.NewTernary(operationV2.TrueValue[int64](0), operationV2.FalseValue(my.total)).GetByValue(my.total == -1)
+	// if my.total == -1 {
+	// 	my.total = 0
+	// }
 	return my
 }
 
 // FindOnlyCondition  自动填充查询条件并查询：使用FinderCondition
 func (my *Finder) FindOnlyCondition(finderCondition *FinderCondition, ret any) *Finder {
 	my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.Limit).Find(ret)
-	if my.total == -1 {
-		my.total = 0
-	}
+	my.total = operationV2.NewTernary(operationV2.TrueValue[int64](0), operationV2.FalseValue(my.total)).GetByValue(my.total == -1)
+	// if my.total == -1 {
+	// 	my.total = 0
+	// }
+
 	return my
 }
