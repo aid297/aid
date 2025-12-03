@@ -387,12 +387,7 @@ func (my *Finder) QueryUseCondition(finderCondition *FinderCondition) *Finder {
 
 // FindUseMap 自动填充查询条件并查询：使用map[string][]any
 func (my *Finder) FindUseMap(queries map[string][]any, preloads []string, orders []string, page, size int, ret any) *Finder {
-	my.QueryUseMap(queries).TryPagination(page, size).TryOrder(orders...).Find(ret, preloads...)
-	my.total = operationV2.NewTernary(operationV2.TrueValue[int64](0), operationV2.FalseValue(my.total)).GetByValue(my.total == -1)
-	// if my.total == -1 {
-	// 	my.total = 0
-	// }
-	return my
+	return my.QueryUseMap(queries).TryPagination(page, size).TryOrder(orders...).Find(ret, preloads...).finderNext()
 }
 
 // FindUseCondition 自动填充查询条件并查询：使用FinderCondition
@@ -401,21 +396,15 @@ func (my *Finder) FindUseCondition(finderCondition *FinderCondition, page, size 
 		page = finderCondition.Page
 		size = finderCondition.Limit
 	}
-	my.QueryUseCondition(finderCondition).TryPagination(page, size).Find(ret)
-	my.total = operationV2.NewTernary(operationV2.TrueValue[int64](0), operationV2.FalseValue(my.total)).GetByValue(my.total == -1)
-	// if my.total == -1 {
-	// 	my.total = 0
-	// }
-	return my
+	return my.QueryUseCondition(finderCondition).TryPagination(page, size).Find(ret).finderNext()
 }
 
 // FindOnlyCondition  自动填充查询条件并查询：使用FinderCondition
 func (my *Finder) FindOnlyCondition(finderCondition *FinderCondition, ret any) *Finder {
-	my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.Limit).Find(ret)
-	my.total = operationV2.NewTernary(operationV2.TrueValue[int64](0), operationV2.FalseValue(my.total)).GetByValue(my.total == -1)
-	// if my.total == -1 {
-	// 	my.total = 0
-	// }
+	return my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.Limit).Find(ret).finderNext()
+}
 
+func (my *Finder) finderNext() *Finder {
+	my.total = operationV2.NewTernary(operationV2.TrueValue[int64](0), operationV2.FalseValue(my.total)).GetByValue(my.total == -1)
 	return my
 }
