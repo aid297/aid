@@ -1,6 +1,7 @@
 package validatorV2
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -115,7 +116,7 @@ func WithFiber[T any](c *fiber.Ctx, fns ...func(ins any) (err error)) (T, error)
 		for _, e := range errs {
 			parts = append(parts, e.Error())
 		}
-		return *ins, fmt.Errorf(strings.Join(parts, "; "))
+		return *ins, errors.New(strings.Join(parts, "; "))
 	}
 
 	return *ins, nil
@@ -139,7 +140,7 @@ func WithGin[T any](c *gin.Context, fns ...func(ins any) (err error)) (T, error)
 		for _, e := range errs {
 			parts = append(parts, e.Error())
 		}
-		return *ins, fmt.Errorf(strings.Join(parts, "; "))
+		return *ins, errors.New(strings.Join(parts, "; "))
 	}
 
 	return *ins, nil
