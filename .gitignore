@@ -21,7 +21,7 @@ vendor
 go.work
 
 .idea
-.vscode
+.vscode1
 .VSCodeCounter
 */**/.idea
 */**/.vscode
