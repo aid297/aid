@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type (
@@ -96,6 +97,31 @@ func removeRule(ruleStr, key string) string {
 	return strings.Join(out, ";")
 }
 
+// WithFiber 在 Fiber 框架中绑定并验证请求数据。
+func WithFiber[T any](c *fiber.Ctx, fns ...func(ins any) (err error)) (T, error) {
+	var (
+		err error
+		ins = new(T)
+	)
+
+	if err = c.BodyParser(ins); err != nil {
+		return *ins, err
+	}
+
+	errs := app.Validator.Validate(ins, fns...)
+	if len(errs) > 0 {
+		// 合并错误为单一 error 返回
+		parts := make([]string, 0, len(errs))
+		for _, e := range errs {
+			parts = append(parts, e.Error())
+		}
+		return *ins, fmt.Errorf(strings.Join(parts, "; "))
+	}
+
+	return *ins, nil
+}
+
+// WithGin 在 Gin 框架中绑定并验证请求数据。
 func WithGin[T any](c *gin.Context, fns ...func(ins any) (err error)) (T, error) {
 	var (
 		err error
@@ -106,7 +132,7 @@ func WithGin[T any](c *gin.Context, fns ...func(ins any) (err error)) (T, error)
 		return *ins, err
 	}
 
-	errs := new(Validator).Validate(ins, fns...)
+	errs := app.Validator.Validate(ins, fns...)
 	if len(errs) > 0 {
 		// 合并错误为单一 error 返回
 		parts := make([]string, 0, len(errs))
