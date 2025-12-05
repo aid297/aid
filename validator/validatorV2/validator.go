@@ -17,39 +17,39 @@ import (
 type (
 	Validator struct{}
 
-	// 保留类型以兼容引用（目前不再返回 FieldResult）
+	// FieldResult 保留类型以兼容引用（目前不再返回 FieldResult）
 	FieldResult struct {
 		Field  string   `json:"field"`
 		Errors []string `json:"errors"`
 	}
 )
 
-// 扩展校验函数类型及注册表
-type ExFunc func(val any) error
+// ExFn 扩展校验函数类型及注册表
+type ExFn func(val any) error
 
 var (
-	exFuncs   = make(map[string]ExFunc)
-	exFuncsMu sync.RWMutex
+	exFns   = make(map[string]ExFn)
+	exFnsMu sync.RWMutex
 )
 
 // RegisterExFun 注册一个扩展校验函数，key 为 v-ex 标签中的键
-func RegisterExFun(key string, fn ExFunc) {
-	exFuncsMu.Lock()
-	defer exFuncsMu.Unlock()
-	exFuncs[key] = fn
+func RegisterExFun(key string, fn ExFn) {
+	exFnsMu.Lock()
+	defer exFnsMu.Unlock()
+	exFns[key] = fn
 }
 
 // UnregisterExFun 注销注册函数
 func UnregisterExFun(key string) {
-	exFuncsMu.Lock()
-	defer exFuncsMu.Unlock()
-	delete(exFuncs, key)
+	exFnsMu.Lock()
+	defer exFnsMu.Unlock()
+	delete(exFns, key)
 }
 
-func getExFun(key string) (ExFunc, bool) {
-	exFuncsMu.RLock()
-	defer exFuncsMu.RUnlock()
-	f, ok := exFuncs[key]
+func getExFun(key string) (ExFn, bool) {
+	exFnsMu.RLock()
+	defer exFnsMu.RUnlock()
+	f, ok := exFns[key]
 	return f, ok
 }
 
@@ -153,7 +153,7 @@ func WithGin[T any](c *gin.Context, fns ...func(ins any) (err error)) (T, error)
 // - in / not-in 使用逗号分隔的值列表。
 // - regex=... 使用完整正则表达式。
 // - 支持快捷规则: email, date(2006-01-02), time(15:04:05), datetime(2006-01-02 15:04:05)
-func (Validator) Validate(data any, exFuncs ...func(d any) error) []error {
+func (Validator) Validate(data any, exFns ...func(d any) error) []error {
 	if data == nil {
 		return []error{fmt.Errorf("data is nil")}
 	}
@@ -171,9 +171,9 @@ func (Validator) Validate(data any, exFuncs ...func(d any) error) []error {
 	errs := make([]error, 0)
 	walkStruct(rv, "", &errs)
 
-	for idx := range exFuncs {
-		if exFuncs[idx] != nil {
-			if err := exFuncs[idx](&data); err != nil {
+	for idx := range exFns {
+		if exFns[idx] != nil {
+			if err := exFns[idx](&data); err != nil {
 				errs = append(errs, err)
 			}
 		}
