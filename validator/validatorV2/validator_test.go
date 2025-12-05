@@ -9,18 +9,18 @@ import (
 // TestValidator_Basic 覆盖字符串、数字、数组、嵌套和时间规则
 func TestValidator_Basic(t *testing.T) {
 	type Inner struct {
-		Code string `v-rule:"required;len:3" v-name:"编码"`
+		Code string `v-rule:"(required)(len:3)" v-name:"编码"`
 	}
 
 	now := time.Now()
 	// 构造测试结构体
 	type Req struct {
-		Name     string      `v-rule:"required;min>3;max<10" v-name:"名称" v-ex:"onlyEnglish"`
-		Email    string      `v-rule:"required;email" v-name:"邮箱"`
-		Tags     []string    `v-rule:"min:1;max:3" v-name:"标签"`
-		Score    int         `v-rule:"min:1;max:100" v-name:"分数"`
+		Name     string      `v-rule:"(required)(min>3)(max<10)" v-name:"名称" v-ex:"onlyEnglish"`
+		Email    string      `v-rule:"(required)(email)" v-name:"邮箱"`
+		Tags     []string    `v-rule:"(min:1)(max:3)" v-name:"标签"`
+		Score    int         `v-rule:"(min:1)(max:100)" v-name:"分数"`
 		InnerVal Inner       `v-name:"内嵌"`
-		Dates    []time.Time `v-rule:"min:1" v-name:"日期列表"`
+		Dates    []time.Time `v-rule:"(min:1)" v-name:"日期列表"`
 	}
 
 	tests := []struct {
@@ -86,9 +86,9 @@ func TestRemoveRule(t *testing.T) {
 		key  string
 		want string
 	}{
-		{"required;min:3", "required", "min:3"},
-		{"min:3;required;max:5", "required", "min:3;max:5"},
-		{"required", "required", ""},
+		{"(required)(min:3)", "required", "(min:3)"},
+		{"(min:3)(required)(max:5)", "required", "(min:3)(max:5)"},
+		{"(required)", "required", ""},
 		{"", "required", ""},
 	}
 	for _, c := range cases {
@@ -150,12 +150,12 @@ func TestVExPointerInvocation(t *testing.T) {
 // TestValidator_Pointers 覆盖指针字段的校验行为（nil 与 非 nil）
 func TestValidator_Pointers(t *testing.T) {
 	type Inner struct {
-		Code string `v-rule:"required;len:3" v-name:"编码"`
+		Code string `v-rule:"(required)(len:3)" v-name:"编码"`
 	}
 
 	type ReqPtr struct {
-		PName  *string `v-rule:"required;max<10" v-name:"名称" v-ex:"onlyEnglish"`
-		PInner *Inner  `v-rule:"required" v-name:"内嵌指针"`
+		PName  *string `v-rule:"(required)(max<10)" v-name:"名称" v-ex:"onlyEnglish"`
+		PInner *Inner  `v-rule:"(required)" v-name:"内嵌指针"`
 	}
 
 	strPtr := func(s string) *string { return &s }
