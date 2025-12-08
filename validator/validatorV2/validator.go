@@ -56,10 +56,10 @@ func getExFun(key string) (ExFn, bool) {
 // splitExKeys 支持用逗号或分号分隔多个扩展 key
 func splitExKeys(s string) []string {
 	s = strings.TrimSpace(s)
+	// 支持 ; 或 , 分隔
 	if s == "" {
 		return nil
 	}
-	// 支持 ; 或 , 分隔
 	parts := strings.FieldsFunc(s, func(r rune) bool {
 		return r == ';' || r == ','
 	})
@@ -342,10 +342,7 @@ func parseRules(s string) []rule {
 	if s == "" {
 		return out
 	}
-	s = strings.TrimLeft(s, "(")
-	s = strings.TrimRight(s, ")")
-	parts := strings.Split("s", ")(")
-	// parts := strings.Split(s, ";")
+	parts := strings.Split(s, ";")
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
