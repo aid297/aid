@@ -368,10 +368,14 @@ func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
 		return my
 	}
 
-	return operationV2.NewTernary(
-		operationV2.TrueFn(func() *HTTPClient { jsonIter.Get(my.responseBody, keys...).ToVal(&target); return my }),
-		operationV2.FalseFn(func() *HTTPClient { jsonIter.Unmarshal(my.requestBody, &target); return my }),
-	).GetByValue(len(keys) > 0)
+	if len(keys) > 0 {
+		jsonIter.Get(my.responseBody, keys...).ToVal(&target)
+		return my
+	} else {
+		jsonIter.Unmarshal(my.requestBody, &target)
+		return my
+	}
+
 	// return operation.TernaryFuncAll(
 	//
 	//	func() bool { return len(keys) > 0 },
