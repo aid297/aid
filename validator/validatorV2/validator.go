@@ -111,7 +111,6 @@ func WithFiber[T any](c *fiber.Ctx, fns ...func(ins any) (err error)) (T, error)
 
 	errs := app.Validator.Validate(ins, fns...)
 	if len(errs) > 0 {
-		// 合并错误为单一 error 返回
 		parts := make([]string, 0, len(errs))
 		for _, e := range errs {
 			parts = append(parts, e.Error())
@@ -135,7 +134,6 @@ func WithGin[T any](c *gin.Context, fns ...func(ins any) (err error)) (T, error)
 
 	errs := app.Validator.Validate(ins, fns...)
 	if len(errs) > 0 {
-		// 合并错误为单一 error 返回
 		parts := make([]string, 0, len(errs))
 		for _, e := range errs {
 			parts = append(parts, e.Error())
@@ -344,7 +342,10 @@ func parseRules(s string) []rule {
 	if s == "" {
 		return out
 	}
-	parts := strings.Split(s, ";")
+	s = strings.TrimLeft(s, "(")
+	s = strings.TrimRight(s, ")")
+	parts := strings.Split("s", ")(")
+	// parts := strings.Split(s, ";")
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
