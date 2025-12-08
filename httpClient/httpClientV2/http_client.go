@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"io"
@@ -16,7 +15,6 @@ import (
 	jsonIter "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/operation"
 	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
 )
@@ -370,16 +368,22 @@ func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
 		return my
 	}
 
-	return operation.TernaryFuncAll(
-		func() bool { return len(keys) > 0 },
-		func() *HTTPClient {
-			jsonIter.Get(my.responseBody, keys...).ToVal(&target)
-			return my
-		}, func() *HTTPClient {
-			my.err = json.Unmarshal(my.responseBody, &target)
-			return my
-		},
-	)
+	return operationV2.NewTernary(
+		operationV2.TrueFn(func() *HTTPClient { jsonIter.Get(my.responseBody, keys...).ToVal(&target); return my }),
+		operationV2.FalseFn(func() *HTTPClient { jsonIter.Unmarshal(my.requestBody, &target); return my }),
+	).GetByValue(len(keys) > 0)
+	// return operation.TernaryFuncAll(
+	//
+	//	func() bool { return len(keys) > 0 },
+	//	func() *HTTPClient {
+	//		jsonIter.Get(my.responseBody, keys...).ToVal(&target)
+	//		return my
+	//	}, func() *HTTPClient {
+	//		my.err = json.Unmarshal(my.responseBody, &target)
+	//		return my
+	//	},
+	//
+	// )
 }
 
 func (my *HTTPClient) ToXML(target any) *HTTPClient {
