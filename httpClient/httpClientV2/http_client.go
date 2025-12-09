@@ -372,7 +372,7 @@ func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
 	if len(keys) > 0 {
 		jsonIter.Get(my.responseBody, keys...).ToVal(&target)
 	} else {
-		my.err = json.Unmarshal(my.requestBody, &target)
+		my.err = json.Unmarshal(my.responseBody, &target)
 	}
 	return my
 }
