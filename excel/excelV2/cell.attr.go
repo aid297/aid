@@ -10,7 +10,7 @@ type (
 	AttrCellPatternRGB    struct{ rgb string }
 	AttrCellFontBold      struct{ fontBold bool }
 	AttrCellFontItalic    struct{ fontItalic bool }
-	AttrCellFontSize      struct{ fontSize int }
+	AttrCellFontSize      struct{ fontSize float32 }
 	AttrCellBorderRGB     struct{ top, bottom, left, right string }
 	AttrCellBorderStyle   struct{ top, bottom, left, right int }
 	AttrCellDiagonalRGB   struct{ up, down string }
@@ -28,7 +28,7 @@ func (AttrCellCoordinate) New(val string) CellAttributer { return AttrCellCoordi
 func (my AttrCellCoordinate) Register(cell *Cell)        { cell.coordinate = my.coordinate }
 
 func (AttrCellFontRGB) New(val string) CellAttributer { return AttrCellFontRGB{val} }
-func (my AttrCellFontRGB) New(cell *Cell)             { cell.fontRgb = my.rgb }
+func (my AttrCellFontRGB) Register(cell *Cell)        { cell.fontRgb = my.rgb }
 
 func (AttrCellPatternRGB) New(val string) CellAttributer { return AttrCellPatternRGB{val} }
 func (my AttrCellPatternRGB) Register(cell *Cell)        { cell.patternRgb = my.rgb }
@@ -39,8 +39,8 @@ func (my AttrCellFontBold) Register(cell *Cell)      { cell.fontBold = my.fontBo
 func (AttrCellFontItalic) New(val bool) CellAttributer { return AttrCellFontItalic{val} }
 func (my AttrCellFontItalic) Register(cell *Cell)      { cell.fontItalic = my.fontItalic }
 
-func (AttrCellFontSize) New(val int) CellAttributer { return AttrCellFontSize{val} }
-func (my AttrCellFontSize) Register(cell *Cell)     { cell.fontSize = my.fontSize }
+func (AttrCellFontSize) New(val float32) CellAttributer { return AttrCellFontSize{val} }
+func (my AttrCellFontSize) Register(cell *Cell)         { cell.fontSize = my.fontSize }
 
 func (AttrCellBorderRGB) New(top, bottom, left, right string) CellAttributer {
 	return AttrCellBorderRGB{top, bottom, left, right}
@@ -74,5 +74,5 @@ func (my AttrCellDiagonalStyle) Register(cell *Cell) {
 	cell.borderDiagonalDownStyle = my.down
 }
 
-func (AttCellWrapText) New(val bool) CellAttributer { return AttrCellWrapText{val} }
-func (my AttrCellWrapText) Register(cell *Cell)     { cell.wrapText = my.wrapText }
+func (AttrCellWrapText) New(val bool) CellAttributer { return AttrCellWrapText{val} }
+func (my AttrCellWrapText) Register(cell *Cell)      { cell.wrapText = my.wrapText }

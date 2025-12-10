@@ -13,14 +13,14 @@ type (
 func (AttrReaderFilename) New(val string) ReaderAttributer { return AttrReaderFilename{val} }
 func (my AttrReaderFilename) Register(reader *Reader)      { reader.filename = my.filename }
 
-func (AttrReaderSheetName) New(val string)             { return AttrReaderSheetName{val} }
-func (my AttrReaderSheetName) Register(reader *Reader) { reader.sheetName = my.sheetName }
+func (AttrReaderSheetName) New(val string) ReaderAttributer { return AttrReaderSheetName{val} }
+func (my AttrReaderSheetName) Register(reader *Reader)      { reader.sheetName = my.sheetName }
 
-func (AttrReaderOriginalRow) New(val int)                { return AttrReaderOriginalRow{val} }
-func (my AttrReaderOriginalRow) Register(reader *Reader) { reader.originalRow = my.originalRow }
+func (AttrReaderOriginalRow) New(val int) ReaderAttributer { return AttrReaderOriginalRow{val} }
+func (my AttrReaderOriginalRow) Register(reader *Reader)   { reader.originalRow = my.originalRow }
 
-func (AttrReaderFinishedRow) New(val int)                { return AttrReaderFinishedRow{val} }
-func (my AttrReaderFinishedRow) Register(reader *Reader) { reader.finishedRow = my.finishedRow }
+func (AttrReaderFinishedRow) New(val int) ReaderAttributer { return AttrReaderFinishedRow{val} }
+func (my AttrReaderFinishedRow) Register(reader *Reader)   { reader.finishedRow = my.finishedRow }
 
-func (AttrReaderTitleRow) New(val int)                { return AttrReaderTitleRow{val} }
-func (my AttrReaderTitleRow) Register(reader *Reader) { reader.titleRow = my.titleRow }
+func (AttrReaderTitleRow) New(val int) ReaderAttributer { return AttrReaderTitleRow{val} }
+func (my AttrReaderTitleRow) Register(reader *Reader)   { reader.titleRow = my.titleRow }

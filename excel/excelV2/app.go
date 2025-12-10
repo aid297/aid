@@ -9,12 +9,12 @@ var APP struct {
 		FinishedRow AttrReaderFinishedRow
 		TitleRow    AttrReaderTitleRow
 	}
-	Row Row
-	RowAttr string{
-		Cells AttrRowCells
+	Row     Row
+	RowAttr struct {
+		Cells  AttrRowCells
 		Number AttrRowNumber
 	}
-	Cell Cell
+	Cell     Cell
 	CellAttr struct {
 		Content       AttrCellContent
 		ContentType   AttrCellContentType
