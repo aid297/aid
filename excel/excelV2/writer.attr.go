@@ -42,19 +42,25 @@ func (my AttrWriterRows) Register(writer *Writer) {
 		rn += my.offset
 		rn = operationV2.NewTernary(operationV2.TrueValue[int](int(row.getNumber())), operationV2.FalseValue(rn)).GetByValue(row.getNumber() > 0)
 		for cn, cell := range row.cells {
-			var (
-				err error
-				col string
-			)
-
-			if col, err = ColumnNumberToText(cn + 1); err != nil {
-				writer.Error = fmt.Errorf("%w：行 %d 列索引 %d 转换为列名称错误", ErrColumnNumber, rn+1, cn+1)
-				return
+			if cell.getCoordinate() != "" {
+				writer.setCell(cell)
+			} else {
+				writeCell(cell, rn, cn, writer)
 			}
-
-			col = operationV2.NewTernary(operationV2.TrueValue(cell.GetCoordinate()), operationV2.FalseValue(col)).GetByValue(cell.getCoordinate() != "")
-			cell.setAttrs(APP.CellAttr.Coordinate.Set(fmt.Sprintf("%s%d", col, rn+1)))
-			writer.setCell(cell)
 		}
 	}
+}
+
+func writeCell(cell *Cell, rn, cn int, writer *Writer) {
+	var (
+		err error
+		col string
+	)
+
+	if col, err = ColumnNumberToText(cn + 1); err != nil {
+		writer.Error = fmt.Errorf("%w：行 %d 列索引 %d 转换为列名称错误", ErrColumnNumber, rn+1, cn+1)
+		return
+	}
+
+	writer.setCell(cell.setAttrs(APP.CellAttr.Coordinate.Set(fmt.Sprintf("%s%d", col, rn+1))))
 }
