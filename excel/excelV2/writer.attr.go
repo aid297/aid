@@ -13,8 +13,9 @@ type (
 	AttrWriterSheetName struct{ sheetName string }
 	AttrWriterCells     struct{ cells []*Cell }
 	AttrWriterRows      struct {
-		rows   []*Row
-		offset int
+		rows     []*Row
+		offset   int
+		isOffset bool
 	}
 )
 
@@ -31,16 +32,14 @@ func (my AttrWriterCells) Register(writer *Writer) {
 	}
 }
 
-func (AttrWriterRows) Set(vals ...*Row) WriterAttributer {
-	return AttrWriterRows{rows: vals, offset: -1}
-}
+func (AttrWriterRows) Set(vals ...*Row) WriterAttributer { return AttrWriterRows{rows: vals} }
 func (AttrWriterRows) Append(offset int, vals ...*Row) WriterAttributer {
-	return AttrWriterRows{rows: vals, offset: offset}
+	return AttrWriterRows{rows: vals, offset: offset, isOffset: true}
 }
 func (my AttrWriterRows) Register(writer *Writer) {
 	for rn, row := range my.rows {
-		rn += my.offset
-		rn = operationV2.NewTernary(operationV2.TrueValue[int](int(row.getNumber())), operationV2.FalseValue(rn)).GetByValue(row.getNumber() > 0)
+		rn = operationV2.NewTernary(operationV2.TrueValue(rn+my.offset-1), operationV2.FalseValue(rn)).GetByValue(my.isOffset)
+		rn = operationV2.NewTernary(operationV2.TrueValue(int(row.getNumber())), operationV2.FalseValue(rn)).GetByValue(row.getNumber() > 0)
 		for cn, cell := range row.cells {
 			if cell.getCoordinate() != "" {
 				writer.setCell(cell)

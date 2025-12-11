@@ -29,4 +29,13 @@ var APP struct {
 		DiagonalStyle AttrCellDiagonalStyle
 		WrapText      AttrCellWrapText
 	}
+	Reader     Reader
+	ReaderAttr struct {
+		Filename    AttrReaderFilename
+		SheetName   AttrReaderSheetName
+		OriginalRow AttrReaderOriginalRow
+		FinishedRow AttrReaderFinishedRow
+		OriginalCol AttrReaderOriginalCol
+		FinishedCol AttrReaderFinishedCol
+	}
 }

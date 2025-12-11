@@ -82,6 +82,33 @@ func Test3RowToFile(t *testing.T) {
 				),
 			),
 		),
+		APP.WriterAttr.Rows.Append(
+			5,
+			APP.Row.New(
+				APP.RowAttr.Cells.Set(
+					APP.Cell.New(
+						APP.CellAttr.Content.Set("王五"),
+						APP.CellAttr.ContentType.Set(CellContentTypeAny),
+					),
+					APP.Cell.New(
+						APP.CellAttr.Content.Set(18),
+						APP.CellAttr.ContentType.Set(CellContentTypeInt),
+					),
+				),
+			),
+			APP.Row.New(
+				APP.RowAttr.Cells.Set(
+					APP.Cell.New(
+						APP.CellAttr.Content.Set("赵六"),
+						APP.CellAttr.ContentType.Set(CellContentTypeAny),
+					),
+					APP.Cell.New(
+						APP.CellAttr.Content.Set(20),
+						APP.CellAttr.ContentType.Set(CellContentTypeInt),
+					),
+				),
+			),
+		),
 	)
 
 	writer.Save()
