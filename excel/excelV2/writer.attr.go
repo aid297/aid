@@ -31,7 +31,7 @@ func (my AttrWriterCells) Register(writer *Writer) {
 func (AttrWriterRows) Set(vals ...*Row) WriterAttributer { return AttrWriterRows{vals} }
 func (my AttrWriterRows) Register(writer *Writer) {
 	for rn, row := range my.rows {
-		rn = operationV2.NewTernary(operationV2.TrueValue(row.getNumber()), operationV2.FalseValue(uint64(rn))).GetByValue(row.getNumber() > 0)
+		rn = operationV2.NewTernary(operationV2.TrueValue[int](int(row.getNumber())), operationV2.FalseValue(rn)).GetByValue(row.getNumber() > 0)
 		for cn, cell := range row.cells {
 			var (
 				err error
