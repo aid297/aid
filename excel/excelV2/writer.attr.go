@@ -12,7 +12,10 @@ type (
 	AttrWriterFilename  struct{ filename string }
 	AttrWriterSheetName struct{ sheetName string }
 	AttrWriterCells     struct{ cells []*Cell }
-	AttrWriterRows      struct{ rows []*Row }
+	AttrWriterRows      struct {
+		rows   []*Row
+		offset int
+	}
 )
 
 func (AttrWriterSheetName) Set(val string) WriterAttributer { return AttrWriterSheetName{val} }
@@ -28,9 +31,15 @@ func (my AttrWriterCells) Register(writer *Writer) {
 	}
 }
 
-func (AttrWriterRows) Set(vals ...*Row) WriterAttributer { return AttrWriterRows{vals} }
+func (AttrWriterRows) Set(vals ...*Row) WriterAttributer {
+	return AttrWriterRows{rows: vals, offset: -1}
+}
+func (AttrWriterRows) Append(offset int, vals ...*Row) WriterAttributer {
+	return AttrWriterRows{rows: vals, offset: offset}
+}
 func (my AttrWriterRows) Register(writer *Writer) {
 	for rn, row := range my.rows {
+		rn += my.offset
 		rn = operationV2.NewTernary(operationV2.TrueValue[int](int(row.getNumber())), operationV2.FalseValue(rn)).GetByValue(row.getNumber() > 0)
 		for cn, cell := range row.cells {
 			var (
