@@ -1,18 +1,11 @@
-package excelV2
+package excelV3
 
 var APP struct {
-	Reader     Reader
-	ReaderAttr struct {
-		Filename    AttrReaderFilename
-		SheetName   AttrReaderSheetName
-		OriginalRow AttrReaderOriginalRow
-		FinishedRow AttrReaderFinishedRow
-		TitleRow    AttrReaderTitleRow
-	}
-	Row     Row
-	RowAttr struct {
-		Cells  AttrRowCells
-		Number AttrRowNumber
+	Writer     Writer
+	WriterAttr struct {
+		Filename  AttrWriterFilename
+		SheetName AttrWriterSheetName
+		Cell      AttrWriterCell
 	}
 	Cell     Cell
 	CellAttr struct {

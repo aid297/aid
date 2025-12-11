@@ -11,7 +11,7 @@ type A struct {
 }
 
 func Test1(t *testing.T) {
-	t.Run("test1 New", func(t *testing.T) {
+	t.Run("test1 Set", func(t *testing.T) {
 		aa := New([]int{1, 2, 3})
 
 		if aa.ToString() != "[1 2 3]" {

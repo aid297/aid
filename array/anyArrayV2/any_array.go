@@ -210,7 +210,7 @@ func (my AnyArray[T]) Shuffle() AnyArray[T] {
 func (my AnyArray[T]) Length() int { return len(my.data) }
 
 // LengthNotEmpty 获取非0值长度
-func (my *AnyArray[T]) LengthNotEmpty() int { return my.RemoveEmpty().Length() }
+func (my AnyArray[T]) LengthNotEmpty() int { return my.RemoveEmpty().Length() }
 
 // Filter 过滤数组值
 func (my AnyArray[T]) Filter(fn func(item T) bool) AnyArray[T] {
