@@ -38,10 +38,6 @@ func (my AttrWriterRows) Register(writer *Writer) {
 				col string
 			)
 
-			if cell.GetCoordinate() != "" {
-
-			}
-
 			if col, err = ColumnNumberToText(cn + 1); err != nil {
 				writer.Error = fmt.Errorf("%w：行 %d 列索引 %d 转换为列名称错误", ErrColumnNumber, rn+1, cn+1)
 				return
