@@ -14,7 +14,7 @@ import (
 
 type Writer struct {
 	Error      error
-	lock       *sync.RWMutex
+	lock       sync.RWMutex
 	rawFile    *excelize.File
 	filename   string
 	sheetName  string
@@ -22,7 +22,7 @@ type Writer struct {
 }
 
 func (*Writer) New(attrs ...WriterAttributer) *Writer {
-	return (&Writer{lock: &sync.RWMutex{}, rawFile: excelize.NewFile()}).setAttrs(attrs...)
+	return (&Writer{lock: sync.RWMutex{}, rawFile: excelize.NewFile()}).setAttrs(attrs...)
 }
 
 func (my *Writer) setAttrs(attrs ...WriterAttributer) *Writer {
@@ -51,12 +51,12 @@ func (my *Writer) GetSheetName() string {
 	return my.getSheetName()
 }
 
-// setCell 设置 cell 值和格式
+// setCell 设置 cells 值和格式
 func (my *Writer) setCell(cell *Cell) *Writer {
 	return my.setSheet().setCellValue(cell).setCellStyle(cell)
 }
 
-// setCellValue 设置 cell 值
+// setCellValue 设置 cells 值
 func (my *Writer) setCellValue(cell *Cell) *Writer {
 	var err error
 
@@ -96,7 +96,7 @@ func (my *Writer) setCellValue(cell *Cell) *Writer {
 	return my
 }
 
-// setCellStyle 设置 cell 格式
+// setCellStyle 设置 cells 格式
 func (my *Writer) setCellStyle(cell *Cell) *Writer {
 	fill := excelize.Fill{Type: "pattern", Pattern: 0, Color: []string{""}}
 	if cell.GetPatternRGB() != "" {

@@ -8,7 +8,7 @@ import (
 
 type (
 	Cell struct {
-		lock                                                                                                                 *sync.RWMutex
+		lock                                                                                                                 sync.RWMutex
 		content                                                                                                              any
 		contentType                                                                                                          CellContentType
 		coordinate, fontRGB, patternRGB                                                                                      string
@@ -38,7 +38,7 @@ const (
 )
 
 func (*Cell) New(attrs ...CellAttributer) *Cell {
-	return (&Cell{lock: &sync.RWMutex{}, contentType: CellContentTypeAny}).setAttrs(attrs...)
+	return (&Cell{lock: sync.RWMutex{}, contentType: CellContentTypeAny}).setAttrs(attrs...)
 }
 
 func (*Cell) NewAny(content any, attrs ...CellAttributer) *Cell {

@@ -14,13 +14,11 @@ func Test1NewWriter(t *testing.T) {
 	t.Logf("sheet name: %v", writer.GetSheetName())
 }
 
-func Test1SaveWriterToFile(t *testing.T) {
-	var writer *Writer
-
-	writer = APP.Writer.New(
+func Test2CellToFile(t *testing.T) {
+	var writer = APP.Writer.New(
 		APP.WriterAttr.Filename.Set("表格1.xlsx"),
 		APP.WriterAttr.SheetName.Set("图1"),
-		APP.WriterAttr.Cell.Set(
+		APP.WriterAttr.Cells.Set(
 			APP.Cell.New(
 				APP.CellAttr.Content.Set(123),
 				APP.CellAttr.ContentType.Set(CellContentTypeInt),
@@ -35,6 +33,53 @@ func Test1SaveWriterToFile(t *testing.T) {
 				APP.CellAttr.DiagonalRGB.Set("FFFF00", "FFFF00"),
 				APP.CellAttr.DiagonalStyle.Set(1, 1),
 				APP.CellAttr.WrapText.SetTrue(),
+			),
+		),
+	)
+
+	writer.Save()
+}
+
+func Test3RowToFile(t *testing.T) {
+	var writer = APP.Writer.New(
+		APP.WriterAttr.Filename.Set("表格2.xlsx"),
+		APP.WriterAttr.SheetName.Set("图1"),
+		APP.WriterAttr.Rows.Set(
+			APP.Row.New(
+				APP.RowAttr.Cells.Set(
+					APP.Cell.New(
+						APP.CellAttr.Content.Set("姓名"),
+						APP.CellAttr.ContentType.Set(CellContentTypeAny),
+					),
+					APP.Cell.New(
+						APP.CellAttr.Content.Set("年龄"),
+						APP.CellAttr.ContentType.Set(CellContentTypeAny),
+					),
+				),
+			),
+			APP.Row.New(
+				APP.RowAttr.Cells.Set(
+					APP.Cell.New(
+						APP.CellAttr.Content.Set("张三"),
+						APP.CellAttr.ContentType.Set(CellContentTypeAny),
+					),
+					APP.Cell.New(
+						APP.CellAttr.Content.Set(18),
+						APP.CellAttr.ContentType.Set(CellContentTypeInt),
+					),
+				),
+			),
+			APP.Row.New(
+				APP.RowAttr.Cells.Set(
+					APP.Cell.New(
+						APP.CellAttr.Content.Set("李四"),
+						APP.CellAttr.ContentType.Set(CellContentTypeAny),
+					),
+					APP.Cell.New(
+						APP.CellAttr.Content.Set(20),
+						APP.CellAttr.ContentType.Set(CellContentTypeInt),
+					),
+				),
 			),
 		),
 	)

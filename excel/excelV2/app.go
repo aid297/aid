@@ -5,7 +5,13 @@ var APP struct {
 	WriterAttr struct {
 		Filename  AttrWriterFilename
 		SheetName AttrWriterSheetName
-		Cell      AttrWriterCell
+		Cells     AttrWriterCells
+		Rows      AttrWriterRows
+	}
+	Row     Row
+	RowAttr struct {
+		Cells  AttrCells
+		Number AttrNumber
 	}
 	Cell     Cell
 	CellAttr struct {

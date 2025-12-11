@@ -19,4 +19,5 @@ var (
 	ErrWriteCellAny      = errors.New("写入单元格失败（常规）")
 	ErrSave              = errors.New("保存文件失败")
 	ErrDownload          = errors.New("下载文件失败")
+	ErrColumnNumber      = errors.New("错误的列索引")
 )
