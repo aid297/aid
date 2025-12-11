@@ -146,7 +146,7 @@ func (my *Reader) GetMap() map[string]string {
 				return nil
 			}
 
-			my.dataMap[fmt.Sprintf("%d%s", colTxt, row)] = my.originalData[row][col]
+			my.dataMap[fmt.Sprintf("%s%d", colTxt, row)] = my.originalData[row][col]
 		}
 	}
 
