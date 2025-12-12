@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	pool := gormPool.MySqlPoolApp.Once(gormPool.DbSettingApp.New("./db.yaml"))
+	pool := gormPool.MySqlPoolApp.Once(gormPool.APP.DBSetting.New("./db.yaml"))
 	db := pool.GetConn()
 
 	tr := APP.Edge.Once(TablePrefix("my_rbac"), DB(db))
