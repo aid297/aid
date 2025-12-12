@@ -9,24 +9,16 @@ type (
 	AttrTargetsError  struct{ targets []error }
 )
 
-func TargetString(target string) AttrTargetString {
-	return AttrTargetString{target: target}
-}
+func TargetString(target string) AttrTargetString   { return AttrTargetString{target} }
 func (my AttrTargetString) Register(regexp *Regexp) { regexp.target = my.target }
 
-func TargetsString(targets ...string) AttrTargetsString {
-	return AttrTargetsString{targets: targets}
-}
-func (my AttrTargetsString) Register(regexp *Regexp) { regexp.targets = my.targets }
+func TargetsString(targets ...string) AttrTargetsString { return AttrTargetsString{targets} }
+func (my AttrTargetsString) Register(regexp *Regexp)    { regexp.targets = my.targets }
 
-func TargetError(target error) AttrTargetError {
-	return AttrTargetError{target: target}
-}
+func TargetError(target error) AttrTargetError     { return AttrTargetError{target} }
 func (my AttrTargetError) Register(regexp *Regexp) { regexp.target = my.target.Error() }
 
-func TargetsError(targets ...error) AttrTargetsError {
-	return AttrTargetsError{targets: targets}
-}
+func TargetsError(targets ...error) AttrTargetsError { return AttrTargetsError{targets} }
 func (my AttrTargetsError) Register(regexp *Regexp) {
 	if len(my.targets) == 0 {
 		return

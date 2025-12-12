@@ -14,10 +14,10 @@ type Regexp struct {
 var RegexpApp Regexp
 
 func (Regexp) New(original string, attrs ...Attributer) Regexp {
-	return Regexp{re: *regexp.MustCompile(original)}.Set(attrs...)
+	return Regexp{re: *regexp.MustCompile(original)}.SetAttrs(attrs...)
 }
 
-func (my Regexp) Set(attrs ...Attributer) Regexp {
+func (my Regexp) SetAttrs(attrs ...Attributer) Regexp {
 	if len(attrs) > 0 {
 		for idx := range attrs {
 			attrs[idx].Register(&my)

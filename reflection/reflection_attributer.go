@@ -8,8 +8,5 @@ type (
 	AttrSerializeFormat struct{ format string }
 )
 
-func SerializeFormat(format string) AttrSerializeFormat {
-	return AttrSerializeFormat{format: format}
-}
-
+func SerializeFormat(format string) AttrSerializeFormat { return AttrSerializeFormat{format} }
 func (my AttrSerializeFormat) Register(ref *Reflection) { ref.serializeFormat = my.format }

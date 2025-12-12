@@ -27,8 +27,6 @@ type (
 	AnyType        string
 )
 
-var ReflectionApp Reflection
-
 const (
 	Int               ReflectionType = "I"
 	Int8              ReflectionType = "I8"
