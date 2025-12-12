@@ -1,14 +1,14 @@
 package rbac
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/array"
+	"github.com/aid297/aid/array/anyArrayV2"
 	"github.com/aid297/aid/str"
 )
 
@@ -17,18 +17,15 @@ type Role struct {
 	CreatedAt time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP;comment:新建时间" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;comment:更新时间" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index;comment:删除时间" json:"deletedAt"`
-	UUID      uuid.UUID      `gorm:"type:char(36);not null;unique;comment:uuid;" json:"uuid"`
+	UUID      string         `gorm:"column:uuid;type:char(36);not null;unique;comment:uuid;" json:"uuid"`
 	Name      string         `gorm:"type:varchar(255);not null;unique;comment:角色名称" json:"name"`
 	Groups    []*Group       `gorm:"foreignKey:group_uuid;references:uuid;" json:"groups"`
 	RBACs     []*Edge        `gorm:"foreignKey:group_uuid;references:uuid;" json:"rbacs"`
 }
 
-func (Role) New(attrs ...RoleAttributer) Role {
-	ins := new(Role)
-	return ins.Set(attrs...)
-}
+func (Role) New(attrs ...RoleAttributer) Role { return Role{}.SetAttrs(attrs...) }
 
-func (my Role) Set(attrs ...RoleAttributer) Role {
+func (my Role) SetAttrs(attrs ...RoleAttributer) Role {
 	if len(attrs) > 0 {
 		for idx := range attrs {
 			attrs[idx].Register(&my)
@@ -40,37 +37,33 @@ func (my Role) Set(attrs ...RoleAttributer) Role {
 
 func (Role) TableName() string {
 	if edgeIns.tablePrefix != "" {
-		return str.BufferApp.NewString(edgeIns.tablePrefix).S("_roles").String()
+		return str.APP.Buffer.JoinString(edgeIns.tablePrefix, "_roles")
 	} else {
-		return str.BufferApp.NewString("triangle_roles").String()
+		return "edge_roles"
 	}
 }
 
 func (Role) DB() *gorm.DB { return edgeIns.db.Model(new(Role)) }
 
-func (my Role) Store(options ...RoleAttributer) error {
+func (my Role) Store(attrs ...RoleAttributer) error {
 	var (
 		err error
 		r   int64
 	)
 
 	if edgeIns.db == nil {
-		return errors.New("数据库链接失败")
+		return ErrDBConnFailed
 	}
 
-	if len(options) > 0 {
-		my.Set(options...)
-	}
-
-	if err = my.DB().Where("name", my.Name).Count(&r).Error; err != nil {
-		return fmt.Errorf("查重失败：%w", err)
+	if err = my.SetAttrs(attrs...).DB().Where("name", my.Name).Count(&r).Error; err != nil {
+		return fmt.Errorf("%w：%w", ErrCheckRepeat, err)
 	}
 
 	if r > 0 {
-		return errors.New("名称重复")
+		return fmt.Errorf("角色%w", ErrRepeatName)
 	}
 
-	my.UUID = uuid.Must(uuid.NewV6())
+	my.UUID = uuid.Must(uuid.NewV6()).String()
 	my.CreatedAt = time.Now()
 	my.UpdatedAt = time.Now()
 	return my.DB().Create(my).Error
@@ -83,24 +76,20 @@ func (my Role) Update(attrs ...RoleAttributer) error {
 	)
 
 	if edgeIns.db == nil {
-		return errors.New("数据库连接失败")
+		return ErrDBConnFailed
 	}
 
-	if len(attrs) > 0 {
-		my.Set(attrs...)
-	}
-
-	if err = my.DB().Where("uuid <> ?", my.UUID.String()).Where("name", my.Name).Count(&r).Error; err != nil {
-		return fmt.Errorf("查重失败：%w", err)
+	if err = my.SetAttrs(attrs...).DB().Where("uuid <> ?", my.UUID).Where("name", my.Name).Count(&r).Error; err != nil {
+		return fmt.Errorf("%w：%w", ErrCheckRepeat, err)
 	}
 
 	if r > 0 {
-		return errors.New("名称重复")
+		return ErrRepeatName
 	}
 
 	my.UpdatedAt = time.Now()
-	if err = my.DB().Where("uuid", my.UUID.String()).Save(my).Error; err != nil {
-		return fmt.Errorf("编辑失败：%w", err)
+	if err = my.DB().Where("uuid", my.UUID).Save(my).Error; err != nil {
+		return fmt.Errorf("%w：%w", ErrUpdate, err)
 	}
 
 	return nil
@@ -108,42 +97,34 @@ func (my Role) Update(attrs ...RoleAttributer) error {
 
 func (my Role) Destroy() error {
 	if edgeIns.db == nil {
-		return errors.New("数据库连接失败")
+		return ErrDBConnFailed
 	}
 
-	return my.DB().Where("uuid", my.UUID.String()).Delete(my).Error
+	return my.DB().Where("uuid", my.UUID).Delete(my).Error
 }
 
-func (my Role) GetDotsByUUID(edgeUUID uuid.UUID) ([]Permission, error) {
+func (my Role) GetDotsByUUID(edgeUUID uuid.UUID) (permissions []Permission, err error) {
 	var groups []*Group
-	if err := my.DB().Preload("Groups").Where("uuid", edgeUUID).Find(&groups).Error; err != nil {
-		return nil, err
+	if err = my.DB().Preload("Groups").Where("uuid", edgeUUID).Find(&groups).Error; err != nil {
+		return
 	}
 
-	var permissionUUIDs = make([]string, len(groups))
-	array.New(groups).Each(func(idx int, item *Group) { permissionUUIDs[idx] = item.PermissionUUID.String() })
-
-	var permissions []Permission
-	if err := APP.Permission.DB().Where("uuid in (?)", permissionUUIDs).Find(&permissions).Error; err != nil {
-		return nil, err
+	if err = APP.Permission.DB().Where("uuid in (?)", anyArrayV2.Cast(anyArrayV2.NewList(groups).Pluck(func(item *Group) any { return item.PermissionUUID }), func(src any) string { return cast.ToString(src) }).ToSlice()).Find(&permissions).Error; err != nil {
+		return
 	}
 
-	return permissions, nil
+	return
 }
 
-func (my Role) GetDotsByUUIDs(edgeUUIDs []uuid.UUID) ([]Permission, error) {
+func (my Role) GetDotsByUUIDs(edgeUUIDs []uuid.UUID) (permissions []Permission, err error) {
 	var groups []*Group
-	if err := my.DB().Preload("Groups").Where("uuid in (?)", edgeUUIDs).Find(&groups).Error; err != nil {
-		return nil, err
+	if err = my.DB().Preload("Groups").Where("uuid in (?)", edgeUUIDs).Find(&groups).Error; err != nil {
+		return
 	}
 
-	var permissionUUIDs = make([]string, len(groups))
-	array.New(groups).Each(func(idx int, item *Group) { permissionUUIDs[idx] = item.PermissionUUID.String() })
-
-	var permissions []Permission
-	if err := APP.Permission.DB().Where("uuid in (?)", permissionUUIDs).Find(&permissions).Error; err != nil {
-		return nil, err
+	if err = APP.Permission.DB().Where("uuid in (?)", anyArrayV2.Cast(anyArrayV2.NewList(groups).Pluck(func(item *Group) any { return item.PermissionUUID }), func(src any) string { return cast.ToString(src) }).ToSlice()).Find(&permissions).Error; err != nil {
+		return
 	}
 
-	return permissions, nil
+	return
 }

@@ -4,7 +4,7 @@ common:
   maxIdleConns: 20
   maxLifetime: 100
   maxIdleTime: 10
-cbitSql:
+ar-sql:
   database: "cbit_db"
   rws: false
   main:
@@ -35,7 +35,7 @@ postgres:
     database: "tbl_test"
     sslmode: "disable"
     timezone: "Asia/Shanghai"
-sqlServer:
+sql-server:
   maxOpenConns: 100
   maxIdleConns: 20
   maxLifetime: 100

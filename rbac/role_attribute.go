@@ -8,10 +8,5 @@ type (
 	AttrRoleName struct{ name string }
 )
 
-func RoleName(name string) RoleAttributer {
-	return AttrRoleName{name: name}
-}
-
-func (my AttrRoleName) Register(role *Role) {
-	role.Name = my.name
-}
+func RoleName(name string) RoleAttributer   { return AttrRoleName{name: name} }
+func (my AttrRoleName) Register(role *Role) { role.Name = my.name }

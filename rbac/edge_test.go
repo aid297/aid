@@ -59,7 +59,7 @@ func Test3(t *testing.T) {
 }
 
 func Test4(t *testing.T) {
-	t.Run("绑定Triangle", func(t *testing.T) {
+	t.Run("绑定Edge", func(t *testing.T) {
 		var edge *Role
 		if err := APP.Role.New().DB().First(&edge).Error; err != nil {
 			log.Fatal(err)
@@ -73,10 +73,7 @@ func Test4(t *testing.T) {
 
 		intersections := map[string][]string{}
 		for idx := range userUUIDs {
-			intersections[userUUIDs[idx]] = []string{}
-			for idx2 := range levels {
-				intersections[userUUIDs[idx]] = append(intersections[userUUIDs[idx]], levels[idx2])
-			}
+			intersections[userUUIDs[idx]] = append([]string{}, levels...)
 		}
 
 		if err := APP.Edge.Bind(edge.UUID, intersections); err != nil {

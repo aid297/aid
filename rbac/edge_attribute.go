@@ -1,50 +1,30 @@
 package rbac
 
 import (
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type (
-	EdgeAttributer interface {
-		Register(triangle *Edge)
-	}
+	EdgeAttributer interface{ Register(edge *Edge) }
 
 	AttrTablePrefix   struct{ tablePrefix string }
 	AttrDB            struct{ db *gorm.DB }
-	AttrGroupUUID     struct{ faceUUID uuid.UUID }
+	AttrGroupUUID     struct{ faceUUID string }
 	AttrIntersection1 struct{ intersection1 string }
 	AttrIntersection2 struct{ intersection2 string }
 )
 
-func TablePrefix(tablePrefix string) EdgeAttributer {
-	return AttrTablePrefix{tablePrefix: tablePrefix}
-}
+func TablePrefix(tablePrefix string) EdgeAttributer { return AttrTablePrefix{tablePrefix} }
+func (my AttrTablePrefix) Register(edge *Edge)      { edge.tablePrefix = my.tablePrefix }
 
-func (my AttrTablePrefix) Register(triangle *Edge) {
-	triangle.tablePrefix = my.tablePrefix
-}
+func DB(db *gorm.DB) EdgeAttributer   { return AttrDB{db} }
+func (my AttrDB) Register(edge *Edge) { edge.db = my.db }
 
-func DB(db *gorm.DB) EdgeAttributer { return AttrDB{db: db} }
+func GroupUUID(face string) EdgeAttributer   { return AttrGroupUUID{face} }
+func (my AttrGroupUUID) Register(edge *Edge) { edge.RoleUUID = my.faceUUID }
 
-func (my AttrDB) Register(triangle *Edge) { triangle.db = my.db }
+func Intersection1(intersection1 string) EdgeAttributer { return AttrIntersection1{intersection1} }
+func (my AttrIntersection1) Register(edge *Edge)        { edge.Intersection1 = my.intersection1 }
 
-func GroupUUID(face uuid.UUID) EdgeAttributer { return AttrGroupUUID{faceUUID: face} }
-
-func (my AttrGroupUUID) Register(triangle *Edge) { triangle.RoleUUID = my.faceUUID }
-
-func Intersection1(intersection1 string) EdgeAttributer {
-	return AttrIntersection1{intersection1: intersection1}
-}
-
-func (my AttrIntersection1) Register(triangle *Edge) {
-	triangle.Intersection1 = my.intersection1
-}
-
-func Intersection2(intersection2 string) EdgeAttributer {
-	return AttrIntersection2{intersection2: intersection2}
-}
-
-func (my AttrIntersection2) Register(triangle *Edge) {
-	triangle.Intersection2 = my.intersection2
-}
+func Intersection2(intersection2 string) EdgeAttributer { return AttrIntersection2{intersection2} }
+func (my AttrIntersection2) Register(edge *Edge)        { edge.Intersection2 = my.intersection2 }
