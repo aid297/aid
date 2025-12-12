@@ -4,7 +4,7 @@ import "testing"
 
 func TestFile1(t *testing.T) {
 	t.Run("新建文件", func(t *testing.T) {
-		file := NewFileRel(FilePath("test-file.txt"))
+		file := NewFileRel(APP.FileAttr.Path.Set("test-file.txt"))
 		if err := file.Write([]byte("aaa")).Error; err != nil {
 			t.Fatalf("创建文件失败：%s", err)
 		}
@@ -13,7 +13,7 @@ func TestFile1(t *testing.T) {
 
 func TestFile2(t *testing.T) {
 	t.Run("新建文件", func(t *testing.T) {
-		file := NewFileRel(FilePath("test-file.txt"))
+		file := NewFileRel(APP.FileAttr.Path.Set("test-file.txt"))
 		if err := file.Write([]byte("aaa")).Error; err != nil {
 			t.Fatalf("创建文件失败：%s", err)
 		}
@@ -24,7 +24,7 @@ func TestFile2(t *testing.T) {
 
 func TestFile3(t *testing.T) {
 	t.Run("拷贝文件", func(t *testing.T) {
-		file := NewFileRel(FilePath("test-file.txt"))
+		file := NewFileRel(APP.FileAttr.Path.Set("test-file.txt"))
 		if err := file.Write([]byte("aaa")).Error; err != nil {
 			t.Fatalf("创建文件失败：%s", err)
 		}
@@ -37,7 +37,7 @@ func TestFile3(t *testing.T) {
 
 func TestFile4(t *testing.T) {
 	t.Run("删除文件", func(t *testing.T) {
-		file := NewFileRel(FilePath("test-file.txt"))
+		file := NewFileRel(APP.FileAttr.Path.Set("test-file.txt"))
 		if err := file.Write([]byte("aaa")).Error; err != nil {
 			t.Fatalf("创建文件失败：%s", err)
 		}
@@ -52,7 +52,7 @@ func TestFile4(t *testing.T) {
 
 func TestFile5(t *testing.T) {
 	t.Run("读取文件内容", func(t *testing.T) {
-		file := NewFileRel(FilePath("test-file.txt"))
+		file := NewFileRel(APP.FileAttr.Path.Set("test-file.txt"))
 		if err := file.Write([]byte("aaa")).Error; err != nil {
 			t.Fatalf("创建文件失败：%s", err)
 		}
@@ -67,7 +67,7 @@ func TestFile5(t *testing.T) {
 
 func TestFile6(t *testing.T) {
 	t.Run("文件改名", func(t *testing.T) {
-		file := NewFileRel(FilePath("test-file.txt"))
+		file := NewFileRel(APP.FileAttr.Path.Set("test-file.txt"))
 		if err := file.Write([]byte("aaa")).Error; err != nil {
 			t.Fatalf("创建文件失败：%s", err)
 		}

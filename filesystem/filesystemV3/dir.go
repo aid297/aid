@@ -31,11 +31,13 @@ func NewDir(attrs ...DirAttributer) *Dir {
 }
 
 // NewDirAbs 实例化：绝对路径
-func NewDirAbs(attrs ...DirAttributer) *Dir { return NewDir(append(attrs, DirIsAbs())...) }
+func NewDirAbs(attrs ...DirAttributer) *Dir {
+	return NewDir(append(attrs, APP.DirAttr.IsRel.SetAbs())...)
+}
 
 // NewDirRel 实例化：相对路径
 func NewDirRel(attrs ...DirAttributer) *Dir {
-	return NewDir(append([]DirAttributer{DirPath("."), DirIsRel()}, attrs...)...)
+	return NewDir(append([]DirAttributer{APP.DirAttr.Path.Set("."), APP.DirAttr.IsRel.SetRel()}, attrs...)...)
 }
 
 // New 实例化
@@ -45,12 +47,12 @@ func (*Dir) New(attrs ...DirAttributer) *Dir {
 
 // Abs 实例化：绝对路径
 func (*Dir) Abs(attrs ...DirAttributer) *Dir {
-	return APP.Dir.New(append([]DirAttributer{DirPath("."), DirIsRel()}, attrs...)...)
+	return APP.Dir.New(append([]DirAttributer{APP.DirAttr.Path.Set("."), APP.DirAttr.IsRel.SetRel()}, attrs...)...)
 }
 
 // Rel 实例化：相对路径
 func (*Dir) Rel(attrs ...DirAttributer) *Dir {
-	return APP.Dir.New(append([]DirAttributer{DirPath("."), DirIsRel()}, attrs...)...)
+	return APP.Dir.New(append([]DirAttributer{APP.DirAttr.Path.Set("."), APP.DirAttr.IsRel.SetRel()}, attrs...)...)
 }
 
 // SetAttrs 设置属性
@@ -127,7 +129,7 @@ func (my *Dir) refresh() *Dir {
 
 // Join 追加目录
 func (my *Dir) Join(dirs ...string) *Dir {
-	return my.setAttrs(DirIsAbs(), DirPath(append([]string{my.FullPath}, dirs...)...)).refresh()
+	return my.setAttrs(APP.DirAttr.IsRel.SetAbs(), APP.DirAttr.Path.Set(append([]string{my.FullPath}, dirs...)...)).refresh()
 }
 
 // Create 创建多级目录
@@ -165,7 +167,7 @@ func (my *Dir) Rename(newName string) *Dir {
 		return my
 	}
 
-	return NewDirAbs(DirPath(newPath))
+	return NewDirAbs(APP.DirAttr.Path.Set(newPath))
 }
 
 // Remove 删除目录
@@ -221,10 +223,10 @@ func (my *Dir) LS() *Dir {
 
 	for _, entry := range entries {
 		if entry.IsDir() {
-			d := NewDirAbs(DirPath(my.FullPath)).Join(entry.Name())
+			d := NewDirAbs(APP.DirAttr.Path.Set(my.FullPath)).Join(entry.Name())
 			my.Dirs = append(my.Dirs, d.LS())
 		} else {
-			my.Files = append(my.Files, NewFileAbs(FilePath(my.FullPath, entry.Name())))
+			my.Files = append(my.Files, NewFileAbs(APP.FileAttr.Path.Set(my.FullPath, entry.Name())))
 		}
 	}
 
@@ -252,7 +254,7 @@ func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = NewDir(DirSetRel(isRel), DirPath(dstPaths...)).Create(DirMode(my.Mode)); dst.Error != nil {
+	if dst = NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)).Create(DirMode(my.Mode)); dst.Error != nil {
 		my.Error = dst.Error
 		return my
 	}
@@ -285,7 +287,7 @@ func (my *Dir) CopyDirsTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = NewDir(DirSetRel(isRel), DirPath(dstPaths...)); dst.Error != nil {
+	if dst = NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)); dst.Error != nil {
 		my.Error = dst.Error
 		return my
 	}
@@ -315,7 +317,7 @@ func (my *Dir) CopyAllTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = NewDir(DirSetRel(isRel), DirPath(dstPaths...)); !dst.Exist {
+	if dst = NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)); !dst.Exist {
 		dst.Create(DirMode(my.Mode))
 	}
 
@@ -332,33 +334,9 @@ func (my *Dir) CopyAllTo(isRel bool, dstPaths ...string) *Dir {
 }
 
 // Copy 复制当前对象
-func (my *Dir) Copy() *Dir { return NewDirAbs(DirPath(my.FullPath)) }
+func (my *Dir) Copy() *Dir { return NewDirAbs(APP.DirAttr.Path.Set(my.FullPath)) }
 
 // Up 向上一级目录
-func (my *Dir) Up() *Dir { return my.setAttrs(DirIsAbs(), DirPath(my.BasePath)).refresh() }
-
-// ******************** 管理器属性 ******************** //
-type (
-	DirAttributer interface {
-		Register(dir *Dir)
-	}
-	AttrDirPath  struct{ dirs []string }
-	AttrDirIsRel struct{ isRel bool }
-)
-
-func DirPath(dirs ...string) AttrDirPath { return AttrDirPath{dirs: dirs} }
-func (my AttrDirPath) Register(dir *Dir) {
-	dir.FullPath = operationV2.NewTernary(
-		operationV2.TrueFn(func() string { return getRootPath(filepath.Join(my.dirs...)) }),
-		operationV2.FalseFn(func() string { return filepath.Join(my.dirs...) }),
-	).GetByValue(dir.IsRel)
+func (my *Dir) Up() *Dir {
+	return my.setAttrs(APP.DirAttr.IsRel.SetAbs(), APP.DirAttr.Path.Set(my.BasePath)).refresh()
 }
-func (my AttrDirPath) Join(dirs ...string) AttrDirPath {
-	my.dirs = append(my.dirs, dirs...)
-	return my
-}
-
-func DirSetRel(isRel bool) AttrDirIsRel   { return AttrDirIsRel{isRel: isRel} }
-func DirIsAbs() AttrDirIsRel              { return AttrDirIsRel{isRel: false} }
-func DirIsRel() AttrDirIsRel              { return AttrDirIsRel{isRel: true} }
-func (my AttrDirIsRel) Register(dir *Dir) { dir.IsRel = my.isRel }

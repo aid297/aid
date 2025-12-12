@@ -1,6 +1,14 @@
 package filesystemV3
 
 var APP struct {
-	Dir  Dir
-	File File
+	Dir     Dir
+	DirAttr struct {
+		Path  AttrDirPath
+		IsRel AttrDirIsRel
+	}
+	File     File
+	FileAttr struct {
+		Path  AttrFilePath
+		IsRel AttrFileIsRel
+	}
 }

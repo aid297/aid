@@ -31,7 +31,7 @@ func TestDir3(t *testing.T) {
 
 func TestDir4(t *testing.T) {
 	t.Run("删除单个目录", func(t *testing.T) {
-		dir := NewDirRel(DirPath("test-a", "test-b", "test-c"))
+		dir := NewDirRel(APP.DirAttr.Path.Set("test-a", "test-b", "test-c"))
 		if err := dir.Remove().Error; err != nil {
 			t.Fatalf("删除目录失败：%s", err)
 		}
@@ -40,7 +40,7 @@ func TestDir4(t *testing.T) {
 
 func TestDir5(t *testing.T) {
 	t.Run("删除多级目录", func(t *testing.T) {
-		dir := NewDirRel(DirPath("test-a"))
+		dir := NewDirRel(APP.DirAttr.Path.Set("test-a"))
 		if err := dir.RemoveAll().Error; err != nil {
 			t.Fatalf("删除失败：%s", err)
 		}
@@ -49,7 +49,7 @@ func TestDir5(t *testing.T) {
 
 func TestDir6(t *testing.T) {
 	t.Run("列出当前目录下的所有文件和子目录", func(t *testing.T) {
-		dir := NewDirRel(DirPath("test-a1", "test-a2", "test-a3"))
+		dir := NewDirRel(APP.DirAttr.Path.Set("test-a1", "test-a2", "test-a3"))
 
 		if err := dir.Create().Error; err != nil {
 			t.Fatalf("创建目录失败：%s", err)
@@ -73,7 +73,7 @@ func TestDir6(t *testing.T) {
 
 func TestDir7(t *testing.T) {
 	t.Run("复制目录", func(t *testing.T) {
-		dir := NewDirRel(DirPath("test-a1", "test-a2", "test-a3"))
+		dir := NewDirRel(APP.DirAttr.Path.Set("test-a1", "test-a2", "test-a3"))
 
 		if err := dir.Create().Error; err != nil {
 			t.Fatalf("创建目录失败：%s", err)
@@ -89,7 +89,7 @@ func TestDir7(t *testing.T) {
 
 func TestDir8(t *testing.T) {
 	t.Run("文件夹改名", func(t *testing.T) {
-		dir := NewDirRel(DirPath("test-a1", "test-a2", "test-a3")).Create(DirMode(0777))
+		dir := NewDirRel(APP.DirAttr.Path.Set("test-a1", "test-a2", "test-a3")).Create(DirMode(0777))
 		if dir.Error != nil {
 			t.Fatalf("创建目录失败：%s", dir.Error)
 		}

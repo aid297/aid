@@ -38,11 +38,13 @@ func NewFile(attrs ...FileAttributer) *File {
 }
 
 // NewFileAbs 实例化：绝对路径
-func NewFileAbs(attrs ...FileAttributer) *File { return NewFile(append(attrs, FileIsAbs())...) }
+func NewFileAbs(attrs ...FileAttributer) *File {
+	return NewFile(append(attrs, APP.FileAttr.IsRel.SetAbs())...)
+}
 
 // NewFileRel 实例化：相对路径
 func NewFileRel(attrs ...FileAttributer) *File {
-	return NewFile(append([]FileAttributer{FileIsRel()}, attrs...)...)
+	return NewFile(append([]FileAttributer{APP.FileAttr.IsRel.SetRel()}, attrs...)...)
 }
 
 // New 实例化
@@ -51,11 +53,13 @@ func (*File) New(attrs ...FileAttributer) *File {
 }
 
 // Abs 实例化：绝对路径
-func (*File) Abs(attrs ...FileAttributer) *File { return APP.File.New(append(attrs, FileIsAbs())...) }
+func (*File) Abs(attrs ...FileAttributer) *File {
+	return APP.File.New(append(attrs, APP.FileAttr.IsRel.SetAbs())...)
+}
 
 // Rel 实例化：相对路径
 func (*File) Rel(attrs ...FileAttributer) *File {
-	return APP.File.New(append([]FileAttributer{FileIsRel()}, attrs...)...)
+	return APP.File.New(append([]FileAttributer{APP.FileAttr.IsRel.SetRel()}, attrs...)...)
 }
 
 // SetAttrs 设置属性
@@ -134,12 +138,12 @@ func (my *File) RUnlock() *File {
 
 // Join 连接路径
 func (my *File) Join(dirs ...string) *File {
-	return my.setAttrs(FileIsAbs(), FilePath(append([]string{my.FullPath}, dirs...)...)).refresh()
+	return my.setAttrs(APP.FileAttr.IsRel.SetAbs(), APP.FileAttr.Path.Set(append([]string{my.FullPath}, dirs...)...)).refresh()
 }
 
 // Create 创建文件
 func (my *File) Create(attrs ...FileOperationAttributer) *File {
-	if dir := NewDirAbs(DirPath(my.BasePath)); !dir.Exist {
+	if dir := NewDirAbs(APP.DirAttr.Path.Set(my.BasePath)); !dir.Exist {
 		if err := dir.Create().Error; err != nil {
 			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		}
@@ -158,7 +162,7 @@ func (my *File) Write(content []byte, attrs ...FileOperationAttributer) *File {
 		file          *os.File
 	)
 
-	if dir := NewDirAbs(DirPath(my.BasePath)); !dir.Exist {
+	if dir := NewDirAbs(APP.DirAttr.Path.Set(my.BasePath)); !dir.Exist {
 		if err := dir.Create().Error; err != nil {
 			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		}
@@ -186,7 +190,7 @@ func (my *File) Write(content []byte, attrs ...FileOperationAttributer) *File {
 func (my *File) Rename(newName string) *File {
 	var (
 		err     error
-		newFile = NewFile(FileIsAbs(), FilePath(my.BasePath, newName))
+		newFile = NewFile(APP.FileAttr.IsRel.SetAbs(), APP.FileAttr.Path.Set(my.BasePath, newName))
 	)
 
 	if err = os.Rename(my.FullPath, newFile.FullPath); err != nil {
@@ -250,45 +254,21 @@ func (my *File) CopyTo(isRel bool, dstPaths ...string) *File {
 		return my
 	}
 
-	a := NewDir(DirSetRel(isRel), DirPath(dstPaths...)).Up()
+	a := NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)).Up()
 	print(a.FullPath)
 
-	b := NewDirAbs(DirPath(my.BasePath))
+	b := NewDirAbs(APP.DirAttr.Path.Set(my.BasePath))
 	print(b.FullPath)
 
-	if my.Error = NewDir(DirSetRel(isRel), DirPath(dstPaths...)).Up().Create(DirMode(NewDirAbs(DirPath(my.BasePath)).Info.Mode())).Error; my.Error != nil {
+	if my.Error = NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)).Up().Create(DirMode(NewDirAbs(APP.DirAttr.Path.Set(my.BasePath)).Info.Mode())).Error; my.Error != nil {
 		return my
 	}
 
-	dst := NewFile(FileSetRel(isRel), FilePath(dstPaths...)).FullPath
+	dst := NewFile(APP.FileAttr.IsRel.Set(isRel), APP.FileAttr.Path.Set(dstPaths...)).FullPath
 	my.Error = copyFileTo(my.FullPath, dst)
 
 	return my
 }
 
 // Copy 复制文件实例
-func (my *File) Copy() *File { return NewFileAbs(FilePath(my.FullPath)) }
-
-// ******************** 管理器属性 ******************** //
-type (
-	FileAttributer interface{ Register(dir *File) }
-	AttrFilePath   struct{ dirs []string }
-	AttrFileIsRel  struct{ isRel bool }
-)
-
-func FilePath(dirs ...string) AttrFilePath { return AttrFilePath{dirs: dirs} }
-func (my AttrFilePath) Register(file *File) {
-	file.FullPath = operationV2.NewTernary(
-		operationV2.TrueFn(func() string { return getRootPath(filepath.Join(my.dirs...)) }),
-		operationV2.FalseFn(func() string { return filepath.Join(my.dirs...) }),
-	).GetByValue(file.IsRel)
-}
-func (my AttrFilePath) Join(dirs ...string) AttrFilePath {
-	my.dirs = append(my.dirs, dirs...)
-	return my
-}
-
-func FileSetRel(isRel bool) AttrFileIsRel   { return AttrFileIsRel{isRel: isRel} }
-func FileIsAbs() AttrFileIsRel              { return AttrFileIsRel{isRel: false} }
-func FileIsRel() AttrFileIsRel              { return AttrFileIsRel{isRel: true} }
-func (my AttrFileIsRel) Register(dir *File) { dir.IsRel = my.isRel }
+func (my *File) Copy() *File { return NewFileAbs(APP.FileAttr.Path.Set(my.FullPath)) }
