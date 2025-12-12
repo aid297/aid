@@ -34,7 +34,7 @@ var (
 
 // NewFile 实例化
 func NewFile(attrs ...FileAttributer) *File {
-	return (&File{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
+	return (&File{mu: sync.RWMutex{}}).setAttrs(attrs...).refresh()
 }
 
 // NewFileAbs 实例化：绝对路径
@@ -47,7 +47,7 @@ func NewFileRel(attrs ...FileAttributer) *File {
 
 // New 实例化
 func (*File) New(attrs ...FileAttributer) *File {
-	return (&File{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
+	return (&File{mu: sync.RWMutex{}}).setAttrs(attrs...).refresh()
 }
 
 // Abs 实例化：绝对路径
@@ -60,6 +60,13 @@ func (*File) Rel(attrs ...FileAttributer) *File {
 
 // SetAttrs 设置属性
 func (my *File) SetAttrs(attrs ...FileAttributer) *File {
+	my.mu.Lock()
+	defer my.mu.Unlock()
+	return my.setAttrs(attrs...)
+}
+
+// setAttrs 设置属性
+func (my *File) setAttrs(attrs ...FileAttributer) *File {
 	for idx := range attrs {
 		attrs[idx].Register(my)
 	}
@@ -127,7 +134,7 @@ func (my *File) RUnlock() *File {
 
 // Join 连接路径
 func (my *File) Join(dirs ...string) *File {
-	return my.SetAttrs(FileIsAbs(), FilePath(append([]string{my.FullPath}, dirs...)...)).refresh()
+	return my.setAttrs(FileIsAbs(), FilePath(append([]string{my.FullPath}, dirs...)...)).refresh()
 }
 
 // Create 创建文件

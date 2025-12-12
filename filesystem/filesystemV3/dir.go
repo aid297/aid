@@ -27,7 +27,7 @@ type Dir struct {
 
 // NewDir 实例化
 func NewDir(attrs ...DirAttributer) *Dir {
-	return (&Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0)}).SetAttrs(attrs...).refresh()
+	return (&Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0)}).setAttrs(attrs...).refresh()
 }
 
 // NewDirAbs 实例化：绝对路径
@@ -40,7 +40,7 @@ func NewDirRel(attrs ...DirAttributer) *Dir {
 
 // New 实例化
 func (*Dir) New(attrs ...DirAttributer) *Dir {
-	return (&Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0)}).SetAttrs(attrs...).refresh()
+	return (&Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0)}).setAttrs(attrs...).refresh()
 }
 
 // Abs 实例化：绝对路径
@@ -55,6 +55,13 @@ func (*Dir) Rel(attrs ...DirAttributer) *Dir {
 
 // SetAttrs 设置属性
 func (my *Dir) SetAttrs(attrs ...DirAttributer) *Dir {
+	my.mu.Lock()
+	defer my.mu.Unlock()
+	return my.setAttrs(attrs...)
+}
+
+// setAttrs 设置属性
+func (my *Dir) setAttrs(attrs ...DirAttributer) *Dir {
 	for idx := range attrs {
 		attrs[idx].Register(my)
 	}
@@ -120,7 +127,7 @@ func (my *Dir) refresh() *Dir {
 
 // Join 追加目录
 func (my *Dir) Join(dirs ...string) *Dir {
-	return my.SetAttrs(DirIsAbs(), DirPath(append([]string{my.FullPath}, dirs...)...)).refresh()
+	return my.setAttrs(DirIsAbs(), DirPath(append([]string{my.FullPath}, dirs...)...)).refresh()
 }
 
 // Create 创建多级目录
@@ -328,7 +335,7 @@ func (my *Dir) CopyAllTo(isRel bool, dstPaths ...string) *Dir {
 func (my *Dir) Copy() *Dir { return NewDirAbs(DirPath(my.FullPath)) }
 
 // Up 向上一级目录
-func (my *Dir) Up() *Dir { return my.SetAttrs(DirIsAbs(), DirPath(my.BasePath)).refresh() }
+func (my *Dir) Up() *Dir { return my.setAttrs(DirIsAbs(), DirPath(my.BasePath)).refresh() }
 
 // ******************** 管理器属性 ******************** //
 type (
