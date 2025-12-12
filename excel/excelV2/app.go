@@ -7,7 +7,6 @@ var APP struct {
 		SheetName AttrWriterSheetName
 		Cells     AttrWriterCells
 		Rows      AttrWriterRows
-		Offset    AttrWriterOffset
 	}
 	Row     Row
 	RowAttr struct {

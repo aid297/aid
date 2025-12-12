@@ -26,12 +26,6 @@ type (
 		originalData   [][]string
 		dataMap        map[string]string
 		dataMaps       []map[string]string
-		structFields   map[string]structField
-	}
-
-	structField struct {
-		T     reflect.Type
-		IsPtr bool
 	}
 )
 

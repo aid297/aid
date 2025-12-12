@@ -19,5 +19,5 @@ func Test1NewCell(t *testing.T) {
 		APP.CellAttr.WrapText.SetTrue(),
 	)
 
-	t.Logf("%+v", *cell)
+	t.Logf("%+v", cell)
 }

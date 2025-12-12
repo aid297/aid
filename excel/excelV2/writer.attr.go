@@ -17,7 +17,6 @@ type (
 		offset   int
 		isOffset bool
 	}
-	AttrWriterOffset struct{ offset int }
 )
 
 func (AttrWriterSheetName) Set(val string) WriterAttributer { return AttrWriterSheetName{val} }
