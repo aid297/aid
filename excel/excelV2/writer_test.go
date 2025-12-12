@@ -73,10 +73,12 @@ func TestFromStruct_PointerElementsAndIgnore(t *testing.T) {
 	if v != "10" {
 		t.Fatalf("expected A3=10 got %q", v)
 	}
+
 	v, _ = w.rawFile.GetCellValue(w.sheetName, "B3")
 	if v != "Nina" {
 		t.Fatalf("expected B3=Nina got %q", v)
 	}
+
 	v, _ = w.rawFile.GetCellValue(w.sheetName, "C3")
 	if v != "nina@ex.com" {
 		t.Fatalf("expected C3=nina@ex.com got %q", v)
