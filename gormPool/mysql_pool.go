@@ -12,37 +12,37 @@ import (
 	"github.com/aid297/aid/operation/operationV2"
 )
 
-type MySqlPool struct {
+type MySQLPool struct {
 	username  string
 	password  string
 	host      string
 	port      uint16
 	database  string
 	charset   string
-	sources   map[string]*MySqlConnection
-	replicas  map[string]*MySqlConnection
+	sources   map[string]*MySQLConnection
+	replicas  map[string]*MySQLConnection
 	mainDsn   *Dsn
 	mainConn  *gorm.DB
-	dbSetting *DbSetting
+	dbSetting *DBSetting
 }
 
 var (
-	mysqlPoolIns   *MySqlPool
+	mysqlPoolIns   *MySQLPool
 	mysqlPoolOnce  sync.Once
 	MySqlDsnFormat = "%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local"
-	MySqlPoolApp   MySqlPool
+	MySqlPoolApp   MySQLPool
 )
 
-func (*MySqlPool) Once(dbSetting *DbSetting) GormPool {
+func (*MySQLPool) Once(dbSetting *DBSetting) GORMPool {
 	return operationV2.NewTernary(operationV2.TrueValue(OnceMySqlPool(dbSetting)), operationV2.FalseValue(mysqlPoolIns)).GetByValue(dbSetting != nil)
 }
 
 // OnceMySqlPool 单例化：mysql链接池
 //
 //go:fix 推荐使用：Once方法
-func OnceMySqlPool(dbSetting *DbSetting) *MySqlPool {
+func OnceMySqlPool(dbSetting *DBSetting) *MySQLPool {
 	mysqlPoolOnce.Do(func() {
-		mysqlPoolIns = &MySqlPool{
+		mysqlPoolIns = &MySQLPool{
 			username:  dbSetting.MySql.Main.Username,
 			password:  dbSetting.MySql.Main.Password,
 			host:      dbSetting.MySql.Main.Host,
@@ -100,13 +100,13 @@ func OnceMySqlPool(dbSetting *DbSetting) *MySqlPool {
 }
 
 // GetConn 获取主数据库链接
-func (*MySqlPool) GetConn() *gorm.DB {
+func (*MySQLPool) GetConn() *gorm.DB {
 	mysqlPoolIns.getRws()
 	return mysqlPoolIns.mainConn
 }
 
 // getRws 获取带有读写分离的数据库链接
-func (*MySqlPool) getRws() *gorm.DB {
+func (*MySQLPool) getRws() *gorm.DB {
 	var (
 		err                                 error
 		sourceDialectors, replicaDialectors []gorm.Dialector
@@ -185,7 +185,7 @@ func (*MySqlPool) getRws() *gorm.DB {
 }
 
 // Close 关闭数据库链接
-func (*MySqlPool) Close() error {
+func (*MySQLPool) Close() error {
 	if mysqlPoolIns.mainConn != nil {
 		db, err := mysqlPoolIns.mainConn.DB()
 		if err != nil {

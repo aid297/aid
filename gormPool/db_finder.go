@@ -41,8 +41,6 @@ type (
 	}
 )
 
-var FinderApp Finder
-
 // New 实例化：查询帮助器
 func (*Finder) New(db *gorm.DB) *Finder { return &Finder{db: db, total: -1} }
 

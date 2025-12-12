@@ -1,9 +1,9 @@
 package gormPool
 
 var APP struct {
-	MySqlPool     MySqlPool
-	PostgresPool  PostgresPool
-	SqlServerPool SqlServerPool
-	DBSetting     DbSetting
+	MySQLPool     MySQLPool
+	PGPool        PGPool
+	SQLServerPool SQLServerPool
+	DBSetting     DBSetting
 	Finder        Finder
 }

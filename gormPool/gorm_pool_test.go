@@ -15,7 +15,7 @@ type (
 )
 
 func Test1(t *testing.T) {
-	pool := APP.MySqlPool.Once(APP.DBSetting.New(filesystemV2.APP.File.NewByRel("./db.yaml").GetFullPath()))
+	pool := APP.MySQLPool.Once(APP.DBSetting.New(filesystemV2.APP.File.NewByRel("./db.yaml").GetFullPath()))
 	conn := pool.GetConn()
 	conn.AutoMigrate(&TestTable1{})
 

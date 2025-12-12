@@ -10,7 +10,7 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-type SqlServerPool struct {
+type SQLServerPool struct {
 	username     string
 	password     string
 	host         string
@@ -22,25 +22,25 @@ type SqlServerPool struct {
 	maxOpenConns int
 	mainDsn      *Dsn
 	mainConn     *gorm.DB
-	sources      map[string]*SqlServerConnection
-	replicas     map[string]*SqlServerConnection
+	sources      map[string]*SQLServerConnection
+	replicas     map[string]*SQLServerConnection
 }
 
 var (
-	sqlServerPoolIns   *SqlServerPool
+	sqlServerPoolIns   *SQLServerPool
 	sqlServerPoolOnce  sync.Once
 	SqlServerDsnFormat = "sqlserver://%s:%s@%s:?%d?database=%s"
-	SqlServerPoolApp   SqlServerPool
+	SqlServerPoolApp   SQLServerPool
 )
 
-func (*SqlServerPool) Once(dbSetting *DbSetting) GormPool { return OnceSqlServerPool(dbSetting) }
+func (*SQLServerPool) Once(dbSetting *DBSetting) GORMPool { return OnceSqlServerPool(dbSetting) }
 
 // OnceSqlServerPool 单例化：sql server连接池
 //
 //go:fix 推荐使用Once方法
-func OnceSqlServerPool(dbSetting *DbSetting) GormPool {
+func OnceSqlServerPool(dbSetting *DBSetting) GORMPool {
 	sqlServerPoolOnce.Do(func() {
-		sqlServerPoolIns = &SqlServerPool{
+		sqlServerPoolIns = &SQLServerPool{
 			username:     dbSetting.SqlServer.Main.Username,
 			password:     dbSetting.SqlServer.Main.Password,
 			host:         dbSetting.SqlServer.Main.Host,
@@ -100,10 +100,10 @@ func OnceSqlServerPool(dbSetting *DbSetting) GormPool {
 }
 
 // GetConn 获取主数据库链接
-func (my *SqlServerPool) GetConn() *gorm.DB { return my.mainConn }
+func (my *SQLServerPool) GetConn() *gorm.DB { return my.mainConn }
 
 // getRws 获取带有读写分离的数据库链接
-func (my *SqlServerPool) getRws() *gorm.DB {
+func (my *SQLServerPool) getRws() *gorm.DB {
 	var (
 		err                                 error
 		sourceDialectors, replicaDialectors []gorm.Dialector
@@ -180,7 +180,7 @@ func (my *SqlServerPool) getRws() *gorm.DB {
 }
 
 // Close 关闭数据库链接
-func (my *SqlServerPool) Close() error {
+func (my *SQLServerPool) Close() error {
 	if my.mainConn != nil {
 		db, err := my.mainConn.DB()
 		if err != nil {

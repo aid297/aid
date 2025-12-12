@@ -10,7 +10,7 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-type PostgresPool struct {
+type PGPool struct {
 	username     string
 	password     string
 	host         string
@@ -22,25 +22,25 @@ type PostgresPool struct {
 	maxOpenConns int
 	mainDsn      *Dsn
 	mainConn     *gorm.DB
-	sources      map[string]*PostgresConnection
-	replicas     map[string]*PostgresConnection
+	sources      map[string]*PGConnection
+	replicas     map[string]*PGConnection
 }
 
 var (
-	postgresPoolIns   *PostgresPool
+	postgresPoolIns   *PGPool
 	postgresPoolOnce  sync.Once
 	PostgresDsnFormat = "host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s"
-	PostgresPoolApp   PostgresPool
+	PostgresPoolApp   PGPool
 )
 
-func (*PostgresPool) Once(dbSetting *DbSetting) GormPool { return OncePostgresPool(dbSetting) }
+func (*PGPool) Once(dbSetting *DBSetting) GORMPool { return OncePostgresPool(dbSetting) }
 
 // OncePostgresPool 单例化：postgres链接池
 //
 //go:fix 推荐使用Once方法
-func OncePostgresPool(dbSetting *DbSetting) GormPool {
+func OncePostgresPool(dbSetting *DBSetting) GORMPool {
 	postgresPoolOnce.Do(func() {
-		postgresPoolIns = &PostgresPool{
+		postgresPoolIns = &PGPool{
 			username:     dbSetting.Postgres.Main.Username,
 			password:     dbSetting.Postgres.Main.Password,
 			host:         dbSetting.Postgres.Main.Host,
@@ -102,13 +102,13 @@ func OncePostgresPool(dbSetting *DbSetting) GormPool {
 }
 
 // GetConn 获取主数据库链接
-func (my *PostgresPool) GetConn() *gorm.DB {
+func (my *PGPool) GetConn() *gorm.DB {
 	my.getRws()
 	return my.mainConn
 }
 
 // getRws 获取带有读写分离的数据库链接
-func (my *PostgresPool) getRws() *gorm.DB {
+func (my *PGPool) getRws() *gorm.DB {
 	var (
 		err                                 error
 		sourceDialectors, replicaDialectors []gorm.Dialector
@@ -189,7 +189,7 @@ func (my *PostgresPool) getRws() *gorm.DB {
 }
 
 // Close 关闭数据库链接
-func (my *PostgresPool) Close() error {
+func (my *PGPool) Close() error {
 	if my.mainConn != nil {
 		db, err := my.mainConn.DB()
 		if err != nil {

@@ -39,7 +39,7 @@ func DefaultModel[model Modeler](db *gorm.DB, attrs ...ModelAttributer) *gorm.DB
 }
 
 func DefaultFinder[model Modeler](db *gorm.DB, attrs ...ModelAttributer) *Finder {
-	return FinderApp.New(DefaultModel[model](db, attrs...))
+	return APP.Finder.New(DefaultModel[model](db, attrs...))
 }
 
 func Table(table string) *AttrTable { return &AttrTable{table: table} }

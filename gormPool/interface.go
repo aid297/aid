@@ -3,7 +3,7 @@ package gormPool
 import "gorm.io/gorm"
 
 type (
-	GormPool interface {
+	GORMPool interface {
 		GetConn() *gorm.DB
 		getRws() *gorm.DB
 		Close() error

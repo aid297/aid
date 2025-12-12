@@ -15,7 +15,7 @@ type (
 )
 
 func main() {
-	pool := gormPool.APP.MySqlPool.Once(gormPool.APP.DBSetting.New(filesystemV2.APP.File.NewByRel("./db.yaml").GetFullPath()))
+	pool := gormPool.APP.MySQLPool.Once(gormPool.APP.DBSetting.New(filesystemV2.APP.File.NewByRel("./db.yaml").GetFullPath()))
 	conn := pool.GetConn()
 	conn.AutoMigrate(&TestTable1{})
 

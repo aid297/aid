@@ -5,12 +5,12 @@ import (
 )
 
 type (
-	DbSetting struct {
+	DBSetting struct {
 		Common    *Common           `yaml:"common,omitempty"`
-		MySql     *MySqlSetting     `yaml:"mysql,omitempty"`
-		Postgres  *PostgresSetting  `yaml:"postgres,omitempty"`
-		SqlServer *SqlServerSetting `yaml:"sqlServer,omitempty"`
-		CbitSql   *CbitSqlSetting   `yaml:"cbitSql,omitempty"`
+		MySql     *MySQLSetting     `yaml:"mysql,omitempty"`
+		Postgres  *PGSetting        `yaml:"postgres,omitempty"`
+		SqlServer *SQLServerSetting `yaml:"sql-server,omitempty"`
+		CbitSql   *ArSQLSetting     `yaml:"ar-sql,omitempty"`
 	}
 
 	Common struct {
@@ -26,43 +26,43 @@ type (
 		Content string
 	}
 
-	MySqlSetting struct {
+	MySQLSetting struct {
 		Database  string                      `yaml:"database"`
 		Charset   string                      `yaml:"charset"`
 		Collation string                      `yaml:"collation"`
 		Rws       bool                        `yaml:"rws"`
-		Main      *MySqlConnection            `yaml:"main"`
-		Sources   map[string]*MySqlConnection `yaml:"sources"`
-		Replicas  map[string]*MySqlConnection `yaml:"replicas"`
+		Main      *MySQLConnection            `yaml:"main"`
+		Sources   map[string]*MySQLConnection `yaml:"sources"`
+		Replicas  map[string]*MySQLConnection `yaml:"replicas"`
 	}
 
-	MySqlConnection struct {
+	MySQLConnection struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`
 		Port     uint16 `yaml:"port"`
 	}
 
-	CbitSqlSetting struct {
-		Database string                        `yaml:"database"`
-		Rws      bool                          `yaml:"rws"`
-		Main     *MySqlConnection              `yaml:"main"`
-		Sources  map[string]*CbitSqlConnection `yaml:"sources"`
-		Replicas map[string]*CbitSqlConnection `yaml:"replicas"`
+	ArSQLSetting struct {
+		Database string                      `yaml:"database"`
+		Rws      bool                        `yaml:"rws"`
+		Main     *MySQLConnection            `yaml:"main"`
+		Sources  map[string]*ArSQLConnection `yaml:"sources"`
+		Replicas map[string]*ArSQLConnection `yaml:"replicas"`
 	}
 
-	CbitSqlConnection struct {
+	ArSQLConnection struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`
 		Port     uint16 `yaml:"port"`
 	}
 
-	PostgresSetting struct {
-		Main *PostgresConnection `yaml:"main"`
+	PGSetting struct {
+		Main *PGConnection `yaml:"main"`
 	}
 
-	PostgresConnection struct {
+	PGConnection struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`
@@ -72,11 +72,11 @@ type (
 		SslMode  string `yaml:"sslmode"`
 	}
 
-	SqlServerSetting struct {
-		Main *SqlServerConnection `yaml:"main"`
+	SQLServerSetting struct {
+		Main *SQLServerConnection `yaml:"main"`
 	}
 
-	SqlServerConnection struct {
+	SQLServerConnection struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`
@@ -85,11 +85,9 @@ type (
 	}
 )
 
-var DbSettingApp DbSetting
-
 // New 初始化：数据库配置
-func (*DbSetting) New(path string) *DbSetting {
-	var dbSetting *DbSetting = &DbSetting{}
+func (*DBSetting) New(path string) *DBSetting {
+	var dbSetting *DBSetting = &DBSetting{}
 
 	if err := honestMan.HonestManApp.New(path).LoadYaml(dbSetting); err != nil {
 		return nil
@@ -98,14 +96,14 @@ func (*DbSetting) New(path string) *DbSetting {
 	return dbSetting
 }
 
-func (*DbSetting) ExampleYaml() string {
+func (*DBSetting) ExampleYaml() string {
 	return `common:
   driver: "mysql"
   maxOpenConns: 100
   maxIdleConns: 20
   maxLifetime: 100
   maxIdleTime: 10
-cbitSql:
+ar-sql:
   database: "cbit_db"
   rws: false
   main:
@@ -161,7 +159,7 @@ postgres:
     database: "tbl_test"
     sslmode: "disable"
     timezone: "Asia/Shanghai"
-sqlServer:
+sql-server:
   maxOpenConns: 100
   maxIdleConns: 20
   maxLifetime: 100
