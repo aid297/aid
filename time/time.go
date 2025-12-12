@@ -45,8 +45,8 @@ func (*Time) New(t time.Time) *Time { return &Time{original: t} }
 // Now 实例化：时间帮助 -> 当前时间
 func (*Time) Now() *Time { return &Time{original: time.Now()} }
 
-// NewByFormat 实例化：时间帮助 -> 通过格式化模板
-func (*Time) NewByFormat(format, t string) (*Time, error) {
+// FromFormat 实例化：时间帮助 -> 通过格式化模板
+func (*Time) FromFormat(format, t string) (*Time, error) {
 	parsedTime, err := time.Parse(format, t)
 	if err != nil {
 		return nil, err
@@ -54,8 +54,8 @@ func (*Time) NewByFormat(format, t string) (*Time, error) {
 	return &Time{original: parsedTime}, nil
 }
 
-// NewByString 实例化：时间帮助 -> 通过时间字符串自动解析
-func (*Time) NewByString(t string) (*Time, error) {
+// FormString 实例化：时间帮助 -> 通过时间字符串自动解析
+func (*Time) FormString(t string) (*Time, error) {
 	formats := []string{
 		time.Layout,
 		time.ANSIC,

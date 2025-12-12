@@ -11,12 +11,8 @@ type (
 	AttrCopyFn     struct{ fn func(copied []byte) error }
 )
 
-func ReadCloser(readCloser io.ReadCloser) AttrReadCloser {
-	return AttrReadCloser{readCloser: readCloser}
-}
+func ReadCloser(readCloser io.ReadCloser) AttrReadCloser { return AttrReadCloser{readCloser} }
+func (my AttrReadCloser) Register(steam *Steam)          { steam.readCloser = my.readCloser }
 
-func (my AttrReadCloser) Register(steam *Steam) { steam.readCloser = my.readCloser }
-
-func CopyFn(fn func(copied []byte) error) AttrCopyFn { return AttrCopyFn{fn: fn} }
-
-func (my AttrCopyFn) Register(steam *Steam) { steam.copyFn = my.fn }
+func CopyFn(fn func(copied []byte) error) AttrCopyFn { return AttrCopyFn{fn} }
+func (my AttrCopyFn) Register(steam *Steam)          { steam.copyFn = my.fn }

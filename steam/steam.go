@@ -15,11 +15,10 @@ type (
 )
 
 // New 实例化：Steam
-func (Steam) New(attrs ...Attributer) Steam {
-	return Steam{}.Set(attrs...)
-}
+func (Steam) New(attrs ...Attributer) Steam { return Steam{}.SetAttrs(attrs...) }
 
-func (my Steam) Set(attrs ...Attributer) Steam {
+// SetAttrs 设置属性
+func (my Steam) SetAttrs(attrs ...Attributer) Steam {
 	if len(attrs) > 0 {
 		for _, attr := range attrs {
 			attr.Register(&my)
