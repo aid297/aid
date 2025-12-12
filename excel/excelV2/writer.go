@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/cast"
 	"github.com/xuri/excelize/v2"
@@ -208,6 +212,251 @@ func (my *Writer) Save() *Writer {
 	}
 
 	my.lock.Unlock()
+	return my
+}
+
+func (my *Writer) FromStruct(data any, title []string, offset int, attrs ...CellAttributer) *Writer {
+	my.lock.Lock()
+	defer my.lock.Unlock()
+	if defaultOffset := 1; offset <= 0 {
+		offset = defaultOffset
+	}
+	if data == nil {
+		my.Error = fmt.Errorf("data 不能为空")
+		return my
+	}
+
+	rv := reflect.ValueOf(data)
+	if rv.Kind() != reflect.Ptr {
+		my.Error = fmt.Errorf("data 必须是指向切片的指针")
+		return my
+	}
+
+	sv := rv.Elem()
+	if sv.Kind() != reflect.Slice {
+		my.Error = fmt.Errorf("data 必须是指向切片的指针")
+		return my
+	}
+
+	elemType := sv.Type().Elem()
+	isElemPtr := false
+	structType := elemType
+	if elemType.Kind() == reflect.Ptr {
+		isElemPtr = true
+		structType = elemType.Elem()
+	}
+
+	if structType.Kind() != reflect.Struct {
+		my.Error = fmt.Errorf("切片元素必须为结构体或结构体指针")
+		return my
+	}
+
+	// 构建字段映射：优先 excel tag, 然后 json tag, 最后字段名（小写）
+	fieldIndex := make(map[string]int)
+	for i := 0; i < structType.NumField(); i++ {
+		f := structType.Field(i)
+		if f.PkgPath != "" { // unexported
+			continue
+		}
+		if et := f.Tag.Get("excel"); et != "" {
+			if et == "-" {
+				continue
+			}
+			parts := strings.Split(et, ",")
+			if parts[0] != "" {
+				fieldIndex[strings.ToLower(parts[0])] = i
+			}
+		}
+		if jt := f.Tag.Get("json"); jt != "" {
+			if jt == "-" {
+				continue
+			}
+			parts := strings.Split(jt, ",")
+			if parts[0] != "" {
+				fieldIndex[strings.ToLower(parts[0])] = i
+			}
+		}
+		name := strings.ToLower(f.Name)
+		fieldIndex[name] = i
+	}
+
+	// 写标题（如果提供）
+	// writeCell 使用 rn/cn 为 0-based index
+	rn := offset - 1
+	if len(title) > 0 {
+		for cn, t := range title {
+			cell := APP.Cell.New(APP.CellAttr.Content.Set(t), APP.CellAttr.ContentType.Set(CellContentTypeAny))
+			writeCell(cell, rn, cn, my)
+		}
+		rn++
+	}
+
+	// 遍历切片元素并写入
+	for i := 0; i < sv.Len(); i++ {
+		item := sv.Index(i)
+		if isElemPtr {
+			if item.IsNil() {
+				// skip nil pointer element
+				continue
+			}
+			item = item.Elem()
+		}
+
+		// 对于每一列，根据 title 找到字段并写入
+		for cn, t := range title {
+			key := strings.ToLower(strings.TrimSpace(t))
+			if key == "" {
+				continue
+			}
+			fi, ok := fieldIndex[key]
+			if !ok {
+				continue
+			}
+			f := item.Field(fi)
+			sf := structType.Field(fi)
+			// 未导出字段或不可设置跳过
+			if !f.IsValid() || !f.CanInterface() {
+				continue
+			}
+
+			// prepare per-field attributes from struct tags
+			localAttrs := make([]CellAttributer, 0)
+			if v := strings.TrimSpace(sf.Tag.Get("excel-font-size")); v != "" {
+				if fv, err := strconv.ParseFloat(v, 64); err == nil {
+					localAttrs = append(localAttrs, AttrCellFontSize{}.Set(fv))
+				}
+			}
+			if v := strings.TrimSpace(sf.Tag.Get("excel-font-rgb")); v != "" {
+				localAttrs = append(localAttrs, AttrCellFontRGB{}.Set(v))
+			}
+			if v := strings.TrimSpace(sf.Tag.Get("excel-pattern-rgb")); v != "" {
+				localAttrs = append(localAttrs, AttrCellPatternRGB{}.Set(v))
+			}
+			if v := strings.TrimSpace(sf.Tag.Get("excel-font-bold")); v != "" {
+				if b, err := strconv.ParseBool(v); err == nil {
+					if b {
+						localAttrs = append(localAttrs, AttrCellFontBold{}.SetTrue())
+					} else {
+						localAttrs = append(localAttrs, AttrCellFontBold{}.SetFalse())
+					}
+				}
+			}
+			if v := strings.TrimSpace(sf.Tag.Get("excel-font-italic")); v != "" {
+				if b, err := strconv.ParseBool(v); err == nil {
+					if b {
+						localAttrs = append(localAttrs, AttrCellFontItalic{}.SetTrue())
+					} else {
+						localAttrs = append(localAttrs, AttrCellFontItalic{}.SetFalse())
+					}
+				}
+			}
+			if v := strings.TrimSpace(sf.Tag.Get("excel-border-rgb")); v != "" {
+				parts := strings.Split(v, ",")
+				for len(parts) < 4 {
+					parts = append(parts, "")
+				}
+				localAttrs = append(localAttrs, AttrCellBorderRGB{}.Set(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), strings.TrimSpace(parts[2]), strings.TrimSpace(parts[3])))
+			}
+			if v := strings.TrimSpace(sf.Tag.Get("excel-border-style")); v != "" {
+				parts := strings.Split(v, ",")
+				ints := make([]int, 4)
+				for idx := 0; idx < 4 && idx < len(parts); idx++ {
+					if iv, err := strconv.Atoi(strings.TrimSpace(parts[idx])); err == nil {
+						ints[idx] = iv
+					}
+				}
+				localAttrs = append(localAttrs, AttrCellBorderStyle{}.Set(ints[0], ints[1], ints[2], ints[3]))
+			}
+			if v := strings.TrimSpace(sf.Tag.Get("excel-diagonal-rgb")); v != "" {
+				parts := strings.Split(v, ",")
+				up, down := "", ""
+				if len(parts) > 0 {
+					up = strings.TrimSpace(parts[0])
+				}
+				if len(parts) > 1 {
+					down = strings.TrimSpace(parts[1])
+				}
+				localAttrs = append(localAttrs, AttrCellDiagonalRGB{}.Set(up, down))
+			}
+			if v := strings.TrimSpace(sf.Tag.Get("excel-diagonal-style")); v != "" {
+				parts := strings.Split(v, ",")
+				up, down := 0, 0
+				if len(parts) > 0 {
+					if iv, err := strconv.Atoi(strings.TrimSpace(parts[0])); err == nil {
+						up = iv
+					}
+				}
+				if len(parts) > 1 {
+					if iv, err := strconv.Atoi(strings.TrimSpace(parts[1])); err == nil {
+						down = iv
+					}
+				}
+				localAttrs = append(localAttrs, AttrCellDiagonalStyle{}.Set(up, down))
+			}
+			if v := strings.TrimSpace(sf.Tag.Get("excel-wrap-text")); v != "" {
+				if b, err := strconv.ParseBool(v); err == nil {
+					if b {
+						localAttrs = append(localAttrs, AttrCellWrapText{}.SetTrue())
+					} else {
+						localAttrs = append(localAttrs, AttrCellWrapText{}.SetFalse())
+					}
+				}
+			}
+
+			// 处理指针字段
+			if f.Kind() == reflect.Ptr {
+				if f.IsNil() {
+					// 空指针写空值
+					merged := make([]CellAttributer, 0, len(attrs)+len(localAttrs))
+					merged = append(merged, attrs...)
+					merged = append(merged, localAttrs...)
+					cell := APP.Cell.New(APP.CellAttr.Content.Set(""), APP.CellAttr.ContentType.Set(CellContentTypeAny)).setAttrs(merged...)
+					writeCell(cell, rn+i, cn, my)
+					continue
+				}
+				f = f.Elem()
+			}
+
+			var content any
+			var ctype CellContentType = CellContentTypeAny
+
+			switch f.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				content = int(f.Int())
+				ctype = CellContentTypeInt
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+				content = int(f.Uint())
+				ctype = CellContentTypeInt
+			case reflect.Float32, reflect.Float64:
+				content = f.Float()
+				ctype = CellContentTypeFloat
+			case reflect.Bool:
+				content = f.Bool()
+				ctype = CellContentTypeBool
+			case reflect.String:
+				content = f.String()
+				ctype = CellContentTypeAny
+			case reflect.Struct:
+				// special case: time.Time
+				if f.Type() == reflect.TypeOf(time.Time{}) {
+					content = f.Interface()
+					ctype = CellContentTypeTime
+				} else {
+					// unsupported struct, marshal to string via fmt
+					content = fmt.Sprintf("%v", f.Interface())
+					ctype = CellContentTypeAny
+				}
+			default:
+				// fallback to string representation
+				content = fmt.Sprintf("%v", f.Interface())
+				ctype = CellContentTypeAny
+			}
+
+			cell := APP.Cell.New(APP.CellAttr.Content.Set(content), APP.CellAttr.ContentType.Set(ctype))
+			writeCell(cell, rn+i, cn, my)
+		}
+	}
+
 	return my
 }
 

@@ -1,115 +1,111 @@
 package excelV2
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
-func Test1NewWriter(t *testing.T) {
-	var writer *Writer
+func TestFromStruct_BasicTypesAndHeader(t *testing.T) {
+	w := APP.Writer.New(APP.WriterAttr.SheetName.Set("Sheet1"))
 
-	writer = APP.Writer.New(
-		APP.WriterAttr.Filename.Set("表格1.xlsx"),
-		APP.WriterAttr.SheetName.Set("图1"),
-	)
+	type User struct {
+		ID     int     `excel:"编号"`
+		Name   string  `excel:"姓名"`
+		Active bool    `excel:"激活"`
+		Score  float64 `excel:"得分"`
+	}
 
-	t.Logf("filename: %v", writer.GetFilename())
-	t.Logf("sheet name: %v", writer.GetSheetName())
+	data := []User{{ID: 1, Name: "Alice", Active: true, Score: 3.5}, {ID: 2, Name: "Bob", Active: false, Score: 4.0}}
+	titles := []string{"编号", "姓名", "激活", "得分"}
+
+	w.FromStruct(&data, titles, 1)
+	if w.Error != nil {
+		t.Fatalf("unexpected error: %v", w.Error)
+	}
+
+	v, _ := w.rawFile.GetCellValue(w.sheetName, "A1")
+	if v != "编号" {
+		t.Fatalf("expected header A1=编号 got %q", v)
+	}
+
+	v, _ = w.rawFile.GetCellValue(w.sheetName, "B1")
+	if v != "姓名" {
+		t.Fatalf("expected header B1=姓名 got %q", v)
+	}
+
+	// first data row
+	v, _ = w.rawFile.GetCellValue(w.sheetName, "A2")
+	if v != "1" {
+		t.Fatalf("expected A2=1 got %q", v)
+	}
+	v, _ = w.rawFile.GetCellValue(w.sheetName, "B2")
+	if v != "Alice" {
+		t.Fatalf("expected B2=Alice got %q", v)
+	}
 }
 
-func Test2CellToFile(t *testing.T) {
-	var writer = APP.Writer.New(
-		APP.WriterAttr.Filename.Set("表格1.xlsx"),
-		APP.WriterAttr.SheetName.Set("图1"),
-		APP.WriterAttr.Cells.Set(
-			APP.Cell.New(
-				APP.CellAttr.Content.Set(123),
-				APP.CellAttr.ContentType.Set(CellContentTypeInt),
-				APP.CellAttr.Coordinate.Set("A1"),
-				APP.CellAttr.FontRGB.Set("FF0000"),
-				APP.CellAttr.PatternRGB.Set("00FF00"),
-				APP.CellAttr.FontBold.SetTrue(),
-				APP.CellAttr.FontItalic.SetFalse(),
-				APP.CellAttr.FontSize.Set(12.5),
-				APP.CellAttr.BorderRGB.Set("0000FF", "0000FF", "0000FF", "0000FF"),
-				APP.CellAttr.BorderStyle.Set(1, 1, 1, 1),
-				APP.CellAttr.DiagonalRGB.Set("FFFF00", "FFFF00"),
-				APP.CellAttr.DiagonalStyle.Set(1, 1),
-				APP.CellAttr.WrapText.SetTrue(),
-			),
-		),
-	)
+func TestFromStruct_PointerElementsAndIgnore(t *testing.T) {
+	w := APP.Writer.New(APP.WriterAttr.SheetName.Set("Sheet2"))
 
-	writer.Save()
+	type U struct {
+		ID    int     `json:"id"`
+		Name  *string `json:"name"`
+		Email *string `excel:"邮箱" json:"email"`
+		Skip  string  `excel:"-"`
+	}
+
+	n := "Nina"
+	e := "nina@ex.com"
+	data := []*U{{ID: 10, Name: &n, Email: &e, Skip: "shouldskip"}, nil}
+	titles := []string{"id", "name", "邮箱", "skip"}
+
+	w.FromStruct(&data, titles, 2)
+	if w.Error != nil {
+		t.Fatalf("unexpected error: %v", w.Error)
+	}
+
+	v, _ := w.rawFile.GetCellValue(w.sheetName, "A2")
+	if v != "id" {
+		t.Fatalf("expected header A2=id got %q", v)
+	}
+
+	v, _ = w.rawFile.GetCellValue(w.sheetName, "A3")
+	if v != "10" {
+		t.Fatalf("expected A3=10 got %q", v)
+	}
+	v, _ = w.rawFile.GetCellValue(w.sheetName, "B3")
+	if v != "Nina" {
+		t.Fatalf("expected B3=Nina got %q", v)
+	}
+	v, _ = w.rawFile.GetCellValue(w.sheetName, "C3")
+	if v != "nina@ex.com" {
+		t.Fatalf("expected C3=nina@ex.com got %q", v)
+	}
+
+	v, _ = w.rawFile.GetCellValue(w.sheetName, "D3")
+	if v != "" {
+		t.Fatalf("expected D3 empty got %q", v)
+	}
 }
 
-func Test3RowToFile(t *testing.T) {
-	var writer = APP.Writer.New(
-		APP.WriterAttr.Filename.Set("表格2.xlsx"),
-		APP.WriterAttr.SheetName.Set("图1"),
-		APP.WriterAttr.Rows.Set(
-			APP.Row.New(
-				APP.RowAttr.Cells.Set(
-					APP.Cell.New(
-						APP.CellAttr.Content.Set("姓名"),
-						APP.CellAttr.ContentType.Set(CellContentTypeAny),
-					),
-					APP.Cell.New(
-						APP.CellAttr.Content.Set("年龄"),
-						APP.CellAttr.ContentType.Set(CellContentTypeAny),
-					),
-				),
-			),
-			APP.Row.New(
-				APP.RowAttr.Cells.Set(
-					APP.Cell.New(
-						APP.CellAttr.Content.Set("张三"),
-						APP.CellAttr.ContentType.Set(CellContentTypeAny),
-					),
-					APP.Cell.New(
-						APP.CellAttr.Content.Set(18),
-						APP.CellAttr.ContentType.Set(CellContentTypeInt),
-					),
-				),
-			),
-			APP.Row.New(
-				APP.RowAttr.Cells.Set(
-					APP.Cell.New(
-						APP.CellAttr.Content.Set("李四"),
-						APP.CellAttr.ContentType.Set(CellContentTypeAny),
-					),
-					APP.Cell.New(
-						APP.CellAttr.Content.Set(20),
-						APP.CellAttr.ContentType.Set(CellContentTypeInt),
-					),
-				),
-			),
-		),
-		APP.WriterAttr.Rows.Append(
-			5,
-			APP.Row.New(
-				APP.RowAttr.Cells.Set(
-					APP.Cell.New(
-						APP.CellAttr.Content.Set("王五"),
-						APP.CellAttr.ContentType.Set(CellContentTypeAny),
-					),
-					APP.Cell.New(
-						APP.CellAttr.Content.Set(18),
-						APP.CellAttr.ContentType.Set(CellContentTypeInt),
-					),
-				),
-			),
-			APP.Row.New(
-				APP.RowAttr.Cells.Set(
-					APP.Cell.New(
-						APP.CellAttr.Content.Set("赵六"),
-						APP.CellAttr.ContentType.Set(CellContentTypeAny),
-					),
-					APP.Cell.New(
-						APP.CellAttr.Content.Set(20),
-						APP.CellAttr.ContentType.Set(CellContentTypeInt),
-					),
-				),
-			),
-		),
-	)
+func TestFromStruct_TimeField(t *testing.T) {
+	w := APP.Writer.New(APP.WriterAttr.SheetName.Set("Sheet3"))
 
-	writer.Save()
+	type T struct {
+		When time.Time `excel:"时间"`
+	}
+
+	now := time.Date(2020, 1, 2, 15, 4, 5, 0, time.UTC)
+	data := []T{{When: now}}
+	titles := []string{"时间"}
+
+	w.FromStruct(&data, titles, 1)
+	if w.Error != nil {
+		t.Fatalf("unexpected error: %v", w.Error)
+	}
+
+	v, _ := w.rawFile.GetCellValue(w.sheetName, "A2")
+	if v == "" {
+		t.Fatalf("expected non-empty time cell, got empty")
+	}
 }

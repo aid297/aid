@@ -22,4 +22,5 @@ var (
 	ErrColumnNumber      = errors.New("错误的列索引")
 	ErrOpen              = errors.New("打开文件失败")
 	ErrClose             = errors.New("关闭文件失败")
+	ErrInvalidStruct     = errors.New("无效的结构体")
 )
