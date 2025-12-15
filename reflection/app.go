@@ -1,5 +1,3 @@
 package reflection
 
-var APP struct {
-	Reflection Reflection
-}
+var APP struct{ Reflection Reflection }
