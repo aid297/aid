@@ -137,7 +137,7 @@ func (my *AttrAppendHeaderValue) Accept(accept Accept) *AttrAppendHeaderValue {
 }
 
 func (my *AttrAppendHeaderValue) Authorization(username, password, title string) *AttrAppendHeaderValue {
-	my.headers["Authorization"] = str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()
+	my.headers["Authorization"] = str.APP.Buffer.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()
 	return my
 }
 
@@ -187,7 +187,7 @@ func (my *AttrAppendHeaderValues) Accept(accept Accept) *AttrAppendHeaderValues 
 }
 
 func (my *AttrAppendHeaderValues) Authorization(username, password, title string) *AttrAppendHeaderValues {
-	my.headers["Authorization"] = []any{str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
+	my.headers["Authorization"] = []any{str.APP.Buffer.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
 	return my
 }
 
@@ -224,7 +224,7 @@ func (my *AttrSetHeaderValue) Accept(accept Accept) *AttrSetHeaderValue {
 }
 
 func (my *AttrSetHeaderValue) Authorization(username, password, title string) *AttrSetHeaderValue {
-	my.headers["Authorization"] = str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()
+	my.headers["Authorization"] = str.APP.Buffer.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()
 	return my
 }
 
@@ -257,7 +257,7 @@ func (my *AttrSetHeaderValues) Accept(accept Accept) *AttrSetHeaderValues {
 }
 
 func (my *AttrSetHeaderValues) Authorization(username, password, title string) *AttrSetHeaderValues {
-	my.headers["Authorization"] = []any{str.BufferApp.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
+	my.headers["Authorization"] = []any{str.APP.Buffer.NewString(title, " ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
 	return my
 }
 

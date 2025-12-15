@@ -73,7 +73,7 @@ func (my *HttpClientDownload) SendResponse(w http.ResponseWriter, headers map[st
 	} else {
 		defer func() { _ = my.httpClient.response.Body.Close() }()
 
-		w.Header().Set("Content-Disposition", str.BufferApp.NewString("attachment; filename=").URLPath(my.filename).String())
+		w.Header().Set("Content-Disposition", str.APP.Buffer.NewString("attachment; filename=").URLPath(my.filename).String())
 
 		if my.httpClient.response.Header.Get("Content-Type") != "" {
 			w.Header().Set("Content-Type", my.httpClient.response.Header.Get("Content-Type"))

@@ -37,9 +37,9 @@ func (*RedisPool) Once(redisSetting *RedisSetting) *RedisPool {
 		if len(redisSetting.Pool) > 0 {
 			for idx := range redisSetting.Pool {
 				redisPoolIns.connections.Set(redisSetting.Pool[idx].Key, &redisConn{
-					prefix: str.BufferApp.NewString(redisSetting.Prefix).S(":", redisSetting.Pool[idx].Prefix).String(),
+					prefix: str.APP.Buffer.NewString(redisSetting.Prefix).S(":", redisSetting.Pool[idx].Prefix).String(),
 					conn: rds.NewClient(&rds.Options{
-						Addr:     str.BufferApp.NewAny(redisSetting.Host).Any(":", redisSetting.Port).String(),
+						Addr:     str.APP.Buffer.NewAny(redisSetting.Host).Any(":", redisSetting.Port).String(),
 						Password: redisSetting.Password,
 						DB:       redisSetting.Pool[idx].DbNum,
 					}),

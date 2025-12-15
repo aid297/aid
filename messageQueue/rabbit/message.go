@@ -46,5 +46,5 @@ func (my *Message) ToJson() []byte {
 		return nil
 	}
 
-	return str.BufferApp.NewBytes([]byte(my.MsgId)).S(string(content)).Bytes()
+	return str.APP.Buffer.NewBytes([]byte(my.MsgId)).S(string(content)).Bytes()
 }

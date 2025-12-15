@@ -60,16 +60,17 @@ func (my *Consumer) Start() *Consumer {
 
 	msgs := my.Go()
 	go func() {
-		var forever chan struct{}
-		select {
-		case <-my.stop:
-			return
-		case <-msgs:
-			for msg := range msgs {
+		for {
+			select {
+			case <-my.stop:
+				return
+			case msg, ok := <-msgs:
+				if !ok {
+					return
+				}
 				my.parseFn(msg.Body)
 			}
 		}
-		<-forever
 	}()
 
 	return my

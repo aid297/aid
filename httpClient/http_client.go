@@ -56,7 +56,7 @@ func (*HttpClient) NewDelete(url string) *HttpClient { return NewDelete(url) }
 //go:fix 推荐使用New方法
 func NewHttpClient(urls ...string) *HttpClient {
 	return &HttpClient{
-		requestUrl:         str.BufferApp.NewString(operation.TernaryFuncAll(func() bool { return len(urls) == 0 }, func() string { return "" }, func() string { return urls[0] })).S(urls[1:]...).String(),
+		requestUrl:         str.APP.Buffer.NewString(operation.TernaryFuncAll(func() bool { return len(urls) == 0 }, func() string { return "" }, func() string { return urls[0] })).S(urls[1:]...).String(),
 		requestQueries:     map[string]string{},
 		requestHeaders:     map[string][]string{"Accept": {}, "Content-Type": {}},
 		responseBody:       []byte{},
@@ -118,7 +118,7 @@ func (my *HttpClient) SetUrl(urls ...string) *HttpClient {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
-	my.requestUrl = str.BufferApp.NewString(operation.TernaryFuncAll(func() bool { return len(urls) == 0 }, func() string { return "" }, func() string { return urls[0] })).S(urls[1:]...).String()
+	my.requestUrl = str.APP.Buffer.NewString(operation.TernaryFuncAll(func() bool { return len(urls) == 0 }, func() string { return "" }, func() string { return urls[0] })).S(urls[1:]...).String()
 	return my
 }
 
@@ -166,7 +166,7 @@ func (my *HttpClient) SetAuthorization(username, password, title string) *HttpCl
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
-	my.requestHeaders["Authorization"] = []string{str.BufferApp.NewString(title).S(" ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
+	my.requestHeaders["Authorization"] = []string{str.APP.Buffer.NewString(title).S(" ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
 	return my
 }
 

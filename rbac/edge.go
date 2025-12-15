@@ -113,10 +113,10 @@ func (*Edge) GetByIntersection1(intersection1 string) ([]*Edge, error) {
 
 func (*Edge) getGroupDB(intersection1, intersection2, identity string) *gorm.DB {
 	return APP.Group.New().DB().
-		Table(str.BufferApp.JoinStringLimit(APP.Edge.TableName(), "as", "e")).
-		Joins(str.BufferApp.JoinStringLimit("join", APP.Group.TableName(), "as", "g", "on", "g.role_uuid = rbacs.role_uuid")).
-		Joins(str.BufferApp.JoinStringLimit("join", APP.Role.TableName(), "as", "r", "on", "r.uuid = g.role_uuid")).
-		Joins(str.BufferApp.JoinStringLimit("join ", APP.Permission.TableName(), "as", "p", "on", "p.uuid = g.permission_uuid")).
+		Table(str.APP.Buffer.JoinStringLimit(APP.Edge.TableName(), "as", "e")).
+		Joins(str.APP.Buffer.JoinStringLimit("join", APP.Group.TableName(), "as", "g", "on", "g.role_uuid = rbacs.role_uuid")).
+		Joins(str.APP.Buffer.JoinStringLimit("join", APP.Role.TableName(), "as", "r", "on", "r.uuid = g.role_uuid")).
+		Joins(str.APP.Buffer.JoinStringLimit("join ", APP.Permission.TableName(), "as", "p", "on", "p.uuid = g.permission_uuid")).
 		Where("p.identity", identity).
 		Where("e.intersection1", intersection1).
 		Where("e.intersection2", intersection2)
