@@ -1,18 +1,16 @@
 package str
 
-type (
-	Html struct{ buffer Buffer }
-)
+type HTML struct{ buffer Buffer }
 
-func (Html) New(options ...HtmlAttributer) Html {
-	return Html{buffer: APP.Buffer.NewString("")}.Set(options...)
+func (HTML) New(options ...HtmlAttributer) HTML {
+	return HTML{buffer: APP.Buffer.NewString("")}.Set(options...)
 }
 
-func (Html) NewString(options ...HtmlAttributer) string {
-	return APP.Html.New(options...).End()
+func (HTML) NewString(options ...HtmlAttributer) string {
+	return APP.HTML.New(options...).End()
 }
 
-func (my Html) Set(options ...HtmlAttributer) Html {
+func (my HTML) Set(options ...HtmlAttributer) HTML {
 	if len(options) > 0 {
 		for _, option := range options {
 			option.Register(&my)
@@ -21,6 +19,6 @@ func (my Html) Set(options ...HtmlAttributer) Html {
 	return my
 }
 
-func (my Html) End() string {
+func (my HTML) End() string {
 	return my.buffer.String()
 }

@@ -4,9 +4,9 @@ import "testing"
 
 func TestHtml1(t *testing.T) {
 	t.Run("Html", func(t *testing.T) {
-		t.Logf("HTML：%s", APP.Html.New(
+		t.Logf("HTML：%s", APP.HTML.New(
 			HtmlP("这里是标题"),
-			HtmlP(APP.Html.New(HtmlNormal("我想要跳转到"), HtmlA("百度", "https://www.baidu.com")).End()),
+			HtmlP(APP.HTML.New(HtmlNormal("我想要跳转到"), HtmlA("百度", "https://www.baidu.com")).End()),
 			HtmlA("Google", "https://www.google.com", HtmlProperty{Key: "class", Value: "my-class"}),
 			HtmlBr(),
 			HtmlUl("第一项", "第二项"),
@@ -18,7 +18,7 @@ func TestHtml2(t *testing.T) {
 	t.Run("Html Table", func(t *testing.T) {
 		t.Logf(
 			"%s",
-			APP.Html.NewString(
+			APP.HTML.NewString(
 				HtmlTable(
 					HtmlTHead(
 						HtmlTh("标题1").AppendProperties(HtmlProperty{Key: "class", Value: "my-th"}, HtmlProperty{Key: "style", Value: "border: 1px solid #000; padding: 4px;"}),

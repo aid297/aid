@@ -7,6 +7,6 @@ var APP struct {
 	TerminalLog TerminalLog
 	Str         Str
 	Transfer    Transfer
-	Html        Html
+	HTML        HTML
 	Markdown    Markdown
 }

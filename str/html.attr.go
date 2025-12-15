@@ -1,9 +1,7 @@
 package str
 
 type (
-	HtmlAttributer interface {
-		Register(html *Html)
-	}
+	HtmlAttributer interface{ Register(html *HTML) }
 
 	AttrHtmlNormal struct{ content string }
 	AttrHtmlA      struct {
@@ -52,7 +50,7 @@ func HtmlNormal(content string) AttrHtmlNormal {
 	return AttrHtmlNormal{content: content}
 }
 
-func (my AttrHtmlNormal) Register(html *Html) {
+func (my AttrHtmlNormal) Register(html *HTML) {
 	html.buffer.S(my.content)
 }
 
@@ -60,7 +58,7 @@ func HtmlA(name, href string, properties ...HtmlProperty) AttrHtmlA {
 	return AttrHtmlA{name: name, href: href, properties: properties}
 }
 
-func (my AttrHtmlA) Register(html *Html) {
+func (my AttrHtmlA) Register(html *HTML) {
 	html.buffer.S(`<a href="`, my.href, `"`)
 	if len(my.properties) > 0 {
 		for idx := range my.properties {
@@ -74,7 +72,7 @@ func HtmlP(content string) AttrHtmlP {
 	return AttrHtmlP{content: content}
 }
 
-func (my AttrHtmlP) Register(html *Html) {
+func (my AttrHtmlP) Register(html *HTML) {
 	html.buffer.S("<p>").S(my.content).S("</p>")
 }
 
@@ -82,7 +80,7 @@ func HtmlBr() AttrHtmlBr {
 	return AttrHtmlBr{content: "<br />"}
 }
 
-func (my AttrHtmlBr) Register(html *Html) {
+func (my AttrHtmlBr) Register(html *HTML) {
 	html.buffer.S(my.content)
 }
 
@@ -90,7 +88,7 @@ func HtmlUl(contents ...string) AttrHtmlUl {
 	return AttrHtmlUl{contents: contents}
 }
 
-func (my AttrHtmlUl) Register(html *Html) {
+func (my AttrHtmlUl) Register(html *HTML) {
 	if len(my.contents) > 0 {
 		html.buffer.S("<ul>")
 		for idx := range my.contents {
@@ -104,7 +102,7 @@ func HtmlAny(tag, content string) AttrHtmlAny {
 	return AttrHtmlAny{tag: tag, content: content, properties: []HtmlProperty{}}
 }
 
-func (my AttrHtmlAny) Register(html *Html) {
+func (my AttrHtmlAny) Register(html *HTML) {
 	html.buffer.S("<", my.tag)
 	if len(my.properties) > 0 {
 		for idx := range my.properties {
@@ -127,7 +125,7 @@ func HtmlTable(options ...HtmlAttributer) AttrHtmlTable {
 	return AttrHtmlTable{options: options, properties: []HtmlProperty{}}
 }
 
-func (my AttrHtmlTable) Register(html *Html) {
+func (my AttrHtmlTable) Register(html *HTML) {
 	html.buffer.S("<table")
 	if len(my.properties) > 0 {
 		for idx := range my.properties {
@@ -152,7 +150,7 @@ func HtmlTr(options ...HtmlAttributer) AttrHtmlTr {
 	return AttrHtmlTr{options: options, properties: []HtmlProperty{}}
 }
 
-func (my AttrHtmlTr) Register(html *Html) {
+func (my AttrHtmlTr) Register(html *HTML) {
 	html.buffer.S("<tr")
 	if len(my.properties) > 0 {
 		for idx := range my.properties {
@@ -177,7 +175,7 @@ func HtmlTd(content string) AttrHtmlTd {
 	return AttrHtmlTd{content: content, properties: []HtmlProperty{}}
 }
 
-func (my AttrHtmlTd) Register(html *Html) {
+func (my AttrHtmlTd) Register(html *HTML) {
 	html.buffer.S("<td")
 	if len(my.properties) > 0 {
 		for idx := range my.properties {
@@ -196,7 +194,7 @@ func HtmlTh(content string) AttrHtmlTh {
 	return AttrHtmlTh{content: content, properties: []HtmlProperty{}}
 }
 
-func (my AttrHtmlTh) Register(html *Html) {
+func (my AttrHtmlTh) Register(html *HTML) {
 	html.buffer.S("<th")
 	if len(my.properties) > 0 {
 		for idx := range my.properties {
@@ -215,7 +213,7 @@ func HtmlTHead(options ...HtmlAttributer) AttrHtmlTHead {
 	return AttrHtmlTHead{options: options, properties: []HtmlProperty{}}
 }
 
-func (my AttrHtmlTHead) Register(html *Html) {
+func (my AttrHtmlTHead) Register(html *HTML) {
 	html.buffer.S("<thead")
 	if len(my.properties) > 0 {
 		for idx := range my.properties {
@@ -240,7 +238,7 @@ func HtmlTBody(options ...HtmlAttributer) AttrHtmlTBody {
 	return AttrHtmlTBody{options: options, properties: []HtmlProperty{}}
 }
 
-func (my AttrHtmlTBody) Register(html *Html) {
+func (my AttrHtmlTBody) Register(html *HTML) {
 	html.buffer.S("<tbody")
 	if len(my.properties) > 0 {
 		for idx := range my.properties {
