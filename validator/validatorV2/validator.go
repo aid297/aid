@@ -170,6 +170,9 @@ func (Validator) Validate(data any, exFns ...func(d any) error) []error {
 
 	errs := make([]error, 0)
 	walkStruct(rv, "", &errs)
+	if len(errs) > 0 {
+		return errs
+	}
 
 	for idx := range exFns {
 		if exFns[idx] != nil {
