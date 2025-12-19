@@ -154,7 +154,24 @@ func (my AnyDict[K, V]) Filter(fn func(item V) bool) AnyDict[K, V] {
 }
 
 func (my AnyDict[K, V]) RemoveEmpty() AnyDict[K, V] {
-	return my.Filter(func(item V) bool { return !reflect.ValueOf(item).IsZero() })
+	return my.Filter(func(item V) bool {
+		ref := reflect.ValueOf(item)
+
+		if ref.Kind() == reflect.Ptr {
+			if ref.IsNil() {
+				return false
+			}
+			if ref.Elem().IsZero() {
+				return false
+			}
+		} else {
+			if ref.IsZero() {
+				return false
+			}
+		}
+
+		return true
+	})
 }
 
 func (my AnyDict[K, V]) Join(sep string) string { return my.values.Join(sep) }
