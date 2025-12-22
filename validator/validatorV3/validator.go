@@ -51,24 +51,30 @@ func (my Validator) Validate(exCheckFns ...any) Validator {
 	return my
 }
 
-func WithGin[T any](c *gin.Context, exCheckFns ...any) Validator {
-	var form = new(T)
+func WithGin[T any](c *gin.Context, exCheckFns ...any) (T, Validator) {
+	var (
+		zero T
+		form = new(T)
+	)
 
 	if err := c.ShouldBind(&form); err != nil {
-		return Validator{wrongs: []error{err}}
+		return zero, Validator{wrongs: []error{err}}
 	}
 
-	return APP.Validator.New(form).Validate(exCheckFns)
+	return *form, APP.Validator.New(form).Validate(exCheckFns)
 }
 
-func WithFiber[T any](c *fiber.Ctx, exCheckFns ...any) Validator {
-	var form = new(T)
+func WithFiber[T any](c *fiber.Ctx, exCheckFns ...any) (T, Validator) {
+	var (
+		zero T
+		form = new(T)
+	)
 
 	if err := c.BodyParser(&form); err != nil {
-		return Validator{wrongs: []error{err}}
+		return zero, Validator{wrongs: []error{err}}
 	}
 
-	return APP.Validator.New(form).Validate(exCheckFns)
+	return *form, APP.Validator.New(form).Validate(exCheckFns)
 }
 
 func callExCheckFn(fn any, data any) error {
