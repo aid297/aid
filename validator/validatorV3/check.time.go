@@ -28,7 +28,7 @@ func (my FieldInfo) checkTime() FieldInfo {
 		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
 			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().Get(exFnNames[idx2]); fn != nil {
+					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
 						if err := fn(my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
