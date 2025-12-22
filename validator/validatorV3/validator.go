@@ -189,6 +189,9 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				continue
 			}
 
+			vRuleTag = strings.TrimLeft(vRuleTag, "(")
+			vRuleTag = strings.TrimRight(vRuleTag, ")")
+
 			infos = append(infos, FieldInfo{
 				Name:      field.Name,
 				Value:     value,
@@ -196,7 +199,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				Type:      elemType,
 				IsPtr:     isPtr,
 				IsNil:     isNil,
-				VRuleTags: strings.Split(vRuleTag, ";"),
+				VRuleTags: strings.Split(vRuleTag, ")("),
 				VNameTags: anyArrayV2.NewItems(parentName, vNameTag).RemoveEmpty().ToSlice(),
 			})
 		}
