@@ -33,7 +33,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、[string]、min>、min>=、max<、max<=、in、not-in、size:
+// checkString 检查字符串，支持：required、[string|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -111,6 +111,7 @@ func (my FieldInfo) checkString() FieldInfo {
 			for _, key := range []string{"RFC3339", "RFC3339Nano", "DateTime", "ReferenceLayout", "ANSIC", "UnixDate", "RubyDate", "RFC822", "RFC822Z", "RFC850", "RFC1123", "RFC1123Z", "Kitchen", "Stamp", "StampMilli", "StampMicro", "StampNano"} {
 				if regexp.MustCompile(patternsForTimeString[key]).MatchString(value) {
 					ok = true
+					break
 				}
 			}
 			if !ok {

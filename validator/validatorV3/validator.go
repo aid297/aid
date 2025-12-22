@@ -5,7 +5,11 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
+
 	"github.com/aid297/aid/array/anyArrayV2"
+	"github.com/aid297/aid/str"
 )
 
 type (
@@ -19,6 +23,16 @@ type (
 func (Validator) New(data any) Validator { return Validator{data: data} }
 
 func (my Validator) Wrongs() []error { return my.wrongs }
+
+func (my Validator) WrongToString() string {
+	var errs = make([]string, 0, len(my.wrongs))
+
+	for idx := range my.wrongs {
+		errs = append(errs, my.wrongs[idx].Error())
+	}
+
+	return str.APP.Buffer.JoinStringLimit("；", errs...)
+}
 
 func (my Validator) Validate(exCheckFns ...any) Validator {
 	fieldInfos := getStructFieldInfos(my.data, "")
@@ -37,6 +51,26 @@ func (my Validator) Validate(exCheckFns ...any) Validator {
 	}
 
 	return my
+}
+
+func WithGin[T any](c *gin.Context, exCheckFns ...any) Validator {
+	var form = new(T)
+
+	if err := c.ShouldBind(&form); err != nil {
+		return Validator{wrongs: []error{err}}
+	}
+
+	return APP.Validator.New(form).Validate(exCheckFns)
+}
+
+func WithFiber[T any](c *fiber.Ctx, exCheckFns ...any) Validator {
+	var form = new(T)
+
+	if err := c.BodyParser(&form); err != nil {
+		return Validator{wrongs: []error{err}}
+	}
+
+	return APP.Validator.New(form).Validate(exCheckFns)
 }
 
 func callExCheckFn(fn any, data any) error {
