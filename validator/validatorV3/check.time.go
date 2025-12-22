@@ -2,39 +2,14 @@ package validatorV3
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-var (
-	patternsForTimeString = map[string]string{
-		"RFC3339":         `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+\-]\d{2}:\d{2})$`,
-		"RFC3339Nano":     `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+(Z|[+\-]\d{2}:\d{2})$`,
-		"DateTime":        `^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$`,
-		"DateOnly":        `^\d{4}-\d{2}-\d{2}$`,
-		"TimeOnly":        `^\d{2}:\d{2}:\d{2}$`,
-		"ReferenceLayout": `^\d{2}/\d{2} \d{2}:\d{2}:\d{2}(AM|PM) '\d{2} [+\-]\d{4}$`,
-		"ANSIC":           `^[A-Za-z]{3} [A-Za-z]{3} [ \d]\d \d{2}:\d{2}:\d{2} \d{4}$`,
-		"UnixDate":        `^[A-Za-z]{3} [A-Za-z]{3} [ \d]\d \d{2}:\d{2}:\d{2} [A-Za-z]{3,4} \d{4}$`,
-		"RubyDate":        `^[A-Za-z]{3} [A-Za-z]{3} \d{2} \d{2}:\d{2}:\d{2} [+\-]\d{4} \d{4}$`,
-		"RFC822":          `^\d{2} [A-Za-z]{3} \d{2} \d{2}:\d{2} [A-Za-z]{3}$`,
-		"RFC822Z":         `^\d{2} [A-Za-z]{3} \d{2} \d{2}:\d{2} [+\-]\d{4}$`,
-		"RFC850":          `^[A-Za-z]+, \d{2}-[A-Za-z]{3}-\d{2} \d{2}:\d{2}:\d{2} [A-Za-z]{3}$`,
-		"RFC1123":         `^[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} [A-Za-z]{3}$`,
-		"RFC1123Z":        `^[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} [+\-]\d{4}$`,
-		"Kitchen":         `^\d{1,2}:\d{2}(AM|PM)$`,
-		"Stamp":           `^[A-Za-z]{3} [ \d]\d \d{2}:\d{2}:\d{2}$`,
-		"StampMilli":      `^[A-Za-z]{3} [ \d]\d \d{2}:\d{2}:\d{2}\.\d{3}$`,
-		"StampMicro":      `^[A-Za-z]{3} [ \d]\d \d{2}:\d{2}:\d{2}\.\d{6}$`,
-		"StampNano":       `^[A-Za-z]{3} [ \d]\d \d{2}:\d{2}:\d{2}\.\d{9}$`,
-	}
-)
-
 // checkString 检查字符串，支持：required、[string]、min>、min>=、max<、max<=、in、not-in、size:
-func (my FieldInfo) checkString() FieldInfo {
+func (my FieldInfo) checkTime() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
 		ruleType       = my.getRuleType(rules)
@@ -105,24 +80,6 @@ func (my FieldInfo) checkString() FieldInfo {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：= %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
-			}
-		case "datetime":
-			ok = false
-			for _, key := range []string{"RFC3339", "RFC3339Nano", "DateTime", "ReferenceLayout", "ANSIC", "UnixDate", "RubyDate", "RFC822", "RFC822Z", "RFC850", "RFC1123", "RFC1123Z", "Kitchen", "Stamp", "StampMilli", "StampMicro", "StampNano"} {
-				if regexp.MustCompile(patternsForTimeString[key]).MatchString(value) {
-					ok = true
-				}
-			}
-			if !ok {
-				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
-			}
-		case "date":
-			if !regexp.MustCompile(patternsForTimeString["DateOnly"]).MatchString(value) {
-				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
-			}
-		case "time":
-			if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
-				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
 			}
 		}
 	}

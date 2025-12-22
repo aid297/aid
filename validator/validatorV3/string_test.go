@@ -16,7 +16,7 @@ type (
 	IntTest struct {
 		Age1 int   `v-rule:"required"`
 		Age2 *int  `v-rule:"required"`
-		Age3 *int8 `v-rule:"required;min>5"`
+		Age3 *int8 `v-rule:"required;min>=5"`
 	}
 )
 
@@ -29,4 +29,15 @@ func Test2(t *testing.T) {
 	it := &IntTest{0, nil, ptr.New(int8(5))}
 
 	t.Logf("%v", APP.Validator.New(it).Validate().Wrongs())
+}
+
+func Test3(t *testing.T) {
+	it := &IntTest{0, ptr.New(1), ptr.New(int8(5))}
+
+	t.Logf("%v", APP.Validator.New(it).Validate(func(data any) error {
+		data.(*IntTest).Age2 = ptr.New(111)
+		return nil
+	}).Wrongs())
+
+	t.Logf("%v", *it.Age2)
 }

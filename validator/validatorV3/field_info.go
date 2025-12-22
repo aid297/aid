@@ -1,9 +1,9 @@
 package validatorV3
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/spf13/cast"
 
@@ -17,6 +17,7 @@ type (
 		Name      string // 字段名
 		Value     any    // 实际值
 		Kind      reflect.Kind
+		Type      reflect.Type
 		IsPtr     bool     // 是否是指针
 		IsNil     bool     // 是否为空指针
 		Required  bool     // 是否必填
@@ -221,11 +222,11 @@ func (my FieldInfo) Check() FieldInfo {
 	case reflect.Bool:
 		return my.checkBool()
 	case reflect.Array, reflect.Slice:
-		if _, ok := my.Value.([]any); !ok {
-			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：数组", my.getName(), ErrInvalidType))
-		}
-		return my
+		return my.checkSlice()
 	case reflect.Struct:
+		if my.Type == reflect.TypeOf(time.Time{}) {
+			return my.checkTime()
+		}
 		return my
 	default:
 		return my

@@ -1,6 +1,7 @@
 package validatorV3
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -17,28 +18,79 @@ type (
 
 func (Validator) New(data any) Validator { return Validator{data: data} }
 
-// func (Validator) New(attrs ...ValidatorAttributer) Validator { return Validator{}.SetAttrs(attrs...) }
-//
-// func (my Validator) SetAttrs(attrs ...ValidatorAttributer) Validator {
-// 	for idx := range attrs {
-// 		attrs[idx].Register(&my)
-// 	}
-//
-// 	return my
-// }
-
 func (my Validator) Wrongs() []error { return my.wrongs }
 
-func (my Validator) Validate() Validator {
+func (my Validator) Validate(exCheckFns ...any) Validator {
 	fieldInfos := getStructFieldInfos(my.data, "")
-	println(fieldInfos)
 	for idx := range fieldInfos {
 		if wrongs := fieldInfos[idx].Check().Wrongs(); len(wrongs) > 0 {
 			my.wrongs = append(my.wrongs, wrongs...)
 		}
 	}
 
+	if len(my.wrongs) == 0 {
+		for idx := range exCheckFns {
+			if err := callExCheckFn(exCheckFns[idx], my.data); err != nil {
+				my.wrongs = append(my.wrongs, err)
+			}
+		}
+	}
+
 	return my
+}
+
+func callExCheckFn(fn any, data any) error {
+	if fn == nil {
+		return fmt.Errorf("callback is nil")
+	}
+	fv := reflect.ValueOf(fn)
+	if fv.Kind() != reflect.Func {
+		return fmt.Errorf("callback is not a function: %T", fn)
+	}
+	ft := fv.Type()
+	if ft.NumIn() != 1 || ft.NumOut() < 1 {
+		return fmt.Errorf("callback must have signature func(T) error (or similar), got %s", ft.String())
+	}
+
+	argType := ft.In(0)
+	var dv reflect.Value
+	if data == nil {
+		dv = reflect.Zero(argType)
+	} else {
+		dv = reflect.ValueOf(data)
+		// If direct assignable, OK. Otherwise try to adapt:
+		if !dv.Type().AssignableTo(argType) {
+			// If function expects a pointer and we have a non-pointer of compatible element, take address.
+			if argType.Kind() == reflect.Ptr && dv.Type().AssignableTo(argType.Elem()) {
+				addr := reflect.New(dv.Type())
+				addr.Elem().Set(dv)
+				dv = addr
+			} else if dv.Kind() == reflect.Ptr && dv.Type().Elem().AssignableTo(argType) {
+				// If we have a pointer but function expects a value, dereference
+				dv = dv.Elem()
+			} else if dv.CanAddr() && dv.Addr().Type().AssignableTo(argType) {
+				// If we have an addressable value and function expects that pointer type
+				dv = dv.Addr()
+			} else {
+				// last resort: try zero value of argType
+				dv = reflect.Zero(argType)
+			}
+		}
+	}
+
+	outs := fv.Call([]reflect.Value{dv})
+	if len(outs) == 0 {
+		return nil
+	}
+	first := outs[0]
+	if first.IsNil() {
+		return nil
+	}
+	errIface := reflect.TypeOf((*error)(nil)).Elem()
+	if !first.Type().Implements(errIface) {
+		return fmt.Errorf("callback first return does not implement error: %s", first.Type().String())
+	}
+	return first.Interface().(error)
 }
 
 func getStructFieldInfos(s any, parentName string) []FieldInfo {
@@ -109,6 +161,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				Name:      field.Name,
 				Value:     value,
 				Kind:      elemKind,
+				Type:      elemType,
 				IsPtr:     isPtr,
 				IsNil:     isNil,
 				VRuleTags: strings.Split(vRuleTag, ";"),
