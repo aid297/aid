@@ -6,7 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pkg/errors"
+	"errors"
+
 	"go.uber.org/zap"
 
 	"github.com/aid297/aid/httpClient/httpClientV2"

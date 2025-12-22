@@ -22,19 +22,19 @@ type (
 
 func Test1(t *testing.T) {
 	st := StringTest{Name1: "张三", Name2: nil, Name3: ptr.New("")}
-	t.Logf("%v", APP.Validator.New(st).Validate().Wrongs())
+	t.Logf("%v", APP.Validator.Ins().Checker(st).Validate().Wrongs())
 }
 
 func Test2(t *testing.T) {
 	it := &IntTest{0, nil, ptr.New(int8(5))}
 
-	t.Logf("%v", APP.Validator.New(it).Validate().Wrongs())
+	t.Logf("%v", APP.Validator.Ins().Checker(it).Validate().Wrongs())
 }
 
 func Test3(t *testing.T) {
 	it := &IntTest{0, ptr.New(1), ptr.New(int8(5))}
 
-	t.Logf("%v", APP.Validator.New(it).Validate(func(data any) error {
+	t.Logf("%v", APP.Validator.Ins().Checker(it).Validate(func(data any) error {
 		data.(*IntTest).Age2 = ptr.New(111)
 		return nil
 	}).Wrongs())

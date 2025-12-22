@@ -1,6 +1,7 @@
 package validatorV3
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -12,17 +13,19 @@ import (
 	"github.com/aid297/aid/str"
 )
 
-// Validator 验证器
-type Validator struct {
+// Checker 验证器
+type Checker struct {
 	data   any
 	wrongs []error
 }
 
-func (Validator) New(data any) Validator { return Validator{data: data} }
+func (Checker) New(data any) Checker { return Checker{data: data} }
 
-func (my Validator) Wrongs() []error { return my.wrongs }
+func (my Checker) Wrongs() []error { return my.wrongs }
 
-func (my Validator) WrongToString() string {
+func (my Checker) Wrong() error { return errors.New(my.WrongToString()) }
+
+func (my Checker) WrongToString() string {
 	var errs = make([]string, 0, len(my.wrongs))
 
 	for idx := range my.wrongs {
@@ -32,7 +35,7 @@ func (my Validator) WrongToString() string {
 	return str.APP.Buffer.JoinStringLimit("；", errs...)
 }
 
-func (my Validator) Validate(exCheckFns ...any) Validator {
+func (my Checker) Validate(exCheckFns ...any) Checker {
 	fieldInfos := getStructFieldInfos(my.data, "")
 	for idx := range fieldInfos {
 		if wrongs := fieldInfos[idx].Check().Wrongs(); len(wrongs) > 0 {
@@ -51,30 +54,30 @@ func (my Validator) Validate(exCheckFns ...any) Validator {
 	return my
 }
 
-func WithGin[T any](c *gin.Context, exCheckFns ...any) (T, Validator) {
+func WithGin[T any](c *gin.Context, exCheckFns ...any) (T, Checker) {
 	var (
 		zero T
 		form = new(T)
 	)
 
 	if err := c.ShouldBind(&form); err != nil {
-		return zero, Validator{wrongs: []error{err}}
+		return zero, Checker{wrongs: []error{err}}
 	}
 
-	return *form, APP.Validator.New(form).Validate(exCheckFns)
+	return *form, Checker{}.New(form).Validate(exCheckFns...)
 }
 
-func WithFiber[T any](c *fiber.Ctx, exCheckFns ...any) (T, Validator) {
+func WithFiber[T any](c *fiber.Ctx, exCheckFns ...any) (T, Checker) {
 	var (
 		zero T
 		form = new(T)
 	)
 
 	if err := c.BodyParser(&form); err != nil {
-		return zero, Validator{wrongs: []error{err}}
+		return zero, Checker{wrongs: []error{err}}
 	}
 
-	return *form, APP.Validator.New(form).Validate(exCheckFns)
+	return *form, Checker{}.New(form).Validate(exCheckFns)
 }
 
 func callExCheckFn(fn any, data any) error {

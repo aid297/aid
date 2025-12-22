@@ -130,7 +130,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
 			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
-					if fn := APP.ValidatorEx.New().Get(exFnNames[idx2]); fn != nil {
+					if fn := APP.Validator.Ins().Get(exFnNames[idx2]); fn != nil {
 						if err := fn(value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
