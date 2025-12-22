@@ -3,6 +3,7 @@ package validatorV3
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/aid297/aid/array/anyArrayV2"
@@ -20,6 +21,20 @@ func (my FieldInfo) checkTime() FieldInfo {
 		v := reflect.ValueOf(my.Value)
 		if !v.IsZero() {
 			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：时间类型", my.getName(), ErrInvalidType))
+		}
+	}
+
+	for idx := range my.VRuleTags {
+		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := APP.ValidatorEx.New().Get(exFnNames[idx2]); fn != nil {
+						if err := fn(my.Value); err != nil {
+							my.wrongs = append(my.wrongs, err)
+						}
+					}
+				}
+			}
 		}
 	}
 

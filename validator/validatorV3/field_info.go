@@ -61,6 +61,19 @@ func (my FieldInfo) getRuleType(rules anyArrayV2.AnyArray[string]) (targetType s
 
 func getRuleRequired(rules anyArrayV2.AnyArray[string]) bool { return rules.In("required") }
 
+func getRuleExFnNames(rule string) []string {
+	var (
+		value string
+		ok    bool
+	)
+
+	if value, ok = strings.CutPrefix(rule, "size"); ok {
+		return strings.Split(value, ",")
+	}
+
+	return nil
+}
+
 func getRuleIntSize(rule string) (size *int) {
 	var (
 		value string

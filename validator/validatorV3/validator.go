@@ -12,13 +12,11 @@ import (
 	"github.com/aid297/aid/str"
 )
 
-type (
-	// Validator 验证器
-	Validator struct {
-		data   any
-		wrongs []error
-	}
-)
+// Validator 验证器
+type Validator struct {
+	data   any
+	wrongs []error
+}
 
 func (Validator) New(data any) Validator { return Validator{data: data} }
 
