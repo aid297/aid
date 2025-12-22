@@ -110,7 +110,7 @@ func (db *Database) RunInteractive() {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	fmt.Println("Simple MySQL-like Database")
-	fmt.Println("Type 'help' for available commands or 'exit' to quit")
+	fmt.Println("Kind 'help' for available commands or 'exit' to quit")
 	fmt.Println()
 
 	for {

@@ -141,7 +141,7 @@ func (my *Reflection) Set(attrs ...Attributer) *Reflection {
 // GetValue 获取reflect.Value
 func (my *Reflection) GetValue() reflect.Value { return my.refValue }
 
-// GetType 获取reflect.Type
+// GetType 获取reflect.Kind
 func (my *Reflection) GetType() reflect.Type { return my.refType }
 
 // GetReflectionType 获取Reflection类型

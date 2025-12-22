@@ -302,7 +302,7 @@ func (my *Reader) ToStruct(title []string, ret any) {
 	}
 }
 
-// convertStringToReflectValue 将字符串转换为给定的 reflect.Type 的值(非指针)
+// convertStringToReflectValue 将字符串转换为给定的 reflect.Kind 的值(非指针)
 func convertStringToReflectValue(s string, t reflect.Type) (reflect.Value, error) {
 	// 空字符串返回零值
 	if s == "" {

@@ -58,7 +58,7 @@ func NewHttpClient(urls ...string) *HttpClient {
 	return &HttpClient{
 		requestUrl:         str.APP.Buffer.NewString(operation.TernaryFuncAll(func() bool { return len(urls) == 0 }, func() string { return "" }, func() string { return urls[0] })).S(urls[1:]...).String(),
 		requestQueries:     map[string]string{},
-		requestHeaders:     map[string][]string{"Accept": {}, "Content-Type": {}},
+		requestHeaders:     map[string][]string{"Accept": {}, "Content-Kind": {}},
 		responseBody:       []byte{},
 		responseBodyBuffer: bytes.NewBuffer([]byte{}),
 		transport:          &http.Transport{
@@ -401,7 +401,7 @@ func (my *HttpClient) SetHeaderContentType(key ContentType) *HttpClient {
 // setHeaderContentType 设置请求头内容类型
 func (my *HttpClient) setHeaderContentType(key ContentType) {
 	if val, ok := ContentTypes[key]; ok {
-		my.requestHeaders["Content-Type"] = []string{val}
+		my.requestHeaders["Content-Kind"] = []string{val}
 	}
 }
 
@@ -424,10 +424,10 @@ func (my *HttpClient) appendHeaderContentType(keys ...ContentType) {
 		}
 	}
 
-	if len(my.requestHeaders["Content-Type"]) == 0 {
-		my.requestHeaders["Content-Type"] = values
+	if len(my.requestHeaders["Content-Kind"]) == 0 {
+		my.requestHeaders["Content-Kind"] = values
 	} else {
-		my.requestHeaders["Content-Type"] = append(my.requestHeaders["Content-Type"], values...)
+		my.requestHeaders["Content-Kind"] = append(my.requestHeaders["Content-Kind"], values...)
 	}
 }
 
