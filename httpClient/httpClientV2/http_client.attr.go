@@ -17,6 +17,7 @@ import (
 
 	"github.com/spf13/cast"
 
+	"github.com/aid297/aid/dict/anyDictV2"
 	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
 )
@@ -86,6 +87,11 @@ func (my *AttrQueries) Append(queries map[string]any) *AttrQueries {
 
 func (my *AttrQueries) AppendOne(key string, value any) *AttrQueries {
 	my.queries[key] = value
+	return my
+}
+
+func (my *AttrQueries) RemoveEmpty() *AttrQueries {
+	my.queries = anyDictV2.New(anyDictV2.Map(my.queries)).RemoveEmpty().ToMap()
 	return my
 }
 
