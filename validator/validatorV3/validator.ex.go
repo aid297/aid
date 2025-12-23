@@ -16,11 +16,11 @@ func (*Validator) Ins() *Validator {
 	return validatorExIns
 }
 
-func (*Validator) RegisterExFns(key string, fn func(any) error) *Validator {
+func (*Validator) RegisterExFns(key string, fn func(any) (err error)) *Validator {
 	validatorExIns.data[key] = fn
 	return validatorExIns
 }
 
-func (*Validator) GetExFn(key string) func(any) error { return validatorExIns.data[key] }
+func (*Validator) GetExFn(key string) func(any) (err error) { return validatorExIns.data[key] }
 
 func (*Validator) Checker(data any) Checker { return Checker{}.New(data) }
