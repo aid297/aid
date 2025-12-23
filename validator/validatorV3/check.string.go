@@ -107,6 +107,27 @@ func (my FieldInfo) checkString() FieldInfo {
 					}
 				}
 			}
+		case "bool":
+			var def = []string{"true", "True", "t", "yes", "on", "ok", "1", "false", "False", "f", "off", "no", "0"}
+			if strings.HasPrefix(my.VRuleTags[idx], "in") {
+				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
+					anyArrayV2.NewList(in).IfNotIn(func() {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					}, value)
+				}
+			}
+			if strings.HasPrefix(my.VRuleTags[idx], "not-in") {
+				if notIn = getRuleNotIn(my.VRuleTags[idx]); len(notIn) > 0 {
+					anyArrayV2.NewList(notIn).IfIn(func() {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					}, value)
+				}
+			}
+			if len(in) == 0 && len(notIn) == 0 {
+				anyArrayV2.NewList(def).IfNotIn(func() {
+					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, def))
+				}, value)
+			}
 		case "datetime":
 			ok = false
 			for _, key := range []string{"RFC3339", "RFC3339Nano", "DateTime", "ReferenceLayout", "ANSIC", "UnixDate", "RubyDate", "RFC822", "RFC822Z", "RFC850", "RFC1123", "RFC1123Z", "Kitchen", "Stamp", "StampMilli", "StampMicro", "StampNano", "SonarQubeDatetime"} {

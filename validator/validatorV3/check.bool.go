@@ -30,7 +30,7 @@ func (my FieldInfo) checkBool() FieldInfo {
 		}
 
 		switch ruleType {
-		case "", "bool", "b":
+		case "", "string":
 			if strings.HasPrefix(my.VRuleTags[idx], "in") {
 				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
 					anyArrayV2.NewList(in).IfNotIn(func() {

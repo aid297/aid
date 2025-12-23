@@ -1,7 +1,9 @@
 package validatorV3
 
 import (
+	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/aid297/aid/ptr"
 )
@@ -17,6 +19,10 @@ type (
 		Age1 int   `v-rule:"required"`
 		Age2 *int  `v-rule:"required"`
 		Age3 *int8 `v-rule:"required;min>=5"`
+	}
+
+	TimeTest struct {
+		Time1 time.Time `json:"time1" v-rule:"datetime"`
 	}
 )
 
@@ -40,4 +46,13 @@ func Test3(t *testing.T) {
 	}).Wrongs())
 
 	t.Logf("%v", *it.Age2)
+}
+
+func Test4(t *testing.T) {
+	tt := TimeTest{time.Now()}
+	if err := json.Unmarshal([]byte(`{"time1": "2017-10-19T13:00:00+0200"}`), &tt); err != nil {
+		t.Fatalf("反序列化失败： %v", err)
+	}
+
+	t.Logf("%v", APP.Validator.Ins().Checker(tt).Validate().Wrongs())
 }
