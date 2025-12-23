@@ -12,11 +12,11 @@ var (
 )
 
 func (*Validator) Ins() *Validator {
-	validatorExOnce.Do(func() { validatorExIns = new(Validator) })
+	validatorExOnce.Do(func() { validatorExIns = &Validator{data: make(map[string]func(any) (err error))} })
 	return validatorExIns
 }
 
-func (*Validator) RegisterExFns(key string, fn func(any) (err error)) *Validator {
+func (*Validator) RegisterExFn(key string, fn func(any) (err error)) *Validator {
 	validatorExIns.data[key] = fn
 	return validatorExIns
 }
