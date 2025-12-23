@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/aid297/aid/array/anyArrayV2"
+	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
 )
 
@@ -23,7 +24,9 @@ func (Checker) New(data any) Checker { return Checker{data: data} }
 
 func (my Checker) Wrongs() []error { return my.wrongs }
 
-func (my Checker) Wrong() error { return errors.New(my.WrongToString()) }
+func (my Checker) Wrong() error {
+	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString()) })).GetByValue(len(my.wrongs) > 0)
+}
 
 func (my Checker) WrongToString() string {
 	var errs = make([]string, 0, len(my.wrongs))
