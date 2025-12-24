@@ -469,14 +469,8 @@ func Transport(transport *http.Transport) *AttrTransport {
 	return &AttrTransport{transport: transport}
 }
 
-func (my *AttrTransport) Register(req *HTTPClient) { req.transport = my.transport }
-
-func (my *AttrTransport) Error() error { return nil }
-
-func (*AttrTransport) ImplHTTPClientAttributer() {}
-
-func TransportDefault() *AttrTransportDefault {
-	return &AttrTransportDefault{transport: &http.Transport{
+func TransportDefault() *AttrTransport {
+	return &AttrTransport{transport: &http.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 10,
 		IdleConnTimeout:     90 * time.Second,
@@ -484,11 +478,11 @@ func TransportDefault() *AttrTransportDefault {
 	}}
 }
 
-func (my *AttrTransportDefault) Register(req *HTTPClient) { req.transport = my.transport }
+func (my *AttrTransport) Register(req *HTTPClient) { req.transport = my.transport }
 
-func (my *AttrTransportDefault) Error() error { return nil }
+func (my *AttrTransport) Error() error { return nil }
 
-func (*AttrTransportDefault) ImplHTTPClientAttributer() {}
+func (*AttrTransport) ImplHTTPClientAttributer() {}
 
 func Cert(cert []byte) *AttrCert { return &AttrCert{cert: cert} }
 
