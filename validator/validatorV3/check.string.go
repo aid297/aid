@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/aid297/aid/array/anyArrayV2"
+	"github.com/aid297/aid/dict/anyDictV2"
 )
 
 var (
@@ -130,12 +131,12 @@ func (my FieldInfo) checkString() FieldInfo {
 			}
 		case "datetime":
 			ok = false
-			for _, key := range []string{"RFC3339", "RFC3339Nano", "DateTime", "ReferenceLayout", "ANSIC", "UnixDate", "RubyDate", "RFC822", "RFC822Z", "RFC850", "RFC1123", "RFC1123Z", "Kitchen", "Stamp", "StampMilli", "StampMicro", "StampNano", "SonarQubeDatetime"} {
-				if regexp.MustCompile(patternsForTimeString[key]).MatchString(value) {
+			anyDictV2.New(anyDictV2.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(key string, value string) {
+				if regexp.MustCompile(value).MatchString(value) {
 					ok = true
-					break
+					return
 				}
-			}
+			})
 			if !ok {
 				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
 			}
