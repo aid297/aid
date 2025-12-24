@@ -9862,7 +9862,7 @@ func (my *AttrAppendHeaderValue) AppendOne(key string, value any) *AttrAppendHea
 }</span>
 
 func (my *AttrAppendHeaderValue) ContentType(contentType ContentType) *AttrAppendHeaderValue <span class="cov0" title="0">{
-        my.headers["Content-Kind"] = ContentTypes[contentType]
+        my.headers["Content-Type"] = ContentTypes[contentType]
         return my
 }</span>
 
@@ -9912,7 +9912,7 @@ func (my *AttrAppendHeaderValues) AppendOne(key string, values ...any) *AttrAppe
 }</span>
 
 func (my *AttrAppendHeaderValues) ContentType(contentType ContentType) *AttrAppendHeaderValues <span class="cov0" title="0">{
-        my.headers["Content-Kind"] = []any{ContentTypes[contentType]}
+        my.headers["Content-Type"] = []any{ContentTypes[contentType]}
         return my
 }</span>
 
@@ -9949,7 +9949,7 @@ func SetHeaderValue(headers map[string]any) *AttrSetHeaderValue <span class="cov
 }</span>
 
 func (my *AttrSetHeaderValue) ContentType(contentType ContentType) *AttrSetHeaderValue <span class="cov8" title="1">{
-        my.headers["Content-Kind"] = ContentTypes[contentType]
+        my.headers["Content-Type"] = ContentTypes[contentType]
         return my
 }</span>
 
@@ -9982,7 +9982,7 @@ func SetHeaderValues(headers map[string][]any) *AttrSetHeaderValues <span class=
 }</span>
 
 func (my *AttrSetHeaderValues) ContentType(contentType ContentType) *AttrSetHeaderValues <span class="cov0" title="0">{
-        my.headers["Content-Kind"] = []any{ContentTypes[contentType]}
+        my.headers["Content-Type"] = []any{ContentTypes[contentType]}
         return my
 }</span>
 
@@ -10171,7 +10171,7 @@ func File(filename string) *AttrBody <span class="cov0" title="0">{
 func (my *AttrBody) Register(req *HTTPClient) <span class="cov8" title="1">{
         req.requestBody = my.body
         if my.contentType != "" </span><span class="cov8" title="1">{
-                req.headers["Content-Kind"] = []any{ContentTypes[my.contentType]}
+                req.headers["Content-Type"] = []any{ContentTypes[my.contentType]}
         }</span>
         <span class="cov8" title="1">req.err = my.err</span>
 }
@@ -10747,7 +10747,7 @@ func NewHttpClient(urls ...string) *HttpClient <span class="cov0" title="0">{
         return &amp;HttpClient{
                 requestUrl:         str.APP.Buffer.NewString(operation.TernaryFuncAll(func() bool </span><span class="cov0" title="0">{ return len(urls) == 0 }</span>, func() string <span class="cov0" title="0">{ return "" }</span>, func() string <span class="cov0" title="0">{ return urls[0] }</span>)).S(urls[1:]...).String(),
                 requestQueries:     map[string]string{},
-                requestHeaders:     map[string][]string{"Accept": {}, "Content-Kind": {}},
+                requestHeaders:     map[string][]string{"Accept": {}, "Content-Type": {}},
                 responseBody:       []byte{},
                 responseBodyBuffer: bytes.NewBuffer([]byte{}),
                 transport:          &amp;http.Transport{
@@ -11090,7 +11090,7 @@ func (my *HttpClient) SetHeaderContentType(key ContentType) *HttpClient <span cl
 // setHeaderContentType 设置请求头内容类型
 func (my *HttpClient) setHeaderContentType(key ContentType) <span class="cov0" title="0">{
         if val, ok := ContentTypes[key]; ok </span><span class="cov0" title="0">{
-                my.requestHeaders["Content-Kind"] = []string{val}
+                my.requestHeaders["Content-Type"] = []string{val}
         }</span>
 }
 
@@ -11113,10 +11113,10 @@ func (my *HttpClient) appendHeaderContentType(keys ...ContentType) <span class="
                 }</span>
         }
 
-        <span class="cov0" title="0">if len(my.requestHeaders["Content-Kind"]) == 0 </span><span class="cov0" title="0">{
-                my.requestHeaders["Content-Kind"] = values
+        <span class="cov0" title="0">if len(my.requestHeaders["Content-Type"]) == 0 </span><span class="cov0" title="0">{
+                my.requestHeaders["Content-Type"] = values
         }</span> else<span class="cov0" title="0"> {
-                my.requestHeaders["Content-Kind"] = append(my.requestHeaders["Content-Kind"], values...)
+                my.requestHeaders["Content-Type"] = append(my.requestHeaders["Content-Type"], values...)
         }</span>
 }
 
@@ -11557,7 +11557,7 @@ func (my *HttpClientDownload) SendResponse(w http.ResponseWriter, headers map[st
                 if my.httpClient.response.Header.Get("Content-Type") != "" </span><span class="cov0" title="0">{
                         w.Header().Set("Content-Type", my.httpClient.response.Header.Get("Content-Type"))
                 }</span> else<span class="cov0" title="0"> {
-                        w.Header().Set("Content-Type", my.httpClient.request.Header["Content-Kind"][0])
+                        w.Header().Set("Content-Type", my.httpClient.request.Header["Content-Type"][0])
                 }</span>
 
                 <span class="cov0" title="0">if headers != nil </span><span class="cov0" title="0">{
@@ -21062,8 +21062,8 @@ func Cors() gin.HandlerFunc <span class="cov0" title="0">{
         return cors.New(cors.Config{
                 AllowAllOrigins:  true,
                 AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"},
-                AllowHeaders:     []string{"Origin", "Content-Kind", "Authorization", "AccessToken", "X-CSRF-Token", "Token", "X-Token", "X-User-Id", "Accept", "X-Requested-With"},
-                ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Kind", "Set-Token", "Set-Expires-At"},
+                AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "AccessToken", "X-CSRF-Token", "Token", "X-Token", "X-User-Id", "Accept", "X-Requested-With"},
+                ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type", "Set-Token", "Set-Expires-At"},
                 AllowCredentials: true,
                 MaxAge:           12 * time.Hour,
         })

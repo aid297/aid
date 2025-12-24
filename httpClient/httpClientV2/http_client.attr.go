@@ -133,7 +133,7 @@ func (my *AttrAppendHeaderValue) AppendOne(key string, value any) *AttrAppendHea
 }
 
 func (my *AttrAppendHeaderValue) ContentType(contentType ContentType) *AttrAppendHeaderValue {
-	my.headers["Content-Kind"] = ContentTypes[contentType]
+	my.headers["Content-Type"] = ContentTypes[contentType]
 	return my
 }
 
@@ -183,7 +183,7 @@ func (my *AttrAppendHeaderValues) AppendOne(key string, values ...any) *AttrAppe
 }
 
 func (my *AttrAppendHeaderValues) ContentType(contentType ContentType) *AttrAppendHeaderValues {
-	my.headers["Content-Kind"] = []any{ContentTypes[contentType]}
+	my.headers["Content-Type"] = []any{ContentTypes[contentType]}
 	return my
 }
 
@@ -220,7 +220,7 @@ func SetHeaderValue(headers map[string]any) *AttrSetHeaderValue {
 }
 
 func (my *AttrSetHeaderValue) ContentType(contentType ContentType) *AttrSetHeaderValue {
-	my.headers["Content-Kind"] = ContentTypes[contentType]
+	my.headers["Content-Type"] = ContentTypes[contentType]
 	return my
 }
 
@@ -253,7 +253,7 @@ func SetHeaderValues(headers map[string][]any) *AttrSetHeaderValues {
 }
 
 func (my *AttrSetHeaderValues) ContentType(contentType ContentType) *AttrSetHeaderValues {
-	my.headers["Content-Kind"] = []any{ContentTypes[contentType]}
+	my.headers["Content-Type"] = []any{ContentTypes[contentType]}
 	return my
 }
 
@@ -442,7 +442,7 @@ func File(filename string) *AttrBody {
 func (my *AttrBody) Register(req *HTTPClient) {
 	req.requestBody = my.body
 	if my.contentType != "" {
-		req.headers["Content-Kind"] = []any{ContentTypes[my.contentType]}
+		req.headers["Content-Type"] = []any{ContentTypes[my.contentType]}
 	}
 	req.err = my.err
 }
