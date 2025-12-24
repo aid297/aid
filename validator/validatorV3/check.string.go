@@ -131,7 +131,7 @@ func (my FieldInfo) checkString() FieldInfo {
 			}
 		case "datetime":
 			ok = false
-			anyDictV2.New(anyDictV2.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(key string, value string) {
+			anyDictV2.New(anyDictV2.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
 				if regexp.MustCompile(value).MatchString(value) {
 					ok = true
 					return
