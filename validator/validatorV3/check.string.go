@@ -46,6 +46,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		notIn          []string
 		value          string
 		ok             bool
+		needRequired   = getRuleRequired(rules)
 	)
 
 	if value, ok = my.Value.(string); !ok {
@@ -53,8 +54,12 @@ func (my FieldInfo) checkString() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if needRequired && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
+		return my
+	} else if !needRequired && !my.IsPtr && value == "" {
+		return my
+	} else if !needRequired && my.IsPtr && my.IsNil {
 		return my
 	}
 
