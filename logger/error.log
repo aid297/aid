@@ -1,0 +1,3 @@
+2025-12-23 15:40:06.287	error	test-error	{"errors": [{"error": "err1"}, {"error": "err2"}, {"error": "err3"}]}
+2025-12-24 09:12:12.563	error	test-error	{"errors": [{"error": "err1"}, {"error": "err2"}, {"error": "err3"}]}
+2025-12-24 09:19:53.450	error	test-error	{"errors": [{"error": "err1"}, {"error": "err2"}, {"error": "err3"}]}
