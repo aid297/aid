@@ -222,9 +222,9 @@ import moment from "moment";
 
 import DateList from "src/components/DateListCom.vue";
 
-import { DateTitleService } from "src/services/dateTitleService";
 import { ClockInService } from "src/services/clockInService";
 import { CollectService } from "src/services/collectService";
+import { DateTitleService } from "src/services/dateTitleService";
 import { StatisticService } from "src/services/statisticService";
 
 import { EveryDaysModule } from "src/modules/everydayModule";
@@ -435,8 +435,8 @@ const onUploadedStatisticExcel = async files => {
 
             // 计算加班
             overtime = value.weekendOvertime + value.holidayOvertime + (value.holiday3Overtime) * 3;
-            // 计算调休
-            compensatoryLeave = value.annualLeave + value.paternityLeave + value.compensatoryLeave + value.absenteeism;
+            // 计算调休：年假、陪产假、调休、事假、旷工、病假
+            compensatoryLeave = value.annualLeave + value.paternityLeave + value.compensatoryLeave + value.absenteeism + value.personalLeave;
             // 日志
             log = value.log.map((item, idx) => `${(idx + 1).toString().padStart(3, "0")}、${item}`).join("\r\n");
 
@@ -466,6 +466,9 @@ const onUploadedStatisticExcel = async files => {
     fileReader.readAsArrayBuffer(file);
 };
 
+/**
+ * 生成 Excel 文件
+ */
 const generateExcel = async () => {
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet("Sheet1")
