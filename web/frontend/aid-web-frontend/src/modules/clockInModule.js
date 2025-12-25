@@ -92,7 +92,16 @@ export class ClockIn {
 
             const matches = value.match(/(?:[01]?\d|2[0-3]):([0-5]\d)/g);
             if (matches === null || matches.length === 0) {
-                if (["俄罗斯","日本", "韩国","美国", "加拿大","澳大利亚"].includes(value)) {
+                if ([
+                    "美国", "加拿大", "墨西哥",
+                    "巴西", "阿根廷", "智利",
+                    "英国","法国","德国","意大利",
+                    "俄罗斯", "波兰",
+                    "埃及", "南非", "沙特阿拉伯", "土耳其",
+                    "印度", "印度尼西亚", "巴基斯坦", "孟加拉国", "泰国",
+                    "日本", "韩国",
+                    "澳大利亚", "新西兰"
+                ].includes(value)) {
                     this._status = true;
                     this._desc = `特殊打卡（${value}）`;
                     return;
