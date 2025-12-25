@@ -1,14 +1,16 @@
 system:
   debug: false
   version: v1.0.0
-  daemon: false
+  daemon: true
   timezone: Asia/Shanghai
 web-service:
   port: "9900"
   cors: true
   static-dir:
-  - url: /page
+  - url: /web
     dir: resource/html/spa
+  - url: /manager
+    dir: resource/html/manager
 log:
   daemon: 
     dir: storage/runtime/log
