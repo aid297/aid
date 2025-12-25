@@ -91,6 +91,18 @@ export class ClockIn {
             }
 
             const matches = value.match(/(?:[01]?\d|2[0-3]):([0-5]\d)/g);
+            if (matches === null || matches.length === 0) {
+                if (["俄罗斯"].includes(value)) {
+                    this._status = true;
+                    this._desc = "特殊打卡（俄罗斯）";
+                    return;
+                }
+
+                this._status = false;
+                this._desc = `打卡数据格式错误：${value}`;
+                return;
+            }
+
             matches.forEach(match => {
                 const hour = moment(match, "HH:mm").format("HH");
                 if (hour < 12) isAm = true;
