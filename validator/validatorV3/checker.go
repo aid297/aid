@@ -24,6 +24,8 @@ func (Checker) New(data any) Checker { return Checker{data: data} }
 
 func (my Checker) Wrongs() []error { return my.wrongs }
 
+func (my Checker) OK() bool { return len(my.wrongs) == 0 }
+
 func (my Checker) Wrong() error {
 	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString()) })).GetByValue(len(my.wrongs) > 0)
 }
