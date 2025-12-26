@@ -5,9 +5,7 @@ import (
 )
 
 func TestDir1(t *testing.T) {
-	t.Run("查看当前目录", func(t *testing.T) {
-		t.Logf("当前目录：%s", NewDirRel().FullPath)
-	})
+	t.Run("查看当前目录", func(t *testing.T) { t.Logf("当前目录：%s", NewDirRel().FullPath) })
 }
 
 func TestDir2(t *testing.T) {
