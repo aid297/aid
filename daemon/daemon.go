@@ -28,7 +28,7 @@ func (*Daemon) Launch(title, logDir, logFilename string) {
 		if err := os.Chdir("./"); err != nil {
 			panic(err)
 		}
-		// syscall.Umask(0)
+		// syscall.Umask(0)  // TODO TEST
 		return
 	}
 
@@ -43,7 +43,7 @@ func (*Daemon) Launch(title, logDir, logFilename string) {
 	}
 	defer func() { _ = fp.Close() }()
 	cmd := exec.Command(os.Args[0], os.Args[1:]...)
-	// cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	// cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // TODO TEST
 	cmd.SysProcAttr = &syscall.SysProcAttr{} // TODO TEST
 	cmd.Stdout = fp
 	cmd.Stderr = fp
