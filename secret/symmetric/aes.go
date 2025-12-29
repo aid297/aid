@@ -48,7 +48,6 @@ func NewAes(sail string) *Aes { return &Aes{sailStr: sail} }
 // NewEncrypt 实例化：Aes加密密钥对象
 func (my *Aes) NewEncrypt() *Aes {
 	my.Encrypt = NewAesEncrypt(my.sailStr)
-
 	return my
 }
 
@@ -102,7 +101,6 @@ func (r *AesEncrypt) GetAesKey() []byte { return r.aesKey }
 // SetAesKey 设置加盐后的密钥
 func (r *AesEncrypt) SetAesKey(aesKey []byte) *AesEncrypt {
 	r.aesKey = aesKey
-
 	return r
 }
 
