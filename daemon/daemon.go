@@ -28,7 +28,7 @@ func (*Daemon) Launch(title, logDir, logFilename string) {
 		if err := os.Chdir("./"); err != nil {
 			panic(err)
 		}
-		// syscall.Umask(0)
+		// syscall.Umask(0) // TODO TEST
 		return
 	}
 
