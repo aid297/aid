@@ -7,6 +7,8 @@ import (
 	"sync"
 
 	"github.com/aid297/aid/array/anyArrayV2"
+
+	jsonIter "github.com/json-iterator/go"
 )
 
 type AnyDict[K comparable, V any] struct {
@@ -293,4 +295,15 @@ func Zip[K comparable, V any](keys []K, values []V) AnyDict[K, V] {
 	}
 
 	return d
+}
+
+// StructToOther struct 通过 json 转其他格式
+func StructToOther[K any, V any](src K) (ret V, err error) {
+	var b []byte
+	if b, err = jsonIter.Marshal(src); err != nil {
+		return
+	}
+
+	err = jsonIter.Unmarshal(b, &ret)
+	return
 }
