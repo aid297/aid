@@ -67,38 +67,73 @@ func getRuleExFnNames(rule string) []string {
 		ok    bool
 	)
 
-	if value, ok = strings.CutPrefix(rule, "size"); ok {
+	if value, ok = strings.CutPrefix(rule, "ex:"); ok {
 		return strings.Split(value, ",")
 	}
 
 	return nil
 }
 
-func getRuleIntSize(rule string) (size *int) {
+func getRuleUintSize(rule string) (size *uint, eq bool) {
+	var s *int
+	s, eq = getRuleIntSize(rule)
+	size = ptr.New(uint(*s))
+	return
+}
+
+func getRuleIntSize(rule string) (size *int, eq bool) {
 	var (
 		value string
 		ok    bool
 	)
 
-	if value, ok = strings.CutPrefix(rule, "size"); ok {
+	if value, ok = strings.CutPrefix(rule, "size="); ok {
 		size = ptr.New(cast.ToInt(value))
+		eq = true
+		return
+	}
+
+	if value, ok = strings.CutPrefix(rule, "size="); ok {
+		size = ptr.New(cast.ToInt(value))
+		eq = false
 		return
 	}
 
 	return
 }
 
-func getRuleFloatSize(rule string) (size *float64) {
+func getRuleFloatSize(rule string) (size *float64, eq bool) {
 	var (
 		value string
 		ok    bool
 	)
 
-	if value, ok = strings.CutPrefix(rule, "size"); ok {
+	if value, ok = strings.CutPrefix(rule, "size="); ok {
 		size = ptr.New(cast.ToFloat64(value))
+		eq = true
 		return
 	}
 
+	if value, ok = strings.CutPrefix(rule, "size!="); ok {
+		size = ptr.New(cast.ToFloat64(value))
+		eq = false
+		return
+	}
+
+	return
+}
+
+func getRuleUintMin(rule string) (size *uint, include bool) {
+	var s *int
+	s, include = getRuleIntMin(rule)
+	size = ptr.New(uint(*s))
+	return
+}
+
+func getRuleUintMax(rule string) (size *uint, include bool) {
+	var s *int
+	s, include = getRuleIntMax(rule)
+	size = ptr.New(uint(*s))
 	return
 }
 
@@ -134,6 +169,7 @@ func getRuleIntMax(rule string) (size *int, include bool) {
 	}
 	if value, ok = strings.CutPrefix(rule, "max<"); ok {
 		size = ptr.New(cast.ToInt(value))
+		include = false
 		return
 	}
 
@@ -153,6 +189,7 @@ func getRuleFloatMin(rule string) (size *float64, include bool) {
 	}
 	if value, ok = strings.CutPrefix(rule, "min>"); ok {
 		size = ptr.New(cast.ToFloat64(value))
+		include = false
 		return
 	}
 
@@ -172,6 +209,7 @@ func getRuleFloatMax(rule string) (size *float64, include bool) {
 	}
 	if value, ok = strings.CutPrefix(rule, "max<"); ok {
 		size = ptr.New(cast.ToFloat64(value))
+		include = false
 		return
 	}
 

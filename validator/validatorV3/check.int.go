@@ -15,7 +15,7 @@ func (my FieldInfo) checkInt() FieldInfo {
 		rules          = anyArrayV2.NewList(my.VRuleTags)
 		ruleType       = my.getRuleType(rules)
 		min, max, size *int
-		include        bool
+		include, eq    bool
 		in             []string
 		notIn          []string
 		value          int
@@ -76,9 +76,15 @@ func (my FieldInfo) checkInt() FieldInfo {
 				}
 			}
 			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size = getRuleIntSize(my.VRuleTags[idx]); size != nil {
-					if value != *size {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：= %d", my.getName(), ErrInvalidLength, *size))
+				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+					if eq {
+						if !(cast.ToInt(value) == *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
+					} else {
+						if !(cast.ToInt(value) != *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
 					}
 				}
 			}
@@ -106,7 +112,7 @@ func (my FieldInfo) checkInt8() FieldInfo {
 		rules          = anyArrayV2.NewList(my.VRuleTags)
 		ruleType       = my.getRuleType(rules)
 		min, max, size *int
-		include        bool
+		include, eq    bool
 		in             []string
 		notIn          []string
 		value          int8
@@ -167,9 +173,15 @@ func (my FieldInfo) checkInt8() FieldInfo {
 				}
 			}
 			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size = getRuleIntSize(my.VRuleTags[idx]); size != nil {
-					if cast.ToInt(value) != *size {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：= %d", my.getName(), ErrInvalidLength, *size))
+				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+					if eq {
+						if !(cast.ToInt(value) == *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
+					} else {
+						if !(cast.ToInt(value) != *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
 					}
 				}
 			}
@@ -197,7 +209,7 @@ func (my FieldInfo) checkInt16() FieldInfo {
 		rules          = anyArrayV2.NewList(my.VRuleTags)
 		ruleType       = my.getRuleType(rules)
 		min, max, size *int
-		include        bool
+		include, eq    bool
 		in             []string
 		notIn          []string
 		value          int16
@@ -257,9 +269,15 @@ func (my FieldInfo) checkInt16() FieldInfo {
 				}
 			}
 			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size = getRuleIntSize(my.VRuleTags[idx]); size != nil {
-					if cast.ToInt(value) != *size {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：= %d", my.getName(), ErrInvalidLength, *size))
+				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+					if eq {
+						if !(cast.ToInt(value) == *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
+					} else {
+						if !(cast.ToInt(value) != *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
 					}
 				}
 			}
@@ -287,7 +305,7 @@ func (my FieldInfo) checkInt32() FieldInfo {
 		rules          = anyArrayV2.NewList(my.VRuleTags)
 		ruleType       = my.getRuleType(rules)
 		min, max, size *int
-		include        bool
+		include, eq    bool
 		in             []string
 		notIn          []string
 		value          int32
@@ -348,9 +366,15 @@ func (my FieldInfo) checkInt32() FieldInfo {
 				}
 			}
 			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size = getRuleIntSize(my.VRuleTags[idx]); size != nil {
-					if cast.ToInt(value) != *size {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：= %d", my.getName(), ErrInvalidLength, *size))
+				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+					if eq {
+						if !(cast.ToInt(value) == *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
+					} else {
+						if !(cast.ToInt(value) != *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
 					}
 				}
 			}
@@ -378,7 +402,7 @@ func (my FieldInfo) checkInt64() FieldInfo {
 		rules          = anyArrayV2.NewList(my.VRuleTags)
 		ruleType       = my.getRuleType(rules)
 		min, max, size *int
-		include        bool
+		include, eq    bool
 		in             []string
 		notIn          []string
 		value          int64
@@ -439,9 +463,15 @@ func (my FieldInfo) checkInt64() FieldInfo {
 				}
 			}
 			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size = getRuleIntSize(my.VRuleTags[idx]); size != nil {
-					if cast.ToInt(value) != *size {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：= %d", my.getName(), ErrInvalidLength, *size))
+				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+					if eq {
+						if !(cast.ToInt(value) == *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
+					} else {
+						if !(cast.ToInt(value) != *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
 					}
 				}
 			}

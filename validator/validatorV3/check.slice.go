@@ -13,7 +13,7 @@ func (my FieldInfo) checkSlice() FieldInfo {
 		rules          = anyArrayV2.NewList(my.VRuleTags)
 		ruleType       = my.getRuleType(rules)
 		min, max, size *int
-		include        bool
+		include, eq    bool
 		value          []any
 		ok             bool
 	)
@@ -58,9 +58,15 @@ func (my FieldInfo) checkSlice() FieldInfo {
 				}
 			}
 			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size = getRuleIntSize(my.VRuleTags[idx]); size != nil {
-					if len(value) != *size {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：= %d", my.getName(), ErrInvalidLength, *size))
+				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+					if eq {
+						if !(len(value) == *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
+					} else {
+						if !(len(value) != *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
 					}
 				}
 			}

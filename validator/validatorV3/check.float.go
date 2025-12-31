@@ -9,13 +9,13 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkFloat32 检查小数#32位，支持：required、[float32|f32]、min>、min>=、max<、max<=、in、not-in、size:
+// checkFloat32 检查小数#32位，支持：required、[float32|f32]、min>、min>=、max<、max<=、in、not-in、size=、size!=
 func (my FieldInfo) checkFloat32() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
 		ruleType       = my.getRuleType(rules)
 		min, max, size *float64
-		include        bool
+		include, eq    bool
 		in             []string
 		notIn          []string
 		value          float32
@@ -80,9 +80,15 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 				}
 			}
 			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size = getRuleFloatSize(my.VRuleTags[idx]); size != nil {
-					if cast.ToFloat64(value) != *size {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：= %f", my.getName(), ErrInvalidLength, *size))
+				if size, eq = getRuleFloatSize(my.VRuleTags[idx]); size != nil {
+					if eq {
+						if !(cast.ToFloat64(value) == *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
+					} else {
+						if !(cast.ToFloat64(value) != *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
 					}
 				}
 			}
@@ -110,7 +116,7 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 		rules          = anyArrayV2.NewList(my.VRuleTags)
 		ruleType       = my.getRuleType(rules)
 		min, max, size *float64
-		include        bool
+		include, eq    bool
 		in             []string
 		notIn          []string
 		value          float64
@@ -171,9 +177,15 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 				}
 			}
 			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size = getRuleFloatSize(my.VRuleTags[idx]); size != nil {
-					if cast.ToFloat64(value) != *size {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：= %f", my.getName(), ErrInvalidLength, *size))
+				if size, eq = getRuleFloatSize(my.VRuleTags[idx]); size != nil {
+					if eq {
+						if !(cast.ToFloat64(value) == *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
+					} else {
+						if !(cast.ToFloat64(value) != *size) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						}
 					}
 				}
 			}
