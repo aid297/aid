@@ -7,7 +7,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkBool 检查布尔值，支持：required、[bool|b]、in、not-in：
+// checkBool 检查布尔值，支持：required、[string]、in:、not-in：、ex:
 func (my FieldInfo) checkBool() FieldInfo {
 	var (
 		rules    = anyArrayV2.NewList(my.VRuleTags)

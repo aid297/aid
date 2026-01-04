@@ -9,7 +9,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkString 检查字符串，支持：required、[datetime]、min>、min>=、max<、max<=、in、not-in、size:
+// checkTime 检查时间，支持：required、min>、min>=、max<、max<=、in、not-in、ex:
 func (my FieldInfo) checkTime() FieldInfo {
 	if getRuleRequired(anyArrayV2.NewList(my.VRuleTags)) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
@@ -22,6 +22,7 @@ func (my FieldInfo) checkTime() FieldInfo {
 		if !v.IsZero() {
 			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：时间类型", my.getName(), ErrInvalidType))
 		}
+
 	}
 
 	for idx := range my.VRuleTags {

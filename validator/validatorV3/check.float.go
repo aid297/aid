@@ -9,7 +9,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkFloat32 检查小数#32位，支持：required、[float32|f32]、min>、min>=、max<、max<=、in、not-in、size=、size!=
+// checkFloat32 检查小数#32位，支持：required、[float32|f32]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkFloat32() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -110,7 +110,7 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 	return my
 }
 
-// checkFloat64 检查小数#64位，支持：required、[float|f64]、min>、min>=、max<、max<=、in、not-in、size:
+// checkFloat64 检查小数#64位，支持：required、[float|f64]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkFloat64() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)

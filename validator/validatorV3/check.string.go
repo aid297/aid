@@ -35,7 +35,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、[string|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size:
+// checkString 检查字符串，支持：required、[string|bool|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size=、size<=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -110,11 +110,11 @@ func (my FieldInfo) checkString() FieldInfo {
 				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
 					if eq {
 						if !(len(value) == *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					} else {
 						if !(len(value) != *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					}
 				}

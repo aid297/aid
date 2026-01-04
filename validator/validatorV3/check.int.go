@@ -9,7 +9,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkInt 检查整数，支持：required、[int|i]、min>、min>=、max<、max<=、in、not-in、size:
+// checkInt 检查整数，支持：required、[int|i]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -79,11 +79,11 @@ func (my FieldInfo) checkInt() FieldInfo {
 				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					} else {
 						if !(cast.ToInt(value) != *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					}
 				}
@@ -106,7 +106,7 @@ func (my FieldInfo) checkInt() FieldInfo {
 	return my
 }
 
-// checkInt8 检查整数#8位，支持：required、[int8|i8]、min>、min>=、max<、max<=、in、not-in、size:
+// checkInt8 检查整数#8位，支持：required、[int8|i8]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt8() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -176,11 +176,11 @@ func (my FieldInfo) checkInt8() FieldInfo {
 				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					} else {
 						if !(cast.ToInt(value) != *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					}
 				}
@@ -203,7 +203,7 @@ func (my FieldInfo) checkInt8() FieldInfo {
 	return my
 }
 
-// checkInt16 检查整数#16位，支持：required、[int16|i16]、min>、min>=、max<、max<=、in、not-in、size:
+// checkInt16 检查整数#16位，支持：required、[int16|i16]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt16() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -272,11 +272,11 @@ func (my FieldInfo) checkInt16() FieldInfo {
 				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					} else {
 						if !(cast.ToInt(value) != *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					}
 				}
@@ -299,7 +299,7 @@ func (my FieldInfo) checkInt16() FieldInfo {
 	return my
 }
 
-// checkInt32 检查整数#32位，支持：required、[int32|i32]、min>、min>=、max<、max<=、in、not-in、size:
+// checkInt32 检查整数#32位，支持：required、[int32|i32]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt32() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -369,11 +369,11 @@ func (my FieldInfo) checkInt32() FieldInfo {
 				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					} else {
 						if !(cast.ToInt(value) != *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					}
 				}
@@ -396,7 +396,7 @@ func (my FieldInfo) checkInt32() FieldInfo {
 	return my
 }
 
-// checkInt64 检查整数#64位，支持：required、[int64|i64]、min>、min>=、max<、max<=、in、not-in、size:
+// checkInt64 检查整数#64位，支持：required、[int64|i64]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt64() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -466,11 +466,11 @@ func (my FieldInfo) checkInt64() FieldInfo {
 				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					} else {
 						if !(cast.ToInt(value) != *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					}
 				}

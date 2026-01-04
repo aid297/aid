@@ -7,7 +7,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkSlice 检查数组、切片，支持：required、[array|slice|a|s]、min>、min>=、max<、max<=、size:
+// checkSlice 检查数组、切片，支持：required、[array|slice]、min>、min>=、max<、max<=、size=、size!=、ex:
 func (my FieldInfo) checkSlice() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -30,7 +30,7 @@ func (my FieldInfo) checkSlice() FieldInfo {
 
 	for idx := range my.VRuleTags {
 		switch ruleType {
-		case "", "array", "slice", "a", "s":
+		case "", "array", "slice":
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -61,11 +61,11 @@ func (my FieldInfo) checkSlice() FieldInfo {
 				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
 					if eq {
 						if !(len(value) == *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					} else {
 						if !(len(value) != *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 						}
 					}
 				}
