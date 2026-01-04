@@ -268,7 +268,6 @@ func getRuleTimeIn(rule string) (in []time.Time) {
 	)
 	if value, ok = strings.CutPrefix(rule, "in:"); ok {
 		times = strings.Split(value, ",")
-		return
 	}
 
 	if len(times) > 0 {
@@ -289,7 +288,6 @@ func getRuleTimeNotIn(rule string) (notIn []time.Time) {
 	)
 	if value, ok = strings.CutPrefix(rule, "not-in:"); ok {
 		times = strings.Split(value, ",")
-		return
 	}
 
 	if len(times) > 0 {
