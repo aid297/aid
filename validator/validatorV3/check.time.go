@@ -11,7 +11,6 @@ import (
 // checkTime 检查时间，支持：required、not-empty、[datetime|date|time]、min>、min>=、max<、max<=、in、not-in、ex:
 func (my FieldInfo) checkTime() FieldInfo {
 	var (
-		rules     = anyArrayV2.NewList(my.VRuleTags)
 		min, max  *time.Time
 		include   bool
 		in, notIn []time.Time
@@ -24,74 +23,68 @@ func (my FieldInfo) checkTime() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "datetime", "date", "time":
-			for idx := range my.VRuleTags {
-				if strings.HasPrefix(my.VRuleTags[idx], "min") {
-					if min, include = getRuleTimeMin(my.VRuleTags[idx]); min != nil {
-						if include {
-							if !(value.Unix() >= (*min).Unix()) {
-								my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %v", my.getName(), ErrInvalidLength, *min))
-							}
-						} else {
-							if !(value.Unix() > (*min).Unix()) {
-								my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：> %v", my.getName(), ErrInvalidLength, *min))
-							}
+			if strings.HasPrefix(rule, "min") {
+				if min, include = getRuleTimeMin(rule); min != nil {
+					if include {
+						if !(value.Unix() >= (*min).Unix()) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %v", my.getName(), ErrInvalidLength, *min))
+						}
+					} else {
+						if !(value.Unix() > (*min).Unix()) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：> %v", my.getName(), ErrInvalidLength, *min))
 						}
 					}
 				}
-				if strings.HasPrefix(my.VRuleTags[idx], "max") {
-					if max, include = getRuleTimeMax(my.VRuleTags[idx]); max != nil {
-						if include {
-							if !(value.Unix() <= (*max).Unix()) {
-								my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %v", my.getName(), ErrInvalidLength, *max))
-							}
-						} else {
-							if !(value.Unix() < (*max).Unix()) {
-								my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：< %v", my.getName(), ErrInvalidLength, *max))
-							}
+			}
+			if strings.HasPrefix(rule, "max") {
+				if max, include = getRuleTimeMax(rule); max != nil {
+					if include {
+						if !(value.Unix() <= (*max).Unix()) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %v", my.getName(), ErrInvalidLength, *max))
+						}
+					} else {
+						if !(value.Unix() < (*max).Unix()) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：< %v", my.getName(), ErrInvalidLength, *max))
 						}
 					}
 				}
+			}
 
-				if strings.HasPrefix(my.VRuleTags[idx], "in") {
-					if in = getRuleTimeIn(my.VRuleTags[idx]); len(in) > 0 {
-						anyArrayV2.NewList(in).IfIn(func() {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
-						}, value)
-					}
+			if strings.HasPrefix(rule, "in") {
+				if in = getRuleTimeIn(rule); len(in) > 0 {
+					anyArrayV2.NewList(in).IfIn(func() {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					}, value)
 				}
+			}
 
-				if strings.HasPrefix(my.VRuleTags[idx], "not-in") {
-					if notIn = getRuleTimeNotIn(my.VRuleTags[idx]); len(notIn) > 0 {
-						anyArrayV2.NewList(notIn).IfNotIn(func() {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
-						}, value)
-					}
+			if strings.HasPrefix(rule, "not-in") {
+				if notIn = getRuleTimeNotIn(rule); len(notIn) > 0 {
+					anyArrayV2.NewList(notIn).IfNotIn(func() {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					}, value)
 				}
 			}
 			fallthrough
 		case "ex":
-			for idx := range my.VRuleTags {
-				if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-					if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-						for idx2 := range exFnNames {
-							if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-								if err := fn(my.Value); err != nil {
-									my.wrongs = append(my.wrongs, err)
-								}
-							}
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(my.Value); err != nil {
+							my.wrongs = append(my.wrongs, err)
 						}
 					}
 				}

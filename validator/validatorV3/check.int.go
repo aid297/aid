@@ -12,7 +12,6 @@ import (
 // checkInt 检查整数，支持：required、not-empty、[int|i]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt() FieldInfo {
 	var (
-		rules          = anyArrayV2.NewList(my.VRuleTags)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -26,17 +25,17 @@ func (my FieldInfo) checkInt() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "int", "i":
 			if strings.HasPrefix(rule, "min") {
@@ -112,7 +111,6 @@ func (my FieldInfo) checkInt() FieldInfo {
 // checkInt8 检查整数#8位，支持：required、not-empty、[int8|i8]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt8() FieldInfo {
 	var (
-		rules          = anyArrayV2.NewList(my.VRuleTags)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -126,17 +124,17 @@ func (my FieldInfo) checkInt8() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "int8", "i8":
 			if strings.HasPrefix(rule, "min") {
@@ -212,7 +210,6 @@ func (my FieldInfo) checkInt8() FieldInfo {
 // checkInt16 检查整数#16位，支持：required、not-empty、[int16|i16]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt16() FieldInfo {
 	var (
-		rules          = anyArrayV2.NewList(my.VRuleTags)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -225,17 +222,17 @@ func (my FieldInfo) checkInt16() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "int16", "i16":
 			if strings.HasPrefix(rule, "min") {
@@ -311,7 +308,6 @@ func (my FieldInfo) checkInt16() FieldInfo {
 // checkInt32 检查整数#32位，支持：required、not-empty、[int32|i32]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt32() FieldInfo {
 	var (
-		rules          = anyArrayV2.NewList(my.VRuleTags)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -325,17 +321,17 @@ func (my FieldInfo) checkInt32() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "int32", "i32":
 			if strings.HasPrefix(rule, "min") {
@@ -411,7 +407,6 @@ func (my FieldInfo) checkInt32() FieldInfo {
 // checkInt64 检查整数#64位，支持：required、not-empty、[int64|i64]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt64() FieldInfo {
 	var (
-		rules          = anyArrayV2.NewList(my.VRuleTags)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -425,17 +420,17 @@ func (my FieldInfo) checkInt64() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "int64", "i64":
 			if strings.HasPrefix(rule, "min") {

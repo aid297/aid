@@ -38,14 +38,13 @@ var (
 // checkString 检查字符串，支持：required、not-empty、[string|bool|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size=、size<=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
-		rules          = anyArrayV2.NewList(my.VRuleTags)
 		min, max, size *int
 		include, eq    bool
 		in             []string
 		notIn          []string
 		value          string
 		ok             bool
-		// needRequired   = getRuleRequired(rules)
+		// needRequired   = getRuleRequired(my.VRuleTags)
 	)
 
 	if value, ok = my.Value.(string); !ok {
@@ -53,12 +52,12 @@ func (my FieldInfo) checkString() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
@@ -72,7 +71,7 @@ func (my FieldInfo) checkString() FieldInfo {
 	// 	return my
 	// }
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "string":
 			if strings.HasPrefix(rule, "min") {

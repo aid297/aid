@@ -214,8 +214,8 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				IsPtr:     isPtr,
 				IsNil:     isNil,
 				IsZero:    v.IsZero(),
-				VRuleTags: strings.Split(vRuleTag, ")("),
-				VNameTags: anyArrayV2.NewItems(parentName, vNameTag).RemoveEmpty().ToSlice(),
+				VRuleTags: anyArrayV2.NewList(strings.Split(vRuleTag, ")(")),
+				VNameTags: anyArrayV2.NewItems(parentName, vNameTag).RemoveEmpty(),
 			})
 		}
 	}

@@ -10,7 +10,6 @@ import (
 // checkBool 检查布尔值，支持：required、not-empty、[string|bool]、in:、not-in：、ex:
 func (my FieldInfo) checkBool() FieldInfo {
 	var (
-		rules = anyArrayV2.NewList(my.VRuleTags)
 		in    []string
 		notIn []string
 		value string
@@ -23,17 +22,17 @@ func (my FieldInfo) checkBool() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "string", "bool":
 			if strings.HasPrefix(rule, "in") {

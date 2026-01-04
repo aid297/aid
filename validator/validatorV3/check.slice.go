@@ -3,14 +3,11 @@ package validatorV3
 import (
 	"fmt"
 	"strings"
-
-	"github.com/aid297/aid/array/anyArrayV2"
 )
 
 // checkSlice 检查数组、切片，支持：required、not-empty、[array|slice]、min>、min>=、max<、max<=、size=、size!=、ex:
 func (my FieldInfo) checkSlice() FieldInfo {
 	var (
-		rules          = anyArrayV2.NewList(my.VRuleTags)
 		min, max, size *int
 		include, eq    bool
 		value          []any
@@ -22,17 +19,17 @@ func (my FieldInfo) checkSlice() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "array", "slice":
 			if strings.HasPrefix(rule, "min") {

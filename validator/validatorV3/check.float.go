@@ -12,7 +12,6 @@ import (
 // checkFloat32 检查小数#32位，支持：required、not-empty、[float32|f32]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkFloat32() FieldInfo {
 	var (
-		rules          = anyArrayV2.NewList(my.VRuleTags)
 		min, max, size *float64
 		include, eq    bool
 		in             []string
@@ -26,17 +25,17 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "float32", "f32":
 			if strings.HasPrefix(rule, "min") {
@@ -112,7 +111,6 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 // checkFloat64 检查小数#64位，支持：required、not-empty、[float|f64]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkFloat64() FieldInfo {
 	var (
-		rules          = anyArrayV2.NewList(my.VRuleTags)
 		min, max, size *float64
 		include, eq    bool
 		in             []string
@@ -126,17 +124,17 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
 
-	if getRuleNotEmpty(rules) && my.IsZero {
+	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	rules.Each(func(_ int, rule string) {
+	my.VRuleTags.Each(func(_ int, rule string) {
 		switch rule {
 		case "", "float64", "f64":
 			if strings.HasPrefix(rule, "min") {

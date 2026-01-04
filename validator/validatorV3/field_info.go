@@ -2,8 +2,9 @@ package validatorV3
 
 import (
 	"reflect"
-	"strings"
 	"time"
+
+	"github.com/aid297/aid/array/anyArrayV2"
 )
 
 type (
@@ -13,12 +14,12 @@ type (
 		Value     any    // 实际值
 		Kind      reflect.Kind
 		Type      reflect.Type
-		IsPtr     bool     // 是否是指针
-		IsNil     bool     // 是否为空指针
-		IsZero    bool     // 是否是零值
-		Required  bool     // 是否必填
-		VRuleTags []string // v-rule tag 的值
-		VNameTags []string // v-name tag 的值
+		IsPtr     bool                        // 是否是指针
+		IsNil     bool                        // 是否为空指针
+		IsZero    bool                        // 是否是零值
+		Required  bool                        // 是否必填
+		VRuleTags anyArrayV2.AnyArray[string] // v-rule tag 的值
+		VNameTags anyArrayV2.AnyArray[string] // v-name tag 的值
 		wrongs    []error
 	}
 
@@ -28,7 +29,7 @@ type (
 
 func (my FieldInfo) Wrongs() []error { return my.wrongs }
 
-func (my FieldInfo) getName() string { return strings.Join(my.VNameTags, ".") }
+func (my FieldInfo) getName() string { return my.VNameTags.Join(".") }
 
 func (my FieldInfo) Check() FieldInfo {
 	switch my.Kind {
