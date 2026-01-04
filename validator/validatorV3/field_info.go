@@ -1,7 +1,6 @@
 package validatorV3
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"time"
