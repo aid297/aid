@@ -9,7 +9,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkFloat32 检查小数#32位，支持：required、[float32|f32]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkFloat32 检查小数#32位，支持：required、not-empty、[float32|f32]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkFloat32() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -32,13 +32,14 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 		return my
 	}
 
-	for idx := range my.VRuleTags {
-		if my.VRuleTags[idx] == "required" && my.IsPtr && my.IsNil {
-			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrRequired))
-		}
+	if getRuleNotEmpty(rules) && my.IsZero {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+		return my
+	}
 
-		switch ruleType {
-		case "", "float32", "f32":
+	switch ruleType {
+	case "", "float32", "f32":
+		for idx := range my.VRuleTags {
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleFloatMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -93,13 +94,16 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 				}
 			}
 		}
-
-		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
-							my.wrongs = append(my.wrongs, err)
+		fallthrough
+	case "ex":
+		for idx := range my.VRuleTags {
+			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+					for idx2 := range exFnNames {
+						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+							if err := fn(value); err != nil {
+								my.wrongs = append(my.wrongs, err)
+							}
 						}
 					}
 				}
@@ -110,7 +114,7 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 	return my
 }
 
-// checkFloat64 检查小数#64位，支持：required、[float|f64]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkFloat64 检查小数#64位，支持：required、not-empty、[float|f64]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkFloat64() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -133,9 +137,14 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 		return my
 	}
 
-	for idx := range my.VRuleTags {
-		switch ruleType {
-		case "", "float64", "f64":
+	if getRuleNotEmpty(rules) && my.IsZero {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+		return my
+	}
+
+	switch ruleType {
+	case "", "float64", "f64":
+		for idx := range my.VRuleTags {
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleFloatMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -190,13 +199,16 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 				}
 			}
 		}
-
-		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
-							my.wrongs = append(my.wrongs, err)
+		fallthrough
+	case "ex":
+		for idx := range my.VNameTags {
+			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+					for idx2 := range exFnNames {
+						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+							if err := fn(value); err != nil {
+								my.wrongs = append(my.wrongs, err)
+							}
 						}
 					}
 				}

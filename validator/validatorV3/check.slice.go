@@ -7,7 +7,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkSlice 检查数组、切片，支持：required、[array|slice]、min>、min>=、max<、max<=、size=、size!=、ex:
+// checkSlice 检查数组、切片，支持：required、not-empty、[array|slice]、min>、min>=、max<、max<=、size=、size!=、ex:
 func (my FieldInfo) checkSlice() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -28,9 +28,14 @@ func (my FieldInfo) checkSlice() FieldInfo {
 		return my
 	}
 
-	for idx := range my.VRuleTags {
-		switch ruleType {
-		case "", "array", "slice":
+	if getRuleNotEmpty(rules) && my.IsZero {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+		return my
+	}
+
+	switch ruleType {
+	case "", "array", "slice":
+		for idx := range my.VRuleTags {
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -71,13 +76,16 @@ func (my FieldInfo) checkSlice() FieldInfo {
 				}
 			}
 		}
-
-		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
-							my.wrongs = append(my.wrongs, err)
+		fallthrough
+	case "ex":
+		for idx := range my.VRuleTags {
+			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+					for idx2 := range exFnNames {
+						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+							if err := fn(value); err != nil {
+								my.wrongs = append(my.wrongs, err)
+							}
 						}
 					}
 				}

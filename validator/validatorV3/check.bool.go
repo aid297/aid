@@ -7,7 +7,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkBool 检查布尔值，支持：required、[string]、in:、not-in：、ex:
+// checkBool 检查布尔值，支持：required、[string|bool]、in:、not-in：、ex:
 func (my FieldInfo) checkBool() FieldInfo {
 	var (
 		rules    = anyArrayV2.NewList(my.VRuleTags)
@@ -30,7 +30,7 @@ func (my FieldInfo) checkBool() FieldInfo {
 		}
 
 		switch ruleType {
-		case "", "string":
+		case "", "string", "bool":
 			if strings.HasPrefix(my.VRuleTags[idx], "in") {
 				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
 					anyArrayV2.NewList(in).IfNotIn(func() {

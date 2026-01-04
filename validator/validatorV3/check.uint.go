@@ -32,9 +32,14 @@ func (my FieldInfo) checkUint() FieldInfo {
 		return my
 	}
 
-	for idx := range my.VRuleTags {
-		switch ruleType {
-		case "", "uint", "u":
+	if getRuleNotEmpty(rules) && my.IsZero {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+		return my
+	}
+
+	switch ruleType {
+	case "", "uint", "u":
+		for idx := range my.VRuleTags {
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleUintMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -89,13 +94,16 @@ func (my FieldInfo) checkUint() FieldInfo {
 				}
 			}
 		}
-
-		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
-							my.wrongs = append(my.wrongs, err)
+		fallthrough
+	case "ex":
+		for idx := range my.VRuleTags {
+			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+					for idx2 := range exFnNames {
+						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+							if err := fn(value); err != nil {
+								my.wrongs = append(my.wrongs, err)
+							}
 						}
 					}
 				}
@@ -129,9 +137,14 @@ func (my FieldInfo) checkUint8() FieldInfo {
 		return my
 	}
 
-	for idx := range my.VRuleTags {
-		switch ruleType {
-		case "", "uint8", "u8":
+	if getRuleNotEmpty(rules) && my.IsZero {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+		return my
+	}
+
+	switch ruleType {
+	case "", "uint8", "u8":
+		for idx := range my.VRuleTags {
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleUintMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -186,13 +199,16 @@ func (my FieldInfo) checkUint8() FieldInfo {
 				}
 			}
 		}
-
-		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
-							my.wrongs = append(my.wrongs, err)
+		fallthrough
+	case "ex":
+		for idx := range my.VRuleTags {
+			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+					for idx2 := range exFnNames {
+						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+							if err := fn(value); err != nil {
+								my.wrongs = append(my.wrongs, err)
+							}
 						}
 					}
 				}
@@ -226,9 +242,14 @@ func (my FieldInfo) checkUint16() FieldInfo {
 		return my
 	}
 
-	for idx := range my.VRuleTags {
-		switch ruleType {
-		case "", "uint16", "u16":
+	if getRuleNotEmpty(rules) && my.IsZero {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+		return my
+	}
+
+	switch ruleType {
+	case "", "uint16", "u16":
+		for idx := range my.VRuleTags {
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleUintMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -283,13 +304,16 @@ func (my FieldInfo) checkUint16() FieldInfo {
 				}
 			}
 		}
-
-		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
-							my.wrongs = append(my.wrongs, err)
+		fallthrough
+	case "ex":
+		for idx := range my.VRuleTags {
+			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+					for idx2 := range exFnNames {
+						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+							if err := fn(value); err != nil {
+								my.wrongs = append(my.wrongs, err)
+							}
 						}
 					}
 				}
@@ -323,9 +347,14 @@ func (my FieldInfo) checkUint32() FieldInfo {
 		return my
 	}
 
-	for idx := range my.VRuleTags {
-		switch ruleType {
-		case "", "uint32", "u32":
+	if getRuleNotEmpty(rules) && my.IsZero {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+		return my
+	}
+
+	switch ruleType {
+	case "", "uint32", "u32":
+		for idx := range my.VRuleTags {
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleUintMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -380,13 +409,16 @@ func (my FieldInfo) checkUint32() FieldInfo {
 				}
 			}
 		}
-
-		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
-							my.wrongs = append(my.wrongs, err)
+		fallthrough
+	case "ex":
+		for idx := range my.VRuleTags {
+			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+					for idx2 := range exFnNames {
+						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+							if err := fn(value); err != nil {
+								my.wrongs = append(my.wrongs, err)
+							}
 						}
 					}
 				}
@@ -397,7 +429,7 @@ func (my FieldInfo) checkUint32() FieldInfo {
 	return my
 }
 
-// checkUint64 检查正整数#64位，支持：required、[uint64|u64]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkUint64 检查正整数#64位，支持：required、not-empty、[uint64|u64]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkUint64() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -420,9 +452,14 @@ func (my FieldInfo) checkUint64() FieldInfo {
 		return my
 	}
 
-	for idx := range my.VRuleTags {
-		switch ruleType {
-		case "", "unt64", "u64":
+	if getRuleNotEmpty(rules) && my.IsZero {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+		return my
+	}
+
+	switch ruleType {
+	case "", "unt64", "u64":
+		for idx := range my.VRuleTags {
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleUintMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -477,13 +514,16 @@ func (my FieldInfo) checkUint64() FieldInfo {
 				}
 			}
 		}
-
-		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
-							my.wrongs = append(my.wrongs, err)
+		fallthrough
+	case "ex":
+		for idx := range my.VRuleTags {
+			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+					for idx2 := range exFnNames {
+						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+							if err := fn(value); err != nil {
+								my.wrongs = append(my.wrongs, err)
+							}
 						}
 					}
 				}

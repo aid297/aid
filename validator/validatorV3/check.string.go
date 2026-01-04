@@ -35,7 +35,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、[string|bool|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size=、size<=, ex:
+// checkString 检查字符串，支持：required、not-empty、[string|bool|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size=、size<=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
@@ -46,7 +46,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		notIn          []string
 		value          string
 		ok             bool
-		needRequired   = getRuleRequired(rules)
+		// needRequired   = getRuleRequired(rules)
 	)
 
 	if value, ok = my.Value.(string); !ok {
@@ -54,18 +54,28 @@ func (my FieldInfo) checkString() FieldInfo {
 		return my
 	}
 
-	if needRequired && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
-		return my
-	} else if !needRequired && !my.IsPtr && value == "" {
-		return my
-	} else if !needRequired && my.IsPtr && my.IsNil {
+	if getRuleRequired(rules) && my.IsPtr && my.IsNil {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
 
-	for idx := range my.VRuleTags {
-		switch ruleType {
-		case "", "string":
+	if getRuleNotEmpty(rules) && my.IsZero {
+		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+		return my
+	}
+
+	// if needRequired && my.IsPtr && my.IsNil {
+	// 	my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
+	// 	return my
+	// } else if !needRequired && !my.IsPtr && value == "" {
+	// 	return my
+	// } else if !needRequired && my.IsPtr && my.IsNil {
+	// 	return my
+	// }
+
+	switch ruleType {
+	case "", "string":
+		for idx := range my.VRuleTags {
 			if strings.HasPrefix(my.VRuleTags[idx], "min") {
 				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
 					if include {
@@ -119,7 +129,10 @@ func (my FieldInfo) checkString() FieldInfo {
 					}
 				}
 			}
-		case "bool":
+		}
+		fallthrough
+	case "bool":
+		for idx := range my.VRuleTags {
 			var def = []string{"true", "True", "t", "yes", "on", "ok", "1", "false", "False", "f", "off", "no", "0"}
 			if strings.HasPrefix(my.VRuleTags[idx], "in") {
 				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
@@ -140,33 +153,39 @@ func (my FieldInfo) checkString() FieldInfo {
 					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, def))
 				}, value)
 			}
-		case "datetime":
-			ok = false
-			anyDictV2.New(anyDictV2.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
-				if regexp.MustCompile(value).MatchString(value) {
-					ok = true
-					return
-				}
-			})
-			if !ok {
-				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
-			}
-		case "date":
-			if !regexp.MustCompile(patternsForTimeString["DateOnly"]).MatchString(value) {
-				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
-			}
-		case "time":
-			if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
-				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
-			}
 		}
-
-		if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-			if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
-							my.wrongs = append(my.wrongs, err)
+		fallthrough
+	case "datetime":
+		ok = false
+		anyDictV2.New(anyDictV2.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
+			if regexp.MustCompile(value).MatchString(value) {
+				ok = true
+				return
+			}
+		})
+		if !ok {
+			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
+		}
+		fallthrough
+	case "date":
+		if !regexp.MustCompile(patternsForTimeString["DateOnly"]).MatchString(value) {
+			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
+		}
+		fallthrough
+	case "time":
+		if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
+			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
+		}
+		fallthrough
+	case "ex":
+		for idx := range my.VRuleTags {
+			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
+				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
+					for idx2 := range exFnNames {
+						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+							if err := fn(value); err != nil {
+								my.wrongs = append(my.wrongs, err)
+							}
 						}
 					}
 				}
