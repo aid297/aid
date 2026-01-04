@@ -39,7 +39,6 @@ var (
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
-		ruleType       = my.getRuleType(rules)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -73,11 +72,11 @@ func (my FieldInfo) checkString() FieldInfo {
 	// 	return my
 	// }
 
-	switch ruleType {
-	case "", "string":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "min") {
-				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
+	rules.Each(func(_ int, rule string) {
+		switch rule {
+		case "", "string":
+			if strings.HasPrefix(rule, "min") {
+				if min, include = getRuleIntMin(rule); min != nil {
 					if include {
 						if !(utf8.RuneCountInString(value) >= *min) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
@@ -89,8 +88,8 @@ func (my FieldInfo) checkString() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "max") {
-				if max, include = getRuleIntMax(my.VRuleTags[idx]); max != nil {
+			if strings.HasPrefix(rule, "max") {
+				if max, include = getRuleIntMax(rule); max != nil {
 					if include {
 						if !(utf8.RuneCountInString(value) <= *max) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
@@ -102,22 +101,22 @@ func (my FieldInfo) checkString() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "in") {
-				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
+			if strings.HasPrefix(rule, "in") {
+				if in = getRuleIn(rule); len(in) > 0 {
 					anyArrayV2.NewList(in).IfNotIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, value)
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "not-in") {
-				if notIn = getRuleNotIn(my.VRuleTags[idx]); len(notIn) > 0 {
+			if strings.HasPrefix(rule, "not-in") {
+				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 					anyArrayV2.NewList(notIn).IfIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 					}, value)
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+			if strings.HasPrefix(rule, "size") {
+				if size, eq = getRuleIntSize(rule); size != nil {
 					if eq {
 						if !(len(value) == *size) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
@@ -129,20 +128,18 @@ func (my FieldInfo) checkString() FieldInfo {
 					}
 				}
 			}
-		}
-		fallthrough
-	case "bool":
-		for idx := range my.VRuleTags {
+			fallthrough
+		case "bool":
 			var def = []string{"true", "True", "t", "yes", "on", "ok", "1", "false", "False", "f", "off", "no", "0"}
-			if strings.HasPrefix(my.VRuleTags[idx], "in") {
-				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
+			if strings.HasPrefix(rule, "in") {
+				if in = getRuleIn(rule); len(in) > 0 {
 					anyArrayV2.NewList(in).IfNotIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, value)
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "not-in") {
-				if notIn = getRuleNotIn(my.VRuleTags[idx]); len(notIn) > 0 {
+			if strings.HasPrefix(rule, "not-in") {
+				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 					anyArrayV2.NewList(notIn).IfIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 					}, value)
@@ -153,45 +150,41 @@ func (my FieldInfo) checkString() FieldInfo {
 					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, def))
 				}, value)
 			}
-		}
-		fallthrough
-	case "datetime":
-		ok = false
-		anyDictV2.New(anyDictV2.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
-			if regexp.MustCompile(value).MatchString(value) {
-				ok = true
-				return
+			fallthrough
+		case "datetime":
+			ok = false
+			anyDictV2.New(anyDictV2.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
+				if regexp.MustCompile(value).MatchString(value) {
+					ok = true
+					return
+				}
+			})
+			if !ok {
+				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
 			}
-		})
-		if !ok {
-			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
-		}
-		fallthrough
-	case "date":
-		if !regexp.MustCompile(patternsForTimeString["DateOnly"]).MatchString(value) {
-			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
-		}
-		fallthrough
-	case "time":
-		if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
-			my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
-		}
-		fallthrough
-	case "ex":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-					for idx2 := range exFnNames {
-						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-							if err := fn(value); err != nil {
-								my.wrongs = append(my.wrongs, err)
-							}
+			fallthrough
+		case "date":
+			if !regexp.MustCompile(patternsForTimeString["DateOnly"]).MatchString(value) {
+				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
+			}
+			fallthrough
+		case "time":
+			if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
+				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
+			}
+			fallthrough
+		case "ex":
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
 						}
 					}
 				}
 			}
 		}
-	}
+	})
 
 	return my
 }

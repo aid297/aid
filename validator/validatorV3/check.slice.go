@@ -11,7 +11,6 @@ import (
 func (my FieldInfo) checkSlice() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
-		ruleType       = my.getRuleType(rules)
 		min, max, size *int
 		include, eq    bool
 		value          []any
@@ -33,11 +32,11 @@ func (my FieldInfo) checkSlice() FieldInfo {
 		return my
 	}
 
-	switch ruleType {
-	case "", "array", "slice":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "min") {
-				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
+	rules.Each(func(_ int, rule string) {
+		switch rule {
+		case "", "array", "slice":
+			if strings.HasPrefix(rule, "min") {
+				if min, include = getRuleIntMin(rule); min != nil {
 					if include {
 						if !(len(value) >= *min) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
@@ -49,8 +48,8 @@ func (my FieldInfo) checkSlice() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "max") {
-				if max, include = getRuleIntMax(my.VRuleTags[idx]); max != nil {
+			if strings.HasPrefix(rule, "max") {
+				if max, include = getRuleIntMax(rule); max != nil {
 					if include {
 						if !(len(value) <= *max) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
@@ -62,8 +61,8 @@ func (my FieldInfo) checkSlice() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+			if strings.HasPrefix(rule, "size") {
+				if size, eq = getRuleIntSize(rule); size != nil {
 					if eq {
 						if !(len(value) == *size) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
@@ -75,23 +74,19 @@ func (my FieldInfo) checkSlice() FieldInfo {
 					}
 				}
 			}
-		}
-		fallthrough
-	case "ex":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-					for idx2 := range exFnNames {
-						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-							if err := fn(value); err != nil {
-								my.wrongs = append(my.wrongs, err)
-							}
+			fallthrough
+		case "ex":
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
 						}
 					}
 				}
 			}
 		}
-	}
+	})
 
 	return my
 }

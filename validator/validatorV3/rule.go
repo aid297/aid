@@ -9,47 +9,48 @@ import (
 	"github.com/spf13/cast"
 )
 
-func (my FieldInfo) getRuleType(rules anyArrayV2.AnyArray[string]) (targetType string) {
-	// 获取目标类型
-	rules.IfIn(func() { targetType = "string" }, "string")
-	rules.IfIn(func() { targetType = "datetime" }, "datetime")
-	rules.IfIn(func() { targetType = "date" }, "date")
-	rules.IfIn(func() { targetType = "time" }, "time")
-	rules.IfIn(func() { targetType = "int" }, "int")
-	rules.IfIn(func() { targetType = "int8" }, "int8")
-	rules.IfIn(func() { targetType = "int16" }, "int16")
-	rules.IfIn(func() { targetType = "int32" }, "int32")
-	rules.IfIn(func() { targetType = "int64" }, "int64")
-	rules.IfIn(func() { targetType = "uint" }, "uint")
-	rules.IfIn(func() { targetType = "uint8" }, "uint8")
-	rules.IfIn(func() { targetType = "uint16" }, "uint16")
-	rules.IfIn(func() { targetType = "uint32" }, "uint32")
-	rules.IfIn(func() { targetType = "uint64" }, "uint64")
-	rules.IfIn(func() { targetType = "bool" }, "bool")
-	rules.IfIn(func() { targetType = "float32" }, "float32")
-	rules.IfIn(func() { targetType = "float64" }, "float64")
-	rules.IfIn(func() { targetType = "slice" }, "array", "slice")
-	rules.IfIn(func() { targetType = "struct" }, "struct")
-	rules.IfIn(func() { targetType = "ex" }, "ex")
+// func (my FieldInfo) getRuleType(rules anyArrayV2.AnyArray[string]) (targetType string) {
+// 	// 获取目标类型
+// 	rules.IfIn(func() { targetType = "string" }, "string")
+// 	rules.IfIn(func() { targetType = "datetime" }, "datetime")
+// 	rules.IfIn(func() { targetType = "date" }, "date")
+// 	rules.IfIn(func() { targetType = "time" }, "time")
+// 	rules.IfIn(func() { targetType = "int" }, "int")
+// 	rules.IfIn(func() { targetType = "int8" }, "int8")
+// 	rules.IfIn(func() { targetType = "int16" }, "int16")
+// 	rules.IfIn(func() { targetType = "int32" }, "int32")
+// 	rules.IfIn(func() { targetType = "int64" }, "int64")
+// 	rules.IfIn(func() { targetType = "uint" }, "uint")
+// 	rules.IfIn(func() { targetType = "uint8" }, "uint8")
+// 	rules.IfIn(func() { targetType = "uint16" }, "uint16")
+// 	rules.IfIn(func() { targetType = "uint32" }, "uint32")
+// 	rules.IfIn(func() { targetType = "uint64" }, "uint64")
+// 	rules.IfIn(func() { targetType = "bool" }, "bool")
+// 	rules.IfIn(func() { targetType = "float32" }, "float32")
+// 	rules.IfIn(func() { targetType = "float64" }, "float64")
+// 	rules.IfIn(func() { targetType = "slice" }, "array", "slice")
+// 	rules.IfIn(func() { targetType = "struct" }, "struct")
+// 	rules.IfIn(func() { targetType = "ex" }, "ex")
 
-	return
-}
+// 	return
+// }
 
 func getRuleRequired(rules anyArrayV2.AnyArray[string]) bool { return rules.In("required") }
 
 func getRuleNotEmpty(rules anyArrayV2.AnyArray[string]) bool { return rules.In("not-empty") }
 
-func getRuleExFnNames(rule string) []string {
+func getRuleExFnNames(rule string) (exFnNames []string) {
 	var (
 		value string
 		ok    bool
 	)
 
 	if value, ok = strings.CutPrefix(rule, "ex:"); ok {
-		return strings.Split(value, ",")
+		exFnNames = strings.Split(value, ",")
+		return
 	}
 
-	return nil
+	return
 }
 
 func getRuleUintSize(rule string) (size *uint, eq bool) {
@@ -151,7 +152,7 @@ func getRuleIntMax(rule string) (size *int, include bool) {
 		return
 	}
 
-	return nil, false
+	return
 }
 
 func getRuleFloatMin(rule string) (size *float64, include bool) {
@@ -191,7 +192,7 @@ func getRuleFloatMax(rule string) (size *float64, include bool) {
 		return
 	}
 
-	return nil, false
+	return
 }
 
 func getRuleIn(rule string) (in []string) {
@@ -204,7 +205,7 @@ func getRuleIn(rule string) (in []string) {
 		return
 	}
 
-	return in
+	return
 }
 
 func getRuleNotIn(rule string) (notIn []string) {
@@ -217,7 +218,7 @@ func getRuleNotIn(rule string) (notIn []string) {
 		return
 	}
 
-	return notIn
+	return
 }
 
 func getRuleTimeMin(rule string) (t *time.Time, include bool) {
@@ -237,7 +238,7 @@ func getRuleTimeMin(rule string) (t *time.Time, include bool) {
 		return
 	}
 
-	return nil, false
+	return
 }
 
 func getRuleTimeMax(rule string) (t *time.Time, include bool) {
@@ -257,7 +258,7 @@ func getRuleTimeMax(rule string) (t *time.Time, include bool) {
 		return
 	}
 
-	return nil, false
+	return
 }
 
 func getRuleTimeIn(rule string) (in []time.Time) {
@@ -277,7 +278,7 @@ func getRuleTimeIn(rule string) (in []time.Time) {
 		}
 	}
 
-	return in
+	return
 }
 
 func getRuleTimeNotIn(rule string) (notIn []time.Time) {
@@ -297,5 +298,5 @@ func getRuleTimeNotIn(rule string) (notIn []time.Time) {
 		}
 	}
 
-	return notIn
+	return
 }

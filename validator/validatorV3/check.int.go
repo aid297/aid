@@ -13,7 +13,6 @@ import (
 func (my FieldInfo) checkInt() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
-		ruleType       = my.getRuleType(rules)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -37,11 +36,11 @@ func (my FieldInfo) checkInt() FieldInfo {
 		return my
 	}
 
-	switch ruleType {
-	case "", "int", "i":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "min") {
-				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
+	rules.Each(func(_ int, rule string) {
+		switch rule {
+		case "", "int", "i":
+			if strings.HasPrefix(rule, "min") {
+				if min, include = getRuleIntMin(rule); min != nil {
 					if include {
 						if !(value >= *min) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
@@ -53,8 +52,8 @@ func (my FieldInfo) checkInt() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "max") {
-				if max, include = getRuleIntMax(my.VRuleTags[idx]); max != nil {
+			if strings.HasPrefix(rule, "max") {
+				if max, include = getRuleIntMax(rule); max != nil {
 					if include {
 						if !(value <= *max) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
@@ -66,22 +65,22 @@ func (my FieldInfo) checkInt() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "in") {
-				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
+			if strings.HasPrefix(rule, "in") {
+				if in = getRuleIn(rule); len(in) > 0 {
 					anyArrayV2.NewList(in).IfNotIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "not-in") {
-				if notIn = getRuleNotIn(my.VRuleTags[idx]); len(notIn) > 0 {
+			if strings.HasPrefix(rule, "not-in") {
+				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 					anyArrayV2.NewList(notIn).IfIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+			if strings.HasPrefix(rule, "size") {
+				if size, eq = getRuleIntSize(rule); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
@@ -93,23 +92,19 @@ func (my FieldInfo) checkInt() FieldInfo {
 					}
 				}
 			}
-		}
-		fallthrough
-	case "ex":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-					for idx2 := range exFnNames {
-						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-							if err := fn(value); err != nil {
-								my.wrongs = append(my.wrongs, err)
-							}
+			fallthrough
+		case "ex":
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
 						}
 					}
 				}
 			}
 		}
-	}
+	})
 
 	return my
 }
@@ -118,7 +113,6 @@ func (my FieldInfo) checkInt() FieldInfo {
 func (my FieldInfo) checkInt8() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
-		ruleType       = my.getRuleType(rules)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -142,11 +136,11 @@ func (my FieldInfo) checkInt8() FieldInfo {
 		return my
 	}
 
-	switch ruleType {
-	case "", "int8", "i8":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "min") {
-				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
+	rules.Each(func(_ int, rule string) {
+		switch rule {
+		case "", "int8", "i8":
+			if strings.HasPrefix(rule, "min") {
+				if min, include = getRuleIntMin(rule); min != nil {
 					if include {
 						if !(cast.ToInt(value) >= *min) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
@@ -158,8 +152,8 @@ func (my FieldInfo) checkInt8() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "max") {
-				if max, include = getRuleIntMax(my.VRuleTags[idx]); max != nil {
+			if strings.HasPrefix(rule, "max") {
+				if max, include = getRuleIntMax(rule); max != nil {
 					if include {
 						if !(cast.ToInt(value) <= *max) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
@@ -171,22 +165,22 @@ func (my FieldInfo) checkInt8() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "in") {
-				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
+			if strings.HasPrefix(rule, "in") {
+				if in = getRuleIn(rule); len(in) > 0 {
 					anyArrayV2.NewList(in).IfNotIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "not-in") {
-				if notIn = getRuleNotIn(my.VRuleTags[idx]); len(notIn) > 0 {
+			if strings.HasPrefix(rule, "not-in") {
+				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 					anyArrayV2.NewList(notIn).IfIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+			if strings.HasPrefix(rule, "size") {
+				if size, eq = getRuleIntSize(rule); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
@@ -198,23 +192,19 @@ func (my FieldInfo) checkInt8() FieldInfo {
 					}
 				}
 			}
-		}
-		fallthrough
-	case "ex":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-					for idx2 := range exFnNames {
-						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-							if err := fn(value); err != nil {
-								my.wrongs = append(my.wrongs, err)
-							}
+			fallthrough
+		case "ex":
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
 						}
 					}
 				}
 			}
 		}
-	}
+	})
 
 	return my
 }
@@ -223,7 +213,6 @@ func (my FieldInfo) checkInt8() FieldInfo {
 func (my FieldInfo) checkInt16() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
-		ruleType       = my.getRuleType(rules)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -246,11 +235,11 @@ func (my FieldInfo) checkInt16() FieldInfo {
 		return my
 	}
 
-	switch ruleType {
-	case "", "int16", "i16":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "min") {
-				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
+	rules.Each(func(_ int, rule string) {
+		switch rule {
+		case "", "int16", "i16":
+			if strings.HasPrefix(rule, "min") {
+				if min, include = getRuleIntMin(rule); min != nil {
 					if include {
 						if !(cast.ToInt(value) >= *min) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
@@ -262,8 +251,8 @@ func (my FieldInfo) checkInt16() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "max") {
-				if max, include = getRuleIntMax(my.VRuleTags[idx]); max != nil {
+			if strings.HasPrefix(rule, "max") {
+				if max, include = getRuleIntMax(rule); max != nil {
 					if include {
 						if !(cast.ToInt(value) <= *max) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
@@ -275,22 +264,22 @@ func (my FieldInfo) checkInt16() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "in") {
-				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
+			if strings.HasPrefix(rule, "in") {
+				if in = getRuleIn(rule); len(in) > 0 {
 					anyArrayV2.NewList(in).IfNotIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "not-in") {
-				if notIn = getRuleNotIn(my.VRuleTags[idx]); len(notIn) > 0 {
+			if strings.HasPrefix(rule, "not-in") {
+				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 					anyArrayV2.NewList(notIn).IfIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+			if strings.HasPrefix(rule, "size") {
+				if size, eq = getRuleIntSize(rule); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
@@ -302,23 +291,19 @@ func (my FieldInfo) checkInt16() FieldInfo {
 					}
 				}
 			}
-		}
-		fallthrough
-	case "ex":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-					for idx2 := range exFnNames {
-						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-							if err := fn(value); err != nil {
-								my.wrongs = append(my.wrongs, err)
-							}
+			fallthrough
+		case "ex":
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
 						}
 					}
 				}
 			}
 		}
-	}
+	})
 
 	return my
 }
@@ -327,7 +312,6 @@ func (my FieldInfo) checkInt16() FieldInfo {
 func (my FieldInfo) checkInt32() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
-		ruleType       = my.getRuleType(rules)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -351,11 +335,11 @@ func (my FieldInfo) checkInt32() FieldInfo {
 		return my
 	}
 
-	switch ruleType {
-	case "", "int32", "i32":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "min") {
-				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
+	rules.Each(func(_ int, rule string) {
+		switch rule {
+		case "", "int32", "i32":
+			if strings.HasPrefix(rule, "min") {
+				if min, include = getRuleIntMin(rule); min != nil {
 					if include {
 						if !(cast.ToInt(value) >= *min) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
@@ -367,8 +351,8 @@ func (my FieldInfo) checkInt32() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "max") {
-				if max, include = getRuleIntMax(my.VRuleTags[idx]); max != nil {
+			if strings.HasPrefix(rule, "max") {
+				if max, include = getRuleIntMax(rule); max != nil {
 					if include {
 						if !(cast.ToInt(value) <= *max) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
@@ -380,22 +364,22 @@ func (my FieldInfo) checkInt32() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "in") {
-				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
+			if strings.HasPrefix(rule, "in") {
+				if in = getRuleIn(rule); len(in) > 0 {
 					anyArrayV2.NewList(in).IfNotIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "not-in") {
-				if notIn = getRuleNotIn(my.VRuleTags[idx]); len(notIn) > 0 {
+			if strings.HasPrefix(rule, "not-in") {
+				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 					anyArrayV2.NewList(notIn).IfIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+			if strings.HasPrefix(rule, "size") {
+				if size, eq = getRuleIntSize(rule); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
@@ -407,23 +391,19 @@ func (my FieldInfo) checkInt32() FieldInfo {
 					}
 				}
 			}
-		}
-		fallthrough
-	case "ex":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-					for idx2 := range exFnNames {
-						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-							if err := fn(value); err != nil {
-								my.wrongs = append(my.wrongs, err)
-							}
+			fallthrough
+		case "ex":
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
 						}
 					}
 				}
 			}
 		}
-	}
+	})
 
 	return my
 }
@@ -432,7 +412,6 @@ func (my FieldInfo) checkInt32() FieldInfo {
 func (my FieldInfo) checkInt64() FieldInfo {
 	var (
 		rules          = anyArrayV2.NewList(my.VRuleTags)
-		ruleType       = my.getRuleType(rules)
 		min, max, size *int
 		include, eq    bool
 		in             []string
@@ -456,11 +435,11 @@ func (my FieldInfo) checkInt64() FieldInfo {
 		return my
 	}
 
-	switch ruleType {
-	case "", "int64", "i64":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "min") {
-				if min, include = getRuleIntMin(my.VRuleTags[idx]); min != nil {
+	rules.Each(func(_ int, rule string) {
+		switch rule {
+		case "", "int64", "i64":
+			if strings.HasPrefix(rule, "min") {
+				if min, include = getRuleIntMin(rule); min != nil {
 					if include {
 						if !(cast.ToInt(value) >= *min) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
@@ -472,8 +451,8 @@ func (my FieldInfo) checkInt64() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "max") {
-				if max, include = getRuleIntMax(my.VRuleTags[idx]); max != nil {
+			if strings.HasPrefix(rule, "max") {
+				if max, include = getRuleIntMax(rule); max != nil {
 					if include {
 						if !(cast.ToInt(value) <= *max) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
@@ -485,22 +464,22 @@ func (my FieldInfo) checkInt64() FieldInfo {
 					}
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "in") {
-				if in = getRuleIn(my.VRuleTags[idx]); len(in) > 0 {
+			if strings.HasPrefix(rule, "in") {
+				if in = getRuleIn(rule); len(in) > 0 {
 					anyArrayV2.NewList(in).IfNotIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "not-in") {
-				if notIn = getRuleNotIn(my.VRuleTags[idx]); len(notIn) > 0 {
+			if strings.HasPrefix(rule, "not-in") {
+				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 					anyArrayV2.NewList(notIn).IfIn(func() {
 						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 					}, cast.ToString(value))
 				}
 			}
-			if strings.HasPrefix(my.VRuleTags[idx], "size") {
-				if size, eq = getRuleIntSize(my.VRuleTags[idx]); size != nil {
+			if strings.HasPrefix(rule, "size") {
+				if size, eq = getRuleIntSize(rule); size != nil {
 					if eq {
 						if !(cast.ToInt(value) == *size) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
@@ -512,23 +491,19 @@ func (my FieldInfo) checkInt64() FieldInfo {
 					}
 				}
 			}
-		}
-		fallthrough
-	case "ex":
-		for idx := range my.VRuleTags {
-			if strings.HasPrefix(my.VRuleTags[idx], "ex") {
-				if exFnNames := getRuleExFnNames(my.VRuleTags[idx]); len(exFnNames) > 0 {
-					for idx2 := range exFnNames {
-						if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
-							if err := fn(value); err != nil {
-								my.wrongs = append(my.wrongs, err)
-							}
+			fallthrough
+		case "ex":
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
 						}
 					}
 				}
 			}
 		}
-	}
+	})
 
 	return my
 }
