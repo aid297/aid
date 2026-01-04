@@ -1,27 +1,28 @@
 package main
 
 import (
-	"log"
-
-	"github.com/aid297/aid/filesystem/filesystemV2"
-	"github.com/aid297/aid/gormPool"
+	"fmt"
+	"os"
+	"runtime"
 )
 
-type (
-	TestTable1 struct {
-		ID   int    `gorm:"column:id;primaryKey;autoIncrement"`
-		Name string `gorm:"column:name;type:varchar(255);not null;default:'';comment:名称"`
-	}
+var (
+	Version   string              // 版本号
+	GitCommit string              // Git 提交哈希
+	BuildTime string              // 编译时间
+	GoVersion = runtime.Version() // Go 运行时版本 (也可以注入，或者直接获取)
 )
 
 func main() {
-	pool := gormPool.APP.MySQLPool.Once(gormPool.APP.DBSetting.New(filesystemV2.APP.File.NewByRel("./db.yaml").GetFullPath()))
-	conn := pool.GetConn()
-	conn.AutoMigrate(&TestTable1{})
+	if len(os.Args) > 1 && os.Args[1] == "-v" {
+		printVersion()
+		return
+	}
+}
 
-	names := []string{"1", "2", "3"}
-	testTables := []TestTable1{}
-	gormPool.APP.Finder.New(conn.Model(&TestTable1{})).WhenIn(len(names) > 0, "name", names).GetDB().Find(&testTables)
-
-	log.Printf("%v", testTables)
+func printVersion() {
+	fmt.Printf("Application Version: %s\n", Version)
+	fmt.Printf("Git Commit: %s\n", GitCommit)
+	fmt.Printf("Build Time: %s\n", BuildTime)
+	fmt.Printf("Go Version: %s\n", GoVersion)
 }
