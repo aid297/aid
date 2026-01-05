@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/aid297/aid/operation/operationV2"
 )
 
 func getRootPath(dir string) string {
