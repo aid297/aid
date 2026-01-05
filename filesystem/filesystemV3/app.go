@@ -1,9 +1,8 @@
 package filesystemV3
 
 var APP struct {
-	Dir          Dir
-	DirOperation DirOperation
-	DirAttr      struct {
+	Dir     Dir
+	DirAttr struct {
 		Path  AttrDirPath
 		IsRel AttrDirIsRel
 	}

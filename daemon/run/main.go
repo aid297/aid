@@ -15,7 +15,7 @@ func main() {
 	log.Printf("参数：D %v", *d)
 
 	if *d {
-		daemon.APP.Daemon.Once().SetTitle("daemon-test").SetLogDir(".").SetLogEnable(true).Launch()
+		daemon.APP.Main.Once().SetTitle("daemon-test").SetLogDir(".").SetLogEnable(true).Launch()
 		log.Printf("daemon 模式启动")
 	} else {
 		log.Printf("非 daemon 模式启动")

@@ -23,8 +23,8 @@ type File struct {
 	Exist     bool         // 文件是否存在
 	mu        sync.RWMutex // 读写锁
 	Extension string       // 文件扩展名
-	Fileinfo  os.FileInfo  // 文件信息
-	Mime      string       // 文件Mime类型
+	FileInfo  os.FileInfo  // 文件信息
+	Mime      string       // 文件 Mime 类型
 }
 
 var (
@@ -77,12 +77,18 @@ func (my *File) setAttrs(attrs ...FileAttributer) *File {
 	return my
 }
 
+// Lock 加锁 → 写
+func (my *File) Lock() *File {
+	my.mu.Lock()
+	return my
+}
+
 // refresh 刷新文件信息
 func (my *File) refresh() *File {
 	var err error
 
 	if my.FullPath != "" {
-		if my.Fileinfo, err = os.Stat(my.FullPath); err != nil {
+		if my.FileInfo, err = os.Stat(my.FullPath); err != nil {
 			if os.IsNotExist(err) {
 				my.Name = ""
 				my.Size = 0
@@ -98,9 +104,9 @@ func (my *File) refresh() *File {
 			}
 		}
 
-		my.Name = my.Fileinfo.Name()
-		my.Size = my.Fileinfo.Size()
-		my.Mode = my.Fileinfo.Mode()
+		my.Name = my.FileInfo.Name()
+		my.Size = my.FileInfo.Size()
+		my.Mode = my.FileInfo.Mode()
 		my.BasePath = path.Dir(my.FullPath)
 		my.Exist = true
 		my.Error = nil
@@ -109,12 +115,6 @@ func (my *File) refresh() *File {
 		return my
 	}
 
-	return my
-}
-
-// Lock 加锁 → 写
-func (my *File) Lock() *File {
-	my.mu.Lock()
 	return my
 }
 

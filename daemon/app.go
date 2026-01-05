@@ -1,3 +1,3 @@
 package daemon
 
-var APP struct{ Daemon Daemon }
+var APP struct{ Main Daemon }
