@@ -86,3 +86,7 @@ func copyDirTo(src, dst string) error {
 
 	return nil
 }
+
+func getDirByCopy(isRel bool, dstPaths ...string) Dir {
+	return operationV2.NewTernary(operationV2.TrueFn(func() Dir { return APP.Dir.Rel(dstPaths...) }), operationV2.FalseFn(func() Dir { return APP.Dir.Abs(dstPaths...) })).GetByValue(isRel)
+}

@@ -6,8 +6,6 @@ import (
 	"path"
 	"path/filepath"
 	"sync"
-
-	"github.com/aid297/aid/operation/operationV2"
 )
 
 type (
@@ -233,11 +231,7 @@ func (my Dir) CopyFilesTo(isRel bool, dstPaths ...string) Dir {
 
 // CopyDirsTo 复制当前目录下的所有子目录到目标路径
 func (my Dir) CopyDirsTo(isRel bool, dstPaths ...string) Dir {
-	var dst = operationV2.NewTernary(operationV2.TrueFn(func() Dir {
-		return APP.Dir.Rel(dstPaths...)
-	}), operationV2.FalseFn(func() Dir {
-		return APP.Dir.Abs(dstPaths...)
-	})).GetByValue(isRel)
+	var dst = getDirByCopy(isRel, dstPaths...)
 
 	if my.FullPath == "" {
 		my.Error = ErrMissFullPath
@@ -267,11 +261,7 @@ func (my Dir) CopyDirsTo(isRel bool, dstPaths ...string) Dir {
 
 // CopyAllTo 复制当前目录下的所有文件和子目录到目标路径
 func (my Dir) CopyAllTo(isRel bool, dstPaths ...string) Dir {
-	var dst = operationV2.NewTernary(operationV2.TrueFn(func() Dir {
-		return APP.Dir.Rel(dstPaths...)
-	}), operationV2.FalseFn(func() Dir {
-		return APP.Dir.Abs(dstPaths...)
-	})).GetByValue(isRel)
+	var dst = getDirByCopy(isRel, dstPaths...)
 
 	if my.FullPath == "" {
 		my.Error = ErrMissFullPath

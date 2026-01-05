@@ -52,16 +52,21 @@ func TestFile4(t *testing.T) {
 
 func TestFile5(t *testing.T) {
 	t.Run("读取文件内容", func(t *testing.T) {
-		file := APP.File.Rel("test-file.txt")
-		if err := file.Write([]byte("aaa")).Error; err != nil {
+		var (
+			err     error
+			content []byte
+			file    File
+		)
+
+		file = APP.File.Rel("test-file.txt")
+		if err = file.Write([]byte("aaa")).Error; err != nil {
 			t.Fatalf("创建文件失败：%s", err)
 		}
 
-		if content, err := file.Read(); err != nil {
+		if content, err = file.Read(); err != nil {
 			t.Fatalf("读取文件内容失败：%s", err)
-		} else {
-			t.Logf("文件内容：%s", string(content))
 		}
+		t.Logf("文件内容：%s", string(content))
 	})
 }
 
