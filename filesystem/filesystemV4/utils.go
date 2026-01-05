@@ -5,8 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/aid297/aid/operation/operationV2"
 )
 
 func getRootPath(dir string) string {
@@ -21,7 +19,7 @@ func copyFileTo(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("无法打开源文件 %s: %w", src, err)
 	}
-	defer func() { _ = srcFile.Close() }()
+	defer srcFile.Close()
 
 	// 获取源文件信息（用于保留权限）
 	srcInfo, err := os.Stat(src)
@@ -34,7 +32,7 @@ func copyFileTo(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("无法创建目标文件 %s: %w", dst, err)
 	}
-	defer func() { _ = dstFile.Close() }()
+	defer dstFile.Close()
 
 	// 复制文件内容
 	_, err = io.Copy(dstFile, srcFile)
@@ -87,8 +85,4 @@ func copyDirTo(src, dst string) error {
 	}
 
 	return nil
-}
-
-func getDirByCopy(isRel bool, dstPaths ...string) Dir {
-	return operationV2.NewTernary(operationV2.TrueFn(func() Dir { return APP.Dir.Rel(dstPaths...) }), operationV2.FalseFn(func() Dir { return APP.Dir.Abs(dstPaths...) })).GetByValue(isRel)
 }

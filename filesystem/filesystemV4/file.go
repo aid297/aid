@@ -7,33 +7,43 @@ import (
 	"path"
 	"path/filepath"
 	"sync"
+
+	"github.com/aid297/aid/operation/operationV2"
 )
 
 type File struct {
-	Error     error         // 错误信息
-	Name      string        // 文件名
-	BasePath  string        // 基础路径
-	FullPath  string        // 完整路径
-	Size      int64         // 文件大小
-	Info      os.FileInfo   // 文件信息
-	Mode      os.FileMode   // 文件权限
-	Exist     bool          // 文件是否存在
-	mu        *sync.RWMutex // 读写锁
-	Extension string        // 文件扩展名
-	FileInfo  os.FileInfo   // 文件信息
-	Mime      string        // 文件 Mime 类型
+	Error     error        // 错误信息
+	Name      string       // 文件名
+	BasePath  string       // 基础路径
+	FullPath  string       // 完整路径
+	Size      int64        // 文件大小
+	Info      os.FileInfo  // 文件信息
+	Mode      os.FileMode  // 文件权限
+	Exist     bool         // 文件是否存在
+	mu        sync.RWMutex // 读写锁
+	Extension string       // 文件扩展名
+	FileInfo  os.FileInfo  // 文件信息
+	Mime      string       // 文件 Mime 类型
 }
 
-func (File) Abs(dirs ...string) File {
-	return File{mu: &sync.RWMutex{}, FullPath: getRootPath(path.Join(dirs...))}.refresh()
+// Abs 实例化：绝对路径
+func (*File) Abs(dirs ...string) *File {
+	return &File{mu: sync.RWMutex{}, FullPath: path.Join(dirs...)}
 }
 
-func (my File) Rel(dirs ...string) File {
-	return File{mu: &sync.RWMutex{}, FullPath: path.Join(dirs...)}.refresh()
+// Rel 实例化：相对路径
+func (*File) Rel(dirs ...string) *File {
+	return &File{mu: sync.RWMutex{}, FullPath: getRootPath(path.Join(dirs...))}
+}
+
+// Lock 加锁 → 写
+func (my *File) Lock() *File {
+	my.mu.Lock()
+	return my
 }
 
 // refresh 刷新文件信息
-func (my File) refresh() File {
+func (my *File) refresh() *File {
 	var err error
 
 	if my.FullPath != "" {
@@ -67,48 +77,45 @@ func (my File) refresh() File {
 	return my
 }
 
-// Lock 加锁 → 写
-func (my File) Lock() File {
-	my.mu.Lock()
-	return my
-}
-
 // Unlock 解锁 → 写
-func (my File) Unlock() File {
+func (my *File) Unlock() *File {
 	my.mu.Unlock()
 	return my
 }
 
 // RLock 加锁 → 读
-func (my File) RLock() File {
+func (my *File) RLock() *File {
 	my.mu.RLock()
 	return my
 }
 
 // RUnlock 解锁 → 读
-func (my File) RUnlock() File {
+func (my *File) RUnlock() *File {
 	my.mu.RUnlock()
 	return my
 }
 
-func (my File) Join(dirs ...string) File {
+// Join 连接路径
+func (my *File) Join(dirs ...string) *File {
 	my.FullPath = path.Join(append([]string{my.FullPath}, dirs...)...)
-	return my.refresh()
+	return my
 }
 
 // Create 创建文件
-func (my File) Create(attrs ...FileOperationAttributer) File {
+func (my *File) Create(attrs ...FileOperationAttributer) *File {
 	if dir := APP.Dir.Abs(my.BasePath); !dir.Exist {
 		if err := dir.Create().Error; err != nil {
 			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		}
 	}
 
-	return my.Write(nil, attrs...)
+	my.Write(nil, attrs...)
+
+	return nil
 }
 
 // 向文件内写入内容
-func (my File) Write(content []byte, attrs ...FileOperationAttributer) File {
+func (my *File) Write(content []byte, attrs ...FileOperationAttributer) *File {
 	var (
 		err           error
 		fileOperation = APP.FileOperation.New(attrs...)
@@ -136,7 +143,7 @@ func (my File) Write(content []byte, attrs ...FileOperationAttributer) File {
 }
 
 // Rename 重命名文件
-func (my File) Rename(newName string) File {
+func (my *File) Rename(newName string) *File {
 	var (
 		err     error
 		newFile = APP.File.Abs(my.BasePath, newName)
@@ -151,7 +158,7 @@ func (my File) Rename(newName string) File {
 }
 
 // Remove 删除文件
-func (my File) Remove() File {
+func (my *File) Remove() *File {
 	var err error
 
 	if my.FullPath == "" {
@@ -168,19 +175,22 @@ func (my File) Remove() File {
 }
 
 // Read 读取文件内容
-func (my File) Read(attrs ...FileOperationAttributer) ([]byte, error) {
+func (my *File) Read(attrs ...FileOperationAttributer) ([]byte, error) {
 	var (
-		fileOperation = APP.FileOperation.New(attrs...)
+		fileOperation = new(FileOperation).SetAttrs(attrs...)
 		file          *os.File
 		content       []byte
 		err           error
 	)
 
-	if file, err = os.OpenFile(my.FullPath, fileOperation.FileFlag, fileOperation.FileMode); err != nil {
+	if file, err = os.OpenFile(
+		my.FullPath,
+		operationV2.NewTernary(operationV2.TrueFn(func() int { return fileOperation.FileFlag }), operationV2.FalseFn(func() int { return DefaultReadMode })).GetByValue(fileOperation.FileFlag != 0),
+		operationV2.NewTernary(operationV2.TrueFn(func() os.FileMode { return fileOperation.FileMode }), operationV2.FalseFn(func() os.FileMode { return os.FileMode(0777) })).GetByValue(fileOperation.FileMode != 0),
+	); err != nil {
 		return []byte{}, fmt.Errorf("%w:%w", ErrReadFile, err)
 	}
 	defer func() { _ = file.Close() }()
-
 	if content, err = io.ReadAll(file); err != nil {
 		return []byte{}, fmt.Errorf("%w:%w", ErrReadFile, err)
 	}
@@ -189,7 +199,7 @@ func (my File) Read(attrs ...FileOperationAttributer) ([]byte, error) {
 }
 
 // CopyTo 复制文件到指定路径
-func (my File) CopyTo(isRel bool, dstPaths ...string) File {
+func (my *File) CopyTo(isRel bool, dstPaths ...string) *File {
 	if my.FullPath == "" {
 		my.Error = ErrMissFullPath
 		return my
@@ -200,21 +210,18 @@ func (my File) CopyTo(isRel bool, dstPaths ...string) File {
 		return my
 	}
 
-	a := APP.Dir.Rel(dstPaths...).Up()
-	print(a.FullPath)
+	// a:=APP.Dir.Rel(dstPaths...).Up()
+	// b:=APP.Dir.Abs(my.BasePath)
 
-	b := APP.Dir.Abs(my.BasePath)
-	print(b.FullPath)
-
-	if my.Error = APP.Dir.Rel(dstPaths...).Up().Create(APP.DirOperAttr.Mode.Set(APP.Dir.Abs(my.BasePath).Info.Mode())).Error; my.Error != nil {
+	if my.Error = APP.Dir.Abs(dstPaths...).Up().Create(APP.DirOperAttr.Mode.Set(APP.Dir.Abs(my.BasePath).Info.Mode())).Error; my.Error != nil {
 		return my
 	}
 
-	dst := APP.File.Rel(dstPaths...)
-	my.Error = copyFileTo(my.FullPath, dst.FullPath)
+	dst := APP.File.Rel(dstPaths...).FullPath
+	my.Error = copyFileTo(my.FullPath, dst)
 
 	return my
 }
 
 // Copy 复制文件实例
-func (my File) Copy() File { return APP.File.Abs(my.FullPath) }
+func (my *File) Copy() *File { return APP.File.Abs(my.FullPath) }

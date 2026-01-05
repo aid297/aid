@@ -6,34 +6,60 @@ import (
 	"path"
 	"path/filepath"
 	"sync"
+
+	"github.com/aid297/aid/operation/operationV2"
 )
 
-type (
-	Dir struct {
-		Error    error         // 错误信息
-		Name     string        // 文件名
-		BasePath string        // 基础路径
-		FullPath string        // 完整路径
-		Size     int64         // 文件大小
-		Info     os.FileInfo   // 文件信息
-		Mode     os.FileMode   // 文件权限
-		Exist    bool          // 文件是否存在
-		mu       *sync.RWMutex // 读写锁
-		Files    []File        // 目录下的文件列表
-		Dirs     []Dir         // 子目录列表
-	}
-)
-
-func (Dir) Abs(dirs ...string) Dir {
-	return Dir{mu: &sync.RWMutex{}, FullPath: getRootPath(path.Join(dirs...))}.refresh()
+type Dir struct {
+	Error    error        // 错误信息
+	Name     string       // 文件名
+	BasePath string       // 基础路径
+	FullPath string       // 完整路径
+	Size     int64        // 文件大小
+	Info     os.FileInfo  // 文件信息
+	Mode     os.FileMode  // 文件权限
+	Exist    bool         // 文件是否存在
+	mu       sync.RWMutex // 读写锁
+	Files    []*File      // 目录下的文件列表
+	Dirs     []*Dir       // 子目录列表
 }
 
-func (my Dir) Rel(dirs ...string) Dir {
-	return Dir{mu: &sync.RWMutex{}, FullPath: path.Join(dirs...)}.refresh()
+// Abs 实例化：绝对路径
+func (my *Dir) Abs(dirs ...string) *Dir {
+	return &Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0), FullPath: path.Join(dirs...)}
+}
+
+// Rel 实例化：相对路径
+func (*Dir) Rel(dirs ...string) *Dir {
+	return &Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0), FullPath: getRootPath(path.Join(dirs...))}
+}
+
+// Lock 加锁 → 写
+func (my *Dir) Lock() *Dir {
+	my.mu.Lock()
+	return my
+}
+
+// Unlock 解锁 → 写
+func (my *Dir) Unlock() *Dir {
+	my.mu.Unlock()
+	return my
+}
+
+// RLock 加锁 → 读
+func (my *Dir) RLock() *Dir {
+	my.mu.RLock()
+	return my
+}
+
+// RUnlock 解锁 → 读
+func (my *Dir) RUnlock() *Dir {
+	my.mu.RUnlock()
+	return my
 }
 
 // refresh 刷新目录信息
-func (my Dir) refresh() Dir {
+func (my *Dir) refresh() *Dir {
 	var err error
 	if my.FullPath != "" {
 		if my.Info, err = os.Stat(my.FullPath); err != nil {
@@ -45,9 +71,10 @@ func (my Dir) refresh() Dir {
 				my.Exist = false
 				my.Error = nil
 				return my
+			} else {
+				my.Error = fmt.Errorf("%w:%w", ErrInit, err)
+				return my
 			}
-			my.Error = fmt.Errorf("%w:%w", ErrInit, err)
-			return my
 		}
 
 		my.Name = my.Info.Name()
@@ -64,39 +91,17 @@ func (my Dir) refresh() Dir {
 	return my
 }
 
-// Lock 加锁 → 写
-func (my Dir) Lock() Dir {
-	my.mu.Lock()
-	return my
-}
-
-// Unlock 解锁 → 写
-func (my Dir) Unlock() Dir {
-	my.mu.Unlock()
-	return my
-}
-
-// RLock 加锁 → 读
-func (my Dir) RLock() Dir {
-	my.mu.RLock()
-	return my
-}
-
-// RUnlock 解锁 → 读
-func (my Dir) RUnlock() Dir {
-	my.mu.RUnlock()
-	return my
-}
-
-func (my Dir) Join(dirs ...string) Dir {
+// Join 追加目录
+func (my *Dir) Join(dirs ...string) *Dir {
 	my.FullPath = path.Join(append([]string{my.FullPath}, dirs...)...)
 	return my.refresh()
 }
 
-func (my Dir) Create(attrs ...DirOperationAttributer) Dir {
+// Create 创建多级目录
+func (my *Dir) Create(attrs ...DirOperationAttributer) *Dir {
 	var (
 		err       error
-		operation = APP.DirOperation.New().SetAttrs(attrs...)
+		operation = new(DirOperation).SetAttrs(attrs...)
 	)
 
 	if my.FullPath == "" {
@@ -104,7 +109,7 @@ func (my Dir) Create(attrs ...DirOperationAttributer) Dir {
 		return my
 	}
 
-	if err = os.MkdirAll(my.FullPath, operation.DirMode); err != nil {
+	if err = os.MkdirAll(my.FullPath, operationV2.NewTernary(operationV2.TrueFn(func() os.FileMode { return operation.DirMode }), operationV2.FalseValue(os.FileMode(0777))).GetByValue(operation.DirMode != 0)); err != nil {
 		my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		return my
 	}
@@ -113,7 +118,7 @@ func (my Dir) Create(attrs ...DirOperationAttributer) Dir {
 }
 
 // Rename 重命名目录
-func (my Dir) Rename(newName string) Dir {
+func (my *Dir) Rename(newName string) *Dir {
 	var err error
 
 	if my.FullPath == "" {
@@ -131,7 +136,7 @@ func (my Dir) Rename(newName string) Dir {
 }
 
 // Remove 删除目录
-func (my Dir) Remove() Dir {
+func (my *Dir) Remove() *Dir {
 	var err error
 
 	if my.FullPath == "" {
@@ -148,7 +153,7 @@ func (my Dir) Remove() Dir {
 }
 
 // RemoveAll 递归删除目录
-func (my Dir) RemoveAll() Dir {
+func (my *Dir) RemoveAll() *Dir {
 	var err error
 
 	if my.FullPath == "" {
@@ -165,7 +170,7 @@ func (my Dir) RemoveAll() Dir {
 }
 
 // LS 列出当前目录下的所有文件和子目录
-func (my Dir) LS() Dir {
+func (my *Dir) LS() *Dir {
 	var (
 		err     error
 		entries []os.DirEntry
@@ -194,10 +199,10 @@ func (my Dir) LS() Dir {
 }
 
 // CopyFilesTo 复制当前目录下的所有文件到目标路径
-func (my Dir) CopyFilesTo(isRel bool, dstPaths ...string) Dir {
+func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 	var (
 		err error
-		dst Dir
+		dst *Dir
 	)
 
 	if my.FullPath == "" {
@@ -214,7 +219,7 @@ func (my Dir) CopyFilesTo(isRel bool, dstPaths ...string) Dir {
 		return my
 	}
 
-	if dst = APP.Dir.Rel(dstPaths...).Create(APP.DirOperAttr.Mode.Set(my.Mode)); dst.Error != nil {
+	if dst = APP.Dir.Rel(dstPaths...).Create(DirMode(my.Mode)); dst.Error != nil {
 		my.Error = dst.Error
 		return my
 	}
@@ -230,8 +235,8 @@ func (my Dir) CopyFilesTo(isRel bool, dstPaths ...string) Dir {
 }
 
 // CopyDirsTo 复制当前目录下的所有子目录到目标路径
-func (my Dir) CopyDirsTo(isRel bool, dstPaths ...string) Dir {
-	var dst = getDirByCopy(isRel, dstPaths...)
+func (my *Dir) CopyDirsTo(isRel bool, dstPaths ...string) *Dir {
+	var dst *Dir
 
 	if my.FullPath == "" {
 		my.Error = ErrMissFullPath
@@ -260,8 +265,8 @@ func (my Dir) CopyDirsTo(isRel bool, dstPaths ...string) Dir {
 }
 
 // CopyAllTo 复制当前目录下的所有文件和子目录到目标路径
-func (my Dir) CopyAllTo(isRel bool, dstPaths ...string) Dir {
-	var dst = getDirByCopy(isRel, dstPaths...)
+func (my *Dir) CopyAllTo(isRel bool, dstPaths ...string) *Dir {
+	var dst *Dir
 
 	if my.FullPath == "" {
 		my.Error = ErrMissFullPath
@@ -277,13 +282,13 @@ func (my Dir) CopyAllTo(isRel bool, dstPaths ...string) Dir {
 		return my
 	}
 
-	if !dst.Exist {
-		dst.Create(APP.DirOperAttr.Mode.Set(my.Mode))
+	if dst = APP.Dir.Rel(dstPaths...); !dst.Exist {
+		dst.Create(DirMode(my.Mode))
 	}
 
-	if len(my.Files) > 0 {
-		my.CopyFilesTo(isRel, dstPaths...)
-	}
+	// if len(my.Files) > 0 {
+	// 	my = my.CopyFilesTo(isRel, dstPaths...)
+	// }
 
 	if len(my.Dirs) > 0 {
 		my.CopyDirsTo(isRel, dstPaths...)
@@ -293,10 +298,10 @@ func (my Dir) CopyAllTo(isRel bool, dstPaths ...string) Dir {
 }
 
 // Copy 复制当前对象
-func (my Dir) Copy() Dir { return APP.Dir.Abs(my.FullPath) }
+func (my *Dir) Copy() *Dir { return APP.Dir.Abs(my.FullPath) }
 
 // Up 向上一级目录
-func (my Dir) Up() Dir {
-	my.FullPath = path.Base(my.FullPath)
+func (my *Dir) Up() *Dir {
+	my.FullPath = path.Dir(my.FullPath)
 	return my.refresh()
 }
