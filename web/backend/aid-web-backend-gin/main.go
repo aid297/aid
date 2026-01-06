@@ -60,7 +60,11 @@ func main() {
 // launch 启动程序
 func launch(consoleArgs consoleArgs) {
 	if cast.ToBool(consoleArgs.daemonStr) || global.CONFIG.System.Daemon {
-		daemon.APP.Main.Launch("启动程序", global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename) // 通过守护进程启动
+		daemon.APP.Main.Once().
+			SetTitle("启动程序").
+			SetLog(global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename).
+			SetLogEnable(true).
+			Launch() // 通过守护进程启动
 	}
 
 	switch consoleArgs.commandName {
