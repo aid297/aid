@@ -355,7 +355,11 @@ func (my *HTTPClient) parseBody() {
 func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
-	defer func() { _ = my.rawResponse.Body.Close() }()
+	defer func() {
+		if my.rawResponse != nil {
+			_ = my.rawResponse.Body.Close()
+		}
+	}()
 
 	if my.err != nil {
 		return my
@@ -380,7 +384,11 @@ func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
 func (my *HTTPClient) ToXML(target any) *HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
-	defer func() { _ = my.rawResponse.Body.Close() }()
+	defer func() {
+		if my.rawResponse != nil {
+			_ = my.rawResponse.Body.Close()
+		}
+	}()
 
 	if my.err != nil {
 		return my
@@ -402,7 +410,11 @@ func (my *HTTPClient) ToXML(target any) *HTTPClient {
 func (my *HTTPClient) ToBytes() []byte {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
-	defer func() { _ = my.rawResponse.Body.Close() }()
+	defer func() {
+		if my.rawResponse != nil {
+			_ = my.rawResponse.Body.Close()
+		}
+	}()
 
 	if my.err != nil {
 		return []byte{}
@@ -422,7 +434,11 @@ func (my *HTTPClient) ToBytes() []byte {
 func (my *HTTPClient) ToWriter(writer http.ResponseWriter) *HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
-	defer func() { _ = my.rawResponse.Body.Close() }()
+	defer func() {
+		if my.rawResponse != nil {
+			_ = my.rawResponse.Body.Close()
+		}
+	}()
 
 	if my.err != nil {
 		return my
