@@ -54,22 +54,14 @@ func (my *CoroutineGroup[T]) Run(fn func(batch, capacity uint) *Result[T]) *Coro
 		for capacity := range my.capacities {
 			my.sw.Add(1)
 
-			var (
-				r  *Result[T]
-				ch = make(chan struct{})
-			)
-
 			go func(b, c uint) {
 				defer my.sw.Done()
-				r = fn(b, c)
-				ch <- struct{}{}
+				var r *Result[T] = fn(b, c)
+				my.Results = append(my.Results, r)
+				if r.Error != nil {
+					my.OK = false
+				}
 			}(batch, capacity)
-
-			<-ch
-			my.Results = append(my.Results, r)
-			if r.Error != nil {
-				my.OK = false
-			}
 		}
 		my.sw.Wait()
 	}
