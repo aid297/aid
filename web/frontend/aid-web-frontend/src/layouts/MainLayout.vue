@@ -6,7 +6,7 @@
 
                 <q-toolbar-title>
                     <q-avatar>
-                        <img src="http://aid.yujizhou.com:9900/page/favicon.ico" alt="" srcset="" />
+                        <img src="/page/favicon.ico" alt="" srcset="" />
                         <!-- <img src="https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg" /> -->
                     </q-avatar>
                     🤠🤠🤠
@@ -82,6 +82,13 @@
                         <i class="fa-solid fa-briefcase" :style="{ fontSize: '18px' }">&nbsp;重新压缩</i>
                     </q-item-section>
                 </q-item>
+
+                <q-item dense clickable v-ripple @click="hrefTo(router, '/fileManager')"
+                    :class="{ 'bg-orange': isActive('/fileManager'), 'text-white': isActive('/fileManager') }">
+                    <q-item-section avatar class="q-mt-md q-mb-md">
+                        <i class="fa-solid fa-briefcase" :style="{ fontSize: '18px' }">&nbsp;文件管理</i>
+                    </q-item-section>
+                </q-item>
             </q-list>
             <!-- drawer content -->
         </q-drawer>
@@ -109,7 +116,7 @@
 
 <script setup>
 import { ref } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const router = useRouter();
 const route = useRoute();

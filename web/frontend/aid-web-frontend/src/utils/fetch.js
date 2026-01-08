@@ -1,4 +1,6 @@
-const BASE_URL = "http://aid.yujizhou.com:9900/api/v1"; // 设置根 URL
+// export const ROOT_URL = "http://172.20.232.212:9900";
+export const ROOT_URL = "http://127.0.0.1:9900";
+export const API_BASE_URL = `${ROOT_URL}/api/v1`; // 设置根 URL
 const DEFAULT_HEADERS = {
     "Content-Type": "application/json",
     Authorization: localStorage.getItem("token") ? `Bearer ${localStorage.getItem("token")}` : "", // 动态添加 Token
@@ -13,11 +15,11 @@ export const fetcher = {
 };
 
 const f = async (endpoint, method = "GET", options = {}) => {
-    console.log(`Fetch -> ${method} ${BASE_URL}${endpoint}`, options);
+    console.log(`Fetch -> ${method} ${API_BASE_URL}${endpoint}`, options);
     const { headers, ...restOptions } = options;
 
     try {
-        const response = await fetch(`${BASE_URL}${endpoint}`, {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method,
             ...restOptions,
             headers: {
@@ -40,7 +42,7 @@ const f = async (endpoint, method = "GET", options = {}) => {
 import Axios from "axios";
 
 const axiosIns = Axios.create({
-    baseUrl: BASE_URL,
+    baseUrl: API_BASE_URL,
     headers: DEFAULT_HEADERS,
 });
 
@@ -57,7 +59,7 @@ const a = async (endpoint, method = "GET", options = {}) => {
 
     try {
         const res = await axiosIns.request({
-            url: `${BASE_URL}${endpoint}`,
+            url: `${API_BASE_URL}${endpoint}`,
             method,
             headers: {
                 ...DEFAULT_HEADERS, // 默认 headers

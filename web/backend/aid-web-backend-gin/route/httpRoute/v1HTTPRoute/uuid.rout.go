@@ -7,14 +7,14 @@ import (
 )
 
 type (
-	UuidRoute struct{}
+	UUIDRoute struct{}
 )
 
 var (
-	Uuid UuidRoute
+	UUID UUIDRoute
 )
 
-func (*UuidRoute) Register(app *gin.RouterGroup) {
+func (*UUIDRoute) Register(app *gin.RouterGroup) {
 	r := app.Group("uuid")
 	{
 		r.POST("/generate", v1HTTPAPI.APP.UUID.Generate)

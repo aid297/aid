@@ -7,6 +7,8 @@ const routes = [
         path: "/",
         component: () => import("layouts/MainLayout.vue"),
         children: [
+            { path: "fileManager", component: () => import("src/pages/FileManagerPage.vue") },
+            { path: "file", component: () => import("src/pages/FilePage.vue") },
             { path: "clockingIn", component: () => import("src/pages/ClockingInPage.vue") },
             { path: "timeCalculator", component: () => import("src/pages/TimeCalculatorPage.vue") },
             { path: "rezip", component: () => import("src/pages/RezipPage.vue") },

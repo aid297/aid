@@ -2,6 +2,7 @@ package validatorV3
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -43,11 +44,9 @@ func (my FieldInfo) checkString() FieldInfo {
 		in             []string
 		notIn          []string
 		value          string
-		ok             bool
-		// needRequired   = getRuleRequired(my.VRuleTags)
 	)
 
-	if value, ok = my.Value.(string); !ok {
+	if my.Kind != reflect.String {
 		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：字符串", my.getName(), ErrInvalidType))
 		return my
 	}
@@ -56,6 +55,8 @@ func (my FieldInfo) checkString() FieldInfo {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 		return my
 	}
+
+	value, _ = my.Value.(string)
 
 	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
@@ -127,7 +128,6 @@ func (my FieldInfo) checkString() FieldInfo {
 					}
 				}
 			}
-			fallthrough
 		case "bool":
 			var def = []string{"true", "True", "t", "yes", "on", "ok", "1", "false", "False", "f", "off", "no", "0"}
 			if strings.HasPrefix(rule, "in") {
@@ -149,9 +149,8 @@ func (my FieldInfo) checkString() FieldInfo {
 					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, def))
 				}, value)
 			}
-			fallthrough
 		case "datetime":
-			ok = false
+			ok := false
 			anyDictV2.New(anyDictV2.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
 				if regexp.MustCompile(value).MatchString(value) {
 					ok = true
@@ -161,17 +160,14 @@ func (my FieldInfo) checkString() FieldInfo {
 			if !ok {
 				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
 			}
-			fallthrough
 		case "date":
 			if !regexp.MustCompile(patternsForTimeString["DateOnly"]).MatchString(value) {
 				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
 			}
-			fallthrough
 		case "time":
 			if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
 				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
 			}
-			fallthrough
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {

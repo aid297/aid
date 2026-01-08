@@ -59,8 +59,6 @@ func (my FieldInfo) Check() FieldInfo {
 		return my.checkFloat32()
 	case reflect.Float64:
 		return my.checkFloat64()
-	case reflect.Bool:
-		return my.checkBool()
 	case reflect.Array, reflect.Slice:
 		return my.checkSlice()
 	case reflect.Struct:

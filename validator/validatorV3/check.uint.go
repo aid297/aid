@@ -2,6 +2,7 @@ package validatorV3
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/spf13/cast"
@@ -17,10 +18,9 @@ func (my FieldInfo) checkUint() FieldInfo {
 		in             []string
 		notIn          []string
 		value          uint
-		ok             bool
 	)
 
-	if value, ok = my.Value.(uint); !ok {
+	if my.Kind != reflect.Uint {
 		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：正整数", my.getName(), ErrInvalidType))
 		return my
 	}
@@ -29,6 +29,8 @@ func (my FieldInfo) checkUint() FieldInfo {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
+
+	value, _ = my.Value.(uint)
 
 	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
@@ -91,7 +93,6 @@ func (my FieldInfo) checkUint() FieldInfo {
 					}
 				}
 			}
-			fallthrough
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
@@ -116,10 +117,9 @@ func (my FieldInfo) checkUint8() FieldInfo {
 		in             []string
 		notIn          []string
 		value          uint8
-		ok             bool
 	)
 
-	if value, ok = my.Value.(uint8); !ok {
+	if my.Kind != reflect.Uint8 {
 		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：正整数#8位", my.getName(), ErrInvalidType))
 		return my
 	}
@@ -128,6 +128,8 @@ func (my FieldInfo) checkUint8() FieldInfo {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
+
+	value, _ = my.Value.(uint8)
 
 	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
@@ -190,7 +192,6 @@ func (my FieldInfo) checkUint8() FieldInfo {
 					}
 				}
 			}
-			fallthrough
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
@@ -215,10 +216,9 @@ func (my FieldInfo) checkUint16() FieldInfo {
 		in             []string
 		notIn          []string
 		value          uint16
-		ok             bool
 	)
 
-	if value, ok = my.Value.(uint16); !ok {
+	if my.Kind != reflect.Uint16 {
 		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：正整数#16位", my.getName(), ErrInvalidType))
 		return my
 	}
@@ -227,6 +227,8 @@ func (my FieldInfo) checkUint16() FieldInfo {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
+
+	value, _ = my.Value.(uint16)
 
 	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
@@ -289,7 +291,6 @@ func (my FieldInfo) checkUint16() FieldInfo {
 					}
 				}
 			}
-			fallthrough
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
@@ -314,10 +315,9 @@ func (my FieldInfo) checkUint32() FieldInfo {
 		in             []string
 		notIn          []string
 		value          uint32
-		ok             bool
 	)
 
-	if value, ok = my.Value.(uint32); !ok {
+	if my.Kind != reflect.Uint32 {
 		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：正整数#32位", my.getName(), ErrInvalidType))
 		return my
 	}
@@ -326,6 +326,8 @@ func (my FieldInfo) checkUint32() FieldInfo {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
+
+	value, _ = my.Value.(uint32)
 
 	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
@@ -388,7 +390,6 @@ func (my FieldInfo) checkUint32() FieldInfo {
 					}
 				}
 			}
-			fallthrough
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
@@ -413,10 +414,9 @@ func (my FieldInfo) checkUint64() FieldInfo {
 		in             []string
 		notIn          []string
 		value          uint64
-		ok             bool
 	)
 
-	if value, ok = my.Value.(uint64); !ok {
+	if my.Kind != reflect.Uint64 {
 		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：正整数#64位", my.getName(), ErrInvalidType))
 		return my
 	}
@@ -425,6 +425,8 @@ func (my FieldInfo) checkUint64() FieldInfo {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
+
+	value, _ = my.Value.(uint64)
 
 	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
@@ -487,7 +489,6 @@ func (my FieldInfo) checkUint64() FieldInfo {
 					}
 				}
 			}
-			fallthrough
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {

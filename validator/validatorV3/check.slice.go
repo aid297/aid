@@ -71,7 +71,6 @@ func (my FieldInfo) checkSlice() FieldInfo {
 					}
 				}
 			}
-			fallthrough
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {

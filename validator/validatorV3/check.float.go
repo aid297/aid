@@ -2,6 +2,7 @@ package validatorV3
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/spf13/cast"
@@ -17,10 +18,9 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 		in             []string
 		notIn          []string
 		value          float32
-		ok             bool
 	)
 
-	if value, ok = my.Value.(float32); !ok {
+	if my.Kind != reflect.Float32 {
 		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：小数#32位", my.getName(), ErrInvalidType))
 		return my
 	}
@@ -29,6 +29,8 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
+
+	value, _ = my.Value.(float32)
 
 	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
@@ -91,7 +93,7 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 					}
 				}
 			}
-			fallthrough
+
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
@@ -116,10 +118,9 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 		in             []string
 		notIn          []string
 		value          float64
-		ok             bool
 	)
 
-	if value, ok = my.Value.(float64); !ok {
+	if my.Kind != reflect.Float64 {
 		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：小数#64位", my.getName(), ErrInvalidType))
 		return my
 	}
@@ -128,6 +129,8 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 		return my
 	}
+
+	value, _ = my.Value.(float64)
 
 	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
 		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
@@ -190,7 +193,6 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 					}
 				}
 			}
-			fallthrough
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {

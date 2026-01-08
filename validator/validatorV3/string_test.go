@@ -56,3 +56,30 @@ func Test4(t *testing.T) {
 
 	t.Logf("%v", APP.Validator.Ins().Checker(tt).Validate().Wrongs())
 }
+
+type MainStoreRequest struct {
+	Name           string  `json:"name" v-rule:"(required)(string)(min>1)(max<=30)" v-name:"项目名称"`
+	Identification string  `json:"identification" v-rule:"(required)(string)(min>1)(max<=30)" v-name:"项目标识" v-ex:"PROJECT-IDENTITY"`
+	Desc           *string `json:"desc" v-rule:"(string)(max<=100)" v-name:"项目描述"`
+	TeamID         uint64  `json:"teamId" v-rule:"(required)(uint)(min>0)" v-name:"团队id"`
+	OwnerUUID      string  `json:"ownerUuid" v-rule:"(required)(string)(size=36)" v-name:"项目所有者uuid"`
+	OwnerUsername  string  `json:"ownerUsername" v-rule:"(required)(string)(min>1)(max<=64)" v-name:"项目所有者昵称"`
+}
+
+func Test5(t *testing.T) {
+	j := `{
+    "name": "项目1",
+    "identification": "project-1",
+    "desc": null,
+    "teamId": 2,
+    "ownerUuid": "027c12c1-7524-4439-9267-c351b6d4a9aa",
+    "ownerNickname": "test-user-a"
+}`
+	m := MainStoreRequest{}
+	if err := json.Unmarshal([]byte(j), &m); err != nil {
+		t.Errorf("反序列化失败： %v", err)
+		return
+	}
+
+	t.Logf("%v", APP.Validator.Ins().Checker(m).Validate().Wrongs())
+}

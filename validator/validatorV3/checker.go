@@ -213,7 +213,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				Type:      elemType,
 				IsPtr:     isPtr,
 				IsNil:     isNil,
-				IsZero:    v.IsZero(),
+				IsZero:    fieldValue.IsZero(),
 				VRuleTags: anyArrayV2.NewList(strings.Split(vRuleTag, ")(")),
 				VNameTags: anyArrayV2.NewItems(parentName, vNameTag).RemoveEmpty(),
 			})
