@@ -171,7 +171,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		case "ex":
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
-					if fn := APP.Validator.Ins().GetExFn(exFnNames[idx2]); fn != nil {
+					if fn := APP.Validator.Once().GetExFn(exFnNames[idx2]); fn != nil {
 						if err := fn(value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}

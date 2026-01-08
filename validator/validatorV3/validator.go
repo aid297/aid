@@ -11,7 +11,7 @@ var (
 	validatorExIns  *Validator
 )
 
-func (*Validator) Ins() *Validator {
+func (*Validator) Once() *Validator {
 	validatorExOnce.Do(func() { validatorExIns = &Validator{data: make(map[string]func(any) (err error))} })
 	return validatorExIns
 }
