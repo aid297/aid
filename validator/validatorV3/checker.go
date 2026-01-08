@@ -31,13 +31,13 @@ func (my Checker) Wrong() error {
 }
 
 func (my Checker) WrongToString() string {
-	var errs = make([]string, 0, len(my.wrongs))
+	var errMsg = str.APP.Buffer.NewString()
 
 	for idx := range my.wrongs {
-		errs = append(errs, my.wrongs[idx].Error())
+		errMsg.Any("问题", idx+1, "：", my.wrongs[idx].Error()).WhenS(idx < len(my.wrongs)-1, "；")
 	}
 
-	return str.APP.Buffer.JoinStringLimit("；", errs...)
+	return errMsg.String()
 }
 
 func (my Checker) Validate(exCheckFns ...any) Checker {

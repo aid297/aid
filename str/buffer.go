@@ -6,8 +6,9 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/aid297/aid/digest"
 	"github.com/spf13/cast"
+
+	"github.com/aid297/aid/digest"
 )
 
 type Buffer struct {
@@ -220,6 +221,15 @@ func (my Buffer) S(values ...string) Buffer {
 	return my.s(values...)
 }
 
+func (my Buffer) WhenS(condition bool, values ...string) Buffer {
+	my.lock.Lock()
+	defer my.lock.Unlock()
+	if condition {
+		return my.s(values...)
+	}
+	return my
+}
+
 func (my Buffer) b(values ...byte) Buffer {
 	for _, b := range values {
 		my.original.Grow(len(values) - 1)
@@ -236,6 +246,15 @@ func (my Buffer) B(values ...byte) Buffer {
 	return my.b(values...)
 }
 
+func (my Buffer) WhenB(condition bool, values ...byte) Buffer {
+	my.lock.Lock()
+	defer my.lock.Unlock()
+	if condition {
+		return my.b(values...)
+	}
+	return my
+}
+
 func (my Buffer) r(values ...rune) Buffer {
 	for _, v := range values {
 		my.original.Grow(totalLenRunes(values))
@@ -250,6 +269,15 @@ func (my Buffer) R(values ...rune) Buffer {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 	return my.r(values...)
+}
+
+func (my Buffer) WhenR(condition bool, values ...rune) Buffer {
+	my.lock.Lock()
+	defer my.lock.Unlock()
+	if condition {
+		return my.r(values...)
+	}
+	return my
 }
 
 // String 获取字符串
