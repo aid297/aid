@@ -16,25 +16,26 @@ import (
 
 // Checker 验证器
 type Checker struct {
-	data   any
-	wrongs []error
+	data         any
+	wrongs       []error
+	defaultLimit string
 }
 
-func (Checker) New(data any) Checker { return Checker{data: data} }
+func (Checker) New(data any) Checker { return Checker{data: data, defaultLimit: "<br />"} }
 
 func (my Checker) Wrongs() []error { return my.wrongs }
 
 func (my Checker) OK() bool { return len(my.wrongs) == 0 }
 
 func (my Checker) Wrong() error {
-	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString()) })).GetByValue(len(my.wrongs) > 0)
+	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString("")) })).GetByValue(len(my.wrongs) > 0)
 }
 
-func (my Checker) WrongToString() string {
+func (my Checker) WrongToString(limit string) string {
 	var errMsg = str.APP.Buffer.NewString()
 
 	for idx := range my.wrongs {
-		errMsg.Any("问题", idx+1, "：", my.wrongs[idx].Error()).WhenS(idx < len(my.wrongs)-1, "；")
+		errMsg.Any("问题", idx+1, "：", my.wrongs[idx].Error()).WhenS(idx < len(my.wrongs)-1, operationV2.NewTernary(operationV2.TrueValue(my.defaultLimit), operationV2.FalseValue(limit)).GetByValue(limit == ""))
 	}
 
 	return errMsg.String()
