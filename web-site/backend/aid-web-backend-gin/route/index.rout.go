@@ -33,8 +33,9 @@ func (*IndexRoute) Register(app *gin.Engine) {
 		app.Any("/health", httpAPI.APP.Health.TOML)
 		app.StaticFS("/upload/rezip", http.Dir(global.CONFIG.Rezip.OutDir)) // 静态资源 (压缩包)
 
-		v1HTTPRoute.Rezip.Register(v1Rout)
-		v1HTTPRoute.UUID.Register(v1Rout)
+		v1HTTPRoute.APP.Rezip.Register(v1Rout)
+		v1HTTPRoute.APP.UUID.Register(v1Rout)
+		v1HTTPRoute.APP.Upload.Register(v1Rout)
 
 		for idx := range global.CONFIG.WebService.StaticDirs {
 			app.Static(global.CONFIG.WebService.StaticDirs[idx].URL, global.CONFIG.WebService.StaticDirs[idx].Dir) // 静态资源路由

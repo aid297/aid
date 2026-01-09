@@ -8,8 +8,6 @@ import (
 
 type RezipRoute struct{}
 
-var Rezip RezipRoute
-
 func (*RezipRoute) Register(app *gin.RouterGroup) {
 	r := app.Group("rezip")
 	{

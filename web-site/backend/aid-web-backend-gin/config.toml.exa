@@ -29,3 +29,4 @@ max-day = 10
 
 [rezip]
 out-dir = "storage/runtime/rezip"
+upload-dir = "storage/runtime/upload"

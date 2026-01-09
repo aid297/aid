@@ -11,7 +11,7 @@
 
                             <q-card-section class="q-pt-none">
                                 <q-uploader :url="uploadUrl" label="上传文件" @uploaded="handleUploaded" class="max-wight"
-                                    @failed="handleFailed" flat bordered multiples style="width: 100%" />
+                                    @failed="handleFailed" flat bordered field-name="file"  style="width: 100%" />
                             </q-card-section>
                         </q-card>
                     </div>
@@ -22,10 +22,11 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from "src/utils/fetch";
 import notify from "src/utils/notify";
 import { ref } from 'vue';
 
-const uploadUrl = ref('http://127.0.0.1:9900/api/upload') // 后端上传接口
+const uploadUrl = ref(`${API_BASE_URL}/upload/single`) // 后端上传接口
 // const headers = ref({
 //     // 如果需要认证，可以在这里设置请求头，例如Token
 //     // 'Authorization': `Bearer ${yourToken}`

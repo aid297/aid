@@ -6,13 +6,7 @@ import (
 	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/api/httpAPI/v1HTTPAPI"
 )
 
-type (
-	UUIDRoute struct{}
-)
-
-var (
-	UUID UUIDRoute
-)
+type UUIDRoute struct{}
 
 func (*UUIDRoute) Register(app *gin.RouterGroup) {
 	r := app.Group("uuid")

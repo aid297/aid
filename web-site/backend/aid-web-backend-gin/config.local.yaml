@@ -1,7 +1,7 @@
 system:
-  debug: false
+  debug: true
   version: v1.0.0
-  daemon: true
+  daemon: false
   timezone: Asia/Shanghai
 web-service:
   port: "9900"
@@ -26,3 +26,4 @@ log:
     max-day: 10
 rezip:
   out-dir: storage/runtime/rezip
+upload-dir: storage/runtime/upload
