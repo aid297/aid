@@ -1,5 +1,5 @@
-// export const ROOT_URL = "http://172.20.232.212:9900";
-export const ROOT_URL = "http://127.0.0.1:9900";
+export const ROOT_URL = "http://172.20.232.212:9900";
+// export const ROOT_URL = "http://127.0.0.1:9900";
 export const API_BASE_URL = `${ROOT_URL}/api/v1`; // 设置根 URL
 const DEFAULT_HEADERS = {
     "Content-Type": "application/json",
