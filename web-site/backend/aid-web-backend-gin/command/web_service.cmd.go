@@ -13,8 +13,6 @@ import (
 
 type WebServiceCommand struct{}
 
-var WebService WebServiceCommand
-
 func (WebServiceCommand) Launch() {
 	if global.CONFIG.System.Debug {
 		gin.SetMode(gin.DebugMode)

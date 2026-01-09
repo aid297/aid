@@ -7,4 +7,5 @@ type Config struct {
 	Log        LogCfg        `mapstructure:"log" json:"log" yaml:"log" toml:"log"`
 	Rezip      RezipCfg      `mapstructure:"rezip" json:"rezip" yaml:"rezip" toml:"rezip"`
 	UploadDir  string        `mapstructure:"upload-dir" json:"upload-dir" yaml:"upload-dir" toml:"upload-dir"`
+	SFTPDir    string        `mapstructure:"sftp-dir" json:"sftp-dir" yaml:"sftp-dir" toml:"sftp-dir"`
 }

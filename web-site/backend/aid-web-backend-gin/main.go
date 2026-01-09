@@ -69,10 +69,12 @@ func launch(consoleArgs consoleArgs) {
 
 	switch consoleArgs.commandName {
 	case "help":
-		command.Help.Launch()
+		command.APP.Help.Launch()
 	case "web-service":
-		command.WebService.Launch()
+		command.APP.WebService.Launch()
+	case "sftp-service":
+		command.APP.SFTP.Launch()
 	default:
-		command.WebService.Launch()
+		command.APP.WebService.Launch()
 	}
 }

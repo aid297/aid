@@ -27,3 +27,6 @@ log:
 rezip:
   out-dir: storage/runtime/rezip
 upload-dir: storage/runtime/upload
+sftp-service:
+  port: 8080
+  dir: storage/sftp
