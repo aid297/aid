@@ -50,7 +50,7 @@ func Test3(t *testing.T) {
 
 func Test4(t *testing.T) {
 	tt := TimeTest{time.Now()}
-	if err := json.Unmarshal([]byte(`{"time1": "2017-10-19T13:00:00+0200"}`), &tt); err != nil {
+	if err := json.Unmarshal([]byte(`{"time1": "2025-01-02T15:04:05Z0800"}`), &tt); err != nil {
 		t.Fatalf("反序列化失败： %v", err)
 	}
 
