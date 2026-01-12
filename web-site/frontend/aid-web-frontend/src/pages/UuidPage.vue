@@ -63,8 +63,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
 import { fetcher } from "src/utils/fetch";
+import { onMounted, ref } from "vue";
 
 const number = ref(10);
 const noSubsTractKey = ref(false);

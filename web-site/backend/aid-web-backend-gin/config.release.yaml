@@ -26,7 +26,8 @@ log:
     max-day: 10
 rezip:
   out-dir: storage/runtime/rezip
-upload-dir: storage/runtime/upload
+file-manager: 
+  dir: storage/runtime/file-manager
 sftp-service:
   port: 8080
   dir: storage/sftp

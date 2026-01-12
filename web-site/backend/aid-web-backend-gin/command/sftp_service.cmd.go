@@ -22,7 +22,7 @@ func (*SFTPService) Launch() {
 
 	// 验证共享目录是否存在
 
-	absDir, err := filepath.Abs(global.CONFIG.SFTPDir)
+	absDir, err := filepath.Abs(global.CONFIG.FileManager.Dir)
 	if err != nil {
 		global.LOG.Error("目录路径错误", zap.Error(err))
 		return
@@ -37,7 +37,7 @@ func (*SFTPService) Launch() {
 	if localIP == "" {
 		global.LOG.Warn("⚠️ 未检测到局域网IP，请手动确认Mac的IP地址")
 	} else {
-		global.LOG.Info("文件服务器已启动", zap.String("共享目录", global.CONFIG.SFTPDir))
+		global.LOG.Info("文件服务器已启动", zap.String("共享目录", global.CONFIG.FileManager.Dir))
 		fmt.Printf("✅ 文件服务器已启动：\n")
 		fmt.Printf("   共享目录：%s\n", absDir)
 		fmt.Printf("   访问地址：http://%s:%s\n", localIP, *port)
