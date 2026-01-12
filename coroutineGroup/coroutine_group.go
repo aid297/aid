@@ -7,15 +7,16 @@ import (
 type (
 	CoroutineGroup[T any] struct {
 		Error      error
+		OK         bool
+		Results    []*Result[T]
 		batches    uint
 		capacities uint
-		Results    []*Result[T]
 		sw         sync.WaitGroup
-		OK         bool
 	}
 	Result[T any] struct {
-		Data  T
-		Error error
+		Data   T
+		Error  error
+		IsSkip bool
 	}
 )
 
