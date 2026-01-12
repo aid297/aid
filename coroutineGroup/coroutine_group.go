@@ -42,7 +42,7 @@ func (my *CoroutineGroup[T]) check() error {
 	return nil
 }
 
-func (my *CoroutineGroup[T]) Run(fn func(batch, capacity uint) *Result[T]) *CoroutineGroup[T] {
+func (my *CoroutineGroup[T]) Run(fn func(batch, capacity uint) (result *Result[T])) *CoroutineGroup[T] {
 	if err := my.check(); err != nil {
 		my.Error = err
 		my.OK = false
@@ -62,42 +62,6 @@ func (my *CoroutineGroup[T]) Run(fn func(batch, capacity uint) *Result[T]) *Coro
 					my.OK = false
 				}
 			}(batch, capacity)
-		}
-		my.sw.Wait()
-	}
-
-	return my
-}
-
-func (my *CoroutineGroup[T]) RunUntilError(fn func(batch, capacity uint) *Result[T]) *CoroutineGroup[T] {
-	if err := my.check(); err != nil {
-		my.Error = err
-		my.OK = false
-		return my
-	}
-
-	my.Results = make([]*Result[T], 0, my.batches+my.capacities)
-	for batch := range my.batches {
-		for capacity := range my.capacities {
-			my.sw.Add(1)
-
-			var (
-				r  *Result[T]
-				ch = make(chan struct{})
-			)
-
-			go func(b, c uint) {
-				defer my.sw.Done()
-				r = fn(b, c)
-				ch <- struct{}{}
-			}(batch, capacity)
-
-			<-ch
-			my.Results = append(my.Results, r)
-			if r.Error != nil {
-				my.OK = false
-				return my
-			}
 		}
 		my.sw.Wait()
 	}
