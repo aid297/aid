@@ -516,17 +516,31 @@ func (my AnyArray[T]) ToString(formats ...string) string {
 }
 
 // Cast 转换值类型
-func Cast[SRC, DST any](aa AnyArray[SRC], fn func(value SRC) DST) AnyArray[DST] {
-	if aa.Length() == 0 {
+func Cast[SRC, DST any](src AnyArray[SRC], fn func(value SRC) DST) AnyArray[DST] {
+	if src.Length() == 0 {
 		return New[DST]()
 	}
 
-	data := make([]DST, len(aa.data))
-	for idx := range aa.data {
-		data[idx] = fn(aa.data[idx])
+	data := make([]DST, len(src.data))
+	for idx := range src.data {
+		data[idx] = fn(src.data[idx])
 	}
 
-	return New(List(data))
+	return NewList(data)
+}
+
+// CastAny 任意类型转目标类型
+func CastAny[DST any](src AnyArray[any], fn func(value any) DST) AnyArray[DST] {
+	if src.Length() == 0 {
+		return New[DST]()
+	}
+
+	data := make([]DST, len(src.data))
+	for idx := range src.data {
+		data[idx] = fn(src.data[idx])
+	}
+
+	return NewList(data)
 }
 
 // ToAny converts any slice to []any

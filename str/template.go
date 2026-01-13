@@ -7,8 +7,7 @@ import (
 	"io"
 )
 
-type Template[T any] struct {
-}
+type Template[T any] struct{}
 
 // New 填充字符串
 func NewTemplate[T any](title, content string, s T) (string, error) {
