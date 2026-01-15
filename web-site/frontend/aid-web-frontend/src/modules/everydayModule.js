@@ -1,36 +1,36 @@
-import moment from "moment";
+import moment from 'moment';
 
 export class EveryDaysModule {
-    _data = [];
+	_data = [];
 
-    constructor() {}
+	constructor() {}
 
-    static new = () => new EveryDaysModule();
+	static new = () => new EveryDaysModule();
 
-    get data() {
-        return this._data;
-    }
+	get data() {
+		return this._data;
+	}
 
-    push(data) {
-        this._data.push(data);
-    }
+	push(data) {
+		this._data.push(data);
+	}
 
-    find(date = "") {
-        let ret = [];
-        this._data.forEach(items => {
-            const s = items[2];
-            const matches = s.match(/\b\d{2}-\d{2}-\d{2}\b/g);
-            if (matches.length === 0) return;
-            if (matches[0] === moment(date).format("YY-MM-DD")) {
-                ret = items;
-                return;
-            }
-        });
+	find(date = '') {
+		let ret = [];
+		this._data.forEach(items => {
+			const s = items[2];
+			const matches = s.match(/\b\d{2}-\d{2}-\d{2}\b/g);
+			if (matches.length === 0) return;
+			if (matches[0] === moment(date).format('YY-MM-DD')) {
+				ret = items;
+				return;
+			}
+		});
 
-        if (ret.length !== 0) {
-            return ret[4]?.startsWith("次日");
-        }
+		if (ret.length !== 0) {
+			return ret[4]?.startsWith('次日');
+		}
 
-        return false;
-    }
+		return false;
+	}
 }

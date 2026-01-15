@@ -53,8 +53,12 @@ func (FileManagerAPI) List(c *gin.Context) {
 	var (
 		dir = filesystemV3.APP.Dir.Rel(filesystemV3.APP.DirAttr.Path.Set(global.CONFIG.FileManager.Dir))
 	)
+
 	if !dir.Exist {
 		dir.Create(filesystemV3.DirMode(0777))
 	}
-	httpModule.NewOK().SetMsg("可以").WithAccept(c)
+
+	dir.LS()
+
+	httpModule.NewOK().SetData(gin.H{"fullPath": dir.FullPath, "dirs": dir.Dirs, "files": dir.Files}).WithAccept(c)
 }

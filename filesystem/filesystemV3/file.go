@@ -12,19 +12,20 @@ import (
 )
 
 type File struct {
-	IsRel     bool         // 是否使用相对路径
-	Error     error        // 错误信息
-	Name      string       // 文件名
-	BasePath  string       // 基础路径
-	FullPath  string       // 完整路径
-	Size      int64        // 文件大小
-	Info      os.FileInfo  // 文件信息
-	Mode      os.FileMode  // 文件权限
-	Exist     bool         // 文件是否存在
+	IsRel     bool         `json:"isRel"`    // 是否使用相对路径
+	Error     error        `json:"error"`    // 错误信息
+	Name      string       `json:"name"`     // 文件名
+	BasePath  string       `json:"basePath"` // 基础路径
+	FullPath  string       `json:"fullPath"` // 完整路径
+	Size      int64        `json:"size"`     // 文件大小
+	Info      os.FileInfo  `json:"info"`     // 文件信息
+	Mode      os.FileMode  `json:"mode"`     // 文件权限
+	Exist     bool         `json:"exist"`    // 文件是否存在
 	mu        sync.RWMutex // 读写锁
-	Extension string       // 文件扩展名
-	FileInfo  os.FileInfo  // 文件信息
-	Mime      string       // 文件 Mime 类型
+	Extension string       `json:"extension"` // 文件扩展名
+	FileInfo  os.FileInfo  `json:"fileInfo"`  // 文件信息
+	Mime      string       `json:"mime"`      // 文件 Mime 类型
+	Kind      string       `json:"file"`      // 类型
 }
 
 var (
@@ -34,7 +35,7 @@ var (
 
 // NewFile 实例化
 func NewFile(attrs ...FileAttributer) *File {
-	return (&File{mu: sync.RWMutex{}}).setAttrs(attrs...).refresh()
+	return (&File{mu: sync.RWMutex{}, Kind: "file"}).setAttrs(attrs...).refresh()
 }
 
 // NewFileAbs 实例化：绝对路径
@@ -49,7 +50,7 @@ func NewFileRel(attrs ...FileAttributer) *File {
 
 // New 实例化
 func (*File) New(attrs ...FileAttributer) *File {
-	return (&File{mu: sync.RWMutex{}}).setAttrs(attrs...).refresh()
+	return (&File{mu: sync.RWMutex{}, Kind: "file"}).setAttrs(attrs...).refresh()
 }
 
 // Abs 实例化：绝对路径
@@ -143,7 +144,7 @@ func (my *File) Join(dirs ...string) *File {
 
 // Create 创建文件
 func (my *File) Create(attrs ...FileOperationAttributer) *File {
-	if dir := NewDirAbs(APP.DirAttr.Path.Set(my.BasePath)); !dir.Exist {
+	if dir := APP.Dir.Abs(APP.DirAttr.Path.Set(my.BasePath)); !dir.Exist {
 		if err := dir.Create().Error; err != nil {
 			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		}
@@ -162,7 +163,7 @@ func (my *File) Write(content []byte, attrs ...FileOperationAttributer) *File {
 		file          *os.File
 	)
 
-	if dir := NewDirAbs(APP.DirAttr.Path.Set(my.BasePath)); !dir.Exist {
+	if dir := APP.Dir.Abs(APP.DirAttr.Path.Set(my.BasePath)); !dir.Exist {
 		if err := dir.Create().Error; err != nil {
 			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		}
@@ -254,13 +255,13 @@ func (my *File) CopyTo(isRel bool, dstPaths ...string) *File {
 		return my
 	}
 
-	a := NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)).Up()
+	a := APP.Dir.Rel(APP.DirAttr.Path.Set(dstPaths...)).Up()
 	print(a.FullPath)
 
-	b := NewDirAbs(APP.DirAttr.Path.Set(my.BasePath))
+	b := APP.Dir.Abs(APP.DirAttr.Path.Set(my.BasePath))
 	print(b.FullPath)
 
-	if my.Error = NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)).Up().Create(DirMode(NewDirAbs(APP.DirAttr.Path.Set(my.BasePath)).Info.Mode())).Error; my.Error != nil {
+	if my.Error = APP.Dir.Rel(APP.DirAttr.Path.Set(dstPaths...)).Up().Create(DirMode(APP.Dir.Abs(APP.DirAttr.Path.Set(my.BasePath)).Info.Mode())).Error; my.Error != nil {
 		return my
 	}
 

@@ -11,43 +11,29 @@ import (
 )
 
 type Dir struct {
-	IsRel    bool         // 是否使用相对路径
-	Error    error        // 错误信息
-	Name     string       // 文件名
-	BasePath string       // 基础路径
-	FullPath string       // 完整路径
-	Size     int64        // 文件大小
-	Info     os.FileInfo  // 文件信息
-	Mode     os.FileMode  // 文件权限
-	Exist    bool         // 文件是否存在
+	IsRel    bool         `json:"isRel"`    // 是否使用相对路径
+	Error    error        `json:"error"`    // 错误信息
+	Name     string       `json:"name"`     // 文件名
+	BasePath string       `json:"basePath"` // 基础路径
+	FullPath string       `json:"fullPath"` // 完整路径
+	Size     int64        `json:"size"`     // 文件大小
+	Info     os.FileInfo  `json:"info"`     // 文件信息
+	Mode     os.FileMode  `json:"mode"`     // 文件权限
+	Exist    bool         `json:"exist"`    // 文件是否存在
 	mu       sync.RWMutex // 读写锁
-	Files    []*File      // 目录下的文件列表
-	Dirs     []*Dir       // 子目录列表
-}
-
-// NewDir 实例化
-func NewDir(attrs ...DirAttributer) *Dir {
-	return (&Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0)}).setAttrs(attrs...).refresh()
-}
-
-// NewDirAbs 实例化：绝对路径
-func NewDirAbs(attrs ...DirAttributer) *Dir {
-	return NewDir(append(attrs, APP.DirAttr.IsRel.SetAbs())...)
-}
-
-// NewDirRel 实例化：相对路径
-func NewDirRel(attrs ...DirAttributer) *Dir {
-	return NewDir(append([]DirAttributer{APP.DirAttr.Path.Set("."), APP.DirAttr.IsRel.SetRel()}, attrs...)...)
+	Files    []*File      `json:"files"` // 目录下的文件列表
+	Dirs     []*Dir       `json:"dirs"`  // 子目录列表
+	Kind     string       `json:"kind"`  // 类型
 }
 
 // New 实例化
 func (*Dir) New(attrs ...DirAttributer) *Dir {
-	return (&Dir{mu: sync.RWMutex{}, Files: make([]*File, 0), Dirs: make([]*Dir, 0)}).setAttrs(attrs...).refresh()
+	return (&Dir{mu: sync.RWMutex{}, Kind: "dir", Files: make([]*File, 0), Dirs: make([]*Dir, 0)}).setAttrs(attrs...).refresh()
 }
 
 // Abs 实例化：绝对路径
 func (*Dir) Abs(attrs ...DirAttributer) *Dir {
-	return APP.Dir.New(append([]DirAttributer{APP.DirAttr.Path.Set("."), APP.DirAttr.IsRel.SetRel()}, attrs...)...)
+	return APP.Dir.New(append([]DirAttributer{APP.DirAttr.Path.Set("."), APP.DirAttr.IsRel.SetAbs()}, attrs...)...)
 }
 
 // Rel 实例化：相对路径
@@ -167,7 +153,7 @@ func (my *Dir) Rename(newName string) *Dir {
 		return my
 	}
 
-	return NewDirAbs(APP.DirAttr.Path.Set(newPath))
+	return APP.Dir.Abs(APP.DirAttr.Path.Set(newPath))
 }
 
 // Remove 删除目录
@@ -222,11 +208,12 @@ func (my *Dir) LS() *Dir {
 	}
 
 	for _, entry := range entries {
+		fmt.Println(entry.Name(), entry.IsDir())
 		if entry.IsDir() {
-			d := NewDirAbs(APP.DirAttr.Path.Set(my.FullPath)).Join(entry.Name())
-			my.Dirs = append(my.Dirs, d.LS())
+			d := APP.Dir.Abs(APP.DirAttr.Path.Set(my.FullPath, entry.Name()))
+			my.Dirs = append(my.Dirs, d)
 		} else {
-			my.Files = append(my.Files, NewFileAbs(APP.FileAttr.Path.Set(my.FullPath, entry.Name())))
+			my.Files = append(my.Files, APP.File.Abs(APP.FileAttr.Path.Set(my.FullPath, entry.Name())))
 		}
 	}
 
@@ -254,7 +241,7 @@ func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)).Create(DirMode(my.Mode)); dst.Error != nil {
+	if dst = APP.Dir.Rel(APP.DirAttr.Path.Set(dstPaths...)).Create(DirMode(my.Mode)); dst.Error != nil {
 		my.Error = dst.Error
 		return my
 	}
@@ -287,7 +274,7 @@ func (my *Dir) CopyDirsTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)); dst.Error != nil {
+	if dst = APP.Dir.Rel(APP.DirAttr.Path.Set(dstPaths...)); dst.Error != nil {
 		my.Error = dst.Error
 		return my
 	}
@@ -317,7 +304,7 @@ func (my *Dir) CopyAllTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = NewDir(APP.DirAttr.IsRel.SetRel(), APP.DirAttr.Path.Set(dstPaths...)); !dst.Exist {
+	if dst = APP.Dir.Rel(APP.DirAttr.Path.Set(dstPaths...)); !dst.Exist {
 		dst.Create(DirMode(my.Mode))
 	}
 
@@ -334,7 +321,7 @@ func (my *Dir) CopyAllTo(isRel bool, dstPaths ...string) *Dir {
 }
 
 // Copy 复制当前对象
-func (my *Dir) Copy() *Dir { return NewDirAbs(APP.DirAttr.Path.Set(my.FullPath)) }
+func (my *Dir) Copy() *Dir { return APP.Dir.Abs(APP.DirAttr.Path.Set(my.FullPath)) }
 
 // Up 向上一级目录
 func (my *Dir) Up() *Dir {
