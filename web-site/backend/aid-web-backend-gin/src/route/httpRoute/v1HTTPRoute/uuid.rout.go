@@ -3,7 +3,7 @@ package v1HTTPRoute
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/api/httpAPI/v1HTTPAPI"
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/api/httpAPI/v1HTTPAPI`
 )
 
 type UUIDRoute struct{}

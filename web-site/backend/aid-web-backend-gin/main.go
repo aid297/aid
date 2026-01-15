@@ -5,11 +5,12 @@ import (
 	"strings"
 
 	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/command"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/global"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/initialize"
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/global`
+	initialize2 `github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/initialize`
+
+	"github.com/spf13/cast"
 
 	"github.com/aid297/aid/daemon"
-	"github.com/spf13/cast"
 )
 
 type consoleArgs struct {
@@ -50,9 +51,9 @@ func parseArgs() consoleArgs {
 func main() {
 	var consoleArgs = parseArgs()
 
-	initialize.Config.Launch(consoleArgs.configPath)
-	initialize.Zap.Launch()
-	initialize.Timezone.Launch()
+	initialize2.Config.Launch(consoleArgs.configPath)
+	initialize2.Zap.Launch()
+	initialize2.Timezone.Launch()
 
 	launch(consoleArgs)
 }

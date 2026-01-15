@@ -3,11 +3,11 @@ package route
 import (
 	"net/http"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/api/httpAPI"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/middleware/httpMiddleware"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/middleware/httpMiddleware/v1HTTPMiddleware"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/route/httpRoute/v1HTTPRoute"
+	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/api/httpAPI"
 
 	"github.com/gin-gonic/gin"
 )
