@@ -11,8 +11,7 @@
                             </q-card-section>
 
                             <q-card-section class="q-pt-none">
-                                <q-uploader :url="`${API_BASE_URL}/upload`" label="选择文件" multiple
-                                    @uploaded="handleUploaded" class="max-wight" @failed="handleFailed" />
+                                <q-uploader :url="`${API_BASE_URL}/upload`" label="选择文件" multiple @uploaded="handleUploaded" class="max-wight" @failed="handleFailed" />
                             </q-card-section>
                         </q-card>
                     </div>
@@ -26,10 +25,10 @@
 import { API_BASE_URL } from "src/utils/fetch";
 import notify from "src/utils/notify";
 
-const handleUploaded = (info) => {
-    console.log('文件上传成功', info);
+const handleUploaded = info => {
+    console.log("文件上传成功", info);
     // 可以在这里处理上传成功后的逻辑，如提示用户、更新文件列表等
     // this.$q.notify({ type: 'positive', message: '上传成功！' })
     notify.ok("上传成功");
-}
+};
 </script>

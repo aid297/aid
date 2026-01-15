@@ -14,15 +14,11 @@ type (
 
 func List[T any](list []T) Attributer[T] { return AttrList[T]{list: list} }
 
-func (my AttrList[T]) Register(anyArray *AnyArray[T]) {
-	anyArray.data = my.list
-}
+func (my AttrList[T]) Register(anyArray *AnyArray[T]) { anyArray.data = my.list }
 
 func Items[T any](items ...T) Attributer[T] { return AttrItems[T]{items: items} }
 
-func (my AttrItems[T]) Register(anyArray *AnyArray[T]) {
-	anyArray.data = my.items
-}
+func (my AttrItems[T]) Register(anyArray *AnyArray[T]) { anyArray.data = my.items }
 
 func Len[T any](length int) Attributer[T] { return AttrLen[T]{length: length} }
 

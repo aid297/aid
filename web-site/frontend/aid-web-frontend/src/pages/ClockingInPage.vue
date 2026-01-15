@@ -12,8 +12,7 @@
                     </div>
                     <div class="col">
                         输入起始月份（格式：01）
-                        <q-input outlined square label="输入起始月份：" v-model="startMonth" autofocus ref="txtStartMonth"
-                            type="number" min="1" max="12" />
+                        <q-input outlined square label="输入起始月份：" v-model="startMonth" autofocus ref="txtStartMonth" type="number" min="1" max="12" />
                     </div>
                     <div class="col">
                         输入起始日期（格式：02）
@@ -34,20 +33,14 @@
 
                                         <q-item-section avatar>
                                             <q-btn-group square>
-                                                <q-btn square @click="clearHoliday3Dates" round color="red"
-                                                    icon="fa fa-times"></q-btn>
+                                                <q-btn square @click="clearHoliday3Dates" round color="red" icon="fa fa-times"></q-btn>
                                                 <q-btn square icon="event" round color="primary">
-                                                    <q-popup-proxy @before-show="holiday3Dates_updateProxy" cover
-                                                        transition-show="scale" transition-hide="scale">
-                                                        <q-date v-model="holiday3DatesProxy" multiple flat bordered
-                                                            today-btn landscape years-in-month-view mark="YYYY-MM-DD">
+                                                    <q-popup-proxy @before-show="holiday3Dates_updateProxy" cover transition-show="scale" transition-hide="scale">
+                                                        <q-date v-model="holiday3DatesProxy" multiple flat bordered today-btn landscape years-in-month-view mark="YYYY-MM-DD">
                                                             <div class="row items-center justify-end q-gutter-sm">
                                                                 <q-btn-group square>
-                                                                    <q-btn square flat label="取消" color="negative"
-                                                                        icon="fa fa-times" v-close-popup />
-                                                                    <q-btn square flat label="确定" color="green"
-                                                                        icon="fa fa-check" @click="holiday3Dates_save"
-                                                                        v-close-popup />
+                                                                    <q-btn square flat label="取消" color="negative" icon="fa fa-times" v-close-popup />
+                                                                    <q-btn square flat label="确定" color="green" icon="fa fa-check" @click="holiday3Dates_save" v-close-popup />
                                                                 </q-btn-group>
                                                             </div>
                                                         </q-date>
@@ -77,20 +70,14 @@
 
                                         <q-item-section avatar>
                                             <q-btn-group square>
-                                                <q-btn square @click="clearExWorkdayDates" round color="red"
-                                                    icon="fa fa-times"></q-btn>
+                                                <q-btn square @click="clearExWorkdayDates" round color="red" icon="fa fa-times"></q-btn>
                                                 <q-btn square icon="event" round color="primary">
-                                                    <q-popup-proxy @before-show="exWorkday_updateProxy" cover
-                                                        transition-show="scale" transition-hide="scale">
-                                                        <q-date v-model="exWorkdayDatesProxy" multiple flat bordered
-                                                            today-btn landscape years-in-month-view mark="YYYY-MM-DD">
+                                                    <q-popup-proxy @before-show="exWorkday_updateProxy" cover transition-show="scale" transition-hide="scale">
+                                                        <q-date v-model="exWorkdayDatesProxy" multiple flat bordered today-btn landscape years-in-month-view mark="YYYY-MM-DD">
                                                             <div class="row items-center justify-end q-gutter-sm">
                                                                 <q-btn-group square>
-                                                                    <q-btn square flat label="取消" color="negative"
-                                                                        icon="fa fa-times" v-close-popup />
-                                                                    <q-btn square flat label="确定" color="green"
-                                                                        icon="fa fa-check" @click="exWorkday_save"
-                                                                        v-close-popup />
+                                                                    <q-btn square flat label="取消" color="negative" icon="fa fa-times" v-close-popup />
+                                                                    <q-btn square flat label="确定" color="green" icon="fa fa-check" @click="exWorkday_save" v-close-popup />
                                                                 </q-btn-group>
                                                             </div>
                                                         </q-date>
@@ -120,20 +107,14 @@
 
                                         <q-item-section avatar>
                                             <q-btn-group square>
-                                                <q-btn square @click="clearExHolidayDates" round color="red"
-                                                    icon="fa fa-times"></q-btn>
+                                                <q-btn square @click="clearExHolidayDates" round color="red" icon="fa fa-times"></q-btn>
                                                 <q-btn square icon="event" round color="primary">
-                                                    <q-popup-proxy @before-show="exHolidayDates_updateProxy" cover
-                                                        transition-show="scale" transition-hide="scale">
-                                                        <q-date v-model="exHolidayDatesProxy" multiple flat bordered
-                                                            today-btn landscape years-in-month-view mark="YYYY-MM-DD">
+                                                    <q-popup-proxy @before-show="exHolidayDates_updateProxy" cover transition-show="scale" transition-hide="scale">
+                                                        <q-date v-model="exHolidayDatesProxy" multiple flat bordered today-btn landscape years-in-month-view mark="YYYY-MM-DD">
                                                             <div class="row items-center justify-end q-gutter-sm">
                                                                 <q-btn-group square>
-                                                                    <q-btn square flat label="取消" color="negative"
-                                                                        icon="fa fa-times" v-close-popup />
-                                                                    <q-btn square flat label="确定" color="green"
-                                                                        icon="fa fa-check" @click="exHolidayDates_save"
-                                                                        v-close-popup />
+                                                                    <q-btn square flat label="取消" color="negative" icon="fa fa-times" v-close-popup />
+                                                                    <q-btn square flat label="确定" color="green" icon="fa fa-check" @click="exHolidayDates_save" v-close-popup />
                                                                 </q-btn-group>
                                                             </div>
                                                         </q-date>
@@ -163,20 +144,14 @@
 
                                         <q-item-section avatar>
                                             <q-btn-group square>
-                                                <q-btn square @click="clearHolidayDates" round color="red"
-                                                    icon="fa fa-times"></q-btn>
+                                                <q-btn square @click="clearHolidayDates" round color="red" icon="fa fa-times"></q-btn>
                                                 <q-btn square icon="event" round color="primary">
-                                                    <q-popup-proxy @before-show="holidayDates_updateProxy" cover
-                                                        transition-show="scale" transition-hide="scale">
-                                                        <q-date v-model="holidayDatesProxy" multiple flat bordered
-                                                            today-btn landscape years-in-month-view mark="YYYY-MM-DD">
+                                                    <q-popup-proxy @before-show="holidayDates_updateProxy" cover transition-show="scale" transition-hide="scale">
+                                                        <q-date v-model="holidayDatesProxy" multiple flat bordered today-btn landscape years-in-month-view mark="YYYY-MM-DD">
                                                             <div class="row items-center justify-end q-gutter-sm">
                                                                 <q-btn-group square>
-                                                                    <q-btn square flat label="取消" color="negative"
-                                                                        icon="fa fa-times" v-close-popup />
-                                                                    <q-btn square flat label="确定" color="green"
-                                                                        icon="fa fa-check" @click="holidayDates_save"
-                                                                        v-close-popup />
+                                                                    <q-btn square flat label="取消" color="negative" icon="fa fa-times" v-close-popup />
+                                                                    <q-btn square flat label="确定" color="green" icon="fa fa-check" @click="holidayDates_save" v-close-popup />
                                                                 </q-btn-group>
                                                             </div>
                                                         </q-date>
@@ -199,13 +174,11 @@
                     <div class="col">
                         <q-toggle v-model="isAutoDownloadStatisticsExcel" label="是否自动下载" />&emsp;&emsp;
                         <q-btn square label="手动下载" type="submit" color="primary" @click="generateExcel" />
-                        <q-uploader url="#" color="purple" label="5. 选择考勤表" flat bordered style="width: 100%"
-                            @added="onUploadedClockInExcel" />
+                        <q-uploader url="#" color="purple" label="5. 选择考勤表" flat bordered style="width: 100%" @added="onUploadedClockInExcel" />
                     </div>
                     <div class="col">
                         <p>&nbsp;</p>
-                        <q-uploader url="#" color="green-10" label="6. 选择统计表" flat bordered style="width: 100%"
-                            @added="onUploadedStatisticExcel" />
+                        <q-uploader url="#" color="green-10" label="6. 选择统计表" flat bordered style="width: 100%" @added="onUploadedStatisticExcel" />
                     </div>
                 </div>
             </q-card-section>
@@ -319,19 +292,23 @@ const onUploadedClockInExcel = async files => {
             // 解析数据 -> 打卡
             ClockInService.new(originalClockIn.slice(1), dateTitle)
                 .parse()
-                .data.forEach(item => { clockInData[item[1].value] = item; });
+                .data.forEach(item => {
+                    clockInData[item[1].value] = item;
+                });
 
             // 解析数据 -> 汇总
             CollectService.new(originalCollect.slice(1), dateTitle)
                 .parse()
-                .data.forEach(item => { collectData[item[1].value] = item; });
+                .data.forEach(item => {
+                    collectData[item[1].value] = item;
+                });
 
             // 分析数据
             finalStatistic = StatisticService.new(dateTitle.data, clockInData, collectData, everydayData).parse().data;
 
             console.log("# 获取考勤数据（分析后）", finalStatistic);
 
-            if (isAutoDownloadStatisticsExcel.value) await generateExcel()  // 保存统计文件到本地
+            if (isAutoDownloadStatisticsExcel.value) await generateExcel(); // 保存统计文件到本地
         } catch (error) {
             console.error("解析Excel失败：", error);
         }
@@ -351,7 +328,8 @@ const onUploadedStatisticExcel = async files => {
             overtime: "G",
             compensatoryLeave: "H",
             note: "J",
-        }, 2: {
+        },
+        2: {
             overtime: "K",
             compensatoryLeave: "L",
             note: "N",
@@ -406,7 +384,7 @@ const onUploadedStatisticExcel = async files => {
             compensatoryLeave: "BC",
             note: "BE",
         },
-    }
+    };
 
     const nameToLineNum = {};
 
@@ -423,18 +401,23 @@ const onUploadedStatisticExcel = async files => {
 
         const originalSheet = workbook.getWorksheet(startYear.value);
 
-        originalSheet.eachRow(row => { if (row.number < 4) return; nameToLineNum[Str.new(row.values[3]).replace()] = row.number; });
+        originalSheet.eachRow(row => {
+            if (row.number < 4) return;
+            nameToLineNum[Str.new(row.values[3]).replace()] = row.number;
+        });
 
         // 更新数据
         for (const [name, value] of Object.entries(finalStatistic)) {
             let overtime = 0;
             let compensatoryLeave = 0;
             let log = "";
-            const lineNum = nameToLineNum[name]; if (!lineNum) continue;
-            const col = columnMap[parseInt(startMonth.value) + 1]; if (!col) continue;
+            const lineNum = nameToLineNum[name];
+            if (!lineNum) continue;
+            const col = columnMap[parseInt(startMonth.value) + 1];
+            if (!col) continue;
 
             // 计算加班
-            overtime = value.weekendOvertime + value.holidayOvertime + (value.holiday3Overtime) * 3;
+            overtime = value.weekendOvertime + value.holidayOvertime + value.holiday3Overtime * 3;
             // 计算调休：年假、陪产假、调休、事假、旷工、病假
             compensatoryLeave = value.annualLeave + value.paternityLeave + value.compensatoryLeave + value.absenteeism + value.personalLeave;
             // 日志
@@ -458,7 +441,7 @@ const onUploadedStatisticExcel = async files => {
 
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-        const filename = `统计2：${startYear.value}-${parseInt(startMonth.value) + 1}.xlsx`
+        const filename = `统计2：${startYear.value}-${parseInt(startMonth.value) + 1}.xlsx`;
         saveAs(blob, filename);
         notify.ok(`文件已保存：${filename}`);
     };
@@ -470,9 +453,9 @@ const onUploadedStatisticExcel = async files => {
  * 生成 Excel 文件
  */
 const generateExcel = async () => {
-    const workbook = new ExcelJS.Workbook()
-    const worksheet = workbook.addWorksheet("Sheet1")
-    const defaultBorder = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Sheet1");
+    const defaultBorder = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
 
     // 设置表头
     worksheet.columns = [
@@ -538,85 +521,84 @@ const generateExcel = async () => {
         },
         // { header: '休息', key: 'reset', width: 16, font: { color: { argb: 'FF0000' } }, },
         { header: "日志", key: "log", width: 135, font: { color: { argb: "000000" } } },
-    ]
+    ];
 
-    const headerRow = worksheet.getRow(1) // 获取第一行（表头）
-    headerRow.font = { name: "仿宋", bold: true, size: 14 }
-    headerRow.border = defaultBorder
-    headerRow.height = 42
-    headerRow.eachCell(cell => (cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" }))
+    const headerRow = worksheet.getRow(1); // 获取第一行（表头）
+    headerRow.font = { name: "仿宋", bold: true, size: 14 };
+    headerRow.border = defaultBorder;
+    headerRow.height = 42;
+    headerRow.eachCell(cell => (cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" }));
 
     // 添加数据
-    Object.entries(finalStatistic).
-        forEach(([name, row]) => {
-            worksheet
-                .addRow({
-                    name: name,
-                    weekendOvertime: row.weekendOvertime || "",  // 周末加班
-                    holidayOvertime: row.holidayOvertime || "",  // 假日加班
-                    holiday3Overtime: row.holiday3Overtime || "",  // 三薪加班
-                    annualLeave: row.annualLeave || "",  // 年假
-                    paternityLeave: row.paternityLeave || "",  // 陪产假
-                    compensatoryLeave: row.compensatoryLeave || "",  // 调休
-                    personalLeave: row.personalLeave || "",// 事假
-                    sickLeave: row.sickLeave || "",  // 病假
-                    absenteeism: row.absenteeism || "", // 旷工
-                    missingClockIn: row.missingClockIn || "", // 上班缺卡
-                    missingClockOut: row.missingClockOut || "",  // 下班缺卡
-                    lateClockIn: row.lateClockIn || "",  // 上班迟到
-                    earlyClockOut: row.earlyClockOut || "",  // 下班早退
-                    overtimeClockOut: row.overtimeClockOut || "", // 加班缺卡
-                    // reset: row.reset,
-                    log: row.log.map((item, idx) => `${(idx + 1).toString().padStart(3, "0")}、${item}`).join("\r\n"),
-                })
-                .eachCell((cell, idx) => {
-                    let style = {
-                        font: { name: "仿宋", size: 12, bold: false, color: { argb: ["000000"] } },
-                        border: defaultBorder,
-                        alignment: { wrapText: true, vertical: "middle", horizontal: idx !== 16 ? "center" : "left" },
+    Object.entries(finalStatistic).forEach(([name, row]) => {
+        worksheet
+            .addRow({
+                name: name,
+                weekendOvertime: row.weekendOvertime || "", // 周末加班
+                holidayOvertime: row.holidayOvertime || "", // 假日加班
+                holiday3Overtime: row.holiday3Overtime || "", // 三薪加班
+                annualLeave: row.annualLeave || "", // 年假
+                paternityLeave: row.paternityLeave || "", // 陪产假
+                compensatoryLeave: row.compensatoryLeave || "", // 调休
+                personalLeave: row.personalLeave || "", // 事假
+                sickLeave: row.sickLeave || "", // 病假
+                absenteeism: row.absenteeism || "", // 旷工
+                missingClockIn: row.missingClockIn || "", // 上班缺卡
+                missingClockOut: row.missingClockOut || "", // 下班缺卡
+                lateClockIn: row.lateClockIn || "", // 上班迟到
+                earlyClockOut: row.earlyClockOut || "", // 下班早退
+                overtimeClockOut: row.overtimeClockOut || "", // 加班缺卡
+                // reset: row.reset,
+                log: row.log.map((item, idx) => `${(idx + 1).toString().padStart(3, "0")}、${item}`).join("\r\n"),
+            })
+            .eachCell((cell, idx) => {
+                let style = {
+                    font: { name: "仿宋", size: 12, bold: false, color: { argb: ["000000"] } },
+                    border: defaultBorder,
+                    alignment: { wrapText: true, vertical: "middle", horizontal: idx !== 16 ? "center" : "left" },
+                };
+
+                for (const item of [
+                    { target: [2, 3, 4], color: "3D9C6A" }, // 绿色
+                    { target: [5, 6, 7, 8, 9], color: "0000FF" }, // 蓝色
+                    { target: [10, 11, 12, 13, 14, 15], color: "FF0000" }, // 红色
+                ])
+                    if (item.target.includes(idx)) {
+                        style.font.color.argb = [item.color];
+                        break;
                     }
 
-                    for (const item of [
-                        { target: [2, 3, 4], color: "3D9C6A" }, // 绿色
-                        { target: [5, 6, 7, 8, 9], color: "0000FF" }, // 蓝色
-                        { target: [10, 11, 12, 13, 14, 15], color: "FF0000" }, // 红色
-                    ])
-                        if (item.target.includes(idx)) {
-                            style.font.color.argb = [item.color]
-                            break
-                        }
+                if ([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(idx)) style.font.bold = true;
 
-                    if ([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(idx)) style.font.bold = true
+                cell.font = style.font;
+                cell.border = style.border;
+                cell.alignment = style.alignment;
+            });
 
-                    cell.font = style.font
-                    cell.border = style.border
-                    cell.alignment = style.alignment
-                })
-
-            // 设置冻结第一行和第一列
-            worksheet.views = [
-                {
-                    state: "frozen",
-                    xSplit: 1, // 冻结第一列
-                    ySplit: 1, // 冻结第一行
-                    topLeftCell: "B2", // 可滚动的区域从B2开始
-                },
-            ]
-        })
+        // 设置冻结第一行和第一列
+        worksheet.views = [
+            {
+                state: "frozen",
+                xSplit: 1, // 冻结第一列
+                ySplit: 1, // 冻结第一行
+                topLeftCell: "B2", // 可滚动的区域从B2开始
+            },
+        ];
+    });
 
     worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber % 2 === 0) row.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "D2D2D2" } }
-    })
+        if (rowNumber % 2 === 0) row.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "D2D2D2" } };
+    });
 
     // 生成 Blob 并下载
-    const buffer = await workbook.xlsx.writeBuffer()
-    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const filename = `统计：${startYear.value}-${parseInt(startMonth.value) + 1}.xlsx`;
-    saveAs(blob, filename)
-    notify.ok(`文件已保存：${filename}`)
+    saveAs(blob, filename);
+    notify.ok(`文件已保存：${filename}`);
 
-    txtStartMonth.value?.focus()
-}
+    txtStartMonth.value?.focus();
+};
 
 // 三薪日
 const holiday3Dates = ref([]);

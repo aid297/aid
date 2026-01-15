@@ -3,10 +3,10 @@ package v1HTTPService
 import (
 	"strings"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/module/httpModule/v1HTTPModule/request"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/module/httpModule/v1HTTPModule/response"
-
 	"github.com/gofrs/uuid/v5"
+
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/module/httpModule/v1HTTPModule/request`
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/module/httpModule/v1HTTPModule/response`
 )
 
 type UUIDService struct{}

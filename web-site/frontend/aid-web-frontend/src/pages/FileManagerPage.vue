@@ -10,8 +10,7 @@
                             </q-card-section>
 
                             <q-card-section class="q-pt-none">
-                                <q-uploader :url="uploadUrl" label="上传文件" @uploaded="handleUploaded" class="max-wight"
-                                    @failed="handleFailed" flat bordered field-name="file" style="width: 100%" />
+                                <q-uploader :url="uploadUrl" label="上传文件" @uploaded="handleUploaded" class="max-wight" @failed="handleFailed" flat bordered field-name="file" style="width: 100%" />
                             </q-card-section>
                         </q-card>
                     </div>
@@ -25,8 +24,7 @@
             <q-page class="q-pa-md">
                 <div class="row q-gutter-md">
                     <div class="col">
-                        <q-table flat bordered separator title="文件管理" :rows="rows" dark color="amber"
-                            :pagination="{ rowsPerPage: 0 }">
+                        <q-table flat bordered separator title="文件管理" :rows="rows" dark color="amber" :pagination="{ rowsPerPage: 0 }">
                             <template v-slot:header="props">
                                 <q-tr :props="props">
                                     <q-th align="left" key="uuid" name="uuid">uuid</q-th>
@@ -48,18 +46,18 @@
 <script setup>
 import { API_BASE_URL } from "src/utils/fetch";
 import notify from "src/utils/notify";
-import { ref } from 'vue';
+import { ref } from "vue";
 
-const uploadUrl = ref(`${API_BASE_URL}/fileManager/upload`) // 后端上传接口
+const uploadUrl = ref(`${API_BASE_URL}/fileManager/upload`); // 后端上传接口
 // const headers = ref({
 //     // 如果需要认证，可以在这里设置请求头，例如Token
 //     // 'Authorization': `Bearer ${yourToken}`
 // })
 
-const handleUploaded = (info) => {
-    console.log('文件上传成功', info);
+const handleUploaded = info => {
+    console.log("文件上传成功", info);
     // 可以在这里处理上传成功后的逻辑，如提示用户、更新文件列表等
     // this.$q.notify({ type: 'positive', message: '上传成功！' })
     notify.ok("上传成功");
-}
+};
 </script>

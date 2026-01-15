@@ -4,11 +4,11 @@ import (
 	"log"
 	"strings"
 
-	"github.com/aid297/aid/logger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/global"
+	"github.com/aid297/aid/logger"
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/global`
 )
 
 type ZapInit struct{}

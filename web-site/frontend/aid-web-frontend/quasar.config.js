@@ -198,7 +198,7 @@ export default defineConfig((/* ctx */) => {
             builder: {
                 // https://www.electron.build/configuration/configuration
                 appId: "aid-web-frontend",
-                mac: { identity: false }
+                mac: { identity: false },
             },
         },
 

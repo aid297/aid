@@ -14,10 +14,13 @@
                                 <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
                                     <div class="row q-gutter-md">
                                         <div class="col">
-                                            <q-input v-model="number" label="生成uuid的数量" hint="必填" lazy-rules type="number" max="100" min="1" outlined square autofocus ref="txtNumber" step="1" />
+                                            <q-input v-model="number" label="生成uuid的数量" hint="必填" lazy-rules
+                                                type="number" max="100" min="1" outlined square autofocus
+                                                ref="txtNumber" step="1" />
                                         </div>
                                         <div class="col">
-                                            <q-select v-model="uuidVersion" :options="versions" outlined square label="uuid版本" />
+                                            <q-select v-model="uuidVersion" :options="versions" outlined square
+                                                label="uuid版本" />
                                         </div>
                                     </div>
                                     <div class="row q-gutter-md q-mt-sm">
@@ -41,7 +44,8 @@
                         </div>
                         <div class="row q-mt-sm">
                             <div class="col">
-                                <q-table flat bordered separator title="UUID 生成结果" :rows="rows" dark color="amber" :pagination="{ rowsPerPage: 0 }">
+                                <q-table flat bordered separator title="UUID 生成结果" :rows="rows" dark color="amber"
+                                    :pagination="{ rowsPerPage: 0 }">
                                     <template v-slot:header="props">
                                         <q-tr :props="props">
                                             <q-th align="left" key="uuid" name="uuid">uuid</q-th>
@@ -81,9 +85,26 @@ onMounted(() => {
     });
 });
 
-const onSubmit = () => {
-    rows.value = [];
-    fetcher.post("/uuid/generate", { body: JSON.stringify({ number: parseInt(number.value), noSubsTractKey: noSubsTractKey.value, isUpper: isUpper.value, version: uuidVersion.value.value }) }).then(res => (rows.value = res.data.uuids));
+const onSubmit = async () => {
+    rows.value = (await fetcher
+        .post("/uuid/generate", {
+            body: JSON.stringify({
+                number: parseInt(number.value),
+                noSubsTractKey: noSubsTractKey.value,
+                isUpper: isUpper.value,
+                version: uuidVersion.value.value,
+            }),
+        })).data.uuids;
+    // fetcher
+    //     .post("/uuid/generate", {
+    //         body: JSON.stringify({
+    //             number: parseInt(number.value),
+    //             noSubsTractKey: noSubsTractKey.value,
+    //             isUpper: isUpper.value,
+    //             version: uuidVersion.value.value,
+    //         }),
+    //     })
+    //     .then(res => (rows.value = res.data.uuids));
     txtNumber.value?.focus();
 };
 

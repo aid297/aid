@@ -9,8 +9,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/global"
 	"go.uber.org/zap"
+
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/global`
 )
 
 type SFTPService struct{}
@@ -21,7 +22,6 @@ func (*SFTPService) Launch() {
 	flag.Parse()
 
 	// 验证共享目录是否存在
-
 	absDir, err := filepath.Abs(global.CONFIG.FileManager.Dir)
 	if err != nil {
 		global.LOG.Error("目录路径错误", zap.Error(err))

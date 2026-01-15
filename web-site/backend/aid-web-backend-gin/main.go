@@ -28,7 +28,7 @@ func parseArgs() consoleArgs {
 	)
 	flag.StringVar(&configPath, "C", "config.yaml", "配置文件路径")
 	flag.StringVar(&originalCommand, "M", "", "命令终端参数")
-	flag.StringVar(&daemonStr, "D", "false", "是否开启守护进程")
+	flag.StringVar(&daemonStr, "D", "", "是否开启守护进程")
 	flag.Parse()
 
 	commandName = ""
@@ -60,7 +60,8 @@ func main() {
 
 // launch 启动程序
 func launch(consoleArgs consoleArgs) {
-	if cast.ToBool(consoleArgs.daemonStr) || global.CONFIG.System.Daemon {
+
+	if (consoleArgs.daemonStr == "" && global.CONFIG.System.Daemon) || (consoleArgs.daemonStr != "" && cast.ToBool(consoleArgs.daemonStr)) {
 		daemon.APP.Main.Once().
 			SetTitle("启动程序").
 			SetLog(global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename).

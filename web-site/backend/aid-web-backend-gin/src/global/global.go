@@ -1,9 +1,9 @@
 package global
 
 import (
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/config"
-
 	"go.uber.org/zap"
+
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/config`
 )
 
 var (

@@ -3,11 +3,11 @@ package route
 import (
 	"net/http"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/global"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/middleware/httpMiddleware"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/middleware/httpMiddleware/v1HTTPMiddleware"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/route/httpRoute/v1HTTPRoute"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/api/httpAPI"
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/global`
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/middleware/httpMiddleware`
+	v1HTTPMiddleware2 `github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/middleware/httpMiddleware/v1HTTPMiddleware`
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/route/httpRoute/v1HTTPRoute`
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,13 +18,13 @@ var Index IndexRoute
 
 func (*IndexRoute) Register(app *gin.Engine) {
 	if global.CONFIG.WebService.Cors {
-		app.Use(v1HTTPMiddleware.Cors())
+		app.Use(v1HTTPMiddleware2.Cors())
 	}
 	app.Use(httpMiddleware.RecoverHandler)
 
 	apiRout := app.Group("api")
 	v1Rout := apiRout.Group("v1")
-	v1Rout.Use(httpMiddleware.RecoverHandler, v1HTTPMiddleware.Timeout(120))
+	v1Rout.Use(httpMiddleware.RecoverHandler, v1HTTPMiddleware2.Timeout(120))
 
 	{
 		app.Any("/health/json", httpAPI.APP.Health.JSON)

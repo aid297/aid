@@ -4,9 +4,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/global"
-
 	"go.uber.org/zap"
+
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/global`
 )
 
 type TimezoneInit struct{}

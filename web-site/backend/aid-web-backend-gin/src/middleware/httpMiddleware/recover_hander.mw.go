@@ -3,9 +3,9 @@ package httpMiddleware
 import (
 	"runtime/debug"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend-gin/module/httpModule"
-
 	"github.com/gin-gonic/gin"
+
+	`github.com/aid297/aid/web-site/backend/aid-web-backend-gin/src/module/httpModule`
 )
 
 func RecoverHandler(c *gin.Context) {
