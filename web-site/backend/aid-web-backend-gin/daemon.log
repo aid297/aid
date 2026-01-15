@@ -1,9 +1,0 @@
---------------------------------------------------
-启动程序 程序启动成功 [进程号->9204] 启动于：2026-01-15 12:15:36.361
-2026-01-15 12:15:36.372	info	/Users/yujizhou/development/projects/go/aid/web-site/backend/aid-web-backend-gin/command/sftp_service.cmd.go:41	文件服务器已启动	{"共享目录": "storage/runtime/file-manager"}
-2026-01-15 12:15:36.372	info	/Users/yujizhou/development/projects/go/aid/web-site/backend/aid-web-backend-gin/command/sftp_service.cmd.go:41	文件服务器已启动	{"共享目录": "storage/runtime/file-manager"}
-✅ 文件服务器已启动：
-   共享目录：/Users/yujizhou/development/projects/go/aid/web-site/backend/aid-web-backend-gin/storage/runtime/file-manager
-   访问地址：http://10.168.1.126:8080
-   本地访问：http://localhost:8080
-📌 提示：保持终端窗口打开，关闭则停止服务
