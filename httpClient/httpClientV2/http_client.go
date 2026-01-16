@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/ptr"
 	"github.com/aid297/aid/str"
 )
 
@@ -36,6 +37,7 @@ type (
 		client                    *http.Client
 		autoCopy                  bool
 		lock                      sync.RWMutex
+		OK                        *bool
 	}
 
 	HTTPClientBuilder struct {
@@ -224,6 +226,8 @@ func (my *HTTPClient) GetClient() *http.Client {
 func (my *HTTPClient) getClient() *http.Client { return my.client }
 
 func (my *HTTPClient) send() *HTTPClient {
+	my.OK = nil // 清理相应状态
+
 	if my.err != nil {
 		return my
 	}
@@ -270,6 +274,8 @@ func (my *HTTPClient) send() *HTTPClient {
 		my.parseBody()
 		my.rawResponse.Body = io.NopCloser(bytes.NewBuffer(my.responseBody)) // 还原响应体
 	}
+
+	my.OK = ptr.New(my.rawResponse.StatusCode < 400)
 
 	return my
 }

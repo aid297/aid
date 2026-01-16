@@ -5,12 +5,12 @@ import (
 )
 
 func TestDir1(t *testing.T) {
-	t.Run("查看当前目录", func(t *testing.T) { t.Logf("当前目录：%s", NewDirRel().FullPath) })
+	t.Run("查看当前目录", func(t *testing.T) { t.Logf("当前目录：%s", APP.Dir.Rel().FullPath) })
 }
 
 func TestDir2(t *testing.T) {
 	t.Run("目录追加", func(t *testing.T) {
-		dir := NewDirRel()
+		dir := APP.Dir.Rel()
 		t.Logf("追加目录：%s\n", dir.Join("test-a", "test-b", "test-c").FullPath)
 		t.Logf("查看目录是否存在：%v", dir.Exist)
 	})
@@ -18,7 +18,7 @@ func TestDir2(t *testing.T) {
 
 func TestDir3(t *testing.T) {
 	t.Run("创建多级目录", func(t *testing.T) {
-		dir := NewDirRel()
+		dir := APP.Dir.Rel()
 		t.Logf("追加目录：%s\n", dir.Join("test-a", "test-b", "test-c").FullPath)
 		if err := dir.Create().Error; err != nil {
 			t.Fatalf("创建目录失败：%s", err)
@@ -29,7 +29,7 @@ func TestDir3(t *testing.T) {
 
 func TestDir4(t *testing.T) {
 	t.Run("删除单个目录", func(t *testing.T) {
-		dir := NewDirRel(APP.DirAttr.Path.Set("test-a", "test-b", "test-c"))
+		dir := APP.Dir.Rel(APP.DirAttr.Path.Set("test-a", "test-b", "test-c"))
 		if err := dir.Remove().Error; err != nil {
 			t.Fatalf("删除目录失败：%s", err)
 		}
@@ -38,7 +38,7 @@ func TestDir4(t *testing.T) {
 
 func TestDir5(t *testing.T) {
 	t.Run("删除多级目录", func(t *testing.T) {
-		dir := NewDirRel(APP.DirAttr.Path.Set("test-a"))
+		dir := APP.Dir.Rel(APP.DirAttr.Path.Set("test-a"))
 		if err := dir.RemoveAll().Error; err != nil {
 			t.Fatalf("删除失败：%s", err)
 		}
@@ -47,7 +47,7 @@ func TestDir5(t *testing.T) {
 
 func TestDir6(t *testing.T) {
 	t.Run("列出当前目录下的所有文件和子目录", func(t *testing.T) {
-		dir := NewDirRel(APP.DirAttr.Path.Set("test-a1", "test-a2", "test-a3"))
+		dir := APP.Dir.Rel(APP.DirAttr.Path.Set("test-a1", "test-a2", "test-a3"))
 
 		if err := dir.Create().Error; err != nil {
 			t.Fatalf("创建目录失败：%s", err)
@@ -71,7 +71,7 @@ func TestDir6(t *testing.T) {
 
 func TestDir7(t *testing.T) {
 	t.Run("复制目录", func(t *testing.T) {
-		dir := NewDirRel(APP.DirAttr.Path.Set("test-a1", "test-a2", "test-a3"))
+		dir := APP.Dir.Rel(APP.DirAttr.Path.Set("test-a1", "test-a2", "test-a3"))
 
 		if err := dir.Create().Error; err != nil {
 			t.Fatalf("创建目录失败：%s", err)
@@ -87,7 +87,7 @@ func TestDir7(t *testing.T) {
 
 func TestDir8(t *testing.T) {
 	t.Run("文件夹改名", func(t *testing.T) {
-		dir := NewDirRel(APP.DirAttr.Path.Set("test-a1", "test-a2", "test-a3")).Create(DirMode(0777))
+		dir := APP.Dir.Rel(APP.DirAttr.Path.Set("test-a1", "test-a2", "test-a3")).Create(DirMode(0777))
 		if dir.Error != nil {
 			t.Fatalf("创建目录失败：%s", dir.Error)
 		}
