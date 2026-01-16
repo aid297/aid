@@ -1,6 +1,7 @@
 package v1HTTPAPI
 
 import (
+	"github.com/aid297/aid/validator/validatorV3"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
@@ -17,15 +18,16 @@ type UUIDAPI struct{}
 // * URL POST /api/v1/uuid/generate
 func (UUIDAPI) Generate(c *gin.Context) {
 	var (
-		title = "批量生成uuid"
-		err   error
-		form  request.UUIDGenerateRequest
-		uuids []response2.UUIDResponse
+		title   = "批量生成uuid"
+		err     error
+		form    request.UUIDGenerateRequest
+		checker validatorV3.Checker
+		uuids   []response2.UUIDResponse
 	)
 
-	if form, err = request.UUIDGenerate.Bind(c); err != nil {
-		global.LOG.Error(title, zap.Any("表单验证", err))
-		httpModule.NewForbidden().SetErrorf("表单验证失败：%w", err).WithAccept(c)
+	if form, checker = request.UUIDGenerate.Bind(c); !checker.OK() {
+		global.LOG.Error(title, zap.Any("表单验证", checker.Wrongs()))
+		httpModule.NewForbidden().SetData(checker.Wrongs()).SetErrorf("表单验证失败：%w", checker.Wrong()).WithAccept(c)
 		return
 	}
 

@@ -25,7 +25,7 @@ type File struct {
 	Extension string       `json:"extension"` // 文件扩展名
 	FileInfo  os.FileInfo  `json:"fileInfo"`  // 文件信息
 	Mime      string       `json:"mime"`      // 文件 Mime 类型
-	Kind      string       `json:"file"`      // 类型
+	Kind      string       `json:"kind"`      // 类型
 }
 
 var (

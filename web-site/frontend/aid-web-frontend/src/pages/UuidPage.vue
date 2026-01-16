@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-import { fetcher } from 'src/utils/fetch';
+import { axios } from 'src/utils/fetch';
 import { onMounted, ref } from 'vue';
 
 const number = ref(10);
@@ -76,22 +76,23 @@ const rows = ref([]);
 const versions = ref([]);
 
 onMounted(() => {
-	fetcher.post('/uuid/versions').then(res => {
+	axios.post('/uuid/versions').then(res => {
 		for (const [k, v] of Object.entries(res.data.versions)) versions.value.push({ label: k, value: v });
 	});
 });
 
 const onSubmit = async () => {
 	rows.value = (
-		await fetcher.post('/uuid/generate', {
-			body: JSON.stringify({
+		await axios.post('/uuid/generate', {
+			body: {
 				number: parseInt(number.value),
 				noSubsTractKey: noSubsTractKey.value,
 				isUpper: isUpper.value,
 				version: uuidVersion.value.value,
-			}),
+			},
 		})
 	).data.uuids;
+
 	txtNumber.value?.focus();
 };
 

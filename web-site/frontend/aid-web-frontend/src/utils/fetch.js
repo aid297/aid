@@ -5,50 +5,43 @@ const authorization = localStorage.getItem('token') ? `Bearer ${localStorage.get
 const DEFAULT_HEADERS = { 'Content-Type': 'application/json', Authorization: authorization };
 
 export const fetcher = {
-    get: async (endpoint, options = {}) => f(endpoint, 'GET', options),
-    post: async (endpoint, options = {}) => f(endpoint, 'POST', options),
-    put: async (endpoint, options = {}) => f(endpoint, 'PUT', options),
-    delete: async (endpoint, options = {}) => f(endpoint, 'DELETE', options),
-    patch: async (endpoint, options = {}) => f(endpoint, 'PATCH', options),
+	get: async (endpoint, options = {}) => f(endpoint, 'GET', options),
+	post: async (endpoint, options = {}) => f(endpoint, 'POST', options),
+	put: async (endpoint, options = {}) => f(endpoint, 'PUT', options),
+	delete: async (endpoint, options = {}) => f(endpoint, 'DELETE', options),
+	patch: async (endpoint, options = {}) => f(endpoint, 'PATCH', options),
 };
 
 const f = async (endpoint, method = 'GET', options = {}) => {
-    console.log(`Fetch -> ${method} ${API_BASE_URL}${endpoint}`, options);
-    const { headers, ...restOptions } = options;
+	const { headers, ...restOptions } = options;
 
-    try {
-        return await fetch(`${API_BASE_URL}${endpoint}`, { method, ...restOptions, headers: { ...DEFAULT_HEADERS, ...headers, }, });
-    } catch (error) {
-        console.error('Fetch error:', error);
-        throw error;
-    }
+	try {
+		await fetch(`${API_BASE_URL}${endpoint}`, { method, ...restOptions, headers: { ...DEFAULT_HEADERS, ...headers } });
+	} catch (error) {
+		console.error('Fetch error:', error);
+		throw error;
+	}
 };
 
 import Axios from 'axios';
 
-const axiosIns = Axios.create({
-    baseUrl: API_BASE_URL,
-    headers: DEFAULT_HEADERS,
-});
+const axiosIns = Axios.create({ baseUrl: API_BASE_URL, headers: DEFAULT_HEADERS });
 
 export const axios = {
-    get: async (endpoint, options = {}) => a(endpoint, 'GET', options),
-    post: async (endpoint, options = {}) => a(endpoint, 'POST', options),
-    put: async (endpoint, options = {}) => a(endpoint, 'PUT', options),
-    delete: async (endpoint, options = {}) => a(endpoint, 'DELETE', options),
-    patch: async (endpoint, options = {}) => a(endpoint, 'PATCH', options),
+	get: async (endpoint, options = {}) => a(endpoint, 'GET', options),
+	post: async (endpoint, options = {}) => a(endpoint, 'POST', options),
+	put: async (endpoint, options = {}) => a(endpoint, 'PUT', options),
+	delete: async (endpoint, options = {}) => a(endpoint, 'DELETE', options),
+	patch: async (endpoint, options = {}) => a(endpoint, 'PATCH', options),
 };
 
 const a = async (endpoint, method = 'GET', options = {}) => {
-    const { headers, data, params, ...restOptions } = options;
+	const { headers, body, params, ...restOptions } = options;
 
-    try {
-        const res = await axiosIns.request({ url: `${API_BASE_URL}${endpoint}`, method, headers: { ...DEFAULT_HEADERS, ...headers, }, data, params, ...restOptions, });
-
-        console.log(`Axios success -> ${endpoint}`, res);
-        return res.data; // 返回响应数据
-    } catch (err) {
-        console.error(`Axios error -> ${endpoint}`, err);
-        throw err;
-    }
+	try {
+		return await axiosIns.request({ url: `${API_BASE_URL}${endpoint}`, method, headers: { ...DEFAULT_HEADERS, ...headers }, data: body, params, ...restOptions });
+	} catch (err) {
+		console.error(`Axios error -> ${endpoint}`, err);
+		throw err;
+	}
 };
