@@ -56,7 +56,7 @@ func (FileManagerAPI) List(c *gin.Context) {
 	var (
 		tilte = "获取文件列表"
 		// err     error
-		dir     *filesystemV3.Dir
+		dir     = filesystemV3.APP.Dir.Rel(filesystemV3.APP.DirAttr.Path.Set(global.CONFIG.FileManager.Dir))
 		form    request.FileListRequest
 		checker validatorV3.Checker
 	)
@@ -67,7 +67,9 @@ func (FileManagerAPI) List(c *gin.Context) {
 		return
 	}
 
-	dir = filesystemV3.APP.Dir.Rel(filesystemV3.APP.DirAttr.Path.Set(global.CONFIG.FileManager.Dir, form.Path))
+	if form.Path != "" {
+		dir = dir.Join(form.Path)
+	}
 
 	if !dir.Exist {
 		dir.Create(filesystemV3.DirMode(0777))
