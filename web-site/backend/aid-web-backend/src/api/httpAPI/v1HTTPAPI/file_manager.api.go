@@ -5,8 +5,11 @@ import (
 	"path/filepath"
 
 	"github.com/aid297/aid/filesystem/filesystemV3"
+	"github.com/aid297/aid/validator/validatorV3"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
+	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 )
@@ -51,8 +54,20 @@ func (FileManagerAPI) Upload(c *gin.Context) {
 // * POST /api/v1/fileManger/list
 func (FileManagerAPI) List(c *gin.Context) {
 	var (
-		dir = filesystemV3.APP.Dir.Rel(filesystemV3.APP.DirAttr.Path.Set(global.CONFIG.FileManager.Dir))
+		tilte = "获取文件列表"
+		// err     error
+		dir     *filesystemV3.Dir
+		form    request.FileListRequest
+		checker validatorV3.Checker
 	)
+
+	if form, checker = request.FileList.Bind(c); !checker.OK() {
+		global.LOG.Error(tilte, zap.Any("表单验证", checker.Wrongs()))
+		httpModule.NewForbidden().SetData(checker.Wrongs()).SetErrorf("表单验证失败：%w", checker.Wrong()).WithAccept(c)
+		return
+	}
+
+	dir = filesystemV3.APP.Dir.Rel(filesystemV3.APP.DirAttr.Path.Set(global.CONFIG.FileManager.Dir, form.Path))
 
 	if !dir.Exist {
 		dir.Create(filesystemV3.DirMode(0777))
