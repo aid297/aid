@@ -2,6 +2,8 @@ package coroutineGroup
 
 import (
 	"sync"
+
+	`github.com/aid297/aid/operation/operationV2`
 )
 
 type (
@@ -20,7 +22,8 @@ type (
 	}
 )
 
-func New[T any]() *CoroutineGroup[T]        { return &CoroutineGroup[T]{sw: sync.WaitGroup{}, OK: true} }
+func New[T any]() *CoroutineGroup[T] { return &CoroutineGroup[T]{sw: sync.WaitGroup{}, OK: true} }
+
 func GetBatches(total, capacities int) uint { return uint((total + capacities - 1) / capacities) }
 
 func (my *CoroutineGroup[T]) SetBatches(batches uint) *CoroutineGroup[T] {
@@ -28,8 +31,14 @@ func (my *CoroutineGroup[T]) SetBatches(batches uint) *CoroutineGroup[T] {
 	return my
 }
 
-func (my *CoroutineGroup[T]) SetCapacity(capacity uint) *CoroutineGroup[T] {
-	my.capacities = capacity
+func (my *CoroutineGroup[T]) SetCapacity(capacities uint) *CoroutineGroup[T] {
+	my.capacities = capacities
+	return my
+}
+
+func (my *CoroutineGroup[T]) SetBatchesByCapacities(total, capacities int) *CoroutineGroup[T] {
+	my.batches = operationV2.NewTernary(operationV2.TrueFn(func() uint { return GetBatches(total, capacities) }), operationV2.FalseValue[uint](1)).GetByValue(total > capacities)
+	my.capacities = uint(capacities)
 	return my
 }
 
