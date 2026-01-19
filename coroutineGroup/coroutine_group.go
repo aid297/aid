@@ -20,7 +20,8 @@ type (
 	}
 )
 
-func New[T any]() *CoroutineGroup[T] { return &CoroutineGroup[T]{sw: sync.WaitGroup{}, OK: true} }
+func New[T any]() *CoroutineGroup[T]        { return &CoroutineGroup[T]{sw: sync.WaitGroup{}, OK: true} }
+func GetBatches(total, capacities int) uint { return uint((total + capacities - 1) / capacities) }
 
 func (my *CoroutineGroup[T]) SetBatches(batches uint) *CoroutineGroup[T] {
 	my.batches = batches
