@@ -1,7 +1,6 @@
 package anyArrayV2
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -11,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	jsonIter "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 )
 
@@ -500,10 +500,10 @@ func (my AnyArray[T]) Clean() AnyArray[T] {
 }
 
 // MarshalJSON 实现接口：json序列化
-func (my AnyArray[T]) MarshalJSON() ([]byte, error) { return json.Marshal(&my.data) }
+func (my AnyArray[T]) MarshalJSON() ([]byte, error) { return jsonIter.Marshal(&my.data) }
 
 // UnmarshalJSON 实现接口：json反序列化
-func (my AnyArray[T]) UnmarshalJSON(data []byte) error { return json.Unmarshal(data, &my.data) }
+func (my AnyArray[T]) UnmarshalJSON(data []byte) error { return jsonIter.Unmarshal(data, &my.data) }
 
 // ToString 导出string
 func (my AnyArray[T]) ToString(formats ...string) string {

@@ -1,7 +1,6 @@
 package anyDictV2
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"sync"
@@ -272,14 +271,14 @@ func (my AnyDict[K, V]) Clean() AnyDict[K, V] {
 }
 
 // MarshalJSON 实现接口：json序列化
-func (my AnyDict[K, V]) MarshalJSON() ([]byte, error) { return json.Marshal(&my.data) }
+func (my AnyDict[K, V]) MarshalJSON() ([]byte, error) { return jsonIter.Marshal(&my.data) }
 
 // UnmarshalJSON 实现接口：json反序列化
-func (my AnyDict[K, V]) UnmarshalJSON(data []byte) error { return json.Unmarshal(data, &my.data) }
+func (my AnyDict[K, V]) UnmarshalJSON(data []byte) error { return jsonIter.Unmarshal(data, &my.data) }
 
 // Cast 转换所有值并创建新AnyDict
 func Cast[K comparable, SRC, DST any](src AnyDict[K, SRC], fn func(key K, value SRC) DST) AnyDict[K, DST] {
-	var d = New[K, DST]()
+	d := New[K, DST]()
 
 	for key, value := range src.data {
 		d = d.SetValue(key, fn(key, value))
@@ -290,7 +289,8 @@ func Cast[K comparable, SRC, DST any](src AnyDict[K, SRC], fn func(key K, value 
 
 // Zip 组合键值对为一个新的有序map
 func Zip[K comparable, V any](keys []K, values []V) AnyDict[K, V] {
-	var d = New[K, V]()
+	d := New[K, V]()
+
 	for idx, key := range keys {
 		d = d.SetValue(key, values[idx])
 	}
@@ -301,6 +301,7 @@ func Zip[K comparable, V any](keys []K, values []V) AnyDict[K, V] {
 // StructToOther struct 通过 json 转其他格式
 func StructToOther[K any, V any](src K) (ret V, err error) {
 	var b []byte
+
 	if b, err = jsonIter.Marshal(src); err != nil {
 		return
 	}
