@@ -22,6 +22,14 @@ func New[K comparable, V any](attrs ...Attributer[K, V]) AnyDict[K, V] {
 	return AnyDict[K, V]{data: make(map[K]V), mu: &sync.RWMutex{}}.SetAttrs(attrs...)
 }
 
+func NewMap[K comparable, V any](data map[K]V, attrs ...Attributer[K, V]) AnyDict[K, V] {
+	return New(Map(data)).SetAttrs(attrs...)
+}
+
+func NewCap[K comparable, V any](cap int, attrs ...Attributer[K, V]) AnyDict[K, V] {
+	return New(Cap[K, V](cap)).SetAttrs(attrs...)
+}
+
 func (my AnyDict[K, V]) SetAttrs(attrs ...Attributer[K, V]) AnyDict[K, V] {
 	if len(attrs) > 0 {
 		for idx := range attrs {

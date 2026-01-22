@@ -131,7 +131,7 @@ func (my AnyArray[T]) GetValues(indexes ...int) []T {
 }
 
 func (my AnyArray[T]) Append(v ...T) AnyArray[T] {
-	return New(List(append(my.data, v...)))
+	return NewList(append(my.data, v...))
 }
 
 // First 获取第一个值
@@ -203,7 +203,7 @@ func (my AnyArray[T]) Shuffle() AnyArray[T] {
 		newData[i], newData[j] = newData[j], newData[i] // 交换元素
 	}
 
-	return New(List(newData))
+	return NewList(newData)
 }
 
 // Length 获取数组长度
@@ -223,7 +223,7 @@ func (my AnyArray[T]) Filter(fn func(item T) bool) AnyArray[T] {
 		}
 	}
 
-	return New(List(ret[:j]))
+	return NewList(ret[:j])
 }
 
 // RemoveEmpty 清除0值元素
@@ -327,7 +327,7 @@ func (my AnyArray[T]) Pluck(fn func(item T) any) AnyArray[any] {
 		ret = append(ret, fn(v))
 	}
 
-	return New(List(ret))
+	return NewList(ret)
 }
 
 // Intersection 取交集
@@ -343,12 +343,12 @@ func (my AnyArray[T]) Intersection(other AnyArray[T]) AnyArray[T] {
 		}
 	}
 
-	return New(List(intersection))
+	return NewList(intersection)
 }
 
 // IntersectionBySlice 取交集：通过切片
 func (my AnyArray[T]) IntersectionBySlice(other ...T) AnyArray[T] {
-	return my.Intersection(New(List(other)))
+	return my.Intersection(NewList(other))
 }
 
 // Difference 取差集
@@ -364,12 +364,12 @@ func (my AnyArray[T]) Difference(other AnyArray[T]) AnyArray[T] {
 		}
 	}
 
-	return New(List(difference))
+	return NewList(difference)
 }
 
 // DifferenceBySlice 取差集：通过切片
 func (my AnyArray[T]) DifferenceBySlice(other ...T) AnyArray[T] {
-	return my.Difference(New(List(other)))
+	return my.Difference(NewList(other))
 }
 
 // Union 取并集
@@ -387,12 +387,12 @@ func (my AnyArray[T]) Union(other AnyArray[T]) AnyArray[T] {
 		}
 	}
 
-	return New(List(union))
+	return NewList(union)
 }
 
 // UnionBySlice 取并集：通过切片
 func (my AnyArray[T]) UnionBySlice(other []T) AnyArray[T] {
-	return my.Union(New(List(other)))
+	return my.Union(NewList(other))
 }
 
 // Unique 去重
@@ -408,7 +408,7 @@ func (my AnyArray[T]) Unique() AnyArray[T] {
 		}
 	}
 
-	return New(List(result))
+	return NewList(result)
 }
 
 // RemoveByIndex 根据索引删除元素
@@ -417,7 +417,7 @@ func (my AnyArray[T]) RemoveByIndex(index int) AnyArray[T] {
 		return my
 	}
 
-	return New(List(append(my.data[:index], my.data[index+1:]...)))
+	return NewList(append(my.data[:index], my.data[index+1:]...))
 }
 
 // RemoveByIndexes 根据索引删除元素
@@ -440,7 +440,7 @@ func (my AnyArray[T]) RemoveByIndexes(indexes ...int) AnyArray[T] {
 		}
 	}
 
-	return New(List(newData))
+	return NewList(newData)
 }
 
 // RemoveByValue 删除数组中对应的目标
@@ -465,7 +465,7 @@ func (my AnyArray[T]) RemoveByValues(targets ...T) AnyArray[T] {
 		data = New(List(data)).RemoveByValues(targets[idx]).data
 	}
 
-	return New(List(data))
+	return NewList(data)
 }
 
 // Every 循环处理每一个
@@ -475,7 +475,7 @@ func (my AnyArray[T]) Every(fn func(item T) T) AnyArray[T] {
 		data[idx] = fn(my.data[idx])
 	}
 
-	return New(List(data))
+	return NewList(data)
 }
 
 // Each 遍历数组
