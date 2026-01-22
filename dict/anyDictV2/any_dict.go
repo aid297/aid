@@ -152,7 +152,7 @@ func (my AnyDict[K, V]) Length() int { return len(my.data) }
 func (my AnyDict[K, V]) LengthNotEmpty() int { return my.RemoveEmpty().Length() }
 
 func (my AnyDict[K, V]) Filter(fn func(item V) bool) AnyDict[K, V] {
-	res := New(Cap[K, V](my.Length()))
+	res := NewCap[K, V](my.Length())
 
 	for idx := range my.values.ToSlice() {
 		if fn(my.values.GetValue(idx)) {
@@ -167,20 +167,13 @@ func (my AnyDict[K, V]) RemoveEmpty() AnyDict[K, V] {
 	return my.Filter(func(item V) bool {
 		ref := reflect.ValueOf(item)
 
+		// 处理指针类型：检查是否为 nil 或底层值为零值
 		if ref.Kind() == reflect.Ptr {
-			if ref.IsNil() {
-				return false
-			}
-			if ref.Elem().IsZero() {
-				return false
-			}
-		} else {
-			if ref.IsZero() {
-				return false
-			}
+			return !ref.IsNil() && !ref.Elem().IsZero()
 		}
 
-		return true
+		// 非指针类型：直接检查零值
+		return !ref.IsZero()
 	})
 }
 
