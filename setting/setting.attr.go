@@ -26,7 +26,7 @@ func EnvName(envName string) AttrEnvName         { return AttrEnvName{envName} }
 func (my AttrEnvName) Register(setting *Setting) { setting.envName = my.envName }
 
 func Content(content any) AttrConfig            { return AttrConfig{content} }
-func (my AttrConfig) Register(setting *Setting) { setting.config = my.content }
+func (my AttrConfig) Register(setting *Setting) { setting.content = my.content }
 
 func OnChange(onChange func(v *viper.Viper, e fsnotify.Event)) AttrOnChange {
 	return AttrOnChange{onChange}

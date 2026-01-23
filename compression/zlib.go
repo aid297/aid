@@ -43,8 +43,7 @@ func (*Zlib) Decompress(data []byte) ([]byte, error) {
 		buffer bytes.Buffer
 		reader io.ReadCloser
 	)
-	reader, err = zlib.NewReader(bytes.NewReader(data))
-	if err != nil {
+	if reader, err = zlib.NewReader(bytes.NewReader(data)); err != nil {
 		return nil, err
 	}
 	defer reader.Close()

@@ -292,7 +292,7 @@ func (my *Rsa) Demo() {
 	}
 
 	// zip压缩
-	zipByte, zipErr = compression.ZlibApp.New().Compress(jsonByte)
+	zipByte, zipErr = compression.NewZlib().Compress(jsonByte)
 	if zipErr != nil {
 		str.TerminalLogApp.New("[RSA] zip failed: %v").Error(zipErr)
 	}
@@ -304,7 +304,7 @@ func (my *Rsa) Demo() {
 	str.TerminalLogApp.New("[RSA] decrypted").Info()
 
 	// 解密后解压缩
-	unzipByte, unzipByteErr = compression.ZlibApp.New().Decompress([]byte(decrypted))
+	unzipByte, unzipByteErr = compression.NewZlib().Decompress([]byte(decrypted))
 	if unzipByteErr != nil {
 		str.TerminalLogApp.New("[RSA] unzipped failed: %v").Error(unzipByteErr)
 	}

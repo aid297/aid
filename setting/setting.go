@@ -16,9 +16,11 @@ import (
 type Setting struct {
 	configFilename string
 	envName        string
-	config         any
+	content        any
 	onChange       func(v *viper.Viper, e fsnotify.Event)
 }
+
+func NewSetting(attrs ...SettingAttributes) (v *viper.Viper) { return Setting{}.New(attrs...) }
 
 func (Setting) New(attrs ...SettingAttributes) (v *viper.Viper) {
 	var (
@@ -49,13 +51,13 @@ func (Setting) New(attrs ...SettingAttributes) (v *viper.Viper) {
 			ins.onChange(v, e)
 		} else {
 			log.Println(str.APP.Buffer.JoinString("配置文件改变：", e.Name))
-			if err = v.Unmarshal(ins.config); err != nil {
+			if err = v.Unmarshal(ins.content); err != nil {
 				log.Println(str.APP.Buffer.JoinString("更新配置文件失败：", err.Error()))
 			}
 		}
 	})
 
-	if err = v.Unmarshal(ins.config); err != nil {
+	if err = v.Unmarshal(ins.content); err != nil {
 		panic(err)
 	}
 

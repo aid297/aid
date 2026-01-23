@@ -1,7 +1,7 @@
 package gormPool
 
 import (
-	"github.com/aid297/aid/honestMan"
+	"github.com/aid297/aid/setting"
 )
 
 type (
@@ -87,13 +87,15 @@ type (
 
 // New 初始化：数据库配置
 func (*DBSetting) New(path string) *DBSetting {
-	var dbSetting *DBSetting = &DBSetting{}
-
-	if err := honestMan.HonestManApp.New(path).LoadYaml(dbSetting); err != nil {
-		return nil
-	}
-
+	var dbSetting = &DBSetting{}
+	setting.NewSetting(setting.ConfigFilename(path), setting.Content(dbSetting))
 	return dbSetting
+
+	// if err := honestMan.HonestManApp.New(path).LoadYaml(dbSetting); err != nil {
+	// 	return nil
+	// }
+
+	// return dbSetting
 }
 
 func (*DBSetting) ExampleYaml() string {
