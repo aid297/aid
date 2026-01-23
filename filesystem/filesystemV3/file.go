@@ -78,12 +78,6 @@ func (my *File) setAttrs(attrs ...FileAttributer) *File {
 	return my
 }
 
-// Lock 加锁 → 写
-func (my *File) Lock() *File {
-	my.mu.Lock()
-	return my
-}
-
 // refresh 刷新文件信息
 func (my *File) refresh() *File {
 	var err error
@@ -116,6 +110,12 @@ func (my *File) refresh() *File {
 		return my
 	}
 
+	return my
+}
+
+// Lock 加锁 → 写
+func (my *File) Lock() *File {
+	my.mu.Lock()
 	return my
 }
 
