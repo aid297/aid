@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"strings"
 
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/command"
@@ -14,37 +15,37 @@ import (
 )
 
 type consoleArgs struct {
-	commandName   string
-	configPath    string
-	daemonStr     string
-	commandParams []string
+	cmdAPP     string
+	configPath string
+	daemonStr  string
+	cmdParams  []string
 }
 
 func parseArgs() consoleArgs {
 	var (
-		originalCommand, commandName, configPath string
-		commandParams, originalCommands          []string
-		daemonStr                                string
+		originalCmd, cmdAPP, configPath string
+		cmdParams, originalCmds         []string
+		daemonStr                       string
 	)
 	flag.StringVar(&configPath, "C", "config.yaml", "配置文件路径")
-	flag.StringVar(&originalCommand, "M", "", "命令终端参数")
+	flag.StringVar(&originalCmd, "M", "", "命令终端参数")
 	flag.StringVar(&daemonStr, "D", "", "是否开启守护进程")
 	flag.Parse()
 
-	commandName = ""
-	commandParams = make([]string, 0)
+	cmdAPP = ""
+	cmdParams = make([]string, 0)
 
-	if originalCommand != "" {
-		originalCommands = strings.Split(originalCommand, " ")
-		commandName = originalCommands[0]
-		commandParams = originalCommands[1:]
+	if originalCmd != "" {
+		originalCmds = strings.Split(originalCmd, " ")
+		cmdAPP = originalCmds[0]
+		cmdParams = originalCmds[1:]
 	}
 
 	return consoleArgs{
-		commandName:   commandName,
-		configPath:    configPath,
-		daemonStr:     daemonStr,
-		commandParams: commandParams,
+		cmdAPP:     cmdAPP,
+		configPath: configPath,
+		daemonStr:  daemonStr,
+		cmdParams:  cmdParams,
 	}
 }
 
@@ -68,14 +69,14 @@ func launch(consoleArgs consoleArgs) {
 			Launch() // 通过守护进程启动
 	}
 
-	switch consoleArgs.commandName {
+	switch consoleArgs.cmdAPP {
 	case "help":
 		command.Elements.Help.Launch()
-	case "web-service":
+	case "web-service", "":
 		command.Elements.WebService.Launch()
 	case "sftp-service":
 		command.Elements.SFTPService.Launch()
 	default:
-		command.Elements.WebService.Launch()
+		log.Fatalf("启动失败：启动模式不支持：%s", consoleArgs.cmdAPP)
 	}
 }
