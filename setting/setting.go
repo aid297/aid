@@ -21,9 +21,7 @@ type Setting struct {
 	onChange       func(v *viper.Viper, e fsnotify.Event)
 }
 
-func NewSetting(attrs ...SettingAttributes) (*viper.Viper, error) { return Setting{}.New(attrs...) }
-
-func (Setting) New(attrs ...SettingAttributes) (v *viper.Viper, err error) {
+func NewSetting(attrs ...SettingAttributes) (v *viper.Viper, err error) {
 	var (
 		configPath string
 		configEnv  string

@@ -6,7 +6,7 @@ import (
 
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/command"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
-	initialize2 "github.com/aid297/aid/web-site/backend/aid-web-backend/src/initialize"
+	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/initialize"
 
 	"github.com/spf13/cast"
 
@@ -51,9 +51,9 @@ func parseArgs() consoleArgs {
 func main() {
 	var consoleArgs = parseArgs()
 
-	initialize2.Config.Launch(consoleArgs.configPath)
-	initialize2.Zap.Launch()
-	initialize2.Timezone.Launch()
+	initialize.Elements.Config.Launch(consoleArgs.configPath)
+	initialize.Elements.Zap.Launch()
+	initialize.Elements.Timezone.Launch()
 
 	launch(consoleArgs)
 }
@@ -62,7 +62,7 @@ func main() {
 func launch(consoleArgs consoleArgs) {
 
 	if (consoleArgs.daemonStr == "" && global.CONFIG.System.Daemon) || (consoleArgs.daemonStr != "" && cast.ToBool(consoleArgs.daemonStr)) {
-		daemon.APP.Main.Once().
+		daemon.Elements.Daemon.Once().
 			SetTitle("启动程序").
 			SetLog(global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename).
 			SetLogEnable(true).
@@ -71,12 +71,12 @@ func launch(consoleArgs consoleArgs) {
 
 	switch consoleArgs.commandName {
 	case "help":
-		command.APP.Help.Launch()
+		command.Elements.Help.Launch()
 	case "web-service":
-		command.APP.WebService.Launch()
+		command.Elements.WebService.Launch()
 	case "sftp-service":
-		command.APP.SFTP.Launch()
+		command.Elements.SFTP.Launch()
 	default:
-		command.APP.WebService.Launch()
+		command.Elements.WebService.Launch()
 	}
 }

@@ -13,8 +13,6 @@ import (
 
 type ZapInit struct{}
 
-var Zap ZapInit
-
 func (ZapInit) Launch() {
 	var (
 		err       error

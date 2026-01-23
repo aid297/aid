@@ -11,8 +11,6 @@ import (
 
 type TimezoneInit struct{}
 
-var Timezone TimezoneInit
-
 func (TimezoneInit) Launch() {
 	if global.CONFIG.System.Timezone != "" {
 		if timezoneL, err := time.LoadLocation(global.CONFIG.System.Timezone); err != nil {

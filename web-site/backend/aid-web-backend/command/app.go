@@ -1,6 +1,6 @@
 package command
 
-var APP struct {
+var Elements struct {
 	Help       HelpCommand
 	WebService WebServiceCommand
 	SFTP       SFTPService
