@@ -90,22 +90,15 @@ func (my *Daemon) Launch() {
 		if err = dir.Create(filesystemV4.Mode(os.ModePerm)).GetError(); err != nil {
 			log.Fatalf("【启动失败】创建日志目录失败：%s", err.Error())
 		}
-		// if err = dir.Create(os.ModePerm).Error(); err != nil {
-		// 	log.Fatalf("【启动失败】创建日志目录失败：%s", err.Error())
-		// }
 	}
 
 	if file != nil {
 		if fp, err = os.OpenFile(file.GetFullPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
 			log.Fatalf("【启动失败】创建总日志失败：%s", err.Error())
 		}
-		// if fp, err = os.OpenFile(file.GetFullPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
-		// 	log.Fatalf("【启动失败】创建总日志失败：%s", err.Error())
-		// }
 		defer func() { _ = fp.Close() }()
 	}
 	cmd := exec.Command(os.Args[0], os.Args[1:]...)
-	// cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // TODO TEST
 	cmd.SysProcAttr = &syscall.SysProcAttr{} // TODO TEST
 	if fp != nil {
 		cmd.Stdout = fp
