@@ -471,6 +471,7 @@ func (my AnyArray[T]) RemoveByValues(targets ...T) AnyArray[T] {
 // Every 循环处理每一个
 func (my AnyArray[T]) Every(fn func(item T) T) AnyArray[T] {
 	data := make([]T, len(my.data))
+
 	for idx := range my.data {
 		data[idx] = fn(my.data[idx])
 	}
