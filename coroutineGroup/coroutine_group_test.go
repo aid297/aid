@@ -8,10 +8,10 @@ import (
 )
 
 func Test1(t *testing.T) {
-	cg := New[[]string]().
+	cg := NewCoroutineGroup[[]string]().
 		SetBatches(3).
 		SetCapacity(4).
-		Run(func(batch, capacity uint) *Result[[]string] {
+		GO(func(batch, capacity uint) *Result[[]string] {
 			return &Result[[]string]{
 				Data:  []string{"轮数:", cast.ToString(batch), "次数:", cast.ToString(capacity)},
 				Error: nil,
@@ -24,10 +24,10 @@ func Test1(t *testing.T) {
 }
 
 func Test2(t *testing.T) {
-	cg := New[[]string]().
+	cg := NewCoroutineGroup[[]string]().
 		SetBatches(3).
 		SetCapacity(4).
-		Run(func(batch, capacity uint) (result *Result[[]string]) {
+		GO(func(batch, capacity uint) (result *Result[[]string]) {
 			result = &Result[[]string]{}
 
 			result.Data = []string{"轮数:", cast.ToString(batch), "次数:", cast.ToString(capacity)}

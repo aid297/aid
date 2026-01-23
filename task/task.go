@@ -32,11 +32,13 @@ func initTaskPool(tasks ...*Task) *TaskPool {
 	return tp
 }
 
-func NewTaskPool(tasks ...*Task) *TaskPool {
+// GetTaskPoolOnce 获取单例
+func GetTaskPoolOnce(tasks ...*Task) *TaskPool {
 	taskPoolOnce.Do(func() { taskPoolIns = initTaskPool(tasks...) })
 	return taskPoolIns
 }
 
+// PushTask 推送任务
 func (my *TaskPool) PushTask(tasks ...*Task) *TaskPool {
 	my.mu.Lock()
 	defer my.mu.Unlock()
@@ -50,6 +52,7 @@ func (my *TaskPool) PushTask(tasks ...*Task) *TaskPool {
 	return taskPoolIns
 }
 
+// GO 执行任务
 func (my *TaskPool) GO() []*Task {
 	my.mu.Lock()
 	defer my.mu.Unlock()
@@ -73,7 +76,7 @@ func (my *TaskPool) GO() []*Task {
 
 func Demo() {
 	// 1. 初始化队列
-	tp := NewTaskPool()
+	tp := GetTaskPoolOnce()
 	// 2. 推送任务并执行
 	tasks := tp.PushTask(
 		&Task{ID: "task-low", Priority: 1},

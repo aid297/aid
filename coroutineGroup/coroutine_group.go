@@ -3,7 +3,7 @@ package coroutineGroup
 import (
 	"sync"
 
-	`github.com/aid297/aid/operation/operationV2`
+	"github.com/aid297/aid/operation/operationV2"
 )
 
 type (
@@ -15,6 +15,7 @@ type (
 		capacities uint
 		sw         sync.WaitGroup
 	}
+
 	Result[T any] struct {
 		Data   T
 		Error  error
@@ -22,26 +23,34 @@ type (
 	}
 )
 
-func New[T any]() *CoroutineGroup[T] { return &CoroutineGroup[T]{sw: sync.WaitGroup{}, OK: true} }
+// NewCoroutineGroup 创建协程组实例
+func NewCoroutineGroup[T any]() *CoroutineGroup[T] {
+	return &CoroutineGroup[T]{sw: sync.WaitGroup{}, OK: true}
+}
 
+// GetBatches 计算批次数
 func GetBatches(total, capacities int) uint { return uint((total + capacities - 1) / capacities) }
 
+// SetBatches 设置批次数
 func (my *CoroutineGroup[T]) SetBatches(batches uint) *CoroutineGroup[T] {
 	my.batches = batches
 	return my
 }
 
+// SetCapacity 设置每批次容量
 func (my *CoroutineGroup[T]) SetCapacity(capacities uint) *CoroutineGroup[T] {
 	my.capacities = capacities
 	return my
 }
 
+// SetBatchesByCapacities 根据总数和每批次容量计算批次数并设置
 func (my *CoroutineGroup[T]) SetBatchesByCapacities(total, capacities int) *CoroutineGroup[T] {
 	my.batches = operationV2.NewTernary(operationV2.TrueFn(func() uint { return GetBatches(total, capacities) }), operationV2.FalseValue[uint](1)).GetByValue(total > capacities)
 	my.capacities = uint(capacities)
 	return my
 }
 
+// check 检查参数
 func (my *CoroutineGroup[T]) check() error {
 	if my.batches == 0 {
 		return ErrBatchInvalid
@@ -53,7 +62,8 @@ func (my *CoroutineGroup[T]) check() error {
 	return nil
 }
 
-func (my *CoroutineGroup[T]) Run(fn func(batch, capacity uint) (result *Result[T])) *CoroutineGroup[T] {
+// GO 执行协程组
+func (my *CoroutineGroup[T]) GO(fn func(batch, capacity uint) (result *Result[T])) *CoroutineGroup[T] {
 	if err := my.check(); err != nil {
 		my.Error = err
 		my.OK = false
