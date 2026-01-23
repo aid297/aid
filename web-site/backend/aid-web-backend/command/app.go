@@ -1,7 +1,7 @@
 package command
 
 var Elements struct {
-	Help       HelpCommand
-	WebService WebServiceCommand
-	SFTP       SFTPService
+	Help        HelpCommand
+	WebService  WebServiceCommand
+	SFTPService SFTPServiceCommand
 }

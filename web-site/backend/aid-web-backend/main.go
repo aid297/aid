@@ -60,7 +60,6 @@ func main() {
 
 // launch 启动程序
 func launch(consoleArgs consoleArgs) {
-
 	if (consoleArgs.daemonStr == "" && global.CONFIG.System.Daemon) || (consoleArgs.daemonStr != "" && cast.ToBool(consoleArgs.daemonStr)) {
 		daemon.GetDaemonOnce().
 			SetTitle("启动程序").
@@ -75,7 +74,7 @@ func launch(consoleArgs consoleArgs) {
 	case "web-service":
 		command.Elements.WebService.Launch()
 	case "sftp-service":
-		command.Elements.SFTP.Launch()
+		command.Elements.SFTPService.Launch()
 	default:
 		command.Elements.WebService.Launch()
 	}

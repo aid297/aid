@@ -34,6 +34,6 @@
     },
     "rezip": {
         "out-dir": "storage/runtime/rezip"
-    }
-    "upload-dir": "storage/runtime/upload"
+    },
+    "file-manager":{"port":"9901","dir":"storage/runtime/file-manager"}
 }

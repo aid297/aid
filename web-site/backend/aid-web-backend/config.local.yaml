@@ -27,4 +27,5 @@ log:
 rezip:
   out-dir: storage/runtime/rezip
 file-manager: 
+  port: "9901"
   dir: storage/runtime/file-manager
