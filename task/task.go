@@ -9,8 +9,10 @@ import (
 type (
 	Task struct {
 		ID       string
-		Priority int // 数值越大，优先级越高
-		Index    int // 用于 heap 内部维护
+		Priority int          // 数值越大，优先级越高
+		Index    int          // 用于 heap 内部维护
+		Fn       func() error // 用于执行
+		Error    error        // 执行结果
 	}
 	TaskPool struct {
 		queue PriorityQueue
@@ -54,8 +56,15 @@ func (my *TaskPool) GO() []*Task {
 
 	if my.queue.Len() > 0 {
 		tasks := make([]*Task, 0, my.queue.Len())
+
+		task := heap.Pop(&my.queue).(*Task)
+
 		for my.queue.Len() > 0 {
-			tasks = append(tasks, heap.Pop(&my.queue).(*Task))
+			if task.Fn != nil {
+				task.Error = task.Fn()
+			}
+
+			tasks = append(tasks, task)
 		}
 		return tasks
 	}
@@ -74,19 +83,4 @@ func Demo() {
 	for idx := range tasks {
 		fmt.Printf("执行ID：%s (优先级：%d)\n", tasks[idx].ID, tasks[idx].Priority)
 	}
-
-	// // 1. 初始化队列
-	// pq := make(PriorityQueue, 0)
-	// heap.Init(&pq)
-
-	// // 2. 投递任务（模拟不同优先级的任务）
-	// heap.Push(&pq, &Task{ID: "task-low", Priority: 1})
-	// heap.Push(&pq, &Task{ID: "task-high", Priority: 10})
-	// heap.Push(&pq, &Task{ID: "task-medium", Priority: 5})
-
-	// // 3. 消费任务
-	// for pq.Len() > 0 {
-	// 	task := heap.Pop(&pq).(*Task)
-	// 	fmt.Printf("Processing task: %s (Priority: %d)\n", task.ID, task.Priority)
-	// }
 }
