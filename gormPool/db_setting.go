@@ -88,14 +88,8 @@ type (
 // New 初始化：数据库配置
 func (*DBSetting) New(path string) *DBSetting {
 	var dbSetting = &DBSetting{}
-	setting.NewSetting(setting.ConfigFilename(path), setting.Content(dbSetting))
+	setting.NewSetting(setting.Filename(path), setting.Content(dbSetting))
 	return dbSetting
-
-	// if err := honestMan.HonestManApp.New(path).LoadYaml(dbSetting); err != nil {
-	// 	return nil
-	// }
-
-	// return dbSetting
 }
 
 func (*DBSetting) ExampleYaml() string {

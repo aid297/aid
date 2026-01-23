@@ -19,16 +19,8 @@ type RedisSetting struct {
 // New 初始化：数据库配置
 func (*RedisSetting) New(path string) *RedisSetting {
 	var rs = &RedisSetting{}
-	setting.NewSetting(setting.ConfigFilename(path), setting.Content(rs))
+	setting.NewSetting(setting.Filename(path), setting.Content(rs))
 	return rs
-
-	// var redisSetting *RedisSetting = &RedisSetting{}
-	// err := honestMan.HonestManApp.New(path).LoadYaml(redisSetting)
-	// if err != nil {
-	// 	return nil
-	// }
-
-	// return redisSetting
 }
 
 // ExampleYaml 示例配置文件

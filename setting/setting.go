@@ -16,15 +16,15 @@ import (
 type Setting struct {
 	configFilename string
 	envName        string
+	defaultName    string
 	content        any
 	onChange       func(v *viper.Viper, e fsnotify.Event)
 }
 
-func NewSetting(attrs ...SettingAttributes) (v *viper.Viper) { return Setting{}.New(attrs...) }
+func NewSetting(attrs ...SettingAttributes) (*viper.Viper, error) { return Setting{}.New(attrs...) }
 
-func (Setting) New(attrs ...SettingAttributes) (v *viper.Viper) {
+func (Setting) New(attrs ...SettingAttributes) (v *viper.Viper, err error) {
 	var (
-		err        error
 		configPath string
 		configEnv  string
 		ins        = Setting{}.SetAttrs(attrs...)
@@ -38,12 +38,20 @@ func (Setting) New(attrs ...SettingAttributes) (v *viper.Viper) {
 		configPath = ins.configFilename
 	}
 
+	if configPath == "" && ins.defaultName != "" {
+		configPath = ins.defaultName
+	}
+
+	if configPath == "" {
+		return nil, ErrConfigNotSet
+	}
+
 	v = viper.New()
 	{
 		v.SetConfigFile(configPath)
 		v.SetConfigType(filepath.Ext(configPath)[1:])
 		if err = v.ReadInConfig(); err != nil {
-			panic(fmt.Sprintf("读取配置文件失败: %s \n", err))
+			return nil, fmt.Errorf("%w：%w", ErrConfigFileNotFound, err)
 		}
 		v.WatchConfig()
 
@@ -59,7 +67,7 @@ func (Setting) New(attrs ...SettingAttributes) (v *viper.Viper) {
 		})
 
 		if err = v.Unmarshal(ins.content); err != nil {
-			panic(err)
+			return nil, fmt.Errorf("%w：%w", ErrConfigReadFailed, err)
 		}
 	}
 

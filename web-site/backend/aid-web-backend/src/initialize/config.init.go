@@ -15,7 +15,7 @@ var Config ConfigInit
 
 func (ConfigInit) Launch(consolePath string) {
 	setting.APP.Setting.New(
-		setting.ConfigFilename(consolePath),
+		setting.Filename(consolePath),
 		setting.EnvName(global2.ENV_CONFIG),
 		setting.Content(&global2.CONFIG),
 		setting.OnChange(func(v *viper.Viper, e fsnotify.Event) {
