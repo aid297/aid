@@ -31,10 +31,12 @@ func NewDir(attrs ...PathAttributer) Filesystemer {
 
 func (*Dir) ImplFilesystemer() {}
 
-func (my *Dir) GetExist() bool       { return my.Exist }
-func (my *Dir) GetError() error      { return my.Error }
-func (my *Dir) GetFullPath() string  { return my.FullPath }
-func (my *Dir) GetInfo() os.FileInfo { return my.Info }
+func (my *Dir) GetExist() bool           { return my.Exist }
+func (my *Dir) GetError() error          { return my.Error }
+func (my *Dir) GetFullPath() string      { return my.FullPath }
+func (my *Dir) GetInfo() os.FileInfo     { return my.Info }
+func (my *Dir) GetDirs() []Filesystemer  { return my.Dirs }
+func (my *Dir) GetFiles() []Filesystemer { return my.Files }
 
 func (my *Dir) SetAttrs(attrs ...PathAttributer) Filesystemer {
 	my.mu.Lock()
@@ -173,7 +175,7 @@ func (my *Dir) RemoveAll() Filesystemer {
 }
 
 // LS 列出当前目录下的所有文件和子目录
-func (my *Dir) LS() *Dir {
+func (my *Dir) LS() Filesystemer {
 	var (
 		err     error
 		entries []os.DirEntry
@@ -219,7 +221,7 @@ func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if my.LS().Error != nil {
+	if my.LS().GetError() != nil {
 		return my
 	}
 
@@ -250,7 +252,7 @@ func (my *Dir) CopyDirsTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if my.LS().Error != nil {
+	if my.LS().GetError() != nil {
 		return my
 	}
 
@@ -278,7 +280,7 @@ func (my *Dir) CopyTo(isRel bool, dstPaths ...string) Filesystemer {
 		return my
 	}
 
-	if my.LS().Error != nil {
+	if my.LS().GetError() != nil {
 		return my
 	}
 

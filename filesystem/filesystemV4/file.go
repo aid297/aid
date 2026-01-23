@@ -40,10 +40,12 @@ func NewFile(attrs ...PathAttributer) Filesystemer {
 
 func (*File) ImplFilesystemer() {}
 
-func (my *File) GetExist() bool       { return my.Exist }
-func (my *File) GetError() error      { return my.Error }
-func (my *File) GetFullPath() string  { return my.FullPath }
-func (my *File) GetInfo() os.FileInfo { return my.Info }
+func (my *File) GetExist() bool           { return my.Exist }
+func (my *File) GetError() error          { return my.Error }
+func (my *File) GetFullPath() string      { return my.FullPath }
+func (my *File) GetInfo() os.FileInfo     { return my.Info }
+func (my *File) GetDirs() []Filesystemer  { return nil }
+func (my *File) GetFiles() []Filesystemer { return nil }
 
 func (my *File) SetAttrs(attrs ...PathAttributer) Filesystemer {
 	my.mu.Lock()
@@ -242,3 +244,5 @@ func (my *File) CopyTo(isRel bool, dstPaths ...string) Filesystemer {
 func (my *File) Copy() Filesystemer { return NewFile(Abs(my.FullPath)) }
 
 func (my *File) Up() Filesystemer { return my }
+
+func (my *File) LS() Filesystemer { return my }

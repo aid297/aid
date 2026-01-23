@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aid297/aid/filesystem/filesystemV3"
+	"github.com/aid297/aid/filesystem/filesystemV4"
 	"github.com/aid297/aid/validator/validatorV3"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
@@ -56,7 +56,7 @@ func (FileManagerAPI) List(c *gin.Context) {
 	var (
 		tilte = "获取文件列表"
 		// err     error
-		dir     = filesystemV3.APP.Dir.Rel(filesystemV3.APP.DirAttr.Path.Set(global.CONFIG.FileManager.Dir))
+		dir     = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir))
 		form    request.FileListRequest
 		checker validatorV3.Checker
 	)
@@ -71,11 +71,11 @@ func (FileManagerAPI) List(c *gin.Context) {
 		dir = dir.Join(form.Path)
 	}
 
-	if !dir.Exist {
-		dir.Create(filesystemV3.DirMode(0777))
+	if !dir.GetExist() {
+		dir.Create(filesystemV4.Mode(0777))
 	}
 
 	dir.LS()
 
-	httpModule.NewOK().SetData(gin.H{"fullPath": dir.FullPath, "dirs": dir.Dirs, "files": dir.Files}).WithAccept(c)
+	httpModule.NewOK().SetData(gin.H{"fullPath": dir.GetFullPath(), "dirs": dir.GetDirs(), "files": dir.GetFiles()}).WithAccept(c)
 }

@@ -8,6 +8,8 @@ type Filesystemer interface {
 	GetError() error
 	GetFullPath() string
 	GetInfo() os.FileInfo
+	GetDirs() []Filesystemer
+	GetFiles() []Filesystemer
 	SetAttrs(attrs ...PathAttributer) Filesystemer
 	SetFullPathForAttr(path string) Filesystemer
 	SetFullPathByAttr(attrs ...PathAttributer) Filesystemer
@@ -23,4 +25,5 @@ type Filesystemer interface {
 	CopyTo(isRel bool, dstPaths ...string) Filesystemer
 	Copy() Filesystemer
 	Up() Filesystemer
+	LS() Filesystemer
 }

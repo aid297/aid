@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aid297/aid/filesystem/filesystemV3"
+	"github.com/aid297/aid/filesystem/filesystemV4"
 	"github.com/aid297/aid/operation/operationV2"
 )
 
@@ -68,14 +68,14 @@ func (*Daemon) SetLogEnable(enable bool) *Daemon {
 func (my *Daemon) Launch() {
 	var (
 		err  error
-		dir  *filesystemV3.Dir
-		file *filesystemV3.File
+		dir  filesystemV4.Filesystemer
+		file filesystemV4.Filesystemer
 		fp   *os.File
 	)
 
 	if my.logEnable && my.logDir != "" {
-		dir = filesystemV3.APP.Dir.New(filesystemV3.APP.DirAttr.IsRel.SetRel(), filesystemV3.APP.DirAttr.Path.Set(my.logDir))
-		file = filesystemV3.APP.File.New(filesystemV3.APP.FileAttr.IsRel.SetAbs(), filesystemV3.APP.FileAttr.Path.Set(operationV2.NewTernary(operationV2.TrueValue(my.logFilename), operationV2.FalseValue("daemon.log")).GetByValue(my.logFilename != "")))
+		dir = filesystemV4.NewDir(filesystemV4.Rel(my.logDir))
+		file = filesystemV4.NewFile(filesystemV4.Abs(operationV2.NewTernary(operationV2.TrueValue(my.logFilename), operationV2.FalseValue("daemon.log")).GetByValue(my.logFilename != "")))
 	}
 
 	if syscall.Getppid() == 1 {
@@ -86,8 +86,8 @@ func (my *Daemon) Launch() {
 		return
 	}
 
-	if dir != nil && !dir.Exist {
-		if err = dir.Create(filesystemV3.DirMode(os.ModePerm)).Error; err != nil {
+	if dir != nil && !dir.GetExist() {
+		if err = dir.Create(filesystemV4.Mode(os.ModePerm)).GetError(); err != nil {
 			log.Fatalf("【启动失败】创建日志目录失败：%s", err.Error())
 		}
 		// if err = dir.Create(os.ModePerm).Error(); err != nil {
@@ -96,7 +96,7 @@ func (my *Daemon) Launch() {
 	}
 
 	if file != nil {
-		if fp, err = os.OpenFile(file.FullPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
+		if fp, err = os.OpenFile(file.GetFullPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
 			log.Fatalf("【启动失败】创建总日志失败：%s", err.Error())
 		}
 		// if fp, err = os.OpenFile(file.GetFullPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
