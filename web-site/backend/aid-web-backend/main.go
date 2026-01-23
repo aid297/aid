@@ -62,7 +62,7 @@ func main() {
 func launch(consoleArgs consoleArgs) {
 
 	if (consoleArgs.daemonStr == "" && global.CONFIG.System.Daemon) || (consoleArgs.daemonStr != "" && cast.ToBool(consoleArgs.daemonStr)) {
-		daemon.Elements.Daemon.Once().
+		daemon.GetDaemonOnce().
 			SetTitle("启动程序").
 			SetLog(global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename).
 			SetLogEnable(true).

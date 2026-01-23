@@ -15,54 +15,39 @@ import (
 
 // Daemon 守护进程服务提供者
 type Daemon struct {
-	title       string
-	logDir      string
-	logFilename string
-	logEnable   bool
+	title    string
+	dir      string
+	filename string
+	enable   bool
 }
 
 var (
-	daemonOnce sync.Once
-	daemonIns  *Daemon
+	o sync.Once
+	i *Daemon
 )
 
-// Once 获取单例
-func (*Daemon) Once() *Daemon {
-	daemonOnce.Do(func() { daemonIns = &Daemon{} })
-	return daemonIns
-}
+// GetDaemonOnce 获取单例
+func GetDaemonOnce() *Daemon { o.Do(func() { i = &Daemon{} }); return i }
 
 // SetTitle 设置标题
-func (*Daemon) SetTitle(title string) *Daemon {
-	daemonIns.title = title
-	return daemonIns
-}
+func (*Daemon) SetTitle(title string) *Daemon { i.title = title; return i }
 
 // SetLogDir 设置日志目录
-func (*Daemon) SetLogDir(logDir string) *Daemon {
-	daemonIns.logDir = logDir
-	return daemonIns
-}
+func (*Daemon) SetLogDir(logDir string) *Daemon { i.dir = logDir; return i }
 
 // SetLogFilename 设置日志文件名
-func (*Daemon) SetLogFilename(logFilename string) *Daemon {
-	daemonIns.logFilename = logFilename
-	return daemonIns
-}
+func (*Daemon) SetLogFilename(logFilename string) *Daemon { i.filename = logFilename; return i }
 
 // SetLog 设置日志
 func (*Daemon) SetLog(dir, filename string) *Daemon {
-	daemonIns.logDir = dir
-	daemonIns.logFilename = filename
-	daemonIns.logEnable = true
-	return daemonIns
+	i.dir = dir
+	i.filename = filename
+	i.enable = true
+	return i
 }
 
 // SetLogEnable 设置日志开关
-func (*Daemon) SetLogEnable(enable bool) *Daemon {
-	daemonIns.logEnable = enable
-	return daemonIns
-}
+func (*Daemon) SetLogEnable(enable bool) *Daemon { i.enable = enable; return i }
 
 // Launch 启动守护进程
 func (my *Daemon) Launch() {
@@ -73,9 +58,9 @@ func (my *Daemon) Launch() {
 		fp   *os.File
 	)
 
-	if my.logEnable && my.logDir != "" {
-		dir = filesystemV4.NewDir(filesystemV4.Rel(my.logDir))
-		file = filesystemV4.NewFile(filesystemV4.Abs(operationV2.NewTernary(operationV2.TrueValue(my.logFilename), operationV2.FalseValue("daemon.log")).GetByValue(my.logFilename != "")))
+	if my.enable && my.dir != "" {
+		dir = filesystemV4.NewDir(filesystemV4.Rel(my.dir))
+		file = filesystemV4.NewFile(filesystemV4.Abs(operationV2.NewTernary(operationV2.TrueValue(my.filename), operationV2.FalseValue("daemon.log")).GetByValue(my.filename != "")))
 	}
 
 	if syscall.Getppid() == 1 {
@@ -115,7 +100,7 @@ func (my *Daemon) Launch() {
 			"--------------------------------------------------\r\n%s 程序启动成功 [进程号->%d] 启动于：%s\r\n",
 			my.title,
 			cmd.Process.Pid,
-			time.Now().Format(string(time.DateTime+".000")),
+			time.Now().Format(time.DateTime+".000"),
 		); err != nil {
 			log.Fatalf("【启动失败】写入日志失败：%s", err.Error())
 		}
