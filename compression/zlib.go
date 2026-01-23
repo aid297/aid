@@ -8,11 +8,7 @@ import (
 
 type Zlib struct{}
 
-var ZlibApp Zlib
-
-func (*Zlib) New() *Zlib { return &Zlib{} }
-
-//go:fix 推荐使用New方法
+// NewZlib 实例化Zlib
 func NewZlib() *Zlib { return &Zlib{} }
 
 // Compress 压缩
