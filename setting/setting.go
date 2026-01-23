@@ -39,26 +39,28 @@ func (Setting) New(attrs ...SettingAttributes) (v *viper.Viper) {
 	}
 
 	v = viper.New()
-	v.SetConfigFile(configPath)
-	v.SetConfigType(filepath.Ext(configPath)[1:])
-	if err = v.ReadInConfig(); err != nil {
-		panic(fmt.Sprintf("读取配置文件失败: %s \n", err))
-	}
-	v.WatchConfig()
-
-	v.OnConfigChange(func(e fsnotify.Event) {
-		if ins.onChange != nil {
-			ins.onChange(v, e)
-		} else {
-			log.Println(str.APP.Buffer.JoinString("配置文件改变：", e.Name))
-			if err = v.Unmarshal(ins.content); err != nil {
-				log.Println(str.APP.Buffer.JoinString("更新配置文件失败：", err.Error()))
-			}
+	{
+		v.SetConfigFile(configPath)
+		v.SetConfigType(filepath.Ext(configPath)[1:])
+		if err = v.ReadInConfig(); err != nil {
+			panic(fmt.Sprintf("读取配置文件失败: %s \n", err))
 		}
-	})
+		v.WatchConfig()
 
-	if err = v.Unmarshal(ins.content); err != nil {
-		panic(err)
+		v.OnConfigChange(func(e fsnotify.Event) {
+			if ins.onChange != nil {
+				ins.onChange(v, e)
+			} else {
+				log.Println(str.APP.Buffer.JoinString("配置文件改变：", e.Name))
+				if err = v.Unmarshal(ins.content); err != nil {
+					log.Println(str.APP.Buffer.JoinString("更新配置文件失败：", err.Error()))
+				}
+			}
+		})
+
+		if err = v.Unmarshal(ins.content); err != nil {
+			panic(err)
+		}
 	}
 
 	return
