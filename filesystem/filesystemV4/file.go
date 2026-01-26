@@ -193,6 +193,8 @@ func (my *File) Remove() Filesystemer {
 	return my.refresh()
 }
 
+func (my *File) RemoveAll() Filesystemer { return my }
+
 // Read 读取文件内容
 func (my *File) Read(attrs ...OperationAttributer) ([]byte, error) {
 	var (

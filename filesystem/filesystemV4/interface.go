@@ -22,7 +22,9 @@ type Filesystemer interface {
 	Create(attrs ...OperationAttributer) Filesystemer
 	Rename(newName string) Filesystemer
 	Remove() Filesystemer
+	RemoveAll() Filesystemer
 	Write(content []byte, attrs ...OperationAttributer) Filesystemer
+	Read(attrs ...OperationAttributer) ([]byte, error)
 	CopyTo(isRel bool, dstPaths ...string) Filesystemer
 	Copy() Filesystemer
 	Up() Filesystemer

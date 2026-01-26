@@ -176,6 +176,8 @@ func (my *Dir) RemoveAll() Filesystemer {
 
 func (my *Dir) Write(content []byte, attrs ...OperationAttributer) Filesystemer { return my }
 
+func (my *Dir) Read(attrs ...OperationAttributer) ([]byte, error) { return nil, nil }
+
 // LS 列出当前目录下的所有文件和子目录
 func (my *Dir) LS() Filesystemer {
 	var (
