@@ -11,6 +11,7 @@ import (
 )
 
 type Dir struct {
+	mu       sync.RWMutex   // 读写锁
 	Error    error          `json:"error"`    // 错误信息
 	Name     string         `json:"name"`     // 文件名
 	BasePath string         `json:"basePath"` // 基础路径
@@ -19,10 +20,9 @@ type Dir struct {
 	Info     os.FileInfo    `json:"info"`     // 文件信息
 	Mode     os.FileMode    `json:"mode"`     // 文件权限
 	Exist    bool           `json:"exist"`    // 文件是否存在
-	mu       sync.RWMutex   // 读写锁
-	Files    []Filesystemer `json:"files"` // 目录下的文件列表
-	Dirs     []Filesystemer `json:"dirs"`  // 子目录列表
-	Kind     string         `json:"kind"`  // 类型
+	Files    []Filesystemer `json:"files"`    // 目录下的文件列表
+	Dirs     []Filesystemer `json:"dirs"`     // 子目录列表
+	Kind     string         `json:"kind"`     // 类型
 }
 
 func NewDir(attrs ...PathAttributer) Filesystemer {
