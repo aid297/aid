@@ -38,8 +38,6 @@ func NewFile(attrs ...PathAttributer) Filesystemer {
 	return (&File{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
 }
 
-func (*File) ImplFilesystemer() {}
-
 func (my *File) GetExist() bool           { return my.Exist }
 func (my *File) GetError() error          { return my.Error }
 func (my *File) GetFullPath() string      { return my.FullPath }

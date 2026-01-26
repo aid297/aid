@@ -3,7 +3,6 @@ package filesystemV4
 import "os"
 
 type Filesystemer interface {
-	ImplFilesystemer()
 	GetExist() bool
 	GetError() error
 	GetFullPath() string

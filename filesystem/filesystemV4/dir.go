@@ -29,8 +29,6 @@ func NewDir(attrs ...PathAttributer) Filesystemer {
 	return (&Dir{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
 }
 
-func (*Dir) ImplFilesystemer() {}
-
 func (my *Dir) GetExist() bool           { return my.Exist }
 func (my *Dir) GetError() error          { return my.Error }
 func (my *Dir) GetFullPath() string      { return my.FullPath }
