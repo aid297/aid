@@ -3,7 +3,10 @@ package filesystemV4
 import "path/filepath"
 
 type (
-	PathAttributer interface{ Register(f Filesystemer) }
+	PathAttributer interface {
+		Joins(paths ...string) PathAttributer
+		Register(f Filesystemer)
+	}
 
 	AttrPath struct{ path string }
 )
