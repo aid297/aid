@@ -30,7 +30,7 @@ func parseArgs() consoleArgs {
 		cmdParams, originalCmds         = make([]string, 0), make([]string, 0)
 		daemonStr                       string
 	)
-	flag.StringVar(&configPath, "C", "config.yaml", "配置文件路径") // 默认配置文件路径：终端命令(C) > 环境变量(AID-BACKEND-CONFIG) > 默认值(config.yaml)
+	flag.StringVar(&configPath, "C", "", "配置文件路径") // 默认配置文件路径：终端命令(C) > 环境变量(AID-BACKEND-CONFIG) > 默认值(config.yaml)
 	flag.StringVar(&originalCmd, "M", "", "命令终端参数")
 	flag.StringVar(&daemonStr, "D", "", "是否开启守护进程")
 	flag.Parse()
@@ -44,6 +44,7 @@ func parseArgs() consoleArgs {
 	return consoleArgs{
 		cmdAPP: cmdAPP,
 		configPath: operationV2.NewMultivariate[string](2).
+			SetDefault("config.yaml").
 			SetItems(0, configPath).
 			SetItems(1, os.Getenv("AID-BACKEND-CONFIG")).
 			FinallyFn(func(item string) bool { return item != "" }),
