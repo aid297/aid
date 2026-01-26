@@ -5,6 +5,9 @@ import (
 	"log"
 	"strings"
 
+	"os"
+
+	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/command"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/initialize"
@@ -24,16 +27,13 @@ type consoleArgs struct {
 func parseArgs() consoleArgs {
 	var (
 		originalCmd, cmdAPP, configPath string
-		cmdParams, originalCmds         []string
+		cmdParams, originalCmds         = make([]string, 0), make([]string, 0)
 		daemonStr                       string
 	)
-	flag.StringVar(&configPath, "C", "config.yaml", "配置文件路径")
+	flag.StringVar(&configPath, "C", "config.yaml", "配置文件路径") // 默认配置文件路径：终端命令(C) > 环境变量(AID-BACKEND-CONFIG) > 默认值(config.yaml)
 	flag.StringVar(&originalCmd, "M", "", "命令终端参数")
 	flag.StringVar(&daemonStr, "D", "", "是否开启守护进程")
 	flag.Parse()
-
-	cmdAPP = ""
-	cmdParams = make([]string, 0)
 
 	if originalCmd != "" {
 		originalCmds = strings.Split(originalCmd, " ")
@@ -42,10 +42,13 @@ func parseArgs() consoleArgs {
 	}
 
 	return consoleArgs{
-		cmdAPP:     cmdAPP,
-		configPath: configPath,
-		daemonStr:  daemonStr,
-		cmdParams:  cmdParams,
+		cmdAPP: cmdAPP,
+		configPath: operationV2.NewMultivariate[string](2).
+			SetItems(0, configPath).
+			SetItems(1, os.Getenv("AID-BACKEND-CONFIG")).
+			FinallyFn(func(item string) bool { return item != "" }),
+		daemonStr: daemonStr,
+		cmdParams: cmdParams,
 	}
 }
 
@@ -61,13 +64,22 @@ func main() {
 
 // launch 启动程序
 func launch(consoleArgs consoleArgs) {
-	if (consoleArgs.daemonStr == "" && global.CONFIG.System.Daemon) || (consoleArgs.daemonStr != "" && cast.ToBool(consoleArgs.daemonStr)) {
+	// 守护进程是否开启：终端命令(D) | 配置文件(system.daemon)
+	if cast.ToBool(consoleArgs.daemonStr) || global.CONFIG.System.Daemon {
 		daemon.GetDaemonOnce().
 			SetTitle("启动程序").
 			SetLog(global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename).
 			SetLogEnable(true).
 			Launch() // 通过守护进程启动
 	}
+
+	// if (consoleArgs.daemonStr == "" && global.CONFIG.System.Daemon) || (consoleArgs.daemonStr != "" && cast.ToBool(consoleArgs.daemonStr)) {
+	// 	daemon.GetDaemonOnce().
+	// 		SetTitle("启动程序").
+	// 		SetLog(global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename).
+	// 		SetLogEnable(true).
+	// 		Launch() // 通过守护进程启动
+	// }
 
 	switch consoleArgs.cmdAPP {
 	case "help":

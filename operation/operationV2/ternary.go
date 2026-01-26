@@ -1,12 +1,11 @@
 package operationV2
 
-type (
-	Ternary[T any] struct {
-		trueFn  func() T
-		falseFn func() T
-	}
-)
+type Ternary[T any] struct {
+	trueFn  func() T
+	falseFn func() T
+}
 
+// NewTernary 实例化：三元运算
 func NewTernary[T any](attrs ...TernaryAttributer[T]) Ternary[T] { return Ternary[T]{}.Set(attrs...) }
 
 func (t Ternary[T]) Set(attrs ...TernaryAttributer[T]) Ternary[T] {
