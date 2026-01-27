@@ -93,6 +93,16 @@ func NewList[T any](data []T) AnySlicer[T] { return New(List(data)) }
 
 func NewItems[T any](items ...T) AnySlicer[T] { return New(Items(items...)) }
 
+func LoadFn[SRC any, DST any](src []SRC, fn func(value SRC) DST) AnySlicer[DST] {
+	var dst = New(Cap[DST](len(src)))
+
+	for idx := range src {
+		dst.Append(fn(src[idx]))
+	}
+
+	return dst
+}
+
 // Cast 转换值类型
 func Cast[SRC, DST any](src AnySlicer[SRC], fn func(value SRC) DST) AnySlicer[DST] {
 	if src.Length() == 0 {
