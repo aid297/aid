@@ -31,8 +31,14 @@ func (my Checker) Wrong() error {
 	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString("")) })).GetByValue(len(my.wrongs) > 0)
 }
 
-func (my Checker) WrongToString(limit string) string {
+func (my Checker) WrongToString(limit string) (ret string) {
 	var errs = anySlice.New(anySlice.Cap[string](len(my.wrongs)))
+
+	if len(my.wrongs) > 0 {
+		ret = anySlice.LoadFn(my.wrongs, func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) }).JoinNotEmpty(operationV2.NewTernary(operationV2.TrueValue(limit), operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""))
+	}
+
+	return
 
 	for idx := range my.wrongs {
 		errs.Append(fmt.Sprintf("问题%d：%s", idx+1, my.wrongs[idx].Error()))

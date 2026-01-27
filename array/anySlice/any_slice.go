@@ -93,11 +93,11 @@ func NewList[T any](data []T) AnySlicer[T] { return New(List(data)) }
 
 func NewItems[T any](items ...T) AnySlicer[T] { return New(Items(items...)) }
 
-func LoadFn[SRC any, DST any](src []SRC, fn func(value SRC) DST) AnySlicer[DST] {
+func LoadFn[SRC any, DST any](src []SRC, fn func(idx int, value SRC) DST) AnySlicer[DST] {
 	var dst = New(Cap[DST](len(src)))
 
 	for idx := range src {
-		dst.Append(fn(src[idx]))
+		dst.Append(fn(idx, src[idx]))
 	}
 
 	return dst
