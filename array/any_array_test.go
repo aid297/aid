@@ -105,7 +105,7 @@ func Test9(t *testing.T) {
 }
 
 func Test10(t *testing.T) {
-	t.Run("test10 ToSlice", func(t *testing.T) {
+	t.Run("test10 ToRaw", func(t *testing.T) {
 		aa := New([]int{1, 2, 3})
 
 		if len(aa.ToSlice()) != 3 {

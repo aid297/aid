@@ -5,46 +5,46 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/aid297/aid/array/anyArrayV3"
+	"github.com/aid297/aid/array/anySlice"
 
 	jsonIter "github.com/json-iterator/go"
 )
 
 type (
-	AnyDicter[K comparable, V any] interface {
-		SetAttrs(attrs ...Attributer[K, V]) AnyDicter[K, V]
-		SetData(data map[K]V) AnyDicter[K, V]
-		SetDatum(k K, v V) AnyDicter[K, V]
-		SetDataCap(cap int) AnyDicter[K, V]
-		SetKeys(keys anyArrayV3.AnyArrayer[K]) AnyDicter[K, V]
-		AppendKey(k K) AnyDicter[K, V]
-		SetValues(values anyArrayV3.AnyArrayer[V]) AnyDicter[K, V]
-		AppendValue(v V) AnyDicter[K, V]
-		Lock() AnyDicter[K, V]
-		Unlock() AnyDicter[K, V]
-		RLock() AnyDicter[K, V]
-		RUnlock() AnyDicter[K, V]
+	IAnyDict[K comparable, V any] interface {
+		SetAttrs(attrs ...Attributer[K, V]) IAnyDict[K, V]
+		SetData(data map[K]V) IAnyDict[K, V]
+		SetDatum(k K, v V) IAnyDict[K, V]
+		SetDataCap(cap int) IAnyDict[K, V]
+		SetKeys(keys anySlice.AnySlicer[K]) IAnyDict[K, V]
+		AppendKey(k K) IAnyDict[K, V]
+		SetValues(values anySlice.AnySlicer[V]) IAnyDict[K, V]
+		AppendValue(v V) IAnyDict[K, V]
+		Lock() IAnyDict[K, V]
+		Unlock() IAnyDict[K, V]
+		RLock() IAnyDict[K, V]
+		RUnlock() IAnyDict[K, V]
 		ToString() string
 		ToMap() map[K]V
 		IsEmpty() bool
 		IsNotEmpty() bool
 		Has(key K) bool
-		SetValue(k K, v V) AnyDicter[K, V]
+		SetValue(k K, v V) IAnyDict[K, V]
 		GetValueByKey(key K) (V, bool)
-		GetValuesByKeys(keys ...K) anyArrayV3.AnyArrayer[V]
+		GetValuesByKeys(keys ...K) anySlice.AnySlicer[V]
 		GetKeyByValue(value V) (K, bool)
-		GetKeysByValues(values ...V) anyArrayV3.AnyArrayer[K]
+		GetKeysByValues(values ...V) anySlice.AnySlicer[K]
 		HasKey(key K) bool
 		HasKeys(keys ...K) bool
 		HasValue(value V) bool
 		HasValues(values ...V) bool
-		HasKeyDefault(key K, existFn func(v V) V, notExistFn func() V) AnyDicter[K, V]
-		GetKeys() anyArrayV3.AnyArrayer[K]
-		GetValues() anyArrayV3.AnyArrayer[V]
+		HasKeyDefault(key K, existFn func(v V) V, notExistFn func() V) IAnyDict[K, V]
+		GetKeys() anySlice.AnySlicer[K]
+		GetValues() anySlice.AnySlicer[V]
 		Length() int
 		LengthNotEmpty() int
-		Filter(fn func(item V) bool) AnyDicter[K, V]
-		RemoveEmpty() AnyDicter[K, V]
+		Filter(fn func(item V) bool) IAnyDict[K, V]
+		RemoveEmpty() IAnyDict[K, V]
 		Join(sep string) string
 		JoinNotEmpty(sep string) string
 		InKey(keys ...K) bool
@@ -53,42 +53,32 @@ type (
 		NotInValue(values ...V) bool
 		AllEmpty() bool
 		AnyEmpty() bool
-		RemoveByKey(key K) AnyDicter[K, V]
-		RemoveByKeys(keys ...K) AnyDicter[K, V]
-		RemoveByValue(value V) AnyDicter[K, V]
-		RemoveByValues(values ...V) AnyDicter[K, V]
-		Every(fn func(key K, value V) V) AnyDicter[K, V]
-		Each(fn func(key K, value V)) AnyDicter[K, V]
-		Clean() AnyDicter[K, V]
+		RemoveByKey(key K) IAnyDict[K, V]
+		RemoveByKeys(keys ...K) IAnyDict[K, V]
+		RemoveByValue(value V) IAnyDict[K, V]
+		RemoveByValues(values ...V) IAnyDict[K, V]
+		Every(fn func(key K, value V) V) IAnyDict[K, V]
+		Each(fn func(key K, value V)) IAnyDict[K, V]
+		Clean() IAnyDict[K, V]
 		MarshalJSON() ([]byte, error)
 		UnmarshalJSON(data []byte) error
 	}
 
 	AnyDict[K comparable, V any] struct {
 		data   map[K]V
-		keys   anyArrayV3.AnyArrayer[K]
-		values anyArrayV3.AnyArrayer[V]
-		mu     *sync.RWMutex
+		keys   anySlice.AnySlicer[K]
+		values anySlice.AnySlicer[V]
+		mu     sync.RWMutex
 	}
 )
 
 // New 创建一个 AnyDict 实例
-func New[K comparable, V any](attrs ...Attributer[K, V]) AnyDicter[K, V] {
-	return (&AnyDict[K, V]{mu: &sync.RWMutex{}}).SetAttrs(attrs...)
-}
-
-// NewMap 使用指定的 map 数据创建一个 AnyDict 实例
-func NewMap[K comparable, V any](data map[K]V, attrs ...Attributer[K, V]) AnyDicter[K, V] {
-	return New(Map(data)).SetAttrs(attrs...)
-}
-
-// NewCap 创建一个指定容量的 AnyDict 实例
-func NewCap[K comparable, V any](cap int, attrs ...Attributer[K, V]) AnyDicter[K, V] {
-	return New(Cap[K, V](cap)).SetAttrs(attrs...)
+func New[K comparable, V any](attrs ...Attributer[K, V]) IAnyDict[K, V] {
+	return (&AnyDict[K, V]{mu: sync.RWMutex{}, data: make(map[K]V), keys: anySlice.New[K](), values: anySlice.New[V]()}).SetAttrs(attrs...)
 }
 
 // SetAttrs 设置属性
-func (my *AnyDict[K, V]) SetAttrs(attrs ...Attributer[K, V]) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) SetAttrs(attrs ...Attributer[K, V]) IAnyDict[K, V] {
 	my.mu.Lock()
 	defer my.mu.Unlock()
 	for i := range attrs {
@@ -98,65 +88,69 @@ func (my *AnyDict[K, V]) SetAttrs(attrs ...Attributer[K, V]) AnyDicter[K, V] {
 }
 
 // SetData 设置字典键值对
-func (my *AnyDict[K, V]) SetData(data map[K]V) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) SetData(data map[K]V) IAnyDict[K, V] {
 	my.data = data
 	return my
 }
 
 // SetDatum 设置字典的单个键值对
-func (my *AnyDict[K, V]) SetDatum(k K, v V) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) SetDatum(k K, v V) IAnyDict[K, V] {
 	if my.data == nil {
 		my.data = make(map[K]V)
 	}
+
+	my.data[k] = v
+	my.keys = my.keys.Append(k)
+	my.values = my.values.Append(v)
 	return my
 }
 
 // SetDataCap 设置字典数据容量
-func (my *AnyDict[K, V]) SetDataCap(cap int) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) SetDataCap(cap int) IAnyDict[K, V] {
 	my.data = make(map[K]V, cap)
 	return my
 }
 
 // SetKeys 设置字典的键列表
-func (my *AnyDict[K, V]) SetKeys(keys anyArrayV3.AnyArrayer[K]) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) SetKeys(keys anySlice.AnySlicer[K]) IAnyDict[K, V] {
 	my.keys = keys
 	return my
 }
 
 // AppendKey 向字典的键列表追加一个键
-func (my *AnyDict[K, V]) AppendKey(k K) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) AppendKey(k K) IAnyDict[K, V] {
 	my.keys = my.keys.Append(k)
 	return my
 }
 
 // SetValues 设置字典的值列表
-func (my *AnyDict[K, V]) SetValues(values anyArrayV3.AnyArrayer[V]) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) SetValues(values anySlice.AnySlicer[V]) IAnyDict[K, V] {
 	my.values = values
 	return my
 }
 
 // AppendValue 向字典的值列表追加一个值
-func (my *AnyDict[K, V]) AppendValue(v V) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) AppendValue(v V) IAnyDict[K, V] {
 	my.values = my.values.Append(v)
 	return my
 }
 
-func (my *AnyDict[K, V]) Lock() AnyDicter[K, V] {
+func (my *AnyDict[K, V]) Lock() IAnyDict[K, V] {
 	my.mu.Lock()
 	return my
 }
 
-func (my *AnyDict[K, V]) Unlock() AnyDicter[K, V] {
+func (my *AnyDict[K, V]) Unlock() IAnyDict[K, V] {
 	my.mu.Unlock()
 	return my
 }
 
-func (my *AnyDict[K, V]) RLock() AnyDicter[K, V] {
+func (my *AnyDict[K, V]) RLock() IAnyDict[K, V] {
 	my.mu.RLock()
 	return my
 }
 
-func (my *AnyDict[K, V]) RUnlock() AnyDicter[K, V] {
+func (my *AnyDict[K, V]) RUnlock() IAnyDict[K, V] {
 	my.mu.RUnlock()
 	return my
 }
@@ -174,7 +168,7 @@ func (my *AnyDict[K, V]) Has(key K) bool {
 	return ok
 }
 
-func (my *AnyDict[K, V]) SetValue(k K, v V) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) SetValue(k K, v V) IAnyDict[K, V] {
 	if my.keys.In(k) {
 		idx := my.keys.GetIndexByValue(k)
 		my.keys = my.keys.SetValue(idx, k)
@@ -193,8 +187,8 @@ func (my *AnyDict[K, V]) GetValueByKey(key K) (V, bool) {
 	return v, ok
 }
 
-func (my *AnyDict[K, V]) GetValuesByKeys(keys ...K) anyArrayV3.AnyArrayer[V] {
-	res := anyArrayV3.New(anyArrayV3.Cap[V](len(keys)))
+func (my *AnyDict[K, V]) GetValuesByKeys(keys ...K) anySlice.AnySlicer[V] {
+	res := anySlice.New(anySlice.Cap[V](len(keys)))
 
 	for idx := range keys {
 		if my.keys.In(keys[idx]) {
@@ -215,8 +209,8 @@ func (my *AnyDict[K, V]) GetKeyByValue(value V) (K, bool) {
 	return k, false
 }
 
-func (my *AnyDict[K, V]) GetKeysByValues(values ...V) anyArrayV3.AnyArrayer[K] {
-	res := anyArrayV3.New(anyArrayV3.Cap[K](len(values)))
+func (my *AnyDict[K, V]) GetKeysByValues(values ...V) anySlice.AnySlicer[K] {
+	res := anySlice.New(anySlice.Cap[K](len(values)))
 
 	for idx := range values {
 		if k, ok := my.GetKeyByValue(values[idx]); ok {
@@ -229,31 +223,31 @@ func (my *AnyDict[K, V]) GetKeysByValues(values ...V) anyArrayV3.AnyArrayer[K] {
 
 func (my *AnyDict[K, V]) HasKey(key K) bool { return my.keys.In(key) }
 
-func (my AnyDict[K, V]) HasKeys(keys ...K) bool { return my.keys.In(keys...) }
+func (my *AnyDict[K, V]) HasKeys(keys ...K) bool { return my.keys.In(keys...) }
 
 func (my *AnyDict[K, V]) HasValue(value V) bool { return my.values.In(value) }
 
 func (my *AnyDict[K, V]) HasValues(values ...V) bool { return my.values.In(values...) }
 
-func (my *AnyDict[K, V]) HasKeyDefault(key K, existFn func(v V) V, notExistFn func() V) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) HasKeyDefault(key K, existFn func(v V) V, notExistFn func() V) IAnyDict[K, V] {
 	if v, e := my.GetValueByKey(key); e {
 		return my.SetValue(key, existFn(v))
 	}
 	return my.SetValue(key, notExistFn())
 }
 
-func (my *AnyDict[K, V]) GetKeys() anyArrayV3.AnyArrayer[K] { return my.keys }
+func (my *AnyDict[K, V]) GetKeys() anySlice.AnySlicer[K] { return my.keys }
 
-func (my *AnyDict[K, V]) GetValues() anyArrayV3.AnyArrayer[V] { return my.values }
+func (my *AnyDict[K, V]) GetValues() anySlice.AnySlicer[V] { return my.values }
 
 func (my *AnyDict[K, V]) Length() int { return len(my.data) }
 
 func (my *AnyDict[K, V]) LengthNotEmpty() int { return my.RemoveEmpty().Length() }
 
-func (my *AnyDict[K, V]) Filter(fn func(item V) bool) AnyDicter[K, V] {
-	res := NewCap[K, V](my.Length())
+func (my *AnyDict[K, V]) Filter(fn func(item V) bool) IAnyDict[K, V] {
+	res := New(Cap[K, V](my.Length()))
 
-	for idx := range my.values.ToSlice() {
+	for idx := range my.values.ToRaw() {
 		if fn(my.values.GetValue(idx)) {
 			res = res.SetValue(my.keys.GetValue(idx), my.values.GetValue(idx))
 		}
@@ -262,7 +256,7 @@ func (my *AnyDict[K, V]) Filter(fn func(item V) bool) AnyDicter[K, V] {
 	return res
 }
 
-func (my *AnyDict[K, V]) RemoveEmpty() AnyDicter[K, V] {
+func (my *AnyDict[K, V]) RemoveEmpty() IAnyDict[K, V] {
 	return my.Filter(func(item V) bool {
 		ref := reflect.ValueOf(item)
 
@@ -292,14 +286,14 @@ func (my *AnyDict[K, V]) AllEmpty() bool { return my.values.AllEmpty() }
 
 func (my *AnyDict[K, V]) AnyEmpty() bool { return my.values.AnyEmpty() }
 
-func (my *AnyDict[K, V]) RemoveByKey(key K) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) RemoveByKey(key K) IAnyDict[K, V] {
 	if my.keys.In(key) {
 		idx := my.keys.GetIndexByValue(key)
 		my.keys = my.keys.RemoveByIndex(idx)
 		my.values = my.values.RemoveByIndex(idx)
 
 		newData := New(Cap[K, V](len(my.data) - 1))
-		for idx := range my.keys.ToSlice() {
+		for idx := range my.keys.ToRaw() {
 			newData = newData.SetValue(my.keys.GetValue(idx), my.values.GetValue(idx))
 		}
 
@@ -309,7 +303,7 @@ func (my *AnyDict[K, V]) RemoveByKey(key K) AnyDicter[K, V] {
 	return my
 }
 
-func (my *AnyDict[K, V]) RemoveByKeys(keys ...K) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) RemoveByKeys(keys ...K) IAnyDict[K, V] {
 	for idx := range keys {
 		my.RemoveByKey(keys[idx])
 	}
@@ -317,14 +311,14 @@ func (my *AnyDict[K, V]) RemoveByKeys(keys ...K) AnyDicter[K, V] {
 	return my
 }
 
-func (my *AnyDict[K, V]) RemoveByValue(value V) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) RemoveByValue(value V) IAnyDict[K, V] {
 	if my.values.In(value) {
 		idx := my.values.GetIndexByValue(value)
 		my.keys = my.keys.RemoveByIndex(idx)
 		my.values = my.values.RemoveByIndex(idx)
 
 		newData := New(Cap[K, V](len(my.data) - 1))
-		for idx := range my.keys.ToSlice() {
+		for idx := range my.keys.ToRaw() {
 			newData = newData.SetValue(my.keys.GetValue(idx), my.values.GetValue(idx))
 		}
 
@@ -334,7 +328,7 @@ func (my *AnyDict[K, V]) RemoveByValue(value V) AnyDicter[K, V] {
 	return my
 }
 
-func (my *AnyDict[K, V]) RemoveByValues(values ...V) AnyDicter[K, V] {
+func (my *AnyDict[K, V]) RemoveByValues(values ...V) IAnyDict[K, V] {
 	for idx := range values {
 		my.RemoveByValue(values[idx])
 	}
@@ -342,8 +336,8 @@ func (my *AnyDict[K, V]) RemoveByValues(values ...V) AnyDicter[K, V] {
 	return my
 }
 
-func (my *AnyDict[K, V]) Every(fn func(key K, value V) V) AnyDicter[K, V] {
-	for idx := range my.keys.ToSlice() {
+func (my *AnyDict[K, V]) Every(fn func(key K, value V) V) IAnyDict[K, V] {
+	for idx := range my.keys.ToRaw() {
 		k := my.keys.GetValue(idx)
 		v := my.values.GetValue(idx)
 		newV := fn(k, v)
@@ -353,8 +347,8 @@ func (my *AnyDict[K, V]) Every(fn func(key K, value V) V) AnyDicter[K, V] {
 	return my
 }
 
-func (my *AnyDict[K, V]) Each(fn func(key K, value V)) AnyDicter[K, V] {
-	for idx := range my.keys.ToSlice() {
+func (my *AnyDict[K, V]) Each(fn func(key K, value V)) IAnyDict[K, V] {
+	for idx := range my.keys.ToRaw() {
 		k := my.keys.GetValue(idx)
 		v := my.values.GetValue(idx)
 		fn(k, v)
@@ -363,7 +357,7 @@ func (my *AnyDict[K, V]) Each(fn func(key K, value V)) AnyDicter[K, V] {
 	return my
 }
 
-func (my *AnyDict[K, V]) Clean() AnyDicter[K, V] {
+func (my *AnyDict[K, V]) Clean() IAnyDict[K, V] {
 	my.keys.Clean()
 	my.values.Clean()
 	my.data = make(map[K]V)
@@ -377,7 +371,7 @@ func (my *AnyDict[K, V]) MarshalJSON() ([]byte, error) { return jsonIter.Marshal
 func (my *AnyDict[K, V]) UnmarshalJSON(data []byte) error { return jsonIter.Unmarshal(data, &my.data) }
 
 // Cast 转换所有值并创建新AnyDict
-func Cast[K comparable, SRC, DST any](src AnyDict[K, SRC], fn func(key K, value SRC) DST) AnyDicter[K, DST] {
+func Cast[K comparable, SRC, DST any](src AnyDict[K, SRC], fn func(key K, value SRC) DST) IAnyDict[K, DST] {
 	d := New[K, DST]()
 
 	for key, value := range src.data {
@@ -388,7 +382,7 @@ func Cast[K comparable, SRC, DST any](src AnyDict[K, SRC], fn func(key K, value 
 }
 
 // Zip 组合键值对为一个新的有序map
-func Zip[K comparable, V any](keys []K, values []V) AnyDicter[K, V] {
+func Zip[K comparable, V any](keys []K, values []V) IAnyDict[K, V] {
 	d := New[K, V]()
 
 	for idx, key := range keys {

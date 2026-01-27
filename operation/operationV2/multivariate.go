@@ -1,6 +1,6 @@
 package operationV2
 
-import "github.com/aid297/aid/array/anyArrayV3"
+import "github.com/aid297/aid/array/anySlice"
 
 type (
 	Multivatiater[T any] interface {
@@ -10,7 +10,7 @@ type (
 	}
 
 	Multivariate[T any] struct {
-		Items   anyArrayV3.AnyArrayer[[]T]
+		Items   anySlice.AnySlicer[[]T]
 		Default T
 	}
 )
@@ -18,7 +18,7 @@ type (
 // NewMultivariate 实例化：多元运算
 func NewMultivariate[T any](cap int) *Multivariate[T] {
 	var def T
-	return &Multivariate[T]{Items: anyArrayV3.New(anyArrayV3.Len[[]T](cap)), Default: def}
+	return &Multivariate[T]{Items: anySlice.New(anySlice.Len[[]T](cap)), Default: def}
 }
 
 // SetItems 设置优先级项
@@ -35,7 +35,7 @@ func (my *Multivariate[T]) SetDefault(item T) *Multivariate[T] { my.Default = it
 
 // Finllay 获取优先级选项
 func (my *Multivariate[T]) FinallyFn(fn func(item T) bool) T {
-	for _, items := range my.Items.ToSlice() {
+	for _, items := range my.Items.ToRaw() {
 		for idx := range items {
 			a := fn(items[idx])
 			if a {
