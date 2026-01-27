@@ -33,7 +33,7 @@ func (my Checker) Wrong() error {
 
 func (my Checker) WrongToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
-		ret = anySlice.LoadFn(
+		ret = anySlice.FillFunc(
 			my.wrongs,
 			func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) },
 		).
