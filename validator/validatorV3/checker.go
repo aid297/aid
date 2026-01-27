@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/aid297/aid/array/anyArrayV2"
+	`github.com/aid297/aid/array/anySlice`
 	"github.com/aid297/aid/operation/operationV2"
 )
 
@@ -31,13 +32,13 @@ func (my Checker) Wrong() error {
 }
 
 func (my Checker) WrongToString(limit string) string {
-	var errs = make([]string, len(my.wrongs))
+	var errs = anySlice.New(anySlice.Cap[string](len(my.wrongs)))
 
 	for idx := range my.wrongs {
-		errs[idx] = fmt.Sprintf("问题%d：%s", idx+1, my.wrongs[idx].Error())
+		errs.Append(fmt.Sprintf("问题%d：%s", idx+1, my.wrongs[idx].Error()))
 	}
 
-	return strings.Join(errs, operationV2.NewTernary(operationV2.TrueValue(limit), operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""))
+	return errs.JoinNotEmpty(operationV2.NewTernary(operationV2.TrueValue(limit), operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""))
 }
 
 func (my Checker) Validate(exCheckFns ...any) Checker {
