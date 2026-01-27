@@ -11,7 +11,6 @@ import (
 
 	"github.com/aid297/aid/array/anyArrayV2"
 	"github.com/aid297/aid/operation/operationV2"
-	"github.com/aid297/aid/str"
 )
 
 // Checker 验证器
@@ -32,13 +31,13 @@ func (my Checker) Wrong() error {
 }
 
 func (my Checker) WrongToString(limit string) string {
-	var errMsg = str.APP.Buffer.NewString()
+	var errs = make([]string, len(my.wrongs))
 
 	for idx := range my.wrongs {
-		errMsg.Any("问题", idx+1, "：", my.wrongs[idx].Error()).WhenS(idx < len(my.wrongs)-1, operationV2.NewTernary(operationV2.TrueValue(my.defaultLimit), operationV2.FalseValue(limit)).GetByValue(limit == ""))
+		errs[idx] = fmt.Sprintf("问题%d：%s", idx+1, my.wrongs[idx].Error())
 	}
 
-	return errMsg.String()
+	return strings.Join(errs, operationV2.NewTernary(operationV2.TrueValue(limit), operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""))
 }
 
 func (my Checker) Validate(exCheckFns ...any) Checker {
