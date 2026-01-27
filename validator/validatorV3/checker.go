@@ -41,12 +41,19 @@ func (my Checker) WrongToString(limit string) string {
 }
 
 func (my Checker) Validate(exCheckFns ...any) Checker {
-	fieldInfos := getStructFieldInfos(my.data, "")
-	for idx := range fieldInfos {
-		if wrongs := fieldInfos[idx].Check().Wrongs(); len(wrongs) > 0 {
+	// fieldInfos := getStructFieldInfos(my.data, "")
+
+	for _, fieldInfo := range getStructFieldInfos(my.data, "") {
+		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
 			my.wrongs = append(my.wrongs, wrongs...)
 		}
 	}
+
+	// for idx := range fieldInfos {
+	// 	if wrongs := fieldInfos[idx].Check().Wrongs(); len(wrongs) > 0 {
+	// 		my.wrongs = append(my.wrongs, wrongs...)
+	// 	}
+	// }
 
 	if len(my.wrongs) == 0 {
 		for idx := range exCheckFns {
