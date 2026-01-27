@@ -32,35 +32,27 @@ func (my Checker) Wrong() error {
 }
 
 func (my Checker) WrongToString(limit string) (ret string) {
-	var errs = anySlice.New(anySlice.Cap[string](len(my.wrongs)))
-
 	if len(my.wrongs) > 0 {
-		ret = anySlice.LoadFn(my.wrongs, func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) }).JoinNotEmpty(operationV2.NewTernary(operationV2.TrueValue(limit), operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""))
+		ret = anySlice.LoadFn(
+			my.wrongs,
+			func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) },
+		).
+			JoinNotEmpty(
+				operationV2.NewTernary(
+					operationV2.TrueValue(limit),
+					operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""),
+			)
 	}
 
 	return
-
-	for idx := range my.wrongs {
-		errs.Append(fmt.Sprintf("问题%d：%s", idx+1, my.wrongs[idx].Error()))
-	}
-
-	return errs.JoinNotEmpty(operationV2.NewTernary(operationV2.TrueValue(limit), operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""))
 }
 
 func (my Checker) Validate(exCheckFns ...any) Checker {
-	// fieldInfos := getStructFieldInfos(my.data, "")
-
 	for _, fieldInfo := range getStructFieldInfos(my.data, "") {
 		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
 			my.wrongs = append(my.wrongs, wrongs...)
 		}
 	}
-
-	// for idx := range fieldInfos {
-	// 	if wrongs := fieldInfos[idx].Check().Wrongs(); len(wrongs) > 0 {
-	// 		my.wrongs = append(my.wrongs, wrongs...)
-	// 	}
-	// }
 
 	if len(my.wrongs) == 0 {
 		for idx := range exCheckFns {
