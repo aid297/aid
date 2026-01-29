@@ -4,30 +4,30 @@ import "github.com/aid297/aid/array/anySlice"
 
 type (
 	Multivariater[T any] interface {
-		Append(items *MultivariateAttr[T]) Multivariater[T]
+		Append(items MultivariateAttr[T]) Multivariater[T]
 		Finally(fn func(item T) bool) (int, T)
-		SetDefault(item *MultivariateAttr[T]) Multivariater[T]
+		SetDefault(item MultivariateAttr[T]) Multivariater[T]
 	}
 
 	Multivariate[T any] struct {
-		Items   anySlice.AnySlicer[*MultivariateAttr[T]]
-		Default *MultivariateAttr[T]
+		Items   anySlice.AnySlicer[MultivariateAttr[T]]
+		Default MultivariateAttr[T]
 	}
 )
 
 // NewMultivariate 实例化：多元运算
 func NewMultivariate[T any]() *Multivariate[T] {
-	return &Multivariate[T]{Items: anySlice.New[*MultivariateAttr[T]]()}
+	return &Multivariate[T]{Items: anySlice.New[MultivariateAttr[T]]()}
 }
 
 // Append 添加优先级项
-func (my *Multivariate[T]) Append(item *MultivariateAttr[T]) *Multivariate[T] {
+func (my *Multivariate[T]) Append(item MultivariateAttr[T]) *Multivariate[T] {
 	my.Items.Append(item)
 	return my
 }
 
 // SetDefault 设置默认值
-func (my *Multivariate[T]) SetDefault(item *MultivariateAttr[T]) *Multivariate[T] {
+func (my *Multivariate[T]) SetDefault(item MultivariateAttr[T]) *Multivariate[T] {
 	my.Default = item
 	return my
 }

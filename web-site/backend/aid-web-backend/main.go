@@ -43,9 +43,9 @@ func parseArgs() ConsoleArgs {
 	}
 
 	_, configPath = operationV2.NewMultivariate[string]().
-		Append(operationV2.NewMultivariateAttr(configPath).SetHitFunc(func(_ int, item string) { fmt.Printf("使用终端参数：%s读取配置", item) })).
-		Append(operationV2.NewMultivariateAttr(os.Getenv("AID-BACKEND-CONFIG")).SetHitFunc(func(idx int, item string) { fmt.Sprintf("使用环境变量：%s读取配置", item) })).
-		SetDefault(operationV2.NewMultivariateAttr("config.yaml").SetHitFunc(func(idx int, item string) { fmt.Printf("使用默认参数：%s读取配置", item) })).
+		Append(operationV2.MultivariateAttr[string]{Item: configPath, HitFunc: func(_ int, item string) { fmt.Printf("使用终端参数：%s读取配置", item) }}).
+		Append(operationV2.MultivariateAttr[string]{Item: os.Getenv("AID-BACKEND-CONFIG"), HitFunc: func(idx int, item string) { fmt.Printf("使用环境变量：%s读取配置", item) }}).
+		SetDefault(operationV2.MultivariateAttr[string]{Item: "config.yaml", HitFunc: func(idx int, item string) { fmt.Printf("使用默认参数：%s读取配置", item) }}).
 		Finally(func(item string) bool { return item != "" })
 
 	return ConsoleArgs{
