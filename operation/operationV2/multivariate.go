@@ -33,16 +33,16 @@ func (my *Multivariate[T]) SetItems(priority uint, items ...T) *Multivariate[T] 
 // SetDefault 设置默认值
 func (my *Multivariate[T]) SetDefault(item T) *Multivariate[T] { my.Default = item; return my }
 
-// Finllay 获取优先级选项
-func (my *Multivariate[T]) FinallyFn(fn func(item T) bool) T {
-	for _, items := range my.Items.ToRaw() {
+// FinllayFunc 获取优先级选项
+func (my *Multivariate[T]) FinallyFunc(condition func(item T) bool) (int, T) {
+	for _, items := range my.Items.ToSlice() {
 		for idx := range items {
-			a := fn(items[idx])
+			a := condition(items[idx])
 			if a {
-				return items[idx]
+				return idx, items[idx]
 			}
 		}
 	}
 
-	return my.Default
+	return -1, my.Default
 }

@@ -47,7 +47,7 @@ func parseArgs() consoleArgs {
 			SetDefault("config.yaml").
 			SetItems(0, configPath).
 			SetItems(1, os.Getenv("AID-BACKEND-CONFIG")).
-			FinallyFn(func(item string) bool { return item != "" }),
+			FinallyFunc(func(item string) bool { return item != "" }),
 		daemonStr: daemonStr,
 		cmdParams: cmdParams,
 	}

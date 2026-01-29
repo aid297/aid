@@ -10,7 +10,7 @@ func Test1(t *testing.T) {
 		SetItems(1, "c", "b"). // B 次高优先级：全局变量
 		SetDefault("d")        // 设置默认值
 
-	f := m.FinallyFn(func(item string) bool { return item != "" })
+	_, f := m.FinallyFunc(func(item string) bool { return item != "" })
 
 	if f != "d" {
 		t.Fatalf("错误：%s", f)

@@ -38,7 +38,7 @@ type (
 		Append(v ...T) AnySlicer[T]
 		First() T
 		Last() T
-		ToRaw() []T
+		ToSlice() []T
 		GetIndexes() []int
 		GetIndexByValue(value T) int
 		GetIndexesByValues(values ...T) []int
@@ -109,9 +109,9 @@ func Cast[SRC, DST any](src AnySlicer[SRC], fn func(value SRC) DST) AnySlicer[DS
 		return New[DST]()
 	}
 
-	data := make([]DST, len(src.ToRaw()))
-	for idx := range src.ToRaw() {
-		data[idx] = fn(src.ToRaw()[idx])
+	data := make([]DST, len(src.ToSlice()))
+	for idx := range src.ToSlice() {
+		data[idx] = fn(src.ToSlice()[idx])
 	}
 
 	return NewList(data)
@@ -123,9 +123,9 @@ func CastAny[DST any](src AnySlicer[any], fn func(value any) DST) AnySlicer[DST]
 		return New[DST]()
 	}
 
-	data := make([]DST, len(src.ToRaw()))
-	for idx := range src.ToRaw() {
-		data[idx] = fn(src.ToRaw()[idx])
+	data := make([]DST, len(src.ToSlice()))
+	for idx := range src.ToSlice() {
+		data[idx] = fn(src.ToSlice()[idx])
 	}
 
 	return NewList(data)
@@ -519,7 +519,7 @@ func (my *AnyArray[T]) Union(other AnySlicer[T]) AnySlicer[T] {
 	var union = make([]T, 0)
 	union = append(union, my.data...)
 
-	for _, value := range other.ToRaw() {
+	for _, value := range other.ToSlice() {
 		if !my.In(value) {
 			union = append(union, value)
 		}
@@ -600,7 +600,7 @@ func (my *AnyArray[T]) RemoveByValues(targets ...T) AnySlicer[T] {
 	data := my.data
 
 	for idx := range targets {
-		data = NewList(data).RemoveByValue(targets[idx]).ToRaw()
+		data = NewList(data).RemoveByValue(targets[idx]).ToSlice()
 	}
 
 	return NewList(data)

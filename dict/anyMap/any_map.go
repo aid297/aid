@@ -247,7 +247,7 @@ func (my *AnyMap[K, V]) LengthNotEmpty() int { return my.RemoveEmpty().Length() 
 func (my *AnyMap[K, V]) Filter(fn func(item V) bool) AnyMapper[K, V] {
 	res := New(Cap[K, V](my.Length()))
 
-	for idx := range my.values.ToRaw() {
+	for idx := range my.values.ToSlice() {
 		if fn(my.values.GetValue(idx)) {
 			res = res.SetValue(my.keys.GetValue(idx), my.values.GetValue(idx))
 		}
@@ -293,7 +293,7 @@ func (my *AnyMap[K, V]) RemoveByKey(key K) AnyMapper[K, V] {
 		my.values = my.values.RemoveByIndex(idx)
 
 		newData := New(Cap[K, V](len(my.data) - 1))
-		for idx := range my.keys.ToRaw() {
+		for idx := range my.keys.ToSlice() {
 			newData = newData.SetValue(my.keys.GetValue(idx), my.values.GetValue(idx))
 		}
 
@@ -318,7 +318,7 @@ func (my *AnyMap[K, V]) RemoveByValue(value V) AnyMapper[K, V] {
 		my.values = my.values.RemoveByIndex(idx)
 
 		newData := New(Cap[K, V](len(my.data) - 1))
-		for idx := range my.keys.ToRaw() {
+		for idx := range my.keys.ToSlice() {
 			newData = newData.SetValue(my.keys.GetValue(idx), my.values.GetValue(idx))
 		}
 
@@ -337,7 +337,7 @@ func (my *AnyMap[K, V]) RemoveByValues(values ...V) AnyMapper[K, V] {
 }
 
 func (my *AnyMap[K, V]) Every(fn func(key K, value V) V) AnyMapper[K, V] {
-	for idx := range my.keys.ToRaw() {
+	for idx := range my.keys.ToSlice() {
 		k := my.keys.GetValue(idx)
 		v := my.values.GetValue(idx)
 		newV := fn(k, v)
@@ -348,7 +348,7 @@ func (my *AnyMap[K, V]) Every(fn func(key K, value V) V) AnyMapper[K, V] {
 }
 
 func (my *AnyMap[K, V]) Each(fn func(key K, value V)) AnyMapper[K, V] {
-	for idx := range my.keys.ToRaw() {
+	for idx := range my.keys.ToSlice() {
 		k := my.keys.GetValue(idx)
 		v := my.values.GetValue(idx)
 		fn(k, v)
