@@ -16,12 +16,15 @@ type (
 )
 
 // NewMultivariate 实例化：多元运算
-func NewMultivariate[T any](cap int) *Multivariate[T] {
-	return &Multivariate[T]{Items: anySlice.New(anySlice.Len[[]T](cap))}
+func NewMultivariate[T any]() *Multivariate[T] {
+	return &Multivariate[T]{Items: anySlice.New[[]T]()}
 }
 
+// Append 添加优先级项
+func (my *Multivariate[T]) Append(items ...T) *Multivariate[T] { my.Items.Append(items); return my }
+
 // SetItems 设置优先级项
-func (my *Multivariate[T]) SetItems(priority uint, items ...T) *Multivariate[T] {
+func (my *Multivariate[T]) Set(priority uint, items ...T) *Multivariate[T] {
 	if my.Items.Has(int(priority)) {
 		my.Items.SetValue(int(priority), items)
 	}
