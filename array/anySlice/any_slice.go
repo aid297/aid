@@ -294,8 +294,8 @@ func (my *AnyArray[T]) Last() T {
 	return t
 }
 
-// ToRaw 获取全部值：到切片
-func (my *AnyArray[T]) ToRaw() []T { return my.data }
+// ToSlice 获取全部值：到切片
+func (my *AnyArray[T]) ToSlice() []T { return my.data }
 
 // GetIndexes 获取所有索引
 func (my *AnyArray[T]) GetIndexes() []int {
