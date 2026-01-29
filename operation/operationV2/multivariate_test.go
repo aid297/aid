@@ -1,14 +1,15 @@
 package operationV2
 
 import (
+	"fmt"
 	"testing"
 )
 
 func Test1(t *testing.T) {
-	m := NewMultivariate[string](3).
-		SetItems(0, "a").      // A 最高优先级：终端命令
-		SetItems(1, "c", "b"). // B 次高优先级：全局变量
-		SetDefault("d")        // 设置默认值
+	m := NewMultivariate[string]().
+		Append(NewMultivariateAttr(Items("a"), HitFunc(func(idx int, item string) { fmt.Printf("采用最高级") }))).      // A 最高优先级：终端命令
+		Append(NewMultivariateAttr(Items("c", "b"), HitFunc(func(idx int, item string) { fmt.Printf("采用次高级") }))). // B 次高优先级：全局变量
+		SetDefault(NewMultivariateAttr[string](Items("d")))                                                        // 设置默认值
 
 	_, f := m.Finally(func(item string) bool { return item != "" })
 
