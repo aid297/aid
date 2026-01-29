@@ -1,34 +1,15 @@
 package operationV2
 
-type (
-	MultivariateAttributer[T any] interface{ Register(ma *MultivariateAttr[T]) }
-
-	MultivariateAttr[T any] struct {
-		Items   []T
-		Default T
-		HitFunc func(idx int, item T)
-	}
-
-	AttrItems[T any]   struct{ items []T }
-	AttrHitFunc[T any] struct{ hitFunc func(idx int, item T) }
-)
-
-func NewMultivariateAttr[T any](attrs ...MultivariateAttributer[T]) *MultivariateAttr[T] {
-	return (&MultivariateAttr[T]{}).SetAttrs(attrs...)
+type MultivariateAttr[T any] struct {
+	Items   []T
+	HitFunc func(idx int, item T)
 }
 
-func (my *MultivariateAttr[T]) SetAttrs(attrs ...MultivariateAttributer[T]) *MultivariateAttr[T] {
-	for _, attr := range attrs {
-		attr.Register(my)
-	}
-
+func NewMultivariateAttr[T any](items ...T) *MultivariateAttr[T] {
+	return &MultivariateAttr[T]{Items: items}
+}
+func (my *MultivariateAttr[T]) SetItems(items ...T) *MultivariateAttr[T] { my.Items = items; return my }
+func (my *MultivariateAttr[T]) SetHitFunc(fn func(idx int, item T)) *MultivariateAttr[T] {
+	my.HitFunc = fn
 	return my
 }
-
-func Items[T any](items ...T) MultivariateAttributer[T]   { return &AttrItems[T]{items: items} }
-func (my *AttrItems[T]) Register(ma *MultivariateAttr[T]) { ma.Items = my.items }
-
-func HitFunc[T any](hitFunc func(idx int, item T)) MultivariateAttributer[T] {
-	return &AttrHitFunc[T]{hitFunc}
-}
-func (my *AttrHitFunc[T]) Register(ma *MultivariateAttr[T]) { ma.HitFunc = my.hitFunc }
