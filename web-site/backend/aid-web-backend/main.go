@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"strings"
 
@@ -17,14 +18,14 @@ import (
 	"github.com/aid297/aid/daemon"
 )
 
-type consoleArgs struct {
+type ConsoleArgs struct {
 	cmdAPP     string
 	configPath string
 	daemonStr  string
 	cmdParams  []string
 }
 
-func parseArgs() consoleArgs {
+func parseArgs() ConsoleArgs {
 	var (
 		originalCmd, cmdAPP, configPath string
 		cmdParams, originalCmds         = make([]string, 0), make([]string, 0)
@@ -41,15 +42,17 @@ func parseArgs() consoleArgs {
 		cmdParams = originalCmds[1:]
 	}
 
-	return consoleArgs{
-		cmdAPP: cmdAPP,
-		configPath: operationV2.NewMultivariate[string](2).
-			SetDefault("config.yaml").
-			SetItems(0, configPath).
-			SetItems(1, os.Getenv("AID-BACKEND-CONFIG")).
-			FinallyFunc(func(item string) bool { return item != "" }),
-		daemonStr: daemonStr,
-		cmdParams: cmdParams,
+	_, configPath = operationV2.NewMultivariate[string]().
+		Append(operationV2.NewMultivariateAttr(configPath).SetHitFunc(func(_ int, item string) { fmt.Printf("使用终端参数：%s读取配置", item) })).
+		Append(operationV2.NewMultivariateAttr(os.Getenv("AID-BACKEND-CONFIG")).SetHitFunc(func(idx int, item string) { fmt.Sprintf("使用环境变量：%s读取配置", item) })).
+		SetDefault(operationV2.NewMultivariateAttr("config.yaml").SetHitFunc(func(idx int, item string) { fmt.Printf("使用默认参数：%s读取配置", item) })).
+		Finally(func(item string) bool { return item != "" })
+
+	return ConsoleArgs{
+		cmdAPP:     cmdAPP,
+		configPath: configPath,
+		daemonStr:  daemonStr,
+		cmdParams:  cmdParams,
 	}
 }
 
@@ -64,7 +67,7 @@ func main() {
 }
 
 // launch 启动程序
-func launch(consoleArgs consoleArgs) {
+func launch(consoleArgs ConsoleArgs) {
 	// 守护进程是否开启：终端命令(D) | 配置文件(system.daemon)
 	if cast.ToBool(consoleArgs.daemonStr) || global.CONFIG.System.Daemon {
 		daemon.GetDaemonOnce().

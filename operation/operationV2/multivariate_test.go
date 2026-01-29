@@ -7,9 +7,9 @@ import (
 
 func Test1(t *testing.T) {
 	m := NewMultivariate[string]().
-		Append(NewMultivariateAttr("a").SetHitFunc(func(_ int, _ string) { fmt.Printf("采用高级") })).            // A 最高优先级：终端命令
-		Append(NewMultivariateAttr("c", "b").SetHitFunc(func(idx int, item string) { fmt.Printf("采用次高级") })). // B 次高优先级：全局变量
-		SetDefault(NewMultivariateAttr[string]("d"))                                                          // 设置默认值
+		Append(NewMultivariateAttr("a").SetHitFunc(func(_ int, _ string) { fmt.Printf("采用高级") })).       // A 最高优先级：终端命令
+		Append(NewMultivariateAttr("b").SetHitFunc(func(idx int, item string) { fmt.Printf("采用次高级") })). // B 次高优先级：全局变量
+		SetDefault(NewMultivariateAttr("c"))                                                             // 设置默认值
 
 	_, f := m.Finally(func(item string) bool { return item != "" })
 

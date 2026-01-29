@@ -34,16 +34,14 @@ func (my *Multivariate[T]) SetDefault(item *MultivariateAttr[T]) *Multivariate[T
 
 // Finally 获取优先级选项
 func (my *Multivariate[T]) Finally(condition func(item T) bool) (int, T) {
-	for _, items := range my.Items.ToSlice() {
-		for idx, item := range items.Items {
-			if condition(item) {
-				if items.HitFunc != nil {
-					items.HitFunc(idx, item)
-				}
-				return idx, item
+	for idx, item := range my.Items.ToSlice() {
+		if condition(item.Item) {
+			if item.HitFunc != nil {
+				item.HitFunc(idx, item.Item)
 			}
+			return idx, item.Item
 		}
 	}
 
-	return -1, my.Default.Items[0]
+	return -1, my.Default.Item
 }
