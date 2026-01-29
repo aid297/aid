@@ -4,9 +4,10 @@ import "github.com/aid297/aid/array/anySlice"
 
 type (
 	Multivariater[T any] interface {
-		SetItems(priority uint, items ...T) *Multivariate[T]
+		Append(items ...T) Multivariater[T]
+		Set(priority uint, items ...T) Multivariater[T]
 		Finally(fn func(item T) bool) (int, T)
-		SetDefault(item T) *Multivariate[T]
+		SetDefault(item T) Multivariater[T]
 	}
 
 	Multivariate[T any] struct {
