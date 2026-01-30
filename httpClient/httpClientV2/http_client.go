@@ -23,21 +23,22 @@ import (
 
 type (
 	HTTPClient struct {
-		err                       error
-		url                       string
-		queries                   map[string]any
-		method                    string
-		headers                   map[string][]any
-		requestBody, responseBody []byte
-		timeout                   time.Duration
-		transport                 *http.Transport
-		cert                      []byte
-		rawRequest                *http.Request
-		rawResponse               *http.Response
-		client                    *http.Client
-		autoCopy                  bool
-		lock                      sync.RWMutex
-		OK                        *bool
+		err          error
+		url          string
+		queries      map[string]any
+		method       string
+		headers      map[string][]any
+		requestBody  *bytes.Buffer
+		responseBody []byte
+		timeout      time.Duration
+		transport    *http.Transport
+		cert         []byte
+		rawRequest   *http.Request
+		rawResponse  *http.Response
+		client       *http.Client
+		autoCopy     bool
+		lock         sync.RWMutex
+		OK           *bool
 	}
 
 	HTTPClientBuilder struct {
@@ -169,7 +170,7 @@ func (my *HTTPClient) GetBody() []byte {
 	return my.getBody()
 }
 
-func (my *HTTPClient) getBody() []byte { return my.requestBody }
+func (my *HTTPClient) getBody() []byte { b, _ := io.ReadAll(my.requestBody); return b }
 
 func (my *HTTPClient) GetTimeout() time.Duration {
 	my.lock.RLock()
@@ -232,7 +233,7 @@ func (my *HTTPClient) send() *HTTPClient {
 		return my
 	}
 
-	if my.rawRequest, my.err = http.NewRequest(my.method, my.getURL(), bytes.NewReader(my.requestBody)); my.err != nil {
+	if my.rawRequest, my.err = http.NewRequest(my.method, my.getURL(), my.requestBody); my.err != nil {
 		return my
 	}
 

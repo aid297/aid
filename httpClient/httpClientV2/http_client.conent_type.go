@@ -1,7 +1,7 @@
 package httpClientV2
 
 type (
-	ContentType string
+	ContentType = string
 	Accept      string
 )
 

@@ -38,7 +38,7 @@ type (
 	AttrSetHeaderValue     struct{ headers map[string]any }
 	AttrBody               struct {
 		err         error
-		body        []byte
+		body        *bytes.Buffer
 		contentType ContentType
 	}
 	AttrTimeout          struct{ timeout time.Duration }
@@ -280,28 +280,34 @@ func (my *AttrSetHeaderValues) Error() error { return nil }
 func (*AttrSetHeaderValues) ImplHTTPClientAttributer() {}
 
 func JSON(body any) *AttrBody {
+	var bodies []byte
 	ins := &AttrBody{}
-	ins.body, ins.err = json.Marshal(body)
+	bodies, ins.err = json.Marshal(body)
+	ins.body = bytes.NewBuffer(bodies)
 	ins.contentType = ContentTypeJSON
 
 	return ins
 }
 
 func XML(body any) HTTPClientAttributer {
+	var bodis []byte
 	ins := &AttrBody{}
-	ins.body, ins.err = xml.Marshal(body)
+	bodis, ins.err = xml.Marshal(body)
+	ins.body = bytes.NewBuffer(bodis)
 	ins.contentType = ContentTypeXML
 
 	return ins
 }
 
 func Form(body map[string]any) *AttrBody {
+	var bodis []byte
 	ins := &AttrBody{}
 	params := url.Values{}
 	for k, v := range body {
 		params.Add(k, cast.ToString(v))
 	}
-	ins.body = []byte(params.Encode())
+	bodis = []byte(params.Encode())
+	ins.body = bytes.NewBuffer(bodis)
 	ins.contentType = ContentTypeXWwwFormURLencoded
 
 	return ins
@@ -323,6 +329,7 @@ func FormData(fields, files map[string]string) *AttrBody {
 			}
 		}
 	}
+	writer.Close()
 
 	if len(files) > 0 {
 		for k, v := range files {
@@ -342,15 +349,17 @@ func FormData(fields, files map[string]string) *AttrBody {
 		}
 	}
 
-	ins.body = []byte(writer.FormDataContentType())
-	ins.contentType = ContentTypeFormData
+	ins.body = &buffer
+	ins.contentType = writer.FormDataContentType()
+	// ins.body = []byte(writer.FormDataContentType())
+	// ins.contentType = ContentTypeFormData
 
 	return ins
 }
 
 func Plain(body string) *AttrBody {
 	ins := &AttrBody{}
-	ins.body = []byte(body)
+	ins.body = bytes.NewBuffer([]byte(body))
 	ins.contentType = ContentTypePlain
 
 	return ins
@@ -358,7 +367,7 @@ func Plain(body string) *AttrBody {
 
 func HTML(body string) *AttrBody {
 	ins := &AttrBody{}
-	ins.body = []byte(body)
+	ins.body = bytes.NewBuffer([]byte(body))
 	ins.contentType = ContentTypeXML
 
 	return ins
@@ -366,7 +375,7 @@ func HTML(body string) *AttrBody {
 
 func CSS(body string) *AttrBody {
 	ins := &AttrBody{}
-	ins.body = []byte(body)
+	ins.body = bytes.NewBuffer([]byte(body))
 	ins.contentType = ContentTypeCSS
 
 	return ins
@@ -374,14 +383,14 @@ func CSS(body string) *AttrBody {
 
 func Javascript(body string) *AttrBody {
 	ins := &AttrBody{}
-	ins.body = []byte(body)
+	ins.body = bytes.NewBuffer([]byte(body))
 	ins.contentType = ContentTypeJavascript
 
 	return ins
 }
 
 func Bytes(body []byte) *AttrBody {
-	ins := &AttrBody{body: body}
+	ins := &AttrBody{body: bytes.NewBuffer(body)}
 
 	return ins
 }
@@ -399,16 +408,17 @@ func Reader(body io.ReadCloser) *AttrBody {
 	if _, ins.err = io.Copy(buffer, body); ins.err != nil {
 		return ins
 	}
-	ins.body = buffer.Bytes()
+	ins.body = buffer
 
 	return ins
 }
 
 func File(filename string) *AttrBody {
 	var (
-		ins    = &AttrBody{}
-		file   *os.File
-		buffer = bytes.NewBuffer([]byte{})
+		ins       = &AttrBody{}
+		file      *os.File
+		buffer    = bytes.NewBuffer([]byte{})
+		fileBodis []byte
 	)
 
 	if file, ins.err = os.Open(filename); ins.err != nil {
@@ -429,11 +439,12 @@ func File(filename string) *AttrBody {
 		if _, ins.err = io.Copy(buffer, file); ins.err != nil {
 			return ins
 		}
-		ins.body = buffer.Bytes()
+		ins.body = buffer
 	} else {
-		if ins.body, ins.err = io.ReadAll(file); ins.err != nil {
+		if fileBodis, ins.err = io.ReadAll(file); ins.err != nil {
 			return ins
 		}
+		ins.body = bytes.NewBuffer(fileBodis)
 	}
 
 	return ins
