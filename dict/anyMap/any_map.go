@@ -371,10 +371,10 @@ func (my *AnyMap[K, V]) MarshalJSON() ([]byte, error) { return jsonIter.Marshal(
 func (my *AnyMap[K, V]) UnmarshalJSON(data []byte) error { return jsonIter.Unmarshal(data, &my.data) }
 
 // Cast 转换所有值并创建新AnyDict
-func Cast[K comparable, SRC, DST any](src AnyMap[K, SRC], fn func(key K, value SRC) DST) AnyMapper[K, DST] {
+func Cast[K comparable, SRC, DST any](src AnyMapper[K, SRC], fn func(key K, value SRC) DST) AnyMapper[K, DST] {
 	d := New[K, DST]()
 
-	for key, value := range src.data {
+	for key, value := range src.ToMap() {
 		d = d.SetValue(key, fn(key, value))
 	}
 
@@ -390,4 +390,16 @@ func Zip[K comparable, V any](keys []K, values []V) AnyMapper[K, V] {
 	}
 
 	return d
+}
+
+// StructToOther struct 通过 json 转其他格式
+func StructToOther[K any, V any](src K) (ret V, err error) {
+	var b []byte
+
+	if b, err = jsonIter.Marshal(src); err != nil {
+		return
+	}
+
+	err = jsonIter.Unmarshal(b, &ret)
+	return
 }
