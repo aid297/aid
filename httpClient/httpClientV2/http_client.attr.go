@@ -50,9 +50,6 @@ type (
 
 func URL(urls ...any) HTTPClientAttributer {
 	ins := &AttrURL{url: ""}
-	switch {
-
-	}
 	if len(urls) == 0 {
 	} else if len(urls) == 1 {
 		ins.url = cast.ToString(urls[0])
