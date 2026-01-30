@@ -326,7 +326,6 @@ func FormData(fields, files map[string]string) *AttrBody {
 			}
 		}
 	}
-	writer.Close()
 
 	if len(files) > 0 {
 		for k, v := range files {
@@ -345,6 +344,8 @@ func FormData(fields, files map[string]string) *AttrBody {
 			_ = file.Close()
 		}
 	}
+
+	writer.Close()
 
 	ins.body = &buffer
 	ins.contentType = writer.FormDataContentType()
