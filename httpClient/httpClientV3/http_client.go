@@ -19,7 +19,7 @@ import (
 
 type (
 	HTTPClient struct {
-		err          error
+		Error        error
 		httpBuilder  HTTPBuilder
 		headers      map[string][]string
 		responseBody []byte
@@ -31,13 +31,9 @@ type (
 	}
 
 	HTTPClientGetParam struct {
-		Queries HTTPQuery
-		Headers map[string][]string
-		Accept  string
-	}
-
-	HTTPClientNoGetParam struct {
-		*HTTPClientGetParam
+		Queries     HTTPQuery
+		Headers     map[string][]string
+		Accept      string
 		Body        io.Reader
 		ContentType string
 	}
@@ -109,27 +105,53 @@ func (my *HTTPClient) Send() *HTTPClient {
 	client := &http.Client{}
 	client.Transport = my.httpBuilder.GetTransport()
 	client.Timeout = my.httpBuilder.GetTimeout()
-	my.rawResponse, my.err = client.Do(my.rawRequest)
+	my.rawResponse, my.Error = client.Do(my.rawRequest)
 
 	return my
+}
+func (my *HTTPClient) Plain() []byte {
+	var body []byte
+
+	if my.Error != nil {
+		return nil
+	}
+
+	if my.rawResponse == nil {
+		my.Error = errors.New("响应体为空")
+		return nil
+	}
+
+	if my.autoCopy != nil && (*my.autoCopy || my.httpBuilder.GetAutoCopy()) {
+		my.rawResponse.Body, my.Error = steam.APP.Steam.New(
+			steam.ReadCloser(my.rawResponse.Body),
+			steam.CopyFn(func(copied []byte) error { body = copied; return nil }),
+		).Copy()
+		return nil
+	}
+
+	defer my.rawResponse.Body.Close()
+	if body, my.Error = io.ReadAll(my.rawResponse.Body); my.Error != nil {
+		return nil
+	}
+
+	return body
 }
 
 // JSON 获取 JSON 结果
 func (my *HTTPClient) JSON(ret any) *HTTPClient {
-	var (
-		body []byte
-	)
-	if my.err != nil {
+	var body []byte
+
+	if my.Error != nil {
 		return my
 	}
 
 	if my.rawResponse == nil {
-		my.err = errors.New("响应体为空")
+		my.Error = errors.New("响应体为空")
 		return my
 	}
 
 	if my.autoCopy != nil && (*my.autoCopy || my.httpBuilder.GetAutoCopy()) {
-		my.rawResponse.Body, my.err = steam.APP.Steam.New(
+		my.rawResponse.Body, my.Error = steam.APP.Steam.New(
 			steam.ReadCloser(my.rawResponse.Body),
 			steam.CopyFn(func(copied []byte) error { return json.Unmarshal(copied, ret) }),
 		).Copy()
@@ -137,15 +159,15 @@ func (my *HTTPClient) JSON(ret any) *HTTPClient {
 	}
 
 	defer my.rawResponse.Body.Close()
-	if body, my.err = io.ReadAll(my.rawResponse.Body); my.err != nil {
+	if body, my.Error = io.ReadAll(my.rawResponse.Body); my.Error != nil {
 		return my
 	}
 
-	my.err = json.Unmarshal(body, ret)
+	my.Error = json.Unmarshal(body, ret)
 	return my
 }
 
-func NewHTTPClientGetParam() *HTTPClientGetParam {
+func NewHTTPClientParam() *HTTPClientGetParam {
 	return &HTTPClientGetParam{Queries: anyMap.New[string, string](), Headers: map[string][]string{}}
 }
 
@@ -159,21 +181,7 @@ func (my *HTTPClientGetParam) SetHeaders(headers map[string][]string) *HTTPClien
 	return my
 }
 
-func NewHTTPClientNoGetParam() *HTTPClientNoGetParam {
-	return &HTTPClientNoGetParam{HTTPClientGetParam: NewHTTPClientGetParam()}
-}
-
-func (my *HTTPClientNoGetParam) SetQueries(queries HTTPQuery) *HTTPClientNoGetParam {
-	my.HTTPClientGetParam.SetQueries(queries)
-	return my
-}
-
-func (my *HTTPClientNoGetParam) SetHeaders(headers map[string][]string) *HTTPClientNoGetParam {
-	my.HTTPClientGetParam.SetHeaders(headers)
-	return my
-}
-
-func (my *HTTPClientNoGetParam) SetJSON(body any) (*HTTPClientNoGetParam, error) {
+func (my *HTTPClientGetParam) SetJSON(body any) (*HTTPClientGetParam, error) {
 	var (
 		err error
 		bb  []byte
@@ -187,7 +195,7 @@ func (my *HTTPClientNoGetParam) SetJSON(body any) (*HTTPClientNoGetParam, error)
 	return my, nil
 }
 
-func (my *HTTPClientNoGetParam) SetXML(body any) (*HTTPClientNoGetParam, error) {
+func (my *HTTPClientGetParam) SetXML(body any) (*HTTPClientGetParam, error) {
 	var (
 		err error
 		bb  []byte
@@ -201,7 +209,7 @@ func (my *HTTPClientNoGetParam) SetXML(body any) (*HTTPClientNoGetParam, error) 
 	return my, nil
 }
 
-func (my *HTTPClientNoGetParam) SetYAML(body any) (*HTTPClientNoGetParam, error) {
+func (my *HTTPClientGetParam) SetYAML(body any) (*HTTPClientGetParam, error) {
 	var (
 		err error
 		bb  []byte
@@ -215,7 +223,7 @@ func (my *HTTPClientNoGetParam) SetYAML(body any) (*HTTPClientNoGetParam, error)
 	return my, nil
 }
 
-func (my *HTTPClientNoGetParam) SetForm(body HTTPQuery) (*HTTPClientNoGetParam, error) {
+func (my *HTTPClientGetParam) SetForm(body HTTPQuery) (*HTTPClientGetParam, error) {
 	if body.IsNotEmpty() {
 		my.ContentType = "application/x-www-form-urlencoded"
 		params := url.Values{}
@@ -226,7 +234,7 @@ func (my *HTTPClientNoGetParam) SetForm(body HTTPQuery) (*HTTPClientNoGetParam, 
 	return my, nil
 }
 
-func (my *HTTPClientNoGetParam) SetFormData(body map[string]string) (*HTTPClientNoGetParam, error) {
+func (my *HTTPClientGetParam) SetFormData(body map[string]string) (*HTTPClientGetParam, error) {
 	var (
 		err    error
 		buffer bytes.Buffer
