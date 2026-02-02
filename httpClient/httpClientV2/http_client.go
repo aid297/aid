@@ -47,7 +47,7 @@ type (
 )
 
 func (*HTTPClient) init(method string, attrs ...HTTPClientAttributer) *HTTPClient {
-	return (&HTTPClient{requestBody: bytes.NewBuffer(nil)}).SetAttrs(Method(method), AppendHeaderValues(map[string][]any{})).SetAttrs(attrs...)
+	return (&HTTPClient{requestBody: bytes.NewBuffer([]byte{})}).SetAttrs(Method(method), AppendHeaderValues(map[string][]any{})).SetAttrs(attrs...)
 }
 
 func (*HTTPClientBuilder) New(attrs ...HTTPClientAttributer) *HTTPClientBuilder {
