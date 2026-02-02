@@ -451,7 +451,8 @@ func File(filename string) *AttrBody {
 func (my *AttrBody) Register(req *HTTPClient) {
 	req.requestBody = my.body
 	if my.contentType != "" {
-		req.headers["Content-Type"] = []any{ContentTypes[my.contentType]}
+		//  []any{ContentTypes[my.contentType]} 因为form-data的缘故，content-type只能使用string类型，所以不限制content-type的具体内容在一定的范围内
+		req.headers["Content-Type"] = []any{my.contentType}
 	}
 	req.err = my.err
 }
