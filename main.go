@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"runtime"
+
+	"github.com/aid297/aid/dict/anyMap"
 )
 
 var (
@@ -14,6 +17,11 @@ var (
 )
 
 func main() {
+	log.Printf("aaa: %+v\n", anyMap.New(anyMap.Map(map[string]string{
+		"error": "1",
+		"op":    "",
+	})).RemoveEmpty().ToMap())
+
 	if len(os.Args) > 1 && os.Args[1] == "-v" {
 		printVersion()
 		return
