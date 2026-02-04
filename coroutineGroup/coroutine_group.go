@@ -10,7 +10,7 @@ type (
 	CoroutineGroup[T any] struct {
 		Error      error
 		OK         bool
-		Results    []*Result[T]
+		Results    []Result[T]
 		batches    uint
 		capacities uint
 		sw         sync.WaitGroup
@@ -63,23 +63,22 @@ func (my *CoroutineGroup[T]) check() error {
 }
 
 // GO 执行协程组
-func (my *CoroutineGroup[T]) GO(fn func(batch, capacity uint) (result *Result[T])) *CoroutineGroup[T] {
+func (my *CoroutineGroup[T]) GO(fn func(batch, capacity uint) (result Result[T])) *CoroutineGroup[T] {
 	if err := my.check(); err != nil {
 		my.Error = err
 		my.OK = false
 		return my
 	}
 
-	my.Results = make([]*Result[T], 0, my.batches+my.capacities)
+	my.Results = make([]Result[T], 0, my.batches+my.capacities)
 	for batch := range my.batches {
 		for capacity := range my.capacities {
 			my.sw.Add(1)
 
 			go func(b, c uint) {
 				defer my.sw.Done()
-				var r *Result[T] = fn(b, c)
-				my.Results = append(my.Results, r)
-				if r.Error != nil {
+				var r Result[T] = fn(b, c)
+				if my.Results = append(my.Results, r); r.Error != nil {
 					my.OK = false
 				}
 			}(batch, capacity)
