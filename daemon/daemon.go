@@ -26,8 +26,8 @@ var (
 	i *Daemon
 )
 
-// GetDaemonOnce 获取单例
-func GetDaemonOnce() *Daemon { o.Do(func() { i = &Daemon{} }); return i }
+// OnceDaemon 获取单例
+func OnceDaemon() *Daemon { o.Do(func() { i = &Daemon{} }); return i }
 
 // SetTitle 设置标题
 func (*Daemon) SetTitle(title string) *Daemon { i.title = title; return i }

@@ -70,7 +70,7 @@ func main() {
 func launch(consoleArgs ConsoleArgs) {
 	// 守护进程是否开启：终端命令(D) | 配置文件(system.daemon)
 	if cast.ToBool(consoleArgs.daemonStr) || global.CONFIG.System.Daemon {
-		daemon.GetDaemonOnce().
+		daemon.OnceDaemon().
 			SetTitle("启动程序").
 			SetLog(global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename).
 			SetLogEnable(true).
