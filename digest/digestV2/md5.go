@@ -6,14 +6,12 @@ import (
 )
 
 type (
-	MD5Hasher interface {
-		Encode() (string, error)
-	}
-	MD5 struct{ original []byte }
+	MD5HashEncoder interface{ Encode() (string, error) }
+	MD5            struct{ original []byte }
 )
 
 // NewMD5 创建MD5编码器
-func NewMD5(original string) MD5Hasher { return &MD5{original: []byte(original)} }
+func NewMD5(original string) MD5HashEncoder { return &MD5{original: []byte(original)} }
 
 // Md5 编码
 func (my *MD5) Encode() (string, error) {

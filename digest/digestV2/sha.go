@@ -6,7 +6,7 @@ import (
 )
 
 type (
-	SHAer interface {
+	SHAEncoder interface {
 		Encode256() (string, error)
 		Encode256Sum256() string
 	}
@@ -14,7 +14,7 @@ type (
 	SHA struct{ original []byte }
 )
 
-func NewSHA(original string) SHAer { return &SHA{original: []byte(original)} }
+func NewSHA(original string) SHAEncoder { return &SHA{original: []byte(original)} }
 
 // Sha256 摘要算法
 func (my *SHA) Encode256() (string, error) {

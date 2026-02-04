@@ -54,8 +54,7 @@ func (FileManagerAPI) Upload(c *gin.Context) {
 // * POST /api/v1/fileManger/list
 func (FileManagerAPI) List(c *gin.Context) {
 	var (
-		tilte = "获取文件列表"
-		// err     error
+		tilte   = "获取文件列表"
 		dir     = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir))
 		form    request.FileListRequest
 		checker validatorV3.Checker

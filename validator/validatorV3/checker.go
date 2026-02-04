@@ -10,28 +10,38 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/aid297/aid/array/anyArrayV2"
-	`github.com/aid297/aid/array/anySlice`
+	"github.com/aid297/aid/array/anySlice"
 	"github.com/aid297/aid/operation/operationV2"
 )
 
-// Checker 验证器
-type Checker struct {
-	data         any
-	wrongs       []error
-	defaultLimit string
-}
+type (
+	Checker interface {
+		Wrongs() []error
+		OK() bool
+		Wrong() error
+		WrongToString(limit string) (ret string)
+		Validate(exCheckFns ...any) Checker
+	}
 
-func (Checker) New(data any) Checker { return Checker{data: data, defaultLimit: "<br />"} }
+	// Check 验证器
+	Check struct {
+		data         any
+		wrongs       []error
+		defaultLimit string
+	}
+)
 
-func (my Checker) Wrongs() []error { return my.wrongs }
+func (Check) New(data any) Check { return Check{data: data, defaultLimit: "<br />"} }
 
-func (my Checker) OK() bool { return len(my.wrongs) == 0 }
+func (my Check) Wrongs() []error { return my.wrongs }
 
-func (my Checker) Wrong() error {
+func (my Check) OK() bool { return len(my.wrongs) == 0 }
+
+func (my Check) Wrong() error {
 	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString("")) })).GetByValue(len(my.wrongs) > 0)
 }
 
-func (my Checker) WrongToString(limit string) (ret string) {
+func (my Check) WrongToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
 		ret = anySlice.FillFunc(
 			my.wrongs,
@@ -47,7 +57,7 @@ func (my Checker) WrongToString(limit string) (ret string) {
 	return
 }
 
-func (my Checker) Validate(exCheckFns ...any) Checker {
+func (my Check) Validate(exCheckFns ...any) Checker {
 	for _, fieldInfo := range getStructFieldInfos(my.data, "") {
 		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
 			my.wrongs = append(my.wrongs, wrongs...)
@@ -69,7 +79,7 @@ func WithGin[T any](c *gin.Context, exCheckFns ...any) (form T, checker Checker)
 	form = *new(T)
 
 	if err := c.ShouldBind(&form); err != nil {
-		checker = Checker{wrongs: []error{err}}
+		checker = Check{wrongs: []error{err}}
 		return
 	}
 
@@ -80,7 +90,7 @@ func WithFiber[T any](c *fiber.Ctx, exCheckFns ...any) (form T, checker Checker)
 	form = *new(T)
 
 	if err := c.BodyParser(&form); err != nil {
-		checker = Checker{wrongs: []error{err}}
+		checker = Check{wrongs: []error{err}}
 		return
 	}
 

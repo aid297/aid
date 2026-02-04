@@ -3,7 +3,7 @@ package digestV2
 import "golang.org/x/crypto/bcrypt"
 
 type (
-	Bcrypter interface {
+	BcryptEncoder interface {
 		Hash() (bytes []byte)
 		Check(hash string) bool
 	}
@@ -11,7 +11,7 @@ type (
 )
 
 // NewBcrypt 实例化
-func NewBcrypt(password string) Bcrypter { return &Bcrypt{password: []byte(password)} }
+func NewBcrypt(password string) BcryptEncoder { return &Bcrypt{password: []byte(password)} }
 
 // Hash 编码
 func (my *Bcrypt) Hash() (bytes []byte) {

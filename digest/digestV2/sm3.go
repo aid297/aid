@@ -7,12 +7,12 @@ import (
 )
 
 type (
-	SM3er interface{}
+	SM3Encoder interface{ Encode() string }
 
 	SM3 struct{ original []byte }
 )
 
-func NewSM3(original string) SM3er { return &SM3{original: []byte(original)} }
+func NewSM3(original string) SM3Encoder { return &SM3{original: []byte(original)} }
 
 // Sm3 生成sm3摘要
 func (my *SM3) Encode() string {
