@@ -294,35 +294,52 @@ func (my *HTTPClient) OK() error {
 	return nil
 }
 
+func (my *HTTPClient) isNeedRetry(condition func(statusCode int, err error) bool) (needRetry bool) {
+	if condition == nil {
+		needRetry = my.OK() != nil
+	} else {
+		condition = func(statusCode int, err error) bool { return statusCode > 399 || err != nil }
+		needRetry = condition(my.GetStatusCode(), my.err)
+	}
+
+	return
+}
+
 func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) *HTTPClient {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
-	if my.send().Error() != nil {
-		return my
+	var (
+		wrongs = make([]error, 0, count)
+		err    error
+	)
+
+	my.send()
+
+	if err = my.OK(); err != nil {
+		wrongs = append(wrongs, err) // 记录第一次错误
 	}
 
-	if count > 0 && interval > 0 {
-		var (
-			maxAttempts uint = count + 1 // 首次尝试 + 重试次数
-			shouldRetry      = false
-		)
-
-		for attempt := uint(0); attempt < maxAttempts; attempt++ {
+	if my.isNeedRetry(condition) && count > 0 && interval > 0 {
+		for attempt := range count {
 			time.Sleep(interval)
-
-			if condition == nil {
-				condition = func(statusCode int, err error) bool { return statusCode > 399 || err != nil }
-			}
-			shouldRetry = condition(my.rawResponse.StatusCode, my.err)
-
-			if !shouldRetry || attempt == maxAttempts-1 {
-				break
-			}
 
 			if my.rawResponse != nil && my.rawResponse.Body != nil {
 				_ = my.rawResponse.Body.Close()
 				my.rawResponse = nil
+			}
+
+			my.send()
+
+			if !my.isNeedRetry(condition) {
+				break
+			}
+
+			wrongs = append(wrongs, my.OK()) // 记录每次错误
+
+			if attempt+1 == count {
+				my.err = errors.New("达到最大重试次数，仍然未成功")
+				break
 			}
 		}
 	}
