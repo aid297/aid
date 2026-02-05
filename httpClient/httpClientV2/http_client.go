@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,7 +18,6 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/aid297/aid/operation/operationV2"
-	"github.com/aid297/aid/ptr"
 	"github.com/aid297/aid/str"
 )
 
@@ -38,7 +38,7 @@ type (
 		client       *http.Client
 		autoCopy     bool
 		lock         sync.RWMutex
-		OK           *bool
+		// OK           *bool
 	}
 
 	HTTPClientBuilder struct {
@@ -227,8 +227,6 @@ func (my *HTTPClient) GetClient() *http.Client {
 func (my *HTTPClient) getClient() *http.Client { return my.client }
 
 func (my *HTTPClient) send() *HTTPClient {
-	my.OK = nil // 清理相应状态
-
 	if my.err != nil {
 		return my
 	}
@@ -276,9 +274,24 @@ func (my *HTTPClient) send() *HTTPClient {
 		my.rawResponse.Body = io.NopCloser(bytes.NewBuffer(my.responseBody)) // 还原响应体
 	}
 
-	my.OK = ptr.New(my.rawResponse.StatusCode < 400)
-
 	return my
+}
+
+// OK 检查响应是否成功，返回布尔值和错误信息
+func (my *HTTPClient) OK() (bool, error) {
+	if my.rawResponse == nil {
+		return false, errors.New("响应体为空")
+	}
+
+	if my.rawResponse.StatusCode > 399 {
+		return false, fmt.Errorf("错误：%d %s", my.GetStatusCode(), my.GetStatus())
+	}
+
+	if my.err != nil {
+		return false, my.err
+	}
+
+	return true, nil
 }
 
 func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) *HTTPClient {
