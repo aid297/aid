@@ -6,17 +6,16 @@ type (
 )
 
 var (
-	ContentTypeJSON               ContentType = "json"
-	ContentTypeXML                ContentType = "xml"
-	ContentTypeXWwwFormURLencoded ContentType = "form"
+	ContentTypeJSON               ContentType = "application/json"
+	ContentTypeXML                ContentType = "application/xml"
+	ContentTypeXWwwFormURLencoded ContentType = "application/x-www-form-urlencoded"
 	ContentTypeFormData           ContentType = "form-data"
-	ContentTypePlain              ContentType = "plain"
-	ContentTypeHTML               ContentType = "html"
-	ContentTypeCSS                ContentType = "css"
-	ContentTypeJavascript         ContentType = "javascript"
-	ContentTypeSteam              ContentType = "steam"
-
-	ContentTypes = map[ContentType]string{
+	ContentTypePlain              ContentType = "text/plain"
+	ContentTypeHTML               ContentType = "text/html"
+	ContentTypeCSS                ContentType = "text/css"
+	ContentTypeJavascript         ContentType = "text/javascript"
+	ContentTypeSteam              ContentType = "application/octet-stream"
+	ContentTypes                              = map[ContentType]string{
 		ContentTypeJSON:               "application/json",
 		ContentTypeXML:                "application/xml",
 		ContentTypeXWwwFormURLencoded: "application/x-www-form-urlencoded",
@@ -28,14 +27,14 @@ var (
 		ContentTypeSteam:              "application/octet-stream",
 	}
 
-	AcceptJSON       Accept = "json"
-	AcceptXML        Accept = "xml"
-	AcceptPlain      Accept = "plain"
-	AcceptHTML       Accept = "html"
-	AcceptCSS        Accept = "css"
-	AcceptJavascript Accept = "javascript"
-	AcceptSteam      Accept = "steam"
-	AcceptAny        Accept = "any"
+	AcceptJSON       Accept = "application/json"
+	AcceptXML        Accept = "application/xml"
+	AcceptPlain      Accept = "text/plain"
+	AcceptHTML       Accept = "text/html"
+	AcceptCSS        Accept = "text/css"
+	AcceptJavascript Accept = "text/javascript"
+	AcceptSteam      Accept = "application/octet-stream"
+	AcceptAny        Accept = "*/*"
 
 	Accepts = map[Accept]string{
 		AcceptJSON:       "application/json",
