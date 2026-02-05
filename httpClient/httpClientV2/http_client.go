@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"sync"
@@ -331,8 +330,6 @@ func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, conditio
 			}
 
 			my.send()
-
-			log.Printf("第%d次重试，结果：%v", attempt+1, my.OK())
 
 			if !my.isNeedRetry(condition) {
 				break
