@@ -278,20 +278,20 @@ func (my *HTTPClient) send() *HTTPClient {
 }
 
 // OK 检查响应是否成功，返回布尔值和错误信息
-func (my *HTTPClient) OK() (bool, error) {
+func (my *HTTPClient) OK() error {
 	if my.rawResponse == nil {
-		return false, errors.New("响应体为空")
+		return errors.New("响应体为空")
 	}
 
 	if my.rawResponse.StatusCode > 399 {
-		return false, fmt.Errorf("错误：%d %s", my.GetStatusCode(), my.GetStatus())
+		return fmt.Errorf("错误：%d %s", my.GetStatusCode(), my.GetStatus())
 	}
 
 	if my.err != nil {
-		return false, my.err
+		return my.err
 	}
 
-	return true, nil
+	return nil
 }
 
 func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) *HTTPClient {
