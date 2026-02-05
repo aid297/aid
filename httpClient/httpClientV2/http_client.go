@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"sync"
@@ -305,7 +306,7 @@ func (my *HTTPClient) isNeedRetry(condition func(statusCode int, err error) bool
 	return
 }
 
-func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) *HTTPClient {
+func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) (*HTTPClient, []error) {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
@@ -331,6 +332,8 @@ func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, conditio
 
 			my.send()
 
+			log.Printf("第%d次重试，结果：%v", attempt+1, my.OK())
+
 			if !my.isNeedRetry(condition) {
 				break
 			}
@@ -344,7 +347,7 @@ func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, conditio
 		}
 	}
 
-	return my
+	return my, wrongs
 }
 
 func (my *HTTPClient) Send() *HTTPClient {

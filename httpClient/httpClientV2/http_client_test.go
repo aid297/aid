@@ -39,3 +39,14 @@ func Test1(t *testing.T) {
 		t.Logf("response: %s\n", hc.Send().ToBytes())
 	})
 }
+
+func Test2(t *testing.T) {
+	hc, wrongs := APP.HTTPClient.New(
+		URL("http://baidu.com"),
+		Timeout(1*time.Second),
+		Method(http.MethodGet),
+	).SendWithRetry(3, 3*time.Second, nil)
+
+	t.Logf("错误列表：%v", wrongs)
+	t.Logf("最终结果：%s", hc.ToBytes())
+}
