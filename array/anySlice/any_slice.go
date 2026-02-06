@@ -66,10 +66,7 @@ type (
 		Union(other AnySlicer[T]) AnySlicer[T]
 		UnionBySlice(other ...T) AnySlicer[T]
 		Unique() AnySlicer[T]
-		RemoveByIndex(index int) AnySlicer[T]
-		RemoveByIndexes(indexes ...int) AnySlicer[T]
-		RemoveByValue(target T) AnySlicer[T]
-		RemoveByValues(targets ...T) AnySlicer[T]
+		RemoveByIndex(indexes ...int) AnySlicer[T]
 		Every(fn func(item T) T) AnySlicer[T]
 		Each(fn func(idx int, item T)) AnySlicer[T]
 		Sort(fn func(i, j int) bool) AnySlicer[T]
@@ -549,61 +546,35 @@ func (my *AnyArray[T]) Unique() AnySlicer[T] {
 	return NewList(result)
 }
 
-// RemoveByIndex 根据索引删除元素
-func (my *AnyArray[T]) RemoveByIndex(index int) AnySlicer[T] {
-	if index < 0 || index >= len(my.data) {
+// RemoveByIndexes 根据索引删除元素
+func (my *AnyArray[T]) RemoveByIndex(indexes ...int) AnySlicer[T] {
+	if len(indexes) == 0 {
 		return my
 	}
 
-	return NewList(append(my.data[:index], my.data[index+1:]...))
-}
+	// Sort indexes in descending order to avoid index shifting issues
+	sort.Slice(indexes, func(i, j int) bool {
+		return indexes[i] > indexes[j]
+	})
 
-// RemoveByIndexes 根据索引删除元素
-func (my *AnyArray[T]) RemoveByIndexes(indexes ...int) AnySlicer[T] {
-	newData := make([]T, 0, len(my.data))
-	myIndexes := make([]int, 0, len(indexes))
-
-	for idx := range indexes {
-		if indexes[idx] < 0 || indexes[idx] >= len(my.data) {
-			myIndexes = append(myIndexes, indexes[idx])
-		}
-	}
-
-	for idx := range my.data {
-		for idx2 := range myIndexes {
-			if idx == idx2 {
-				continue
+	// Remove duplicates and invalid indexes
+	seen := make(map[int]struct{})
+	validIndexes := make([]int, 0)
+	for _, idx := range indexes {
+		if idx >= 0 && idx < len(my.data) {
+			if _, exists := seen[idx]; !exists {
+				seen[idx] = struct{}{}
+				validIndexes = append(validIndexes, idx)
 			}
-			newData = append(newData, my.data[idx])
 		}
 	}
 
-	return NewList(newData)
-}
-
-// RemoveByValue 删除数组中对应的目标
-func (my *AnyArray[T]) RemoveByValue(target T) AnySlicer[T] {
-	var ret = make([]T, len(my.data))
-	j := 0
-	for _, value := range my.data {
-		if !reflect.DeepEqual(value, target) {
-			ret[j] = value
-			j++
-		}
+	// Remove elements by index in descending order
+	for _, idx := range validIndexes {
+		my.data = append(my.data[:idx], my.data[idx+1:]...)
 	}
 
-	return New(List(ret[:j]))
-}
-
-// RemoveByValues 删除数组中对应的多个目标
-func (my *AnyArray[T]) RemoveByValues(targets ...T) AnySlicer[T] {
-	data := my.data
-
-	for idx := range targets {
-		data = NewList(data).RemoveByValue(targets[idx]).ToSlice()
-	}
-
-	return NewList(data)
+	return my
 }
 
 // Every 循环处理每一个
