@@ -64,7 +64,7 @@ type (
 		Difference(other AnySlicer[T]) AnySlicer[T]
 		DifferenceBySlice(other ...T) AnySlicer[T]
 		Union(other AnySlicer[T]) AnySlicer[T]
-		UnionBySlice(other []T) AnySlicer[T]
+		UnionBySlice(other ...T) AnySlicer[T]
 		Unique() AnySlicer[T]
 		RemoveByIndex(index int) AnySlicer[T]
 		RemoveByIndexes(indexes ...int) AnySlicer[T]
