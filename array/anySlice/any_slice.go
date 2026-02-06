@@ -265,10 +265,7 @@ func (my *AnyArray[T]) GetValuesBySlices(original, finished int) []T {
 }
 
 // Append 添加值
-func (my *AnyArray[T]) Append(v ...T) AnySlicer[T] {
-	my.data = append(my.data, v...)
-	return my
-}
+func (my *AnyArray[T]) Append(v ...T) AnySlicer[T] { my.data = append(my.data, v...); return my }
 
 // First 获取第一个值
 func (my *AnyArray[T]) First() T {
@@ -339,7 +336,8 @@ func (my *AnyArray[T]) Shuffle() AnySlicer[T] {
 		newData[i], newData[j] = newData[j], newData[i] // 交换元素
 	}
 
-	return NewList(newData)
+	my.data = newData
+	return my
 }
 
 // Length 获取数组长度
@@ -359,7 +357,8 @@ func (my *AnyArray[T]) Filter(fn func(item T) bool) AnySlicer[T] {
 		}
 	}
 
-	return NewList(ret[:j])
+	my.data = ret[:j]
+	return my
 }
 
 // RemoveEmpty 清除0值元素
@@ -478,7 +477,8 @@ func (my *AnyArray[T]) Intersection(other AnySlicer[T]) AnySlicer[T] {
 		}
 	}
 
-	return NewList(intersection)
+	my.data = intersection
+	return my
 }
 
 // IntersectionBySlice 取交集：通过切片
@@ -499,7 +499,8 @@ func (my *AnyArray[T]) Difference(other AnySlicer[T]) AnySlicer[T] {
 		}
 	}
 
-	return NewList(difference)
+	my.data = difference
+	return my
 }
 
 // DifferenceBySlice 取差集：通过切片
@@ -522,7 +523,8 @@ func (my *AnyArray[T]) Union(other AnySlicer[T]) AnySlicer[T] {
 		}
 	}
 
-	return NewList(union)
+	my.data = union
+	return my
 }
 
 // UnionBySlice 取并集：通过切片
@@ -543,7 +545,8 @@ func (my *AnyArray[T]) Unique() AnySlicer[T] {
 		}
 	}
 
-	return NewList(result)
+	my.data = result
+	return my
 }
 
 // RemoveByIndexes 根据索引删除元素
@@ -585,7 +588,8 @@ func (my *AnyArray[T]) Every(fn func(item T) T) AnySlicer[T] {
 		data[idx] = fn(my.data[idx])
 	}
 
-	return NewList(data)
+	my.data = data
+	return my
 }
 
 // Each 遍历数组

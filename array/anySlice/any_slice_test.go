@@ -16,5 +16,5 @@ func Test2(t *testing.T) {
 
 func Test3(t *testing.T) {
 	var a AnySlicer[int] = New(List([]int{1, 2, 3, 4, 5}))
-	t.Logf("%#v\n", a.RemoveByIndexes(0, 1, 2).ToSlice())
+	t.Logf("%#v\n", a.RemoveByIndex(0, 1, 2).ToSlice())
 }
