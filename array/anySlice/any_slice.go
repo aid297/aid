@@ -73,6 +73,7 @@ type (
 		Clean() AnySlicer[T]
 		MarshalJSON() ([]byte, error)
 		UnmarshalJSON(data []byte) error
+		Copy() AnySlicer[T]
 		ToString(formats ...string) string
 	}
 
@@ -618,6 +619,8 @@ func (my *AnyArray[T]) MarshalJSON() ([]byte, error) { return jsonIter.Marshal(&
 
 // UnmarshalJSON 实现接口：json反序列化
 func (my *AnyArray[T]) UnmarshalJSON(data []byte) error { return jsonIter.Unmarshal(data, &my.data) }
+
+func (my *AnyArray[T]) Copy() AnySlicer[T] { return NewList(my.data) }
 
 // ToString 导出string
 func (my *AnyArray[T]) ToString(formats ...string) string {

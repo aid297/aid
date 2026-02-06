@@ -24,6 +24,7 @@ type (
 		Unlock() AnyMapper[K, V]
 		RLock() AnyMapper[K, V]
 		RUnlock() AnyMapper[K, V]
+		Copy() AnyMapper[K, V]
 		ToString() string
 		ToMap() map[K]V
 		IsEmpty() bool
@@ -154,6 +155,8 @@ func (my *AnyMap[K, V]) RUnlock() AnyMapper[K, V] {
 	my.mu.RUnlock()
 	return my
 }
+
+func (my *AnyMap[K, V]) Copy() AnyMapper[K, V] { return New(Map(my.data)) }
 
 func (my *AnyMap[K, V]) ToString() string { return fmt.Sprintf("%v", my.data) }
 
