@@ -7,3 +7,6 @@
 3. [协程组](./coroutineGroup/readme.md)
 
 4. [守护进程](./daemon/readme.md)（非windows可用）
+
+5. [泛型字典](./dict/anyMap/readme.md)
+

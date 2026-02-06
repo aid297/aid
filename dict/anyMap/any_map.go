@@ -384,7 +384,7 @@ func (my *AnyMap[K, V]) MarshalJSON() ([]byte, error) { return jsonIter.Marshal(
 // UnmarshalJSON 实现接口：json反序列化
 func (my *AnyMap[K, V]) UnmarshalJSON(data []byte) error { return jsonIter.Unmarshal(data, &my.data) }
 
-// Cast 转换所有值并创建新AnyDict
+// Cast 转换所有值并创建新 AsnyMapper
 func Cast[K comparable, SRC, DST any](src AnyMapper[K, SRC], fn func(key K, value SRC) DST) AnyMapper[K, DST] {
 	d := New[K, DST]()
 

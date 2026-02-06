@@ -632,9 +632,10 @@
     func Clean() AnySlicer[T]                // 清理数据
     func MarshalJSON() ([]byte, error)      // JSON 序列化 → 实现 JSON 序列化接口
     func UnmarshalJSON(data []byte) error   // JSON 反序列化 → 实现 JSON 序列化接口
+    func Copy() AnySlicer                    // 复制自身
     func ToString(formats ...string) string // 转字符串
     ```
-
+    
 34. 高级方法：填充
     ```go
     a1 := anySlice.FillFunc[User,string]([]User{
