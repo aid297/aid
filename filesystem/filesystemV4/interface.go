@@ -5,6 +5,7 @@ import "os"
 type Filesystemer interface {
 	GetExist() bool
 	GetError() error
+	GetBasePath() string
 	GetFullPath() string
 	GetInfo() os.FileInfo
 	GetDirs() []Filesystemer

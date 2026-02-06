@@ -31,6 +31,7 @@ func NewDir(attrs ...PathAttributer) Filesystemer {
 
 func (my *Dir) GetExist() bool           { return my.Exist }
 func (my *Dir) GetError() error          { return my.Error }
+func (my *Dir) GetBasePath() string      { return my.BasePath }
 func (my *Dir) GetFullPath() string      { return my.FullPath }
 func (my *Dir) GetInfo() os.FileInfo     { return my.Info }
 func (my *Dir) GetDirs() []Filesystemer  { return my.Dirs }
@@ -227,13 +228,15 @@ func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = NewDir(Rel(dstPaths...)).Create(Mode(my.Mode)); dst.GetError() != nil {
-		my.Error = dst.GetError()
-		return my
+	if dst = NewDir(operationV2.NewTernary(operationV2.TrueValue(Rel(dstPaths...)), operationV2.FalseValue(Abs(dstPaths...))).GetByValue(isRel)); !dst.GetExist() {
+		if err = dst.Create(Mode(my.Mode)).GetError(); err != nil {
+			my.Error = err
+			return my
+		}
 	}
 
 	for idx := range my.Files {
-		if err = my.Files[idx].CopyTo(isRel, dstPaths...).GetError(); err != nil {
+		if err = my.Files[idx].CopyTo(isRel, append([]string{my.Files[idx].GetBasePath()}, dstPaths...)...).GetError(); err != nil {
 			my.Error = err
 			return my
 		}

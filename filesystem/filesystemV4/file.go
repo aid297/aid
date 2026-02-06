@@ -40,6 +40,7 @@ func NewFile(attrs ...PathAttributer) Filesystemer {
 
 func (my *File) GetExist() bool           { return my.Exist }
 func (my *File) GetError() error          { return my.Error }
+func (my *File) GetBasePath() string      { return my.BasePath }
 func (my *File) GetFullPath() string      { return my.FullPath }
 func (my *File) GetInfo() os.FileInfo     { return my.Info }
 func (my *File) GetDirs() []Filesystemer  { return nil }
