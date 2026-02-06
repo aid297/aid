@@ -17,8 +17,6 @@ func (my AttrMap[K, V]) Register(anyDict AnyMapper[K, V]) {
 	anyDict.SetValues(anySlice.New(anySlice.Cap[V](len(my.dict))))
 	for idx := range my.dict {
 		anyDict.SetDatum(idx, my.dict[idx])
-		anyDict.AppendKey(idx)
-		anyDict.AppendValue(my.dict[idx])
 	}
 }
 

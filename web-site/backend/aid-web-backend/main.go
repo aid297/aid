@@ -77,14 +77,6 @@ func launch(consoleArgs ConsoleArgs) {
 			Launch() // 通过守护进程启动
 	}
 
-	// if (consoleArgs.daemonStr == "" && global.CONFIG.System.Daemon) || (consoleArgs.daemonStr != "" && cast.ToBool(consoleArgs.daemonStr)) {
-	// 	daemon.GetDaemonOnce().
-	// 		SetTitle("启动程序").
-	// 		SetLog(global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename).
-	// 		SetLogEnable(true).
-	// 		Launch() // 通过守护进程启动
-	// }
-
 	switch consoleArgs.cmdAPP {
 	case "help":
 		command.Elements.Help.Launch()

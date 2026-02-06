@@ -253,7 +253,11 @@ func (my *AnyMap[K, V]) Filter(fn func(item V) bool) AnyMapper[K, V] {
 		}
 	}
 
-	return res
+	my.data = res.ToMap()
+	my.keys = res.GetKeys()
+	my.values = res.GetValues()
+
+	return my
 }
 
 func (my *AnyMap[K, V]) RemoveEmpty() AnyMapper[K, V] {
@@ -266,6 +270,9 @@ func (my *AnyMap[K, V]) RemoveEmpty() AnyMapper[K, V] {
 		}
 
 		// 非指针类型：直接检查零值
+		if !ref.IsValid() {
+			return false
+		}
 		return !ref.IsZero()
 	})
 }
@@ -297,7 +304,9 @@ func (my *AnyMap[K, V]) RemoveByKey(key K) AnyMapper[K, V] {
 			newData = newData.SetValue(my.keys.GetValue(idx), my.values.GetValue(idx))
 		}
 
-		return newData
+		my.data = newData.ToMap()
+		my.keys = newData.GetKeys()
+		my.values = newData.GetValues()
 	}
 
 	return my
@@ -322,7 +331,9 @@ func (my *AnyMap[K, V]) RemoveByValue(value V) AnyMapper[K, V] {
 			newData = newData.SetValue(my.keys.GetValue(idx), my.values.GetValue(idx))
 		}
 
-		return newData
+		my.data = newData.ToMap()
+		my.keys = newData.GetKeys()
+		my.values = newData.GetValues()
 	}
 
 	return my
