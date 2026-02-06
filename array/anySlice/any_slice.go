@@ -529,7 +529,7 @@ func (my *AnyArray[T]) Union(other AnySlicer[T]) AnySlicer[T] {
 }
 
 // UnionBySlice 取并集：通过切片
-func (my *AnyArray[T]) UnionBySlice(other []T) AnySlicer[T] {
+func (my *AnyArray[T]) UnionBySlice(other ...T) AnySlicer[T] {
 	return my.Union(NewList(other))
 }
 
