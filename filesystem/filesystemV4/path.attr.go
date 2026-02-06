@@ -11,8 +11,8 @@ type (
 	AttrPath struct{ path string }
 )
 
-func Abs(paths ...string) PathAttributer { return AttrPath{path: getRootPath(filepath.Join(paths...))} }
-func Rel(paths ...string) PathAttributer { return AttrPath{path: filepath.Join(paths...)} }
+func Rel(paths ...string) PathAttributer { return AttrPath{path: getRootPath(filepath.Join(paths...))} }
+func Abs(paths ...string) PathAttributer { return AttrPath{path: filepath.Join(paths...)} }
 
 func (my AttrPath) Register(f Filesystemer) { f.SetFullPathForAttr(my.path) }
 func (my AttrPath) Joins(paths ...string) PathAttributer {

@@ -10,3 +10,4 @@
 
 5. [泛型字典](./dict/anyMap/readme.md)
 
+6. [摘要算法](digest/digestV2/readme.md)
