@@ -286,20 +286,19 @@ func (my *Dir) CopyTo(isRel bool, dstPaths ...string) Filesystemer {
 		return my
 	}
 
-	if dst = NewDir(Rel(dstPaths...)); !dst.GetExist() {
+	if dst = NewDir(operationV2.NewTernary(operationV2.TrueValue(Rel(dstPaths...)), operationV2.FalseValue(Abs(dstPaths...))).GetByValue(isRel)); !dst.GetExist() {
 		if err = dst.Create(Mode(my.Mode)).GetError(); err != nil {
 			my.Error = err
 			return my
 		}
 	}
 
-	if len(my.Files) > 0 {
-		my.CopyFilesTo(isRel, dstPaths...)
-	}
-
 	if len(my.Dirs) > 0 {
 		my.CopyDirsTo(isRel, dstPaths...)
+	}
 
+	if len(my.Files) > 0 {
+		my.CopyFilesTo(isRel, dstPaths...)
 	}
 
 	return my
