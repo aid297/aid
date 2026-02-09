@@ -262,4 +262,14 @@
    
    ```
 
+8. 其他简单方法
+   ```go
+   Lock() Filesystemer      // 加锁：写锁
+   Unlock() Filesystemer    // 解锁：写锁
+   RLock() Filesystemer     // 加锁：读锁
+   RUnlock() Filesystemer   // 解锁：读锁
+   RemoveAll() Filesystemer // 删除文件夹（包括文件夹下所有递归子集）
+   Up() Filesystemer        // 返回上一级
+   ```
+
    
