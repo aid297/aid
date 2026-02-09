@@ -29,6 +29,7 @@ func NewDir(attrs ...PathAttributer) Filesystemer {
 	return (&Dir{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
 }
 
+func (my *Dir) GetName() string          { return my.Name }
 func (my *Dir) GetExist() bool           { return my.Exist }
 func (my *Dir) GetError() error          { return my.Error }
 func (my *Dir) GetBasePath() string      { return my.BasePath }
@@ -235,12 +236,24 @@ func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 		}
 	}
 
-	for idx := range my.Files {
-		if err = my.Files[idx].CopyTo(isRel, append([]string{my.Files[idx].GetBasePath()}, dstPaths...)...).GetError(); err != nil {
+	for _, file := range my.Files {
+		newFile := operationV2.NewTernary(operationV2.TrueValue(append([]string{file.GetBasePath()}, dstPaths...)), operationV2.FalseValue(dstPaths)).GetByValue(isRel)
+		newFile = append(newFile, file.GetName())
+		if err = file.CopyTo(false, newFile...).GetError(); err != nil {
 			my.Error = err
 			return my
 		}
 	}
+
+	// for idx := range my.Files {
+	// 	file := my.Files[idx]
+	// 	newFile := append([]string{file.GetBasePath()}, dstPaths...)
+	// 	newFile = append(newFile, file.GetName())
+	// 	if err = my.Files[idx].CopyTo(false, newFile...).GetError(); err != nil {
+	// 		my.Error = err
+	// 		return my
+	// 	}
+	// }
 
 	return my
 }
@@ -262,7 +275,7 @@ func (my *Dir) CopyDirsTo(isRel bool, dstPaths ...string) *Dir {
 	}
 
 	if len(my.Dirs) > 0 {
-		my.Error = copyDirTo(my.FullPath, NewDir(Rel(dstPaths...)).GetFullPath())
+		my.Error = copyDirTo(my.FullPath, NewDir(operationV2.NewTernary(operationV2.TrueValue(Rel(dstPaths...)), operationV2.FalseValue(Abs(dstPaths...))).GetByValue(isRel)).GetFullPath())
 	}
 
 	return my
@@ -294,14 +307,15 @@ func (my *Dir) CopyTo(isRel bool, dstPaths ...string) Filesystemer {
 			my.Error = err
 			return my
 		}
+
 	}
 
 	if len(my.Dirs) > 0 {
-		my.CopyDirsTo(isRel, dstPaths...)
+		my.CopyDirsTo(false, dst.GetFullPath())
 	}
 
 	if len(my.Files) > 0 {
-		my.CopyFilesTo(isRel, dstPaths...)
+		my.CopyFilesTo(false, dst.GetFullPath())
 	}
 
 	return my

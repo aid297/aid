@@ -13,40 +13,48 @@ func getRootPath(dir string) string {
 	return filepath.Clean(filepath.Join(rootPath, dir))
 }
 
-func copyFileTo(src, dst string) error {
+func copyFileTo(src, dst string) (err error) {
+	var (
+		srcFile *os.File
+		dstFile *os.File
+		srcInfo os.FileInfo
+	)
+
 	// 打开源文件
-	srcFile, err := os.Open(src)
-	if err != nil {
+	if srcFile, err = os.Open(src); err != nil {
 		return fmt.Errorf("无法打开源文件 %s: %w", src, err)
 	}
 	defer srcFile.Close()
 
 	// 获取源文件信息（用于保留权限）
-	srcInfo, err := os.Stat(src)
-	if err != nil {
+	if srcInfo, err = os.Stat(src); err != nil {
 		return fmt.Errorf("无法获取源文件信息 %s: %w", src, err)
 	}
 
 	// 创建目标文件，保留原始权限
-	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, srcInfo.Mode())
-	if err != nil {
+	if dstFile, err = os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, srcInfo.Mode()); err != nil {
 		return fmt.Errorf("无法创建目标文件 %s: %w", dst, err)
 	}
 	defer dstFile.Close()
 
 	// 复制文件内容
-	_, err = io.Copy(dstFile, srcFile)
-	if err != nil {
+	if _, err = io.Copy(dstFile, srcFile); err != nil {
 		return fmt.Errorf("复制文件内容失败 %s -> %s: %w", src, dst, err)
 	}
 
-	return nil
+	return
 }
 
-func copyDirTo(src, dst string) error {
+func copyDirTo(src, dst string) (err error) {
+	var (
+		srcInfo          os.FileInfo
+		entries          []os.DirEntry
+		entry            os.DirEntry
+		srcPath, dstPath string
+	)
+
 	// 获取源目录信息
-	srcInfo, err := os.Stat(src)
-	if err != nil {
+	if srcInfo, err = os.Stat(src); err != nil {
 		return fmt.Errorf("无法获取源目录信息: %w", err)
 	}
 
@@ -56,29 +64,28 @@ func copyDirTo(src, dst string) error {
 	}
 
 	// 创建目标目录（保留原始权限）
-	if err := os.MkdirAll(dst, srcInfo.Mode()); err != nil {
+	if err = os.MkdirAll(dst, srcInfo.Mode()); err != nil {
 		return fmt.Errorf("无法创建目标目录 %s: %w", dst, err)
 	}
 
 	// 读取源目录内容
-	entries, err := os.ReadDir(src)
-	if err != nil {
+	if entries, err = os.ReadDir(src); err != nil {
 		return fmt.Errorf("无法读取源目录 %s: %w", src, err)
 	}
 
 	// 遍历并处理每个条目
-	for _, entry := range entries {
-		srcPath := filepath.Join(src, entry.Name())
-		dstPath := filepath.Join(dst, entry.Name())
+	for _, entry = range entries {
+		srcPath = filepath.Join(src, entry.Name())
+		dstPath = filepath.Join(dst, entry.Name())
 
 		if entry.IsDir() {
 			// 递归处理子目录
-			if err := copyDirTo(srcPath, dstPath); err != nil {
+			if err = copyDirTo(srcPath, dstPath); err != nil {
 				return err
 			}
 		} else {
 			// 复制文件
-			if err := copyFileTo(srcPath, dstPath); err != nil {
+			if err = copyFileTo(srcPath, dstPath); err != nil {
 				return fmt.Errorf("复制文件 %s 失败: %w", srcPath, err)
 			}
 		}

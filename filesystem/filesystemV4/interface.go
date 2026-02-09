@@ -3,6 +3,7 @@ package filesystemV4
 import "os"
 
 type Filesystemer interface {
+	GetName() string
 	GetExist() bool
 	GetError() error
 	GetBasePath() string

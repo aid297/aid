@@ -13,17 +13,16 @@ import (
 
 type (
 	File struct {
-		Error    error        `json:"error"`    // 错误信息
-		Name     string       `json:"name"`     // 文件名
-		BasePath string       `json:"basePath"` // 基础路径
-		FullPath string       `json:"fullPath"` // 完整路径
-		Size     int64        `json:"size"`     // 文件大小
-		Info     os.FileInfo  `json:"info"`     // 文件信息
-		Mode     os.FileMode  `json:"mode"`     // 文件权限
-		Exist    bool         `json:"exist"`    // 文件是否存在
-		mu       sync.RWMutex // 读写锁
+		Error    error        `json:"error"`     // 错误信息
+		Name     string       `json:"name"`      // 文件名
+		BasePath string       `json:"basePath"`  // 基础路径
+		FullPath string       `json:"fullPath"`  // 完整路径
+		Size     int64        `json:"size"`      // 文件大小
+		Info     os.FileInfo  `json:"info"`      // 文件信息
+		Mode     os.FileMode  `json:"mode"`      // 文件权限
+		Exist    bool         `json:"exist"`     // 文件是否存在
+		mu       sync.RWMutex `json:"-"`         // 读写锁
 		Ext      string       `json:"extension"` // 文件扩展名
-		FileInfo os.FileInfo  `json:"fileInfo"`  // 文件信息
 		Mime     string       `json:"mime"`      // 文件 Mime 类型
 		Kind     string       `json:"kind"`      // 类型
 	}
@@ -38,6 +37,7 @@ func NewFile(attrs ...PathAttributer) Filesystemer {
 	return (&File{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
 }
 
+func (my *File) GetName() string          { return my.Name }
 func (my *File) GetExist() bool           { return my.Exist }
 func (my *File) GetError() error          { return my.Error }
 func (my *File) GetBasePath() string      { return my.BasePath }
@@ -66,7 +66,7 @@ func (my *File) refresh() Filesystemer {
 	var err error
 
 	if my.FullPath != "" {
-		if my.FileInfo, err = os.Stat(my.FullPath); err != nil {
+		if my.Info, err = os.Stat(my.FullPath); err != nil {
 			if os.IsNotExist(err) {
 				my.Name = ""
 				my.Size = 0
@@ -82,9 +82,9 @@ func (my *File) refresh() Filesystemer {
 			}
 		}
 
-		my.Name = my.FileInfo.Name()
-		my.Size = my.FileInfo.Size()
-		my.Mode = my.FileInfo.Mode()
+		my.Name = my.Info.Name()
+		my.Size = my.Info.Size()
+		my.Mode = my.Info.Mode()
 		my.BasePath = path.Dir(my.FullPath)
 		my.Exist = true
 		my.Error = nil
@@ -144,8 +144,14 @@ func (my *File) Write(content []byte, attrs ...OperationAttributer) Filesystemer
 
 	if file, err = os.OpenFile(
 		my.FullPath,
-		operationV2.NewTernary(operationV2.TrueValue(operation.Flag), operationV2.FalseValue(DefaultCreateMode)).GetByValue(operation.Flag != 0),
-		operationV2.NewTernary(operationV2.TrueValue(operation.Mode), operationV2.FalseValue(os.FileMode(0777))).GetByValue(operation.Mode != 0),
+		operationV2.NewTernary(
+			operationV2.TrueValue(operation.Flag),
+			operationV2.FalseValue(DefaultCreateMode),
+		).GetByValue(operation.Flag != 0),
+		operationV2.NewTernary(
+			operationV2.TrueValue(operation.Mode),
+			operationV2.FalseValue(os.FileMode(0777)),
+		).GetByValue(operation.Mode != 0),
 	); err != nil {
 		my.Error = fmt.Errorf("%w:%w", ErrWriteFile, err)
 		return my
@@ -205,8 +211,14 @@ func (my *File) Read(attrs ...OperationAttributer) ([]byte, error) {
 
 	if file, err = os.OpenFile(
 		my.FullPath,
-		operationV2.NewTernary(operationV2.TrueFn(func() int { return fileOperation.Flag }), operationV2.FalseFn(func() int { return DefaultReadMode })).GetByValue(fileOperation.Flag != 0),
-		operationV2.NewTernary(operationV2.TrueFn(func() os.FileMode { return fileOperation.Mode }), operationV2.FalseFn(func() os.FileMode { return os.FileMode(0777) })).GetByValue(fileOperation.Mode != 0),
+		operationV2.NewTernary(
+			operationV2.TrueFn(func() int { return fileOperation.Flag }),
+			operationV2.FalseFn(func() int { return DefaultReadMode }),
+		).GetByValue(fileOperation.Flag != 0),
+		operationV2.NewTernary(
+			operationV2.TrueFn(func() os.FileMode { return fileOperation.Mode }),
+			operationV2.FalseFn(func() os.FileMode { return os.FileMode(0777) }),
+		).GetByValue(fileOperation.Mode != 0),
 	); err != nil {
 		return []byte{}, fmt.Errorf("%w:%w", ErrReadFile, err)
 	}
@@ -230,14 +242,19 @@ func (my *File) CopyTo(isRel bool, dstPaths ...string) Filesystemer {
 		return my
 	}
 
-	a := NewDir(Rel(dstPaths...)).Up()
-	b := NewDir(Abs(my.BasePath))
-
-	if my.Error = a.Create(Mode(b.GetInfo().Mode())).GetError(); my.Error != nil {
+	if dstDir := NewDir(operationV2.NewTernary(operationV2.TrueValue(Rel(dstPaths...)), operationV2.FalseValue(Abs(dstPaths...))).GetByValue(isRel)).Up(); dstDir.GetError() != nil {
+		my.Error = dstDir.GetError()
 		return my
 	}
 
-	my.Error = copyFileTo(my.FullPath, NewFile(operationV2.NewTernary(operationV2.TrueFn(func() PathAttributer { return Rel(dstPaths...) }), operationV2.FalseFn(func() PathAttributer { return Abs(dstPaths...) })).GetByValue(isRel)).GetFullPath())
+	newPath := NewFile(
+		operationV2.NewTernary(
+			operationV2.TrueFn(func() PathAttributer { return Rel(dstPaths...) }),
+			operationV2.FalseFn(func() PathAttributer { return Abs(dstPaths...) }),
+		).GetByValue(isRel),
+	)
+
+	my.Error = copyFileTo(my.GetFullPath(), newPath.GetFullPath())
 
 	return my
 }
