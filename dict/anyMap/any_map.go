@@ -245,7 +245,7 @@ func (my *AnyMap[K, V]) GetValues() anySlice.AnySlicer[V] { return my.values }
 
 func (my *AnyMap[K, V]) Length() int { return len(my.data) }
 
-func (my *AnyMap[K, V]) LengthNotEmpty() int { return my.RemoveEmpty().Length() }
+func (my *AnyMap[K, V]) LengthNotEmpty() int { return my.Copy().RemoveEmpty().Length() }
 
 func (my *AnyMap[K, V]) Filter(fn func(item V) bool) AnyMapper[K, V] {
 	res := New(Cap[K, V](my.Length()))

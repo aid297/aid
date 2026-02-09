@@ -9,3 +9,7 @@
 7. [文件管理](./filesystem/filesystemV4/readme.md)
 8. [`GORM`连接池](./gormPool/readme.md)
 9. [`HTTP`客户端](./httpClient/httpClientV2/readme.md)
+10. [`HTTP`限流器](./httpLimiter/readme.md)
+11. [日志](./logger/readme.md)
+12. [消息中间件](./messageQueue/readme.md)
+13. [`MongoDB`连接池](./mongoClientPool/readme.md)

@@ -345,7 +345,7 @@ func (my *AnyArray[T]) Shuffle() AnySlicer[T] {
 func (my *AnyArray[T]) Length() int { return len(my.data) }
 
 // LengthNotEmpty 获取非0值长度
-func (my *AnyArray[T]) LengthNotEmpty() int { return my.RemoveEmpty().Length() }
+func (my *AnyArray[T]) LengthNotEmpty() int { return my.Copy().RemoveEmpty().Length() }
 
 // Filter 过滤数组值
 func (my *AnyArray[T]) Filter(fn func(item T) bool) AnySlicer[T] {
@@ -388,7 +388,7 @@ func (my *AnyArray[T]) Join(sep string) string {
 }
 
 // JoinNotEmpty 拼接非空字符串
-func (my *AnyArray[T]) JoinNotEmpty(sep string) string { return my.RemoveEmpty().Join(sep) }
+func (my *AnyArray[T]) JoinNotEmpty(sep string) string { return my.Copy().RemoveEmpty().Join(sep) }
 
 func (my *AnyArray[T]) in(target T) bool {
 	for idx := range my.data {
