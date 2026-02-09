@@ -196,10 +196,9 @@ func (my *Dir) LS() Filesystemer {
 	}
 
 	for _, entry := range entries {
-		fmt.Println(entry.Name(), entry.IsDir())
 		if entry.IsDir() {
-			d := NewDir(Abs(my.FullPath, entry.Name()))
-			my.Dirs = append(my.Dirs, d)
+			dir := NewDir(Abs(my.FullPath, entry.Name()))
+			my.Dirs = append(my.Dirs, dir)
 		} else {
 			my.Files = append(my.Files, NewFile(Abs(my.FullPath, entry.Name())))
 		}
@@ -244,16 +243,6 @@ func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 			return my
 		}
 	}
-
-	// for idx := range my.Files {
-	// 	file := my.Files[idx]
-	// 	newFile := append([]string{file.GetBasePath()}, dstPaths...)
-	// 	newFile = append(newFile, file.GetName())
-	// 	if err = my.Files[idx].CopyTo(false, newFile...).GetError(); err != nil {
-	// 		my.Error = err
-	// 		return my
-	// 	}
-	// }
 
 	return my
 }
