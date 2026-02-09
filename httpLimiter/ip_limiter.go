@@ -9,38 +9,34 @@ type (
 	Visit struct {
 		// 最后一次请求时间
 		lastVisit time.Time
-		// 对应Time窗口内的访问次数
+		// 对应 Time 窗口内的访问次数
 		visitTimes uint16
 	}
 
-	// IpLimiter ip限流器
-	IpLimiter struct{ visitMap map[string]*Visit }
-)
-
-var (
-	VisitApp Visit
+	// IPLimiter ip限流器
+	IPLimiter struct{ visitMap map[string]*Visit }
 )
 
 func (*Visit) New() *Visit {
 	return &Visit{lastVisit: time.Now(), visitTimes: 1}
 }
 
-func (*IpLimiter) New() *IpLimiter { return NewIpLimiter() }
+func (*IPLimiter) New() *IPLimiter { return NewIPLimiter() }
 
-// NewIpLimiter 实例化：Ip 限流
+// NewIPLimiter 实例化：Ip 限流
 //
 //go:fix 推荐使用New方法
-func NewIpLimiter() *IpLimiter { return &IpLimiter{visitMap: make(map[string]*Visit)} }
+func NewIPLimiter() *IPLimiter { return &IPLimiter{visitMap: make(map[string]*Visit)} }
 
 // Affirm 检查限流
-func (my *IpLimiter) Affirm(ip string, t time.Duration, maxVisitTimes uint16) (*Visit, bool) {
+func (my *IPLimiter) Affirm(ip string, t time.Duration, maxVisitTimes uint16) (*Visit, bool) {
 	if maxVisitTimes == 0 || t == 0 {
 		return nil, true
 	}
 
 	v, ok := my.visitMap[ip]
 	if !ok {
-		my.visitMap[ip] = VisitApp.New()
+		my.visitMap[ip] = APP.Visit.New()
 		return nil, true
 	}
 

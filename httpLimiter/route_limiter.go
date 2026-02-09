@@ -8,7 +8,7 @@ import (
 type (
 	// visitor 访问者对象
 	visitor struct {
-		ipLimiter     *IpLimiter
+		ipLimiter     *IPLimiter
 		t             time.Duration
 		maxVisitTimes uint16
 	}
@@ -24,7 +24,7 @@ var (
 )
 
 func (*visitor) New(t time.Duration, maxVisitTimes uint16) *visitor {
-	return &visitor{ipLimiter: NewIpLimiter(), t: t, maxVisitTimes: maxVisitTimes}
+	return &visitor{ipLimiter: NewIPLimiter(), t: t, maxVisitTimes: maxVisitTimes}
 }
 
 func (*RouteLimiter) Once() *RouteLimiter { return OnceRouteLimiter() }

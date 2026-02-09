@@ -8,4 +8,4 @@
 6. [摘要算法](digest/digestV2/readme.md)
 7. [文件管理](./filesystem/filesystemV4/readme.md)
 8. [`GORM`连接池](./gormPool/readme.md)
-9. 
+9. [`HTTP`客户端](./httpClient/httpClientV2/readme.md)

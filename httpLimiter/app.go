@@ -1,6 +1,7 @@
 package httpLimiter
 
 var APP struct {
-	IpLimiter     IpLimiter
+	Visit         Visit
+	IPLimiter     IPLimiter
 	RouterLimiter RouteLimiter
 }
