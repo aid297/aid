@@ -17,10 +17,9 @@ type RedisSetting struct {
 }
 
 // New 初始化：数据库配置
-func (*RedisSetting) New(path string) *RedisSetting {
-	var rs = &RedisSetting{}
-	setting.NewSetting(setting.Filename(path), setting.Content(rs))
-	return rs
+func (*RedisSetting) New(path string) (rs *RedisSetting, err error) {
+	_, err = setting.NewSetting(setting.Filename(path), setting.Content(rs))
+	return
 }
 
 // ExampleYaml 示例配置文件
