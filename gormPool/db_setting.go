@@ -154,7 +154,7 @@ postgres:
     host: 127.0.0.1
     port: 5432
     database: "tbl_test"
-    sslmode: "disable"
+    ssl-mode: "disable"
     timezone: "Asia/Shanghai"
 sql-server:
   main:

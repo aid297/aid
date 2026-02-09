@@ -58,13 +58,9 @@ postgres:
     host: 127.0.0.1
     port: 5432
     database: "tbl_test"
-    sslmode: "disable"
+    ssl-mode: "disable"
     timezone: "Asia/Shanghai"
 sql-server:
-  maxOpenConns: 100
-  maxIdleConns: 20
-  maxLifetime: 100
-  maxIdleTime: 10
   main:
     username: "admin"
     password: "Admin@1234"
