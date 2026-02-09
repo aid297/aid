@@ -68,7 +68,7 @@ func OncePostgresPool(dbSetting *DBSetting) GORMPool {
 			dbSetting.Postgres.Main.Password,
 			dbSetting.Postgres.Main.Database,
 			dbSetting.Postgres.Main.Port,
-			dbSetting.Postgres.Main.SslMode,
+			dbSetting.Postgres.Main.SSLMode,
 			dbSetting.Postgres.Main.TimeZone,
 		),
 	}
@@ -128,7 +128,7 @@ func (my *PGPool) getRws() *gorm.DB {
 					item.Password,
 					item.Database,
 					item.Port,
-					item.SslMode,
+					item.SSLMode,
 					item.TimeZone,
 				),
 			})
@@ -148,7 +148,7 @@ func (my *PGPool) getRws() *gorm.DB {
 					item.Password,
 					item.Database,
 					item.Port,
-					item.SslMode,
+					item.SSLMode,
 					item.TimeZone,
 				),
 			})

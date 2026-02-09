@@ -6,5 +6,10 @@
         <method importPath="github.com/gorilla/websocket" receiver="*Upgrader" name="Upgrade" />
       </methods>
     </inspection_tool>
+    <inspection_tool class="GoResourceLeak" enabled="true" level="WARNING" enabled_by_default="true">
+      <functions>
+        <function importPath="github.com/aid297/aid/gormPool" name="OnceMySqlPool" />
+      </functions>
+    </inspection_tool>
   </profile>
 </component>

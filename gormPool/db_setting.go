@@ -7,18 +7,18 @@ import (
 type (
 	DBSetting struct {
 		Common    *Common           `yaml:"common,omitempty"`
-		MySql     *MySQLSetting     `yaml:"mysql,omitempty"`
+		MySQL     *MySQLSetting     `yaml:"mysql,omitempty"`
 		Postgres  *PGSetting        `yaml:"postgres,omitempty"`
-		SqlServer *SQLServerSetting `yaml:"sql-server,omitempty"`
-		CbitSql   *ArSQLSetting     `yaml:"ar-sql,omitempty"`
+		SQLServer *SQLServerSetting `yaml:"sql-server,omitempty"`
+		ArSQL     *ArSQLSetting     `yaml:"ar-sql,omitempty"`
 	}
 
 	Common struct {
 		Driver             string `yaml:"driver"`
-		MaxOpenConnections int    `yaml:"maxOpenConns"`
-		MaxIdleConnections int    `yaml:"maxIdleConns"`
-		MaxLifetime        int    `yaml:"maxLifetime"`
-		MaxIdleTime        int    `yaml:"maxIdleTime"`
+		MaxOpenConnections int    `yaml:"max-open-connections"`
+		MaxIdleConnections int    `yaml:"max-idle-connections"`
+		MaxLifetime        int    `yaml:"max-lifetime"`
+		MaxIdleTime        int    `yaml:"max-idle-time"`
 	}
 
 	Dsn struct {
@@ -69,7 +69,7 @@ type (
 		Port     uint16 `yaml:"port"`
 		Database string `yaml:"database"`
 		TimeZone string `yaml:"timezone"`
-		SslMode  string `yaml:"sslmode"`
+		SSLMode  string `yaml:"ssl-mode"`
 	}
 
 	SQLServerSetting struct {
@@ -86,19 +86,20 @@ type (
 )
 
 // New 初始化：数据库配置
-func (*DBSetting) New(path string) *DBSetting {
-	var dbSetting = &DBSetting{}
-	setting.NewSetting(setting.Filename(path), setting.Content(dbSetting))
-	return dbSetting
+func (*DBSetting) New(path string) (dbSetting *DBSetting, err error) {
+	if _, err = setting.NewSetting(setting.Filename(path), setting.Content(dbSetting)); err != nil {
+		return nil, err
+	}
+	return dbSetting, nil
 }
 
 func (*DBSetting) ExampleYaml() string {
 	return `common:
   driver: "mysql"
-  maxOpenConns: 100
-  maxIdleConns: 20
-  maxLifetime: 100
-  maxIdleTime: 10
+  max-open-connections: 100
+  max-idle-connections: 20
+  max-lifetime: 100
+  max-idle-time: 10
 ar-sql:
   database: "cbit_db"
   rws: false
@@ -156,10 +157,6 @@ postgres:
     sslmode: "disable"
     timezone: "Asia/Shanghai"
 sql-server:
-  maxOpenConns: 100
-  maxIdleConns: 20
-  maxLifetime: 100
-  maxIdleTime: 10
   main:
     username: "admin"
     password: "Admin@1234"

@@ -41,11 +41,11 @@ func (*SQLServerPool) Once(dbSetting *DBSetting) GORMPool { return OnceSqlServer
 func OnceSqlServerPool(dbSetting *DBSetting) GORMPool {
 	sqlServerPoolOnce.Do(func() {
 		sqlServerPoolIns = &SQLServerPool{
-			username:     dbSetting.SqlServer.Main.Username,
-			password:     dbSetting.SqlServer.Main.Password,
-			host:         dbSetting.SqlServer.Main.Host,
-			port:         dbSetting.SqlServer.Main.Port,
-			database:     dbSetting.SqlServer.Main.Database,
+			username:     dbSetting.SQLServer.Main.Username,
+			password:     dbSetting.SQLServer.Main.Password,
+			host:         dbSetting.SQLServer.Main.Host,
+			port:         dbSetting.SQLServer.Main.Port,
+			database:     dbSetting.SQLServer.Main.Database,
 			maxIdleTime:  dbSetting.Common.MaxIdleTime,
 			maxLifetime:  dbSetting.Common.MaxLifetime,
 			maxIdleConns: dbSetting.Common.MaxIdleConnections,
@@ -63,11 +63,11 @@ func OnceSqlServerPool(dbSetting *DBSetting) GORMPool {
 		Name: "main",
 		Content: fmt.Sprintf(
 			SqlServerDsnFormat,
-			dbSetting.SqlServer.Main.Username,
-			dbSetting.SqlServer.Main.Password,
-			dbSetting.SqlServer.Main.Host,
-			dbSetting.SqlServer.Main.Port,
-			dbSetting.SqlServer.Main.Database,
+			dbSetting.SQLServer.Main.Username,
+			dbSetting.SQLServer.Main.Password,
+			dbSetting.SQLServer.Main.Host,
+			dbSetting.SQLServer.Main.Port,
+			dbSetting.SQLServer.Main.Database,
 		),
 	}
 

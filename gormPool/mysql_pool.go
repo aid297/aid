@@ -33,7 +33,7 @@ var (
 	MySqlPoolApp   MySQLPool
 )
 
-func (*MySQLPool) Once(dbSetting *DBSetting) GORMPool {
+func (*MySQLPool) Once(dbSetting *DBSetting) *MySQLPool {
 	return operationV2.NewTernary(operationV2.TrueValue(OnceMySqlPool(dbSetting)), operationV2.FalseValue(mysqlPoolIns)).GetByValue(dbSetting != nil)
 }
 
@@ -43,14 +43,14 @@ func (*MySQLPool) Once(dbSetting *DBSetting) GORMPool {
 func OnceMySqlPool(dbSetting *DBSetting) *MySQLPool {
 	mysqlPoolOnce.Do(func() {
 		mysqlPoolIns = &MySQLPool{
-			username:  dbSetting.MySql.Main.Username,
-			password:  dbSetting.MySql.Main.Password,
-			host:      dbSetting.MySql.Main.Host,
-			port:      dbSetting.MySql.Main.Port,
-			database:  dbSetting.MySql.Database,
-			charset:   dbSetting.MySql.Charset,
-			sources:   dbSetting.MySql.Sources,
-			replicas:  dbSetting.MySql.Replicas,
+			username:  dbSetting.MySQL.Main.Username,
+			password:  dbSetting.MySQL.Main.Password,
+			host:      dbSetting.MySQL.Main.Host,
+			port:      dbSetting.MySQL.Main.Port,
+			database:  dbSetting.MySQL.Database,
+			charset:   dbSetting.MySQL.Charset,
+			sources:   dbSetting.MySQL.Sources,
+			replicas:  dbSetting.MySQL.Replicas,
 			dbSetting: dbSetting,
 		}
 	})
@@ -63,12 +63,12 @@ func OnceMySqlPool(dbSetting *DBSetting) *MySQLPool {
 	// 配置主库
 	mysqlPoolIns.mainDsn = &Dsn{Name: "main", Content: fmt.Sprintf(
 		MySqlDsnFormat,
-		dbSetting.MySql.Main.Username,
-		dbSetting.MySql.Main.Password,
-		dbSetting.MySql.Main.Host,
-		dbSetting.MySql.Main.Port,
-		dbSetting.MySql.Database,
-		dbSetting.MySql.Charset,
+		dbSetting.MySQL.Main.Username,
+		dbSetting.MySQL.Main.Password,
+		dbSetting.MySQL.Main.Host,
+		dbSetting.MySQL.Main.Port,
+		dbSetting.MySQL.Database,
+		dbSetting.MySQL.Charset,
 	)}
 
 	// 数据库配置
@@ -82,8 +82,7 @@ func OnceMySqlPool(dbSetting *DBSetting) *MySQLPool {
 	}
 
 	// 配置主库
-	mysqlPoolIns.mainConn, err = gorm.Open(mysql.Open(mysqlPoolIns.mainDsn.Content), dbConfig)
-	if err != nil {
+	if mysqlPoolIns.mainConn, err = gorm.Open(mysql.Open(mysqlPoolIns.mainDsn.Content), dbConfig); err != nil {
 		panic(fmt.Errorf("配置主库失败：%w", err))
 	}
 
@@ -108,10 +107,10 @@ func (*MySQLPool) GetConn() *gorm.DB {
 // getRws 获取带有读写分离的数据库链接
 func (*MySQLPool) getRws() *gorm.DB {
 	var (
-		err                                 error
-		sourceDialectors, replicaDialectors []gorm.Dialector
-		sources                             []*Dsn
-		replicas                            []*Dsn
+		err                                  error
+		sourceDialectors, replicaDialectores []gorm.Dialector
+		sources                              []*Dsn
+		replicas                             []*Dsn
 	)
 	// 配置写库
 	if len(mysqlPoolIns.sources) > 0 {
@@ -125,8 +124,8 @@ func (*MySQLPool) getRws() *gorm.DB {
 					item.Password,
 					item.Host,
 					item.Port,
-					mysqlPoolIns.dbSetting.MySql.Database,
-					mysqlPoolIns.dbSetting.MySql.Charset,
+					mysqlPoolIns.dbSetting.MySQL.Database,
+					mysqlPoolIns.dbSetting.MySQL.Charset,
 				),
 			})
 		}
@@ -144,8 +143,8 @@ func (*MySQLPool) getRws() *gorm.DB {
 					item.Password,
 					item.Host,
 					item.Port,
-					mysqlPoolIns.dbSetting.MySql.Database,
-					mysqlPoolIns.dbSetting.MySql.Charset,
+					mysqlPoolIns.dbSetting.MySQL.Database,
+					mysqlPoolIns.dbSetting.MySQL.Charset,
 				),
 			})
 		}
@@ -159,16 +158,16 @@ func (*MySQLPool) getRws() *gorm.DB {
 	}
 
 	if len(replicas) > 0 {
-		replicaDialectors = make([]gorm.Dialector, len(replicas))
+		replicaDialectores = make([]gorm.Dialector, len(replicas))
 		for i := 0; i < len(replicas); i++ {
-			replicaDialectors[i] = mysql.Open(replicas[i].Content)
+			replicaDialectores[i] = mysql.Open(replicas[i].Content)
 		}
 	}
 
 	err = mysqlPoolIns.mainConn.Use(
 		dbresolver.Register(dbresolver.Config{
 			Sources:           sourceDialectors,          // 写库
-			Replicas:          replicaDialectors,         // 读库
+			Replicas:          replicaDialectores,        // 读库
 			Policy:            dbresolver.RandomPolicy{}, // 策略
 			TraceResolverMode: true,
 		}).
