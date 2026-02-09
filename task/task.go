@@ -32,8 +32,8 @@ func initTaskPool(tasks ...*Task) *TaskPool {
 	return tp
 }
 
-// GetTaskPoolOnce 获取单例
-func GetTaskPoolOnce(tasks ...*Task) *TaskPool {
+// OnceTaskPool 获取单例
+func OnceTaskPool(tasks ...*Task) *TaskPool {
 	taskPoolOnce.Do(func() { taskPoolIns = initTaskPool(tasks...) })
 	return taskPoolIns
 }
@@ -76,7 +76,7 @@ func (my *TaskPool) GO() []*Task {
 
 func Demo() {
 	// 1. 初始化队列
-	tp := GetTaskPoolOnce()
+	tp := OnceTaskPool()
 	// 2. 推送任务并执行
 	tasks := tp.PushTask(
 		&Task{ID: "task-low", Priority: 1},

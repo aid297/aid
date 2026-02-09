@@ -6,9 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aid297/aid/str"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+
+	`github.com/aid297/aid/operation/operationV2`
+	"github.com/aid297/aid/str"
 )
 
 // ******************** 配置文件 ********************
@@ -24,23 +26,14 @@ type Setting struct {
 func NewSetting(attrs ...SettingAttributes) (v *viper.Viper, err error) {
 	var (
 		configPath string
-		configEnv  string
 		ins        = Setting{}.SetAttrs(attrs...)
 	)
 
-	if configEnv = os.Getenv(ins.envName); configEnv != "" {
-		configPath = configEnv
-	}
-
-	if ins.configFilename != "" {
-		configPath = ins.configFilename
-	}
-
-	if configPath == "" && ins.defaultName != "" {
-		configPath = ins.defaultName
-	}
-
-	if configPath == "" {
+	if _, configPath = operationV2.NewMultivariate[string]().
+		Append(operationV2.MultivariateAttr[string]{Item: ins.configFilename}).
+		Append(operationV2.MultivariateAttr[string]{Item: os.Getenv(ins.envName)}).
+		SetDefault(operationV2.MultivariateAttr[string]{Item: ins.defaultName}).
+		Finally(func(item string) bool { return item != "" }); configPath == "" {
 		return nil, ErrConfigNotSet
 	}
 

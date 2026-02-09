@@ -16,3 +16,6 @@
 14. [多元操作](./operation/operationV2/readme.md)
 15. [便捷指针](./ptr/readme.md)
 16. [`RBAC`套件](./rbac/readme.md)
+17. [`Redis`连接池](./redisPool/readme.md)
+18. [配置文件](./setting/readme.md)
+19. 

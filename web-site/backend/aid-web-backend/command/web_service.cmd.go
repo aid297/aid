@@ -28,7 +28,7 @@ func (WebServiceCommand) Launch() {
 
 	// 启动web-service服务
 	if err := app.Run(str.APP.Buffer.JoinString(":", global.CONFIG.WebService.Port)); err != nil {
-		global.LOG.Error("启动web服务", zap.Error(err))
+		global.LOG.Error("启动 web 服务", zap.Error(err))
 		log.Fatalf("【启动web服务错误】%s", err.Error())
 	}
 }
