@@ -4,9 +4,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cast"
+
 	"github.com/aid297/aid/array/anyArrayV2"
 	"github.com/aid297/aid/ptr"
-	"github.com/spf13/cast"
 )
 
 // func (my FieldInfo) getRuleType(rules anyArrayV2.AnyArray[string]) (targetType string) {
@@ -37,7 +38,7 @@ import (
 
 func getRuleRequired(rules anyArrayV2.AnyArray[string]) bool { return rules.In("required") }
 
-func getRuleNotEmpty(rules anyArrayV2.AnyArray[string]) bool { return rules.In("not-empty") }
+func getRuleNotZero(rules anyArrayV2.AnyArray[string]) bool { return rules.In("not-zero") }
 
 func getRuleExFnNames(rule string) (exFnNames []string) {
 	var (

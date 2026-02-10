@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// checkSlice 检查数组、切片，支持：required、not-empty、[array|slice]、min>、min>=、max<、max<=、size=、size!=、ex:
+// checkSlice 检查数组、切片，支持：required、min>、min>=、max<、max<=、size=、size!=、ex:
 func (my FieldInfo) checkSlice() FieldInfo {
 	var (
 		min, max, size *int
@@ -19,14 +19,14 @@ func (my FieldInfo) checkSlice() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
-		return my
-	}
-
-	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
-		return my
+	if getRuleRequired(my.VRuleTags) {
+		if my.IsPtr && (my.IsNil || len(value) == 0) {
+			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
+			return my
+		} else if !my.IsPtr && len(value) == 0 {
+			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+			return my
+		}
 	}
 
 	my.VRuleTags.Each(func(_ int, rule string) {

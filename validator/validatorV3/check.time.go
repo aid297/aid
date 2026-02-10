@@ -8,7 +8,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkTime 检查时间，支持：required、not-empty、[datetime|date|time]、min>、min>=、max<、max<=、in、not-in、ex:
+// checkTime 检查时间，支持：required、[datetime|date|time]、min>、min>=、max<、max<=、in、not-in、ex:
 func (my FieldInfo) checkTime() FieldInfo {
 	var (
 		min, max  *time.Time
@@ -23,14 +23,14 @@ func (my FieldInfo) checkTime() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
-		return my
-	}
-
-	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
-		return my
+	if getRuleRequired(my.VRuleTags) {
+		if my.IsPtr && my.IsNil {
+			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
+			return my
+		} else if !my.IsPtr && value.IsZero() {
+			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+			return my
+		}
 	}
 
 	my.VRuleTags.Each(func(_ int, rule string) {

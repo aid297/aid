@@ -10,7 +10,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkInt 检查整数，支持：required、not-empty、[int|i]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt 检查整数，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt() FieldInfo {
 	var (
 		min, max, size *int
@@ -31,11 +31,6 @@ func (my FieldInfo) checkInt() FieldInfo {
 	}
 
 	value, _ = my.Value.(int)
-
-	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
-		return my
-	}
 
 	my.VRuleTags.Each(func(_ int, rule string) {
 		if strings.HasPrefix(rule, "min") {
@@ -102,7 +97,7 @@ func (my FieldInfo) checkInt() FieldInfo {
 	return my
 }
 
-// checkInt8 检查整数#8位，支持：required、not-empty、[int8|i8]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt8 检查整数#8位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt8() FieldInfo {
 	var (
 		min, max, size *int
@@ -124,11 +119,6 @@ func (my FieldInfo) checkInt8() FieldInfo {
 
 	value, _ = my.Value.(int8)
 
-	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
-		return my
-	}
-
 	my.VRuleTags.Each(func(_ int, rule string) {
 		if strings.HasPrefix(rule, "min") {
 			if min, include = getRuleIntMin(rule); min != nil {
@@ -194,7 +184,7 @@ func (my FieldInfo) checkInt8() FieldInfo {
 	return my
 }
 
-// checkInt16 检查整数#16位，支持：required、not-empty、[int16|i16]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt16 检查整数#16位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt16() FieldInfo {
 	var (
 		min, max, size *int
@@ -215,11 +205,6 @@ func (my FieldInfo) checkInt16() FieldInfo {
 
 	value, _ = my.Value.(int16)
 
-	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
-		return my
-	}
-
 	my.VRuleTags.Each(func(_ int, rule string) {
 		if strings.HasPrefix(rule, "min") {
 			if min, include = getRuleIntMin(rule); min != nil {
@@ -285,7 +270,7 @@ func (my FieldInfo) checkInt16() FieldInfo {
 	return my
 }
 
-// checkInt32 检查整数#32位，支持：required、not-empty、[int32|i32]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt32 检查整数#32位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt32() FieldInfo {
 	var (
 		min, max, size *int
@@ -307,11 +292,6 @@ func (my FieldInfo) checkInt32() FieldInfo {
 
 	value, _ = my.Value.(int32)
 
-	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
-		return my
-	}
-
 	my.VRuleTags.Each(func(_ int, rule string) {
 		if strings.HasPrefix(rule, "min") {
 			if min, include = getRuleIntMin(rule); min != nil {
@@ -377,7 +357,7 @@ func (my FieldInfo) checkInt32() FieldInfo {
 	return my
 }
 
-// checkInt64 检查整数#64位，支持：required、not-empty、[int64|i64]、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt64 检查整数#64位，支持：required、not-empty、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
 func (my FieldInfo) checkInt64() FieldInfo {
 	var (
 		min, max, size *int
@@ -398,11 +378,6 @@ func (my FieldInfo) checkInt64() FieldInfo {
 	}
 
 	value, _ = my.Value.(int64)
-
-	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
-		return my
-	}
 
 	my.VRuleTags.Each(func(_ int, rule string) {
 		if strings.HasPrefix(rule, "min") {

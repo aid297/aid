@@ -36,7 +36,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、not-empty、[string|bool|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size=、size<=, ex:
+// checkString 检查字符串，支持：required、[bool|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size=、size<=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		min, max, size *int
@@ -51,26 +51,17 @@ func (my FieldInfo) checkString() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
-		return my
+	if getRuleRequired(my.VRuleTags) {
+		if my.IsPtr && (my.IsNil || my.IsZero) {
+			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
+			return my
+		} else if !my.IsPtr && my.IsZero {
+			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
+			return my
+		}
 	}
 
 	value, _ = my.Value.(string)
-
-	if getRuleNotEmpty(my.VRuleTags) && my.IsZero {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
-		return my
-	}
-
-	// if needRequired && my.IsPtr && my.IsNil {
-	// 	my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
-	// 	return my
-	// } else if !needRequired && !my.IsPtr && value == "" {
-	// 	return my
-	// } else if !needRequired && my.IsPtr && my.IsNil {
-	// 	return my
-	// }
 
 	my.VRuleTags.Each(func(_ int, rule string) {
 		if strings.HasPrefix(rule, "min") {
