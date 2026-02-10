@@ -23,4 +23,4 @@ func (*Validator) RegisterExFn(key string, fn func(any) (err error)) *Validator 
 
 func (*Validator) GetExFn(key string) func(any) (err error) { return validatorExIns.data[key] }
 
-func (*Validator) Checker(data any) Check { return Check{}.New(data) }
+func (*Validator) Checker(data any) Checker { return NewCheck(data) }

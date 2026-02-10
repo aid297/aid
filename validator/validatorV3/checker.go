@@ -31,17 +31,17 @@ type (
 	}
 )
 
-func (Check) New(data any) Check { return Check{data: data, defaultLimit: "<br />"} }
+func NewCheck(data any) Checker { return &Check{data: data, defaultLimit: "<br />"} }
 
-func (my Check) Wrongs() []error { return my.wrongs }
+func (my *Check) Wrongs() []error { return my.wrongs }
 
-func (my Check) OK() bool { return len(my.wrongs) == 0 }
+func (my *Check) OK() bool { return len(my.wrongs) == 0 }
 
-func (my Check) Wrong() error {
+func (my *Check) Wrong() error {
 	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString("")) })).GetByValue(len(my.wrongs) > 0)
 }
 
-func (my Check) WrongToString(limit string) (ret string) {
+func (my *Check) WrongToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
 		ret = anySlice.FillFunc(
 			my.wrongs,
@@ -57,7 +57,7 @@ func (my Check) WrongToString(limit string) (ret string) {
 	return
 }
 
-func (my Check) Validate(exCheckFns ...any) Checker {
+func (my *Check) Validate(exCheckFns ...any) Checker {
 	for _, fieldInfo := range getStructFieldInfos(my.data, "") {
 		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
 			my.wrongs = append(my.wrongs, wrongs...)
@@ -79,7 +79,7 @@ func WithGin[T any](c *gin.Context, exCheckFns ...any) (form T, checker Checker)
 	form = *new(T)
 
 	if err := c.ShouldBind(&form); err != nil {
-		checker = Check{wrongs: []error{err}}
+		checker = &Check{wrongs: []error{err}}
 		return
 	}
 
@@ -90,7 +90,7 @@ func WithFiber[T any](c *fiber.Ctx, exCheckFns ...any) (form T, checker Checker)
 	form = *new(T)
 
 	if err := c.BodyParser(&form); err != nil {
-		checker = Check{wrongs: []error{err}}
+		checker = &Check{wrongs: []error{err}}
 		return
 	}
 

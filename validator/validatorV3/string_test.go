@@ -11,8 +11,10 @@ func Test1(t *testing.T) {
 
 	ur := UserRequest{Firstname: ""}
 	checker := APP.Validator.Once().Checker(ur)
-	wrongs := checker.Validate().Wrongs()
-	for _, wrong := range wrongs {
-		t.Errorf("%v\n", wrong)
+	checker.Validate()
+	if !checker.OK() {
+		for _, wrong := range checker.Wrongs() {
+			t.Errorf("%v\n", wrong)
+		}
 	}
 }
