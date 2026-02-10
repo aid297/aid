@@ -28,8 +28,6 @@ func (my FieldInfo) checkTime() FieldInfo {
 			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 			return my
 		} else if !my.IsPtr && value.IsZero() {
-			iz := value.IsZero()
-			println(iz)
 			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 			return my
 		}
@@ -72,7 +70,7 @@ func (my FieldInfo) checkTime() FieldInfo {
 					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, value)
 			}
-		} else if rule == "ex" {
+		} else if strings.HasPrefix(rule, "ex") {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := APP.Validator.Once().GetExFn(exFnNames[idx2]); fn != nil {

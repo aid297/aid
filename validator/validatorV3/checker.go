@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	`time`
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
@@ -48,19 +48,17 @@ func (my *Check) WrongToString(limit string) (ret string) {
 			my.wrongs,
 			func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) },
 		).
-			JoinNotEmpty(
-				operationV2.NewTernary(
-					operationV2.TrueValue(limit),
-					operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""),
-			)
+			JoinNotEmpty(operationV2.NewTernary(
+				operationV2.TrueValue(limit),
+				operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""))
 	}
 
 	return
 }
 
 func (my *Check) Validate(exCheckFns ...any) Checker {
-	structFieldInfos := getStructFieldInfos(my.data, "")
-	for _, fieldInfo := range structFieldInfos {
+	fieldInfos := getStructFieldInfos(my.data, "")
+	for _, fieldInfo := range fieldInfos {
 		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
 			my.wrongs = append(my.wrongs, wrongs...)
 		}
@@ -204,38 +202,92 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				value = fieldValue.Interface()
 			}
 
-			// If the declared/element kind is struct, recurse.
-			// For a nil pointer-to-struct, pass a zero value of the element type so reflection works.
-			if elemKind == reflect.Struct {
-				var recurseArg any
-				if isPtr && isNil {
-					recurseArg = reflect.Zero(elemType).Interface()
-				} else {
-					recurseArg = value
-				}
+			// 如果是切片或数组，需要判断是否是基础类型还是 struct 或更深的切片或数组
+			switch elemKind {
+			case reflect.Slice, reflect.Array:
+				elemElemType := elemType.Elem()
+				elemElemKind := elemElemType.Kind()
 
-				if elemType != reflect.TypeOf(time.Time{}) { // 如果不是时间类型则递归 struct
-					infos = append(infos, getStructFieldInfos(recurseArg, vNameTag)...)
-					continue
+				vRuleTag = strings.TrimLeft(vRuleTag, "(")
+				vRuleTag = strings.TrimRight(vRuleTag, ")")
+
+				infos = append(infos, FieldInfo{
+					Name:      field.Name,
+					Value:     value,
+					RefValue:  fieldValue,
+					Kind:      elemKind,
+					Type:      elemType,
+					IsPtr:     isPtr,
+					IsNil:     isNil,
+					IsZero:    fieldValue.IsZero(),
+					VRuleTags: anyArrayV2.NewList(strings.Split(vRuleTag, ")(")),
+					VNameTags: anyArrayV2.NewItems(parentName, vNameTag).RemoveEmpty(),
+				})
+
+				// 检查数组/切片的元素类型是否是基础类型
+				if !isBasicKind(elemElemKind) {
+					// 非基础类型，需要递归处理
+					if fieldValue.Len() > 0 {
+						// 遍历数组/切片元素
+						for i := 0; i < fieldValue.Len(); i++ {
+							elemValue := fieldValue.Index(i)
+							infos = append(
+								infos,
+								getStructFieldInfos(elemValue.Interface(), vNameTag)...,
+							)
+						}
+					} else {
+						// 空数组/切片，使用零值递归
+						infos = append(
+							infos,
+							getStructFieldInfos(reflect.Zero(elemElemType).Interface(), vNameTag)...,
+						)
+					}
 				}
+			case reflect.Struct:
+				if elemType != reflect.TypeOf(time.Time{}) && elemType != reflect.TypeOf(&time.Time{}) { // 如果不是时间类型则递归 struct
+					infos = append(
+						infos,
+						getStructFieldInfos(
+							operationV2.NewTernary(operationV2.TrueFn(reflect.Zero(elemType).Interface), operationV2.FalseValue(value)).GetByValue(isPtr && isNil),
+							vNameTag,
+						)...,
+					)
+				}
+			default:
+				vRuleTag = strings.TrimLeft(vRuleTag, "(")
+				vRuleTag = strings.TrimRight(vRuleTag, ")")
+
+				infos = append(infos, FieldInfo{
+					Name:      field.Name,
+					Value:     value,
+					RefValue:  fieldValue,
+					Kind:      elemKind,
+					Type:      elemType,
+					IsPtr:     isPtr,
+					IsNil:     isNil,
+					IsZero:    fieldValue.IsZero(),
+					VRuleTags: anyArrayV2.NewList(strings.Split(vRuleTag, ")(")),
+					VNameTags: anyArrayV2.NewItems(parentName, vNameTag).RemoveEmpty(),
+				})
 			}
-
-			vRuleTag = strings.TrimLeft(vRuleTag, "(")
-			vRuleTag = strings.TrimRight(vRuleTag, ")")
-
-			infos = append(infos, FieldInfo{
-				Name:      field.Name,
-				Value:     value,
-				Kind:      elemKind,
-				Type:      elemType,
-				IsPtr:     isPtr,
-				IsNil:     isNil,
-				IsZero:    fieldValue.IsZero(),
-				VRuleTags: anyArrayV2.NewList(strings.Split(vRuleTag, ")(")),
-				VNameTags: anyArrayV2.NewItems(parentName, vNameTag).RemoveEmpty(),
-			})
 		}
 	}
 
 	return infos
+}
+
+// isBasicKind 判断 reflect.Kind 是否是基础类型
+func isBasicKind(k reflect.Kind) bool {
+	switch k {
+	case reflect.Bool,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+		reflect.Float32, reflect.Float64,
+		reflect.Complex64, reflect.Complex128,
+		reflect.String:
+		return true
+	default:
+		return false
+	}
 }

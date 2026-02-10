@@ -15,7 +15,11 @@ type (
 )
 
 func Test1(t *testing.T) {
-	pool := APP.MySQLPool.Once(APP.DBSetting.New(filesystemV2.APP.File.NewByRel("./db.yaml").GetFullPath()))
+	dbSetting, err := APP.DBSetting.New(filesystemV2.APP.File.NewByRel("./db.yaml").GetFullPath())
+	if err != nil {
+		t.Fatalf("读取配置文件失败：%v", err)
+	}
+	pool := APP.MySQLPool.Once(dbSetting)
 	conn := pool.GetConn()
 	conn.AutoMigrate(&TestTable1{})
 

@@ -12,6 +12,7 @@ type (
 	FieldInfo struct {
 		Name      string // 字段名
 		Value     any    // 实际值
+		RefValue  reflect.Value
 		Kind      reflect.Kind
 		Type      reflect.Type
 		IsPtr     bool                        // 是否是指针
