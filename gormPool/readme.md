@@ -149,7 +149,7 @@
    		}). // 如果带有级联属性则使用 WhenFunc 来构建复杂的 SQL 条件
    		When(condition.Age > 20, "age > ?", condition.Age). // 通过条件判断是否要增加对应 SQL 的条件
    		WhenIn(condition.Username != "", "username", condition.Username). // 通过条件判断是否要增加对应 SQL 的条件 → IN 查询（更多查询： WhenNotIn、WhenBetween、WhenNotBetween、WhenLike、WhenLikeRight、WhenFunc）
-   		TryPagination(condition.Page, condition.PageSize). // 尝试使用分页（当 page 和 pageSize 都大于 0 时，会尝试进行分页。结果也由简单的列表改为分页格式列表）
+   		TryPagination(condition.Page, condition.PageSize). // 尝试使用分页（当 page 和 pageSize 都大于 0 时，会尝试进行分页）
    		TryOrder(condition.OrderBy...). // 尝试进行排序
    		Find(&users) // 构建查询条件并执行查询
    }
