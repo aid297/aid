@@ -8,7 +8,7 @@ import (
 	"github.com/aid297/aid/array/anyArrayV2"
 )
 
-// checkTime 检查时间，支持：required、[datetime|date|time]、min>、min>=、max<、max<=、in、not-in、ex:
+// checkTime 检查时间，支持：required、min>、min>=、max<、max<=、in、not-in、ex:
 func (my FieldInfo) checkTime() FieldInfo {
 	var (
 		min, max  *time.Time
@@ -28,6 +28,8 @@ func (my FieldInfo) checkTime() FieldInfo {
 			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
 			return my
 		} else if !my.IsPtr && value.IsZero() {
+			iz := value.IsZero()
+			println(iz)
 			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 			return my
 		}

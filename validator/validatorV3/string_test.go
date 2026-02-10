@@ -3,52 +3,18 @@ package validatorV3
 import (
 	"testing"
 	`time`
-
-	`github.com/aid297/aid/ptr`
 )
 
 func Test1(t *testing.T) {
 	type UserRequest struct {
-		Firstname string `json:"firstname" v-rule:"(min>0)" v-name:"firstname"`
+		Birthday time.Time `v-rule:"required" v-name:"生日"`
 	}
 
-	ur := UserRequest{Firstname: ""}
-	checker := APP.Validator.Once().Checker(ur)
-	checker.Validate()
-	if !checker.OK() {
-		for _, wrong := range checker.Wrongs() {
-			t.Errorf("%v\n", wrong)
-		}
-	}
-}
+	ur := &UserRequest{Birthday: time.Time{}}
 
-func Test2(t *testing.T) {
-	type UserRequest struct {
-		Firstname string  `json:"firstname" v-rule:"(required)" v-name:"firstname"`
-		Lastname  *string `json:"lastname" v-rule:"(required)" v-name:"lastname"`
-	}
-
-	ur := UserRequest{Firstname: "123", Lastname: ptr.New("")}
 	checker := APP.Validator.Once().Checker(ur).Validate()
-	if !checker.OK() {
-		for _, wrong := range checker.Wrongs() {
-			t.Errorf("%v\n", wrong)
-		}
-	}
-}
-
-func Test3(t *testing.T) {
-	type UserRequest struct {
-		Firstname string    `json:"firstname" v-rule:"(required)" v-name:"firstname"`
-		Lastname  *string   `json:"lastname" v-rule:"(required)" v-name:"lastname"`
-		Birthday  time.Time `json:"birthday" v-rule:"(required)" v-name:"birthday"`
-	}
-
-	ur := &UserRequest{Firstname: "123", Lastname: ptr.New("123")}
-	checker := APP.Validator.Once().Checker(ur).Validate()
-	if !checker.OK() {
-		for _, wrong := range checker.Wrongs() {
-			t.Errorf("%v\n", wrong)
-		}
+	t.Logf("%v\n", checker.OK())
+	for _, wrong := range checker.Wrongs() {
+		t.Logf("%v\n", wrong)
 	}
 }

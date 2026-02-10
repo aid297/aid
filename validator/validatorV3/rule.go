@@ -73,7 +73,7 @@ func getRuleIntSize(rule string) (size *int, eq bool) {
 		return
 	}
 
-	if value, ok = strings.CutPrefix(rule, "size="); ok {
+	if value, ok = strings.CutPrefix(rule, "size!="); ok {
 		size = ptr.New(cast.ToInt(value))
 		eq = false
 		return
