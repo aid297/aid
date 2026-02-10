@@ -38,63 +38,55 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 	}
 
 	my.VRuleTags.Each(func(_ int, rule string) {
-		switch rule {
-		case "", "float32", "f32":
-			if strings.HasPrefix(rule, "min") {
-				if min, include = getRuleFloatMin(rule); min != nil {
-					if include {
-						if !(cast.ToFloat64(value) >= *min) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %f", my.getName(), ErrInvalidLength, *min))
-						}
-					} else {
-						if !(cast.ToFloat64(value) > *min) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：> %f", my.getName(), ErrInvalidLength, *min))
-						}
+		if strings.HasPrefix(rule, "min") {
+			if min, include = getRuleFloatMin(rule); min != nil {
+				if include {
+					if !(cast.ToFloat64(value) >= *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %f", my.getName(), ErrInvalidLength, *min))
+					}
+				} else {
+					if !(cast.ToFloat64(value) > *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：> %f", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
-			if strings.HasPrefix(rule, "max") {
-				if max, include = getRuleFloatMax(rule); max != nil {
-					if include {
-						if !(cast.ToFloat64(value) <= *max) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %f", my.getName(), ErrInvalidLength, *max))
-						}
-					} else {
-						if !(cast.ToFloat64(value) < *max) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：< %f", my.getName(), ErrInvalidLength, *max))
-						}
+		} else if strings.HasPrefix(rule, "max") {
+			if max, include = getRuleFloatMax(rule); max != nil {
+				if include {
+					if !(cast.ToFloat64(value) <= *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %f", my.getName(), ErrInvalidLength, *max))
+					}
+				} else {
+					if !(cast.ToFloat64(value) < *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：< %f", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
-			if strings.HasPrefix(rule, "in") {
-				if in = getRuleIn(rule); len(in) > 0 {
-					anyArrayV2.NewList(in).IfNotIn(func() {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
-					}, cast.ToString(value))
-				}
+		} else if strings.HasPrefix(rule, "in") {
+			if in = getRuleIn(rule); len(in) > 0 {
+				anyArrayV2.NewList(in).IfNotIn(func() {
+					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+				}, cast.ToString(value))
 			}
-			if strings.HasPrefix(rule, "not-in") {
-				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
-					anyArrayV2.NewList(notIn).IfIn(func() {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
-					}, cast.ToString(value))
-				}
+		} else if strings.HasPrefix(rule, "not-in") {
+			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
+				anyArrayV2.NewList(notIn).IfIn(func() {
+					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+				}, cast.ToString(value))
 			}
-			if strings.HasPrefix(rule, "size") {
-				if size, eq = getRuleFloatSize(rule); size != nil {
-					if eq {
-						if !(cast.ToFloat64(value) == *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
-						}
-					} else {
-						if !(cast.ToFloat64(value) != *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
-						}
+		} else if strings.HasPrefix(rule, "size") {
+			if size, eq = getRuleFloatSize(rule); size != nil {
+				if eq {
+					if !(cast.ToFloat64(value) == *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+					}
+				} else {
+					if !(cast.ToFloat64(value) != *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
-
-		case "ex":
+		} else if rule == "ex" {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := APP.Validator.Once().GetExFn(exFnNames[idx2]); fn != nil {

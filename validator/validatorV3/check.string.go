@@ -73,62 +73,55 @@ func (my FieldInfo) checkString() FieldInfo {
 	// }
 
 	my.VRuleTags.Each(func(_ int, rule string) {
-		switch rule {
-		case "", "string":
-			if strings.HasPrefix(rule, "min") {
-				if min, include = getRuleIntMin(rule); min != nil {
-					if include {
-						if !(utf8.RuneCountInString(value) >= *min) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
-						}
-					} else {
-						if !(utf8.RuneCountInString(value) > *min) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
-						}
+		if strings.HasPrefix(rule, "min") {
+			if min, include = getRuleIntMin(rule); min != nil {
+				if include {
+					if !(utf8.RuneCountInString(value) >= *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+					}
+				} else {
+					if !(utf8.RuneCountInString(value) > *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
-			if strings.HasPrefix(rule, "max") {
-				if max, include = getRuleIntMax(rule); max != nil {
-					if include {
-						if !(utf8.RuneCountInString(value) <= *max) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
-						}
-					} else {
-						if !(utf8.RuneCountInString(value) < *max) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
-						}
+		} else if strings.HasPrefix(rule, "max") {
+			if max, include = getRuleIntMax(rule); max != nil {
+				if include {
+					if !(utf8.RuneCountInString(value) <= *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+					}
+				} else {
+					if !(utf8.RuneCountInString(value) < *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
-			if strings.HasPrefix(rule, "in") {
-				if in = getRuleIn(rule); len(in) > 0 {
-					anyArrayV2.NewList(in).IfNotIn(func() {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
-					}, value)
-				}
+		} else if strings.HasPrefix(rule, "in") {
+			if in = getRuleIn(rule); len(in) > 0 {
+				anyArrayV2.NewList(in).IfNotIn(func() {
+					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+				}, value)
 			}
-			if strings.HasPrefix(rule, "not-in") {
-				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
-					anyArrayV2.NewList(notIn).IfIn(func() {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
-					}, value)
-				}
+		} else if strings.HasPrefix(rule, "not-in") {
+			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
+				anyArrayV2.NewList(notIn).IfIn(func() {
+					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+				}, value)
 			}
-			if strings.HasPrefix(rule, "size") {
-				if size, eq = getRuleIntSize(rule); size != nil {
-					if eq {
-						if !(len(value) == *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
-						}
-					} else {
-						if !(len(value) != *size) {
-							my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
-						}
+		} else if strings.HasPrefix(rule, "size") {
+			if size, eq = getRuleIntSize(rule); size != nil {
+				if eq {
+					if !(len(value) == *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				} else {
+					if !(len(value) != *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
-		case "bool":
+		} else if rule == "bool" {
 			var def = []string{"true", "True", "t", "yes", "on", "ok", "1", "false", "False", "f", "off", "no", "0"}
 			if strings.HasPrefix(rule, "in") {
 				if in = getRuleIn(rule); len(in) > 0 {
@@ -149,7 +142,7 @@ func (my FieldInfo) checkString() FieldInfo {
 					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, def))
 				}, value)
 			}
-		case "datetime":
+		} else if rule == "datetime" {
 			ok := false
 			anyDictV2.New(anyDictV2.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
 				if regexp.MustCompile(value).MatchString(value) {
@@ -160,15 +153,15 @@ func (my FieldInfo) checkString() FieldInfo {
 			if !ok {
 				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
 			}
-		case "date":
+		} else if rule == "date" {
 			if !regexp.MustCompile(patternsForTimeString["DateOnly"]).MatchString(value) {
 				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
 			}
-		case "time":
+		} else if rule == "time" {
 			if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
 				my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w", my.getName(), ErrInvalidFormat))
 			}
-		case "ex":
+		} else if rule == "ex" {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := APP.Validator.Once().GetExFn(exFnNames[idx2]); fn != nil {
