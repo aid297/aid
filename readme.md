@@ -19,3 +19,4 @@
 17. [`Redis`连接池](./redisPool/readme.md)
 18. [配置文件](./setting/readme.md)
 19. [权重队列](./task/readme.md)
+20. [验证器](./validator/validatorV3/readme.md)
