@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	`time`
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
@@ -58,7 +59,8 @@ func (my *Check) WrongToString(limit string) (ret string) {
 }
 
 func (my *Check) Validate(exCheckFns ...any) Checker {
-	for _, fieldInfo := range getStructFieldInfos(my.data, "") {
+	structFieldInfos := getStructFieldInfos(my.data, "")
+	for _, fieldInfo := range structFieldInfos {
 		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
 			my.wrongs = append(my.wrongs, wrongs...)
 		}
@@ -211,8 +213,11 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				} else {
 					recurseArg = value
 				}
-				infos = append(infos, getStructFieldInfos(recurseArg, vNameTag)...)
-				continue
+
+				if elemType != reflect.TypeOf(time.Time{}) { // 如果不是时间类型则递归 struct
+					infos = append(infos, getStructFieldInfos(recurseArg, vNameTag)...)
+					continue
+				}
 			}
 
 			vRuleTag = strings.TrimLeft(vRuleTag, "(")
