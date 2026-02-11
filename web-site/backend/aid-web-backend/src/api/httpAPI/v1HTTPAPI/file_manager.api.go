@@ -74,16 +74,14 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	}
 
 	var (
-		title   = "获取文件列表"
-		err     error
-		dir     filesystemV4.Filesystemer
-		form    request.FileListRequest
-		checker validatorV3.Checker
-		// dirs              []filesystemV4.Filesystemer
-		// files             []filesystemV4.Filesystemer
-		filesystemerItems []filesystemV4.Filesystemer
-		rootPath          filesystemV4.Filesystemer
-		currentPath       string
+		title         = "获取文件列表"
+		err           error
+		dir           filesystemV4.Filesystemer
+		form          request.FileListRequest
+		checker       validatorV3.Checker
+		filesystemers []filesystemV4.Filesystemer
+		rootPath      filesystemV4.Filesystemer
+		currentPath   string
 	)
 
 	if form, checker = validatorV3.WithGin[request.FileListRequest](c); !checker.OK() {
@@ -100,28 +98,8 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	}
 	dir.LS()
 
-	filesystemerItems = make([]filesystemV4.Filesystemer, 0, len(dir.GetDirs())+len(dir.GetFiles()))
-	filesystemerItems = append(filesystemerItems, dir.GetDirs()...)
-	filesystemerItems = append(filesystemerItems, dir.GetFiles()...)
-	// originalPath := filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path)).GetFullPath()
-	// dirs = dir.GetDirs()
-	// files = dir.GetFiles()
-	// for idx := range dirs {
-	// 	newDir, _ := strings.CutPrefix(dirs[idx].GetBasePath(), originalPath)
-	// 	filesystemerItems = append(filesystemerItems, FilesystemerItem{
-	// 		Path: newDir,
-	// 		Name: dirs[idx].GetName(),
-	// 		Kind: dirs[idx].GetKind(),
-	// 	})
-	// }
-	// for idx := range files {
-	// 	newFile, _ := strings.CutPrefix(files[idx].GetBasePath(), originalPath)
-	// 	filesystemerItems = append(filesystemerItems, FilesystemerItem{
-	// 		Path: newFile,
-	// 		Name: files[idx].GetName(),
-	// 		Kind: files[idx].GetKind(),
-	// 	})
-	// }
+	filesystemers = make([]filesystemV4.Filesystemer, 0, len(dir.GetDirs())+len(dir.GetFiles()))
+	filesystemers = append(append(filesystemers, dir.GetDirs()...), dir.GetFiles()...)
 
 	rootPath, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir))
 	if err != nil {
@@ -132,8 +110,8 @@ func (*FileManagerAPI) List(c *gin.Context) {
 
 	currentPath, _ = strings.CutPrefix(dir.GetFullPath(), rootPath.GetFullPath())
 
-	global.LOG.Info(title, zap.Any("成功", filesystemerItems))
-	httpModule.NewOK(httpModule.Content(gin.H{"items": filesystemerItems, "current": currentPath})).WithAccept(c)
+	global.LOG.Info(title, zap.Any("成功", filesystemers))
+	httpModule.NewOK(httpModule.Content(gin.H{"filesystemers": filesystemers, "currentPath": currentPath})).WithAccept(c)
 }
 
 // StoreFolder 创建文件夹

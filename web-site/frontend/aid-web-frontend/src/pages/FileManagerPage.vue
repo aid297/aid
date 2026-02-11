@@ -103,9 +103,9 @@ const inputStoreFolder = ref(null);
  * @param dir 所需目录
  */
 const loadFileList = async (name = '') => {
-    const { current, items } = (await axios.post('/fileManager/list', { body: { path: currentDir.value, name } })).data.content;
-    currentDir.value = current;
-    rows.value = [{ path: current, name: '..', kind: 'DIR' }].concat(items); // 在文件列表前添加返回上级目录的项;
+    const { currentPath:newCurrentDir, filesystemers } = (await axios.post('/fileManager/list', { body: { path: currentDir.value, name } })).data.content;
+    currentDir.value = newCurrentDir;
+    rows.value = [{ path: newCurrentDir, name: '..', kind: 'DIR' }, ...filesystemers]; // 在文件列表前添加返回上级目录的项;
     newFolderName.value = '';
     inputStoreFolder.value.focus();
 };
@@ -134,7 +134,7 @@ const handleDownload = async row => {
 
 const handleDestroy = async row => {
     try {
-        notify.ask(`确定要删除 ${row.name} 吗？`, async () => {
+        notify.ask(`确定要删除 【${row.name}】 吗？`, async () => {
             await axios.post('/fileManager/destroy', { body: { path: currentDir.value, name: row.name } });
             await loadFileList(); // 重新加载文件列表
         });
