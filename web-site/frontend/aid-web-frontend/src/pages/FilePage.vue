@@ -11,7 +11,7 @@
 							</q-card-section>
 
 							<q-card-section class="q-pt-none">
-								<q-uploader :url="`${API_BASE_URL}/upload`" label="选择文件" multiple @uploaded="handleUploaded" class="max-wight" @failed="handleFailed" />
+								<q-uploader :url="`${API_URL}/upload`" label="选择文件" multiple @uploaded="handleUploaded" class="max-wight" @failed="handleFailed" />
 							</q-card-section>
 						</q-card>
 					</div>
@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { API_BASE_URL } from 'src/utils/fetch';
+import { API_URL } from 'src/utils/fetch';
 import notify from 'src/utils/notify';
 
 const handleUploaded = info => {

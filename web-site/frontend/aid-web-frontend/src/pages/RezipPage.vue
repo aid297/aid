@@ -22,7 +22,6 @@
 </template>
 
 <script setup>
-import { API_BASE_URL } from 'src/utils/fetch';
 import notify from 'src/utils/notify';
 
 const onUploaded = function (file) {

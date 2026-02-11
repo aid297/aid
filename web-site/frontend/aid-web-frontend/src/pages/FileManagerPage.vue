@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import { API_BASE_URL, axios } from 'src/utils/fetch';
+import { API_URL, axios } from 'src/utils/fetch';
 import notify from 'src/utils/notify';
 import { computed, onMounted, ref } from 'vue';
 
@@ -113,7 +113,7 @@ const loadList = async (name = '') => {
 onMounted(loadList);
 
 // 根据当前目录动态生成上传URL
-const uploadURL = computed(() => `${API_BASE_URL}/fileManager/upload?path=${encodeURIComponent(currentDir.value)}`);
+const uploadURL = computed(() => `${API_URL}/fileManager/upload?path=${encodeURIComponent(currentDir.value)}`);
 
 /**
  * 上传文件
@@ -140,7 +140,7 @@ const handleStoreFolder = async () => {
  */
 const handleDownload = async row => {
     if (row.kind === 'DIR') return;
-    window.open(`${API_BASE_URL}/fileManager/download?path=${encodeURIComponent(currentDir.value)}&name=${encodeURIComponent(row.name)}`, '_blank');
+    window.open(`${API_URL}/fileManager/download?path=${encodeURIComponent(currentDir.value)}&name=${encodeURIComponent(row.name)}`, '_blank');
 };
 
 /**
