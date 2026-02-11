@@ -240,7 +240,7 @@
     
     type (
     	UserRequest struct {
-    		Firstname string `v-rule:"ex:some-ex-check-fn" v-name:"姓"`
+        Firstname string `v-rule:"(required)(min>0)" v-name:"姓"`
     	}
     )
     
