@@ -100,7 +100,7 @@ const inputStoreFolder = ref(null);
 
 /**
  * 加载文件列表
- * @param dir 所需目录
+ * @param name 操作的文件或目录名称，默认为空表示加载当前目录列表
  */
 const loadList = async (name = '') => {
     const { currentPath:newCurrentDir, filesystemers } = (await axios.post('/fileManager/list', { body: { path: currentDir.value, name } })).data.content;
@@ -115,11 +115,18 @@ onMounted(loadList);
 // 根据当前目录动态生成上传URL
 const uploadURL = computed(() => `${API_BASE_URL}/fileManager/upload?path=${encodeURIComponent(currentDir.value)}`);
 
+/**
+ * 上传文件
+ * @param info 上传文件信息
+ */
 const handleUploaded = async info => {
     console.log('文件上传成功', info);
     await loadList(); // 重新加载文件列表
 };
 
+/**
+ * 上传失败处理
+ */
 const handleStoreFolder = async () => {
     if (newFolderName.value.trim() !== '') {
         await axios.post('/fileManager/storeFolder', { body: { path: currentDir.value, name: newFolderName.value } });
@@ -127,11 +134,19 @@ const handleStoreFolder = async () => {
     }
 }
 
+/**
+ * 下载文件
+ * @param row 当前行数据
+ */
 const handleDownload = async row => {
     if (row.kind === 'DIR') return;
     window.open(`${API_BASE_URL}/fileManager/download?path=${encodeURIComponent(currentDir.value)}&name=${encodeURIComponent(row.name)}`, '_blank');
 };
 
+/**
+ * 删除文件或目录
+ * @param row 当前行数据
+ */
 const handleDestroy = async row => {
     try {
         notify.ask(`确定要删除 【${row.name}】 吗？`, async () => {
@@ -144,6 +159,10 @@ const handleDestroy = async row => {
     }
 };
 
+/**
+ * 压缩文件或目录
+ * @param row 当前行数据
+ */
 const handleZip = async row => {
     await axios.post('/fileManager/zip', { body: { path: currentDir.value, name: row.name } });
     await loadList(); // 重新加载文件列表
