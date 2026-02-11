@@ -25,7 +25,7 @@
                                     </q-input>
                                 </div>
                                 <div class="col">
-                                    <q-uploader :url="uploadUrl" label="上传文件" @uploaded="handleUploaded"
+                                    <q-uploader :url="uploadURL" label="上传文件" @uploaded="handleUploaded"
                                         class="max-wight" @failed="handleFailed" flat bordered field-name="file"
                                         style="width: 100%" />
                                 </div>
@@ -55,7 +55,7 @@
                                     <q-tr :props="props">
                                         <q-td align="left" key="name" :props="props">
                                             <a class="text-white text-decoration-none" v-if="props.row.kind === 'DIR'"
-                                                href="#" @click.prevent="loadFileList(props.row.name);">
+                                                href="#" @click.prevent="loadList(props.row.name);">
                                                 <i class="fa fa-folder">&nbsp;</i>{{ props.row.name || '' }}
                                             </a>
                                             <span v-else>
@@ -102,7 +102,7 @@ const inputStoreFolder = ref(null);
  * 加载文件列表
  * @param dir 所需目录
  */
-const loadFileList = async (name = '') => {
+const loadList = async (name = '') => {
     const { currentPath:newCurrentDir, filesystemers } = (await axios.post('/fileManager/list', { body: { path: currentDir.value, name } })).data.content;
     currentDir.value = newCurrentDir;
     rows.value = [{ path: newCurrentDir, name: '..', kind: 'DIR' }, ...filesystemers]; // 在文件列表前添加返回上级目录的项;
@@ -110,20 +110,20 @@ const loadFileList = async (name = '') => {
     inputStoreFolder.value.focus();
 };
 
-onMounted(loadFileList);
+onMounted(loadList);
 
 // 根据当前目录动态生成上传URL
-const uploadUrl = computed(() => `${API_BASE_URL}/fileManager/upload?path=${encodeURIComponent(currentDir.value)}`);
+const uploadURL = computed(() => `${API_BASE_URL}/fileManager/upload?path=${encodeURIComponent(currentDir.value)}`);
 
 const handleUploaded = async info => {
     console.log('文件上传成功', info);
-    await loadFileList(); // 重新加载文件列表
+    await loadList(); // 重新加载文件列表
 };
 
 const handleStoreFolder = async () => {
     if (newFolderName.value.trim() !== '') {
         await axios.post('/fileManager/storeFolder', { body: { path: currentDir.value, name: newFolderName.value } });
-        await loadFileList(); // 重新加载文件列表
+        await loadList(); // 重新加载文件列表
     }
 }
 
@@ -136,7 +136,7 @@ const handleDestroy = async row => {
     try {
         notify.ask(`确定要删除 【${row.name}】 吗？`, async () => {
             await axios.post('/fileManager/destroy', { body: { path: currentDir.value, name: row.name } });
-            await loadFileList(); // 重新加载文件列表
+            await loadList(); // 重新加载文件列表
         });
     } catch (error) {
         console.error('删除文件失败', error);
@@ -146,6 +146,6 @@ const handleDestroy = async row => {
 
 const handleZip = async row => {
     await axios.post('/fileManager/zip', { body: { path: currentDir.value, name: row.name } });
-    await loadFileList(); // 重新加载文件列表
+    await loadList(); // 重新加载文件列表
 };
 </script>
