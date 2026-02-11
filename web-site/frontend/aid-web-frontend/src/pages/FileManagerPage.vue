@@ -9,8 +9,26 @@
                         </q-card-section>
 
                         <q-card-section class="q-pt-none">
-                            <q-uploader :url="uploadUrl" label="上传文件" @uploaded="handleUploaded" class="max-wight"
-                                @failed="handleFailed" flat bordered field-name="file" style="width: 100%" />
+                            <div class="row">
+                                <div class="col">
+                                    <q-input outlined bottom-slots v-model="newFolderName" label="新建目录名称" counter
+                                        maxlength="64" :dense="dense">
+                                        <template v-slot:append>
+                                            <q-icon v-if="newFolderName !== ''" name="close" @click="newFolderName = ''"
+                                                class="cursor-pointer" />
+                                        </template>
+
+                                        <template v-slot:after>
+                                            <q-btn round dense flat icon="send" @click="handleStoreFolder" />
+                                        </template>
+                                    </q-input>
+                                </div>
+                                <div class="col">
+                                    <q-uploader :url="uploadUrl" label="上传文件" @uploaded="handleUploaded"
+                                        class="max-wight" @failed="handleFailed" flat bordered field-name="file"
+                                        style="width: 100%" />
+                                </div>
+                            </div>
                         </q-card-section>
                     </q-card>
                 </div>
@@ -35,23 +53,27 @@
                                 <template v-slot:body="props">
                                     <q-tr :props="props">
                                         <q-td align="left" key="name" :props="props">
-                                            <a class="text-white text-decoration-none" v-if="props.row.kind === 'dir'"
-                                                href="#" @click.prevent="
-                                                    currentDir = props.row.fullPath; loadFileList();">
-                                                📁
-                                                {{ props.row.name || '' }}
+                                            <a class="text-white text-decoration-none" v-if="props.row.kind === 'DIR'"
+                                                href="#" @click.prevent="loadFileList(props.row.name);">
+                                                <i class="fa fa-folder">&nbsp;</i>{{ props.row.name || '' }}
                                             </a>
-                                            <span v-else>📄 {{ props.row.name || '' }}</span>
+                                            <span v-else>
+                                                <a class="text-white text-decoration-none" href="#"
+                                                    @click.prevent="handleDownload(props.row)">
+                                                    <i class="fa-regular fa-file">&nbsp;</i>{{ props.row.name || '' }}
+                                                </a>
+                                            </span>
                                         </q-td>
-                                        <q-td align="left" key="fullPath" :props="props">
+                                        <q-td align="left" key="path" :props="props">
                                             <q-btn-group flat>
-                                                <q-btn size="sm" color="primary" icon="download" label="下载"
-                                                    @click="handleDownload(props.row)"
-                                                    :disable="props.row.kind === 'dir'" />
-                                                <q-btn size="sm" color="negative" icon="delete" label="删除"
-                                                    @click="handleDelete(props.row)" />
-                                                <q-btn size="sm" color="info" icon="edit" label="重命名"
-                                                    @click="handleRename(props.row)" />
+                                                <q-btn size="sm" color="negative" @click="handleDestroy(props.row)"
+                                                    v-if="props.row.name !== '..'">
+                                                    <i class="fa fa-trash">&nbsp;</i>删除
+                                                </q-btn>
+                                                <q-btn size="sm" color="info" @click="handleZip(props.row)"
+                                                    v-if="props.row.name !== '..'">
+                                                    <i class="fa fa-box-archive">&nbsp;</i>压缩
+                                                </q-btn>
                                             </q-btn-group>
                                         </q-td>
                                     </q-tr>
@@ -68,51 +90,57 @@
 <script setup>
 import { API_BASE_URL, axios } from 'src/utils/fetch';
 import notify from 'src/utils/notify';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
+const newFolderName = ref('');
 const rows = ref([]);
-const currentDir = ref('/');
+const currentDir = ref('');
 
 /**
  * 加载文件列表
  * @param dir 所需目录
  */
-const loadFileList = async () => {
-    const { dirs, files } = (await axios.post('/fileManager/list', { body: { path: currentDir.value } })).data.content;
-    rows.value = [...dirs, ...files];
-    console.log('文件列表已加载', rows.value);
+const loadFileList = async (name = '') => {
+    const { current, items } = (await axios.post('/fileManager/list', { body: { path: currentDir.value, name } })).data.content;
+    currentDir.value = current;
+    rows.value = [{ path: current, name: '..', kind: 'DIR' }].concat(items); // 在文件列表前添加返回上级目录的项;
+    newFolderName.value = '';
 };
 
 onMounted(loadFileList);
 
-const uploadUrl = ref(`${API_BASE_URL}/fileManager/upload`); // 后端上传接口
-const handleUploaded = info => {
+// 根据当前目录动态生成上传URL
+const uploadUrl = computed(() => `${API_BASE_URL}/fileManager/upload?path=${encodeURIComponent(currentDir.value)}`);
+
+const handleUploaded = async info => {
     console.log('文件上传成功', info);
-    notify.ok('上传成功');
-    loadFileList(); // 重新加载文件列表
+    await loadFileList(); // 重新加载文件列表
 };
 
-const handleFailed = () => {
-    notify.error('上传失败');
+const handleStoreFolder = async () => {
+    if (newFolderName.value.trim() !== '') {
+        await axios.post('/fileManager/storeFolder', { body: { path: currentDir.value, name: newFolderName.value } });
+        await loadFileList(); // 重新加载文件列表
+    }
+}
+
+const handleDownload = async row => {
+    if (row.kind === 'DIR') return;
+    window.open(`${API_BASE_URL}/fileManager/download?path=${encodeURIComponent(currentDir.value)}&name=${encodeURIComponent(row.name)}`, '_blank');
 };
 
-const handleDownload = row => {
-    if (row.kind === 'dir') return;
-    window.open(`${API_BASE_URL}/fileManager/download?path=${encodeURIComponent(row.fullPath)}`, '_blank');
-};
-
-const handleDelete = async row => {
+const handleDestroy = async row => {
     try {
-        await axios.post('/fileManager/delete', { path: row.fullPath });
-        notify.ok('删除成功');
-        loadFileList();
+        await axios.post('/fileManager/destroy', { body: { path: currentDir.value, name: row.name } });
+        await loadFileList(); // 重新加载文件列表
     } catch (error) {
+        console.error('删除文件失败', error);
         notify.error('删除失败', error);
     }
 };
 
-const handleRename = row => {
-    // TODO: 实现重命名功能
-    notify.info(`重命名功能待实现: ${row.name}`);
+const handleZip = async row => {
+    await axios.post('/fileManager/zip', { body: { path: currentDir.value, name: row.name } });
+    await loadFileList(); // 重新加载文件列表
 };
 </script>

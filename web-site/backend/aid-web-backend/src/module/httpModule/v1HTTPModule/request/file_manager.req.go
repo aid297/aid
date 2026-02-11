@@ -4,8 +4,11 @@ type (
 	FileRequest struct {
 		Path string `json:"path" yaml:"path" toml:"path"`
 	}
-	FileListRequest     FileRequest
-	FileDownloadRequest FileRequest
-	FileDestroyRequest  FileRequest
-	FileZipRequest      FileRequest
+	FileListRequest        FileStoreFolderRequest
+	FileStoreFolderRequest struct {
+		FileRequest
+		Name string `json:"name" yaml:"name" toml:"name"`
+	}
+	FileDestroyRequest FileStoreFolderRequest
+	FileZipRequest     FileStoreFolderRequest
 )

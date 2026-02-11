@@ -1,5 +1,5 @@
-// export const ROOT_URL = 'http://172.20.232.212:19900';
-export const ROOT_URL = 'http://127.0.0.1:19900';
+export const ROOT_URL = 'http://172.20.232.212:9900';
+// export const ROOT_URL = 'http://127.0.0.1:19900';
 export const API_BASE_URL = `${ROOT_URL}/api/v1`;
 const authorization = localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '';
 const DEFAULT_HEADERS = { 'Content-Type': 'application/json', Authorization: authorization };
