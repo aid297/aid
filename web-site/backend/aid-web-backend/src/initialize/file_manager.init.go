@@ -8,8 +8,7 @@ import (
 type FileManagerInitialize struct{}
 
 func (FileManagerInitialize) Boot() {
-	dir := filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir))
-	if !dir.GetExist() {
+	if dir := filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir)); !dir.GetExist() {
 		dir.Create(filesystemV4.Flag(0644))
 	}
 }

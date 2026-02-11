@@ -36,7 +36,7 @@ func (*FileManagerAPI) Upload(c *gin.Context) {
 	}
 
 	// 确保上传目录存在
-	if err := os.MkdirAll(filepath.Join(global.CONFIG.FileManager.Dir, path), 0755); err != nil {
+	if err = os.MkdirAll(filepath.Join(global.CONFIG.FileManager.Dir, path), 0755); err != nil {
 		global.LOG.Error(title, zap.Errors("创建上传目录", []error{err}))
 		httpModule.NewInternalServerError(httpModule.Errorf("创建上传目录失败：%w", err)).JSON(c)
 		return
@@ -45,7 +45,7 @@ func (*FileManagerAPI) Upload(c *gin.Context) {
 	savePath := filepath.Join(global.CONFIG.FileManager.Dir, path, file.Filename)
 
 	// 保存文件到本地
-	if err := c.SaveUploadedFile(file, savePath); err != nil {
+	if err = c.SaveUploadedFile(file, savePath); err != nil {
 		global.LOG.Error(title, zap.Errors("保存文件到本地", []error{err}))
 		httpModule.NewForbidden(httpModule.Errorf("保存文件到本地失败：%w", err)).JSON(c)
 		return
@@ -74,14 +74,14 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	}
 
 	var (
-		title             = "获取文件列表"
-		err               error
-		dir               filesystemV4.Filesystemer
-		form              request.FileListRequest
-		checker           validatorV3.Checker
-		dirs              []filesystemV4.Filesystemer
-		files             []filesystemV4.Filesystemer
-		filesystemerItems []FilesystemerItem
+		title   = "获取文件列表"
+		err     error
+		dir     filesystemV4.Filesystemer
+		form    request.FileListRequest
+		checker validatorV3.Checker
+		// dirs              []filesystemV4.Filesystemer
+		// files             []filesystemV4.Filesystemer
+		filesystemerItems []filesystemV4.Filesystemer
 		rootPath          filesystemV4.Filesystemer
 		currentPath       string
 	)
@@ -100,26 +100,28 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	}
 	dir.LS()
 
-	filesystemerItems = make([]FilesystemerItem, 0, len(dir.GetDirs())+len(dir.GetFiles()))
-	originalPath := filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path)).GetFullPath()
-	dirs = dir.GetDirs()
-	files = dir.GetFiles()
-	for idx := range dirs {
-		newDir, _ := strings.CutPrefix(dirs[idx].GetBasePath(), originalPath)
-		filesystemerItems = append(filesystemerItems, FilesystemerItem{
-			Path: newDir,
-			Name: dirs[idx].GetName(),
-			Kind: dirs[idx].GetKind(),
-		})
-	}
-	for idx := range files {
-		newFile, _ := strings.CutPrefix(files[idx].GetBasePath(), originalPath)
-		filesystemerItems = append(filesystemerItems, FilesystemerItem{
-			Path: newFile,
-			Name: files[idx].GetName(),
-			Kind: files[idx].GetKind(),
-		})
-	}
+	filesystemerItems = make([]filesystemV4.Filesystemer, 0, len(dir.GetDirs())+len(dir.GetFiles()))
+	filesystemerItems = append(filesystemerItems, dir.GetDirs()...)
+	filesystemerItems = append(filesystemerItems, dir.GetFiles()...)
+	// originalPath := filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path)).GetFullPath()
+	// dirs = dir.GetDirs()
+	// files = dir.GetFiles()
+	// for idx := range dirs {
+	// 	newDir, _ := strings.CutPrefix(dirs[idx].GetBasePath(), originalPath)
+	// 	filesystemerItems = append(filesystemerItems, FilesystemerItem{
+	// 		Path: newDir,
+	// 		Name: dirs[idx].GetName(),
+	// 		Kind: dirs[idx].GetKind(),
+	// 	})
+	// }
+	// for idx := range files {
+	// 	newFile, _ := strings.CutPrefix(files[idx].GetBasePath(), originalPath)
+	// 	filesystemerItems = append(filesystemerItems, FilesystemerItem{
+	// 		Path: newFile,
+	// 		Name: files[idx].GetName(),
+	// 		Kind: files[idx].GetKind(),
+	// 	})
+	// }
 
 	rootPath, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir))
 	if err != nil {

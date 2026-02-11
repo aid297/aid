@@ -12,7 +12,8 @@
                             <div class="row">
                                 <div class="col">
                                     <q-input outlined bottom-slots v-model="newFolderName" label="新建目录名称" counter
-                                        maxlength="64" :dense="dense">
+                                        maxlength="64" :dense="dense" @keydown.enter="handleStoreFolder"
+                                        ref="inputStoreFolder">
                                         <template v-slot:append>
                                             <q-icon v-if="newFolderName !== ''" name="close" @click="newFolderName = ''"
                                                 class="cursor-pointer" />
@@ -95,6 +96,7 @@ import { computed, onMounted, ref } from 'vue';
 const newFolderName = ref('');
 const rows = ref([]);
 const currentDir = ref('');
+const inputStoreFolder = ref(null);
 
 /**
  * 加载文件列表
@@ -105,6 +107,7 @@ const loadFileList = async (name = '') => {
     currentDir.value = current;
     rows.value = [{ path: current, name: '..', kind: 'DIR' }].concat(items); // 在文件列表前添加返回上级目录的项;
     newFolderName.value = '';
+    inputStoreFolder.value.focus();
 };
 
 onMounted(loadFileList);
@@ -131,8 +134,10 @@ const handleDownload = async row => {
 
 const handleDestroy = async row => {
     try {
-        await axios.post('/fileManager/destroy', { body: { path: currentDir.value, name: row.name } });
-        await loadFileList(); // 重新加载文件列表
+        notify.ask(`确定要删除 ${row.name} 吗？`, async () => {
+            await axios.post('/fileManager/destroy', { body: { path: currentDir.value, name: row.name } });
+            await loadFileList(); // 重新加载文件列表
+        });
     } catch (error) {
         console.error('删除文件失败', error);
         notify.error('删除失败', error);
