@@ -15,6 +15,7 @@ type Filesystemer interface {
 	GetInfo() os.FileInfo
 	GetDirs() []Filesystemer
 	GetFiles() []Filesystemer
+	GetKind() string
 	SetAttrs(attrs ...PathAttributer) Filesystemer
 	SetFullPathForAttr(path string) Filesystemer
 	SetFullPathByAttr(attrs ...PathAttributer) Filesystemer

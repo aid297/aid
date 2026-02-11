@@ -28,7 +28,7 @@ type Dir struct {
 }
 
 func NewDir(attrs ...PathAttributer) Filesystemer {
-	return (&Dir{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
+	return (&Dir{mu: sync.RWMutex{}, Kind: "DIR"}).SetAttrs(attrs...).refresh()
 }
 
 func (my *Dir) GetName() string          { return my.Name }
@@ -39,6 +39,7 @@ func (my *Dir) GetFullPath() string      { return my.FullPath }
 func (my *Dir) GetInfo() os.FileInfo     { return my.Info }
 func (my *Dir) GetDirs() []Filesystemer  { return my.Dirs }
 func (my *Dir) GetFiles() []Filesystemer { return my.Files }
+func (my *Dir) GetKind() string          { return my.Kind }
 
 func (my *Dir) SetAttrs(attrs ...PathAttributer) Filesystemer {
 	my.mu.Lock()

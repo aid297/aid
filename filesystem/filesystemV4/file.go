@@ -35,7 +35,7 @@ var (
 )
 
 func NewFile(attrs ...PathAttributer) Filesystemer {
-	return (&File{mu: sync.RWMutex{}}).SetAttrs(attrs...).refresh()
+	return (&File{mu: sync.RWMutex{}, Kind: "FILE"}).SetAttrs(attrs...).refresh()
 }
 
 func (my *File) GetName() string          { return my.Name }
@@ -46,6 +46,7 @@ func (my *File) GetFullPath() string      { return my.FullPath }
 func (my *File) GetInfo() os.FileInfo     { return my.Info }
 func (my *File) GetDirs() []Filesystemer  { return nil }
 func (my *File) GetFiles() []Filesystemer { return nil }
+func (my *File) GetKind() string          { return my.Kind }
 
 func (my *File) SetAttrs(attrs ...PathAttributer) Filesystemer {
 	my.mu.Lock()
