@@ -209,6 +209,8 @@ func (*FileManagerAPI) Download(c *gin.Context) {
 		return
 	}
 
+	// 设置文件名
+	c.Header("Content-Disposition", "attachment; filename="+name)
 	c.File(dir.GetFullPath())
 }
 
