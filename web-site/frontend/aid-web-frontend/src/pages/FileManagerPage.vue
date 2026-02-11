@@ -29,8 +29,6 @@
                                 <template v-slot:header="props">
                                     <q-tr :props="props">
                                         <q-th align="left" key="name" name="name">名称</q-th>
-                                        <q-th align="left" key="size" name="size">大小</q-th>
-                                        <q-th align="left" key="kind" name="kind">类型</q-th>
                                         <q-th align="left" key="option" name="option">操作</q-th>
                                     </q-tr>
                                 </template>
@@ -45,8 +43,6 @@
                                             </a>
                                             <span v-else>📄 {{ props.row.name || '' }}</span>
                                         </q-td>
-                                        <q-td align="left" key="size" :props="props">{{ props.row.size || '' }}</q-td>
-                                        <q-td align="left" key="kind" :props="props">{{ props.row.kind || '' }}</q-td>
                                         <q-td align="left" key="fullPath" :props="props">
                                             <q-btn-group flat>
                                                 <q-btn size="sm" color="primary" icon="download" label="下载"
@@ -82,7 +78,7 @@ const currentDir = ref('/');
  * @param dir 所需目录
  */
 const loadFileList = async () => {
-    const { dirs, files } = (await axios.post('/fileManager/list', { body: { path: currentDir.value } })).data.data;
+    const { dirs, files } = (await axios.post('/fileManager/list', { body: { path: currentDir.value } })).data.content;
     rows.value = [...dirs, ...files];
     console.log('文件列表已加载', rows.value);
 };

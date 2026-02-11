@@ -1,6 +1,7 @@
 package filesystemV4
 
 import (
+	"archive/zip"
 	"fmt"
 	"io"
 	"os"
@@ -198,7 +199,7 @@ func (my *File) Remove() Filesystemer {
 	return my.refresh()
 }
 
-func (my *File) RemoveAll() Filesystemer { return my }
+func (my *File) RemoveAll() Filesystemer { return my.Remove() }
 
 // Read 读取文件内容
 func (my *File) Read(attrs ...OperationAttributer) ([]byte, error) {
@@ -257,6 +258,71 @@ func (my *File) CopyTo(isRel bool, dstPaths ...string) Filesystemer {
 	my.Error = copyFileTo(my.GetFullPath(), newPath.GetFullPath())
 
 	return my
+}
+
+// Zip 压缩文件到 zip 格式
+func (my *File) Zip() Filesystemer {
+	var (
+		err       error
+		srcFile   *os.File
+		zipFile   *os.File
+		zipWriter *zip.Writer
+		writer    io.Writer
+		zipPath   string
+		content   []byte
+	)
+
+	if my.FullPath == "" {
+		my.Error = ErrMissFullPath
+		return my
+	}
+
+	if !my.Exist {
+		my.Error = ErrFileNotExist
+		return my
+	}
+
+	// 压缩后的文件名：原文件名 + .zip
+	zipPath = my.FullPath + ".zip"
+
+	// 读取源文件内容
+	if srcFile, err = os.Open(my.FullPath); err != nil {
+		my.Error = fmt.Errorf("打开源文件失败:%w", err)
+		return my
+	}
+	defer srcFile.Close()
+
+	// 创建 zip 文件
+	if zipFile, err = os.Create(zipPath); err != nil {
+		my.Error = fmt.Errorf("创建 zip 文件失败:%w", err)
+		return my
+	}
+	defer zipFile.Close()
+
+	// 创建 zip writer
+	zipWriter = zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	// 在 zip 中创建文件条目（使用原文件名）
+	if writer, err = zipWriter.Create(my.Name); err != nil {
+		my.Error = fmt.Errorf("创建 zip 条目失败:%w", err)
+		return my
+	}
+
+	// 读取源文件内容
+	if content, err = io.ReadAll(srcFile); err != nil {
+		my.Error = fmt.Errorf("读取源文件失败:%w", err)
+		return my
+	}
+
+	// 写入到 zip
+	if _, err = writer.Write(content); err != nil {
+		my.Error = fmt.Errorf("写入 zip 文件失败:%w", err)
+		return my
+	}
+
+	// 返回指向压缩后文件的新 File 对象
+	return NewFile(Abs(zipPath))
 }
 
 func (my *File) Copy() Filesystemer { return NewFile(Abs(my.FullPath)) }

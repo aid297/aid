@@ -1,6 +1,6 @@
 package v1HTTPRoute
 
-var APP struct {
+var Catalog struct {
 	Rezip  RezipRoute
 	UUID   UUIDRoute
 	Upload FileManagerRoute

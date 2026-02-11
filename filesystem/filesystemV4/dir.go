@@ -1,7 +1,9 @@
 package filesystemV4
 
 import (
+	"archive/zip"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -308,6 +310,114 @@ func (my *Dir) CopyTo(isRel bool, dstPaths ...string) Filesystemer {
 	}
 
 	return my
+}
+
+// Zip 压缩整个目录到 zip 文件
+func (my *Dir) Zip() Filesystemer {
+	var (
+		err       error
+		zipFile   *os.File
+		zipWriter *zip.Writer
+		zipPath   string
+	)
+
+	if my.FullPath == "" {
+		my.Error = ErrMissFullPath
+		return my
+	}
+
+	if !my.Exist {
+		my.Error = ErrDirNotExist
+		return my
+	}
+
+	// 压缩后的文件名：目录名 + .zip，保存在目录的同级路径下
+	zipPath = my.FullPath + ".zip"
+
+	// 创建 zip 文件
+	if zipFile, err = os.Create(zipPath); err != nil {
+		my.Error = fmt.Errorf("创建 zip 文件失败:%w", err)
+		return my
+	}
+	defer zipFile.Close()
+
+	// 创建 zip writer
+	zipWriter = zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	// 递归添加目录中的所有文件
+	if err = my.addDirToZip(zipWriter, my.FullPath, my.Name); err != nil {
+		my.Error = fmt.Errorf("压缩目录失败:%w", err)
+		return my
+	}
+
+	// 返回指向压缩后文件的新 File 对象
+	return NewFile(Abs(zipPath))
+}
+
+// addDirToZip 递归添加目录内容到 zip
+func (my *Dir) addDirToZip(zipWriter *zip.Writer, basePath, baseInZip string) error {
+	var (
+		err     error
+		entries []os.DirEntry
+	)
+
+	// 读取目录内容
+	if entries, err = os.ReadDir(basePath); err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		fullPath := filepath.Join(basePath, entry.Name())
+		zipPath := filepath.Join(baseInZip, entry.Name())
+
+		if entry.IsDir() {
+			// 递归处理子目录
+			if err = my.addDirToZip(zipWriter, fullPath, zipPath); err != nil {
+				return err
+			}
+		} else {
+			// 添加文件到 zip
+			if err = my.addFileToZip(zipWriter, fullPath, zipPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// addFileToZip 添加单个文件到 zip
+func (my *Dir) addFileToZip(zipWriter *zip.Writer, filePath, zipPath string) error {
+	var (
+		err     error
+		file    *os.File
+		writer  io.Writer
+		content []byte
+	)
+
+	// 打开文件
+	if file, err = os.Open(filePath); err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// 在 zip 中创建文件条目
+	if writer, err = zipWriter.Create(zipPath); err != nil {
+		return err
+	}
+
+	// 读取文件内容
+	if content, err = io.ReadAll(file); err != nil {
+		return err
+	}
+
+	// 写入到 zip
+	if _, err = writer.Write(content); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Copy 复制当前对象

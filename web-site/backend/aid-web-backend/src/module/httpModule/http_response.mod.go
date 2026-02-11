@@ -9,9 +9,9 @@ import (
 
 // ******************** HTTPResponse 定义 ******************** //
 type HTTPResponse struct {
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
-	Data any    `json:"data"`
+	Code    int    `json:"code"`
+	Msg     string `json:"msg"`
+	Content any    `json:"content"`
 }
 
 func New(attrs ...HTTPResponseAttributer) HTTPResponse {
@@ -63,7 +63,7 @@ func (my HTTPResponse) SetErrorf(format string, a ...any) HTTPResponse {
 	return my.SetAttrs(Errorf(format, a...))
 }
 
-func (my HTTPResponse) SetData(data any) HTTPResponse { return my.SetAttrs(Data(data)) }
+func (my HTTPResponse) SetData(data any) HTTPResponse { return my.SetAttrs(Content(data)) }
 
 func (my HTTPResponse) Raw() (int, any) { return my.Code, my }
 
@@ -134,5 +134,5 @@ func Error(err error) HTTPResponseAttributer                { return AttrMsg{msg
 func Errorf(format string, a ...any) HTTPResponseAttributer { return Error(fmt.Errorf(format, a...)) }
 func (my AttrMsg) Register(res *HTTPResponse)               { res.Msg = my.msg }
 
-func Data(data any) HTTPResponseAttributer     { return AttrData{data: data} }
-func (my AttrData) Register(res *HTTPResponse) { res.Data = my.data }
+func Content(data any) HTTPResponseAttributer  { return AttrData{data: data} }
+func (my AttrData) Register(res *HTTPResponse) { res.Content = my.data }

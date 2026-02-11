@@ -9,9 +9,9 @@ import (
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 )
 
-type TimezoneInit struct{}
+type TimezoneInitialize struct{}
 
-func (TimezoneInit) Launch() {
+func (*TimezoneInitialize) Boot() {
 	if global.CONFIG.System.Timezone != "" {
 		if timezoneL, err := time.LoadLocation(global.CONFIG.System.Timezone); err != nil {
 			global.LOG.Error("加载时区失败", zap.String("timezone", global.CONFIG.System.Timezone), zap.Error(err))

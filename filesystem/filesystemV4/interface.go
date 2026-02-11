@@ -1,6 +1,10 @@
 package filesystemV4
 
-import "os"
+import (
+	"os"
+
+	"github.com/aid297/aid/operation/operationV2"
+)
 
 type Filesystemer interface {
 	GetName() string
@@ -30,4 +34,13 @@ type Filesystemer interface {
 	Copy() Filesystemer
 	Up() Filesystemer
 	LS() Filesystemer
+	Zip() Filesystemer
+}
+
+func New(attr PathAttributer) (Filesystemer, error) {
+	isDir, err := isDir(attr.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	return operationV2.NewTernary(operationV2.TrueFn(func() Filesystemer { return NewFile(attr) }), operationV2.FalseFn(func() Filesystemer { return NewDir(attr) })).GetByValue(!isDir), nil
 }

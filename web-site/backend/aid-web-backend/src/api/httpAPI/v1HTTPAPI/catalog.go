@@ -1,6 +1,6 @@
 package v1HTTPAPI
 
-var APP struct {
+var Catalog struct {
 	Rezip       RezipAPI
 	UUID        UUIDAPI
 	FileManager FileManagerAPI

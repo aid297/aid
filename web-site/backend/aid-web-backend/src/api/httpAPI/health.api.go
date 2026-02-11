@@ -50,21 +50,21 @@ var healthRes = httpModule.HealthResponse{
 
 // JSON 健康检查 JSON 格式
 // * URL ANY /health/json
-func (HealthAPI) JSON(c *gin.Context) {
+func (*HealthAPI) JSON(c *gin.Context) {
 	global.LOG.Info("获取支持的UUID版本", zap.Any("ANY /health/json", "生成UUID成功"))
 	c.JSON(http.StatusOK, healthRes)
 }
 
 // JSON 健康检查 JSON 格式
 // * URL ANY /health/yaml
-func (HealthAPI) YAML(c *gin.Context) {
+func (*HealthAPI) YAML(c *gin.Context) {
 	global.LOG.Info("获取支持的UUID版本", zap.Any("ANY /health/yaml", "生成UUID成功"))
 	c.YAML(http.StatusOK, healthRes)
 }
 
 // JSON 健康检查 JSON 格式
 // * URL ANY /health/toml
-func (HealthAPI) TOML(c *gin.Context) {
+func (*HealthAPI) TOML(c *gin.Context) {
 	global.LOG.Info("获取支持的UUID版本", zap.Any("ANY /health/toml", "生成UUID成功"))
 	c.TOML(http.StatusOK, healthRes)
 }

@@ -11,9 +11,9 @@ import (
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 )
 
-type ConfigInit struct{}
+type ConfigInitialize struct{}
 
-func (ConfigInit) Launch(consolePath string) {
+func (*ConfigInitialize) Boot(consolePath string) {
 	if _, err := setting.NewSetting(
 		setting.Filename(consolePath),
 		setting.EnvName(global.ENV_CONFIG),

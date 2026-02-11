@@ -44,6 +44,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		in             []string
 		notIn          []string
 		value          string
+		ok             bool
 	)
 
 	if my.Kind != reflect.String {
@@ -61,7 +62,10 @@ func (my FieldInfo) checkString() FieldInfo {
 		}
 	}
 
-	value, _ = my.Value.(string)
+	if value, ok = my.Value.(string); !ok {
+		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：字符串", my.getName(), ErrInvalidType))
+		return my
+	}
 
 	my.VRuleTags.Each(func(_ int, rule string) {
 		if strings.HasPrefix(rule, "min") {

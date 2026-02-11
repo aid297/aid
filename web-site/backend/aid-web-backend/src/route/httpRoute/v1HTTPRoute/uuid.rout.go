@@ -11,7 +11,7 @@ type UUIDRoute struct{}
 func (*UUIDRoute) Register(app *gin.RouterGroup) {
 	r := app.Group("uuid")
 	{
-		r.POST("/generate", v1HTTPAPI.APP.UUID.Generate)
-		r.POST("/versions", v1HTTPAPI.APP.UUID.Versions)
+		r.POST("/generate", v1HTTPAPI.Catalog.UUID.Generate)
+		r.POST("/versions", v1HTTPAPI.Catalog.UUID.Versions)
 	}
 }

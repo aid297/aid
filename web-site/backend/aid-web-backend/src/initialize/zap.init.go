@@ -11,9 +11,9 @@ import (
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 )
 
-type ZapInit struct{}
+type ZapInitialize struct{}
 
-func (ZapInit) Launch() {
+func (*ZapInitialize) Boot() {
 	var (
 		err       error
 		zapLevels = map[string]zapcore.Level{

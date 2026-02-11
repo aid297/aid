@@ -6,6 +6,7 @@ type (
 	PathAttributer interface {
 		Joins(paths ...string) PathAttributer
 		Register(f Filesystemer)
+		GetPath() string
 	}
 
 	AttrPath struct{ path string }
@@ -19,3 +20,4 @@ func (my AttrPath) Joins(paths ...string) PathAttributer {
 	my.path = filepath.Join(append([]string{my.path}, paths...)...)
 	return my
 }
+func (my AttrPath) GetPath() string { return my.path }

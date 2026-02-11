@@ -3,7 +3,6 @@ package v1HTTPAPI
 import (
 	"archive/zip"
 	"bytes"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -14,12 +13,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/filesystem/filesystemV2"
+	"github.com/aid297/aid/filesystem/filesystemV4"
 )
 
 type RezipAPI struct{}
 
-func (RezipAPI) Upload(c *gin.Context) {
+func (*RezipAPI) Upload(c *gin.Context) {
 	var (
 		title     = "重新压缩"
 		file      *multipart.FileHeader
@@ -32,7 +31,7 @@ func (RezipAPI) Upload(c *gin.Context) {
 
 	if file, err = c.FormFile("f"); err != nil {
 		global.LOG.Error(title, zap.Errors("上传文件", []error{err}))
-		httpModule.NewForbidden().SetMsg("上传文件失败").WithAccept(c)
+		httpModule.NewForbidden(httpModule.Msg("上传文件失败")).WithAccept(c)
 		return
 	}
 
@@ -40,7 +39,7 @@ func (RezipAPI) Upload(c *gin.Context) {
 	srcFile, err = file.Open()
 	if err != nil {
 		global.LOG.Error(title, zap.Errors("打开文件", []error{err}))
-		httpModule.NewForbidden().SetErrorf("打开文件失败：%w", err).WithAccept(c)
+		httpModule.NewForbidden(httpModule.Errorf("打开文件失败：%w", err)).WithAccept(c)
 		return
 	}
 	defer func() { _ = srcFile.Close() }()
@@ -49,7 +48,7 @@ func (RezipAPI) Upload(c *gin.Context) {
 	buf = make([]byte, file.Size)
 	if _, err = io.ReadFull(srcFile, buf); err != nil {
 		global.LOG.Error(title, zap.Errors("读取文件", []error{err}))
-		httpModule.NewForbidden().SetErrorf("读取文件失败：%w", err).WithAccept(c)
+		httpModule.NewForbidden(httpModule.Errorf("读取文件失败：%w", err)).WithAccept(c)
 		return
 	}
 
@@ -57,7 +56,7 @@ func (RezipAPI) Upload(c *gin.Context) {
 	zipReader, err = zip.NewReader(bytes.NewReader(buf), file.Size)
 	if err != nil {
 		global.LOG.Error(title, zap.Errors("创建zip reader", []error{err}))
-		httpModule.NewForbidden().SetErrorf("创建zip容器失败：%w", err).WithAccept(c)
+		httpModule.NewForbidden(httpModule.Errorf("创建zip容器失败：%w", err)).WithAccept(c)
 		return
 	}
 
@@ -74,7 +73,7 @@ func (RezipAPI) Upload(c *gin.Context) {
 		rc, err = f.Open()
 		if err != nil {
 			global.LOG.Error(title, zap.Errors("读取压缩包文件", []error{err}))
-			httpModule.NewForbidden().SetErrorf("读取压缩包文件失败：%w", err).WithAccept(c)
+			httpModule.NewForbidden(httpModule.Errorf("读取压缩包文件失败：%w", err)).WithAccept(c)
 			return
 		}
 
@@ -94,7 +93,7 @@ func (RezipAPI) Upload(c *gin.Context) {
 		if _, err := io.Copy(w, rc); err != nil {
 			_ = rc.Close()
 			global.LOG.Error(title, zap.Errors("拷贝压缩文件内容", []error{err}))
-			httpModule.NewForbidden().SetErrorf("拷贝压缩文件内容失败：%w", err).WithAccept(c)
+			httpModule.NewForbidden(httpModule.Errorf("拷贝压缩文件内容失败：%w", err)).WithAccept(c)
 			return
 		}
 		_ = rc.Close()
@@ -103,22 +102,22 @@ func (RezipAPI) Upload(c *gin.Context) {
 	// 关闭 zip writer
 	if err = zipWriter.Close(); err != nil {
 		global.LOG.Error(title, zap.Errors("保存新压缩文件", []error{err}))
-		httpModule.NewForbidden().SetErrorf("保存新压缩文件失败：%w", err).WithAccept(c)
+		httpModule.NewForbidden(httpModule.Errorf("保存新压缩文件失败：%w", err)).WithAccept(c)
 		return
 	}
 
-	fs := filesystemV2.FileApp.NewByRel(fmt.Sprintf("%s/repacked.zip", global.CONFIG.Rezip.OutDir))
+	fs := filesystemV4.NewFile(filesystemV4.Rel(global.CONFIG.Rezip.OutDir, "repacked.zip"))
 	global.LOG.Info(title, zap.String("保存路径", fs.GetFullPath()))
 	if err = os.MkdirAll(fs.GetBasePath(), os.ModePerm); err != nil {
 		global.LOG.Error(title, zap.Errors("创建目录", []error{err}))
-		httpModule.NewForbidden().SetErrorf("创建目录失败：%w", err).WithAccept(c)
+		httpModule.NewForbidden(httpModule.Errorf("创建目录失败：%w", err)).WithAccept(c)
 		return
 	}
 
 	// 保存到本地文件
 	if err = os.WriteFile(fs.GetFullPath(), outBuf.Bytes(), 0644); err != nil {
 		global.LOG.Error(title, zap.Errors("保存压缩文件", []error{err}))
-		httpModule.NewForbidden().SetErrorf("保存压缩文件失败：%w", err).WithAccept(c)
+		httpModule.NewForbidden(httpModule.Errorf("保存压缩文件失败：%w", err)).WithAccept(c)
 		return
 	}
 

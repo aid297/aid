@@ -13,6 +13,14 @@ func getRootPath(dir string) string {
 	return filepath.Clean(filepath.Join(rootPath, dir))
 }
 
+func isDir(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, err // 路径不存在或权限不足等错误
+	}
+	return info.IsDir(), nil
+}
+
 func copyFileTo(src, dst string) (err error) {
 	var (
 		srcFile *os.File

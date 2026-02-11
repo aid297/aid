@@ -59,9 +59,10 @@ func parseArgs() ConsoleArgs {
 func main() {
 	var consoleArgs = parseArgs()
 
-	initialize.Elements.Config.Launch(consoleArgs.configPath)
-	initialize.Elements.Zap.Launch()
-	initialize.Elements.Timezone.Launch()
+	initialize.Catalog.Config.Boot(consoleArgs.configPath)
+	initialize.Catalog.Zap.Boot()
+	initialize.Catalog.Timezone.Boot()
+	initialize.Catalog.FileManager.Boot()
 
 	launch(consoleArgs)
 }
@@ -79,11 +80,11 @@ func launch(consoleArgs ConsoleArgs) {
 
 	switch consoleArgs.cmdAPP {
 	case "help":
-		command.Elements.Help.Launch()
+		command.Catalog.Help.Launch()
 	case "web-service", "":
-		command.Elements.WebService.Launch()
+		command.Catalog.WebService.Launch()
 	case "sftp-service":
-		command.Elements.SFTPService.Launch()
+		command.Catalog.SFTPService.Launch()
 	default:
 		log.Fatalf("启动失败：启动模式不支持：%s", consoleArgs.cmdAPP)
 	}

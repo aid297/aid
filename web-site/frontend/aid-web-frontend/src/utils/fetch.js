@@ -1,5 +1,5 @@
-export const ROOT_URL = 'http://172.20.232.212:19900';
-
+// export const ROOT_URL = 'http://172.20.232.212:19900';
+export const ROOT_URL = 'http://127.0.0.1:19900';
 export const API_BASE_URL = `${ROOT_URL}/api/v1`;
 const authorization = localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '';
 const DEFAULT_HEADERS = { 'Content-Type': 'application/json', Authorization: authorization };
@@ -28,14 +28,14 @@ import Axios from 'axios';
 const axiosIns = Axios.create({ baseUrl: API_BASE_URL, headers: DEFAULT_HEADERS });
 
 export const axios = {
-	get: async (endpoint, options = {}) => a(endpoint, 'GET', options),
-	post: async (endpoint, options = {}) => a(endpoint, 'POST', options),
-	put: async (endpoint, options = {}) => a(endpoint, 'PUT', options),
-	delete: async (endpoint, options = {}) => a(endpoint, 'DELETE', options),
-	patch: async (endpoint, options = {}) => a(endpoint, 'PATCH', options),
+	get: async (endpoint, options = {}) => sendAxios(endpoint, 'GET', options),
+	post: async (endpoint, options = {}) => sendAxios(endpoint, 'POST', options),
+	put: async (endpoint, options = {}) => sendAxios(endpoint, 'PUT', options),
+	delete: async (endpoint, options = {}) => sendAxios(endpoint, 'DELETE', options),
+	patch: async (endpoint, options = {}) => sendAxios(endpoint, 'PATCH', options),
 };
 
-const a = async (endpoint, method = 'GET', options = {}) => {
+const sendAxios = async (endpoint, method = 'GET', options = {}) => {
 	const { headers, body, params, ...restOptions } = options;
 
 	try {

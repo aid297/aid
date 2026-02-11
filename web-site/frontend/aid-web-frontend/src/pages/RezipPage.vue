@@ -29,6 +29,6 @@ const onUploaded = function (file) {
 	const res = JSON.parse(file.xhr.response);
 
 	notify.ok(res.msg);
-	if (res.code === 200) location.href = `http://${res.data.to}`;
+	if (res.code === 200) location.href = `http://${res.content.to}`;
 };
 </script>

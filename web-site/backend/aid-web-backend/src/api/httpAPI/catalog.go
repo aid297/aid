@@ -1,5 +1,5 @@
 package httpAPI
 
-var APP struct {
+var Catalog struct {
 	Health HealthAPI
 }
