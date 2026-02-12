@@ -394,11 +394,8 @@ func Bytes(body []byte) *AttrBody {
 }
 
 func Reader(body io.ReadCloser) *AttrBody {
-	var (
-		ins = &AttrBody{}
-		// buffer = bytes.NewBuffer([]byte{})
-	)
-	ins.body = bytes.NewBuffer(nil)
+	var ins = &AttrBody{body: bytes.NewBuffer(nil)}
+
 	if body == nil {
 		ins.err = errors.New("设置steam流失败：不能为空")
 		return ins
@@ -407,16 +404,14 @@ func Reader(body io.ReadCloser) *AttrBody {
 	if _, ins.err = io.Copy(ins.body, body); ins.err != nil {
 		return ins
 	}
-	// ins.body = buffer
 
 	return ins
 }
 
 func File(filename string) *AttrBody {
 	var (
-		ins       = &AttrBody{}
+		ins       = &AttrBody{body: bytes.NewBuffer(nil)}
 		file      *os.File
-		buffer    = bytes.NewBuffer([]byte{})
 		fileBodis []byte
 	)
 
@@ -435,10 +430,9 @@ func File(filename string) *AttrBody {
 
 	// 创建RequestBodyReader用于读取文件内容
 	if size > 1*1024*1024 {
-		if _, ins.err = io.Copy(buffer, file); ins.err != nil {
+		if _, ins.err = io.Copy(ins.body, file); ins.err != nil {
 			return ins
 		}
-		ins.body = buffer
 	} else {
 		if fileBodis, ins.err = io.ReadAll(file); ins.err != nil {
 			return ins
