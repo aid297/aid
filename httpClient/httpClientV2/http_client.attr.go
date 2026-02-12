@@ -395,18 +395,19 @@ func Bytes(body []byte) *AttrBody {
 
 func Reader(body io.ReadCloser) *AttrBody {
 	var (
-		ins    = &AttrBody{}
-		buffer = bytes.NewBuffer([]byte{})
+		ins = &AttrBody{}
+		// buffer = bytes.NewBuffer([]byte{})
 	)
+	ins.body = bytes.NewBuffer(nil)
 	if body == nil {
 		ins.err = errors.New("设置steam流失败：不能为空")
 		return ins
 	}
 
-	if _, ins.err = io.Copy(buffer, body); ins.err != nil {
+	if _, ins.err = io.Copy(ins.body, body); ins.err != nil {
 		return ins
 	}
-	ins.body = buffer
+	// ins.body = buffer
 
 	return ins
 }

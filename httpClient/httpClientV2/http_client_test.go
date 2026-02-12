@@ -41,12 +41,17 @@ func Test1(t *testing.T) {
 }
 
 func Test2(t *testing.T) {
-	hc, wrongs := APP.HTTPClient.New(
-		URL("http://baidu.com"),
+	hc := APP.HTTPClient.New(
+		TransportDefault(),
+		URL("http://127.0.0.1:19003/project/list"),
+		SetHeaderValue(map[string]any{"User-Info": "eyJ1dWlkIjoiYmIwZjJhYjItYTRiNy00ZjYxLWIzYTQtMWRlNTMzOGNkNmNkIiwibmlja25hbWUiOiLkvZkiLCJ1c2VybmFtZSI6Inl1aml6aG91IiwiZW1haWwiOiIxMzUyMjE3ODA1N0BlbWFpbC5jb20iLCJpc0FkbWluIjpmYWxzZSwidGVhbUlkIjoyLCJvd25lclRlYW1JZHMiOlszM10sImhhc1RlYW1JZHMiOlsyLDMzLDM3XSwidG9rZW4iOiIvZWREdnBCRGhManlaVWJ0TC9iVkdaZktRWlRoajJNdDc1bVBxSVduTWxQdFFGOGdxbWpJQjEzMG5MVDllelF2SmJvN1dGbG9YVzU3SW5JZkQvNkRrMU1ERmtpWVJ5aHdZRENSanZJVnArZzY2bnFwSTd5bDBCcWpDN0FBU2NrT3cyQzFWSmY1emtjaGVqbWxIMDhJNnB5Ylk2NmtzaEwwOWxGNlJMZVIzd0xNQ3l5RGNjSVpmclJQQS9IOUtNM3YvNWdVTFk3UGpKL1BSR0NzSzJlYkMyTHlEdGpTMk02MmJ1N0FRekhRQmhkSFEvN3hsQXlUTk1aT0NPU0tyWlRQWmVWK0V5b2NMMGNqNEozQ0ZzMGRFZHkvdG5iVWV3SFhIa0grU0lvUG0vQ2pPeVN4SFFEV3FCS0plemRiSFdCN2ZUMjZZcWljcjBJVmROOTB3UE1SZGtQSHJvSmVkVHNGQSs2SGhVZ1hsVHc9In0="}),
 		Timeout(1*time.Second),
-		Method(http.MethodGet),
-	).SendWithRetry(3, 3*time.Second, nil)
+		Method(http.MethodPost),
+		JSON(map[string]any{
+			"projectUUID": "1f06786e-07bd-6868-8ef5-355bce72ed9b",
+		}),
+		AutoCopy(true),
+	).Send()
 
-	t.Logf("错误列表：%v", wrongs)
-	t.Logf("最终结果：%s", hc.ToBytes())
+	t.Logf("结果：%s\n", hc.ToBytes())
 }
