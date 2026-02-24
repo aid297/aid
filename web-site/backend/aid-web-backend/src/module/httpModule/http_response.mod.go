@@ -48,6 +48,9 @@ func NewUnPermission(attrs ...HTTPResponseAttributer) HTTPResponse {
 func NewForbidden(attrs ...HTTPResponseAttributer) HTTPResponse {
 	return New(Forbidden()).SetAttrs(attrs...)
 }
+func NewUnprocessableEntity(attrs ...HTTPResponseAttributer) HTTPResponse {
+	return New(UnprocessableEntity()).SetAttrs(attrs...)
+}
 func NewNotFound(attrs ...HTTPResponseAttributer) HTTPResponse {
 	return New(NotFound()).SetAttrs(attrs...)
 }
@@ -69,8 +72,6 @@ func (my HTTPResponse) Raw() (int, any) { return my.Code, my }
 
 func (my HTTPResponse) WithAccept(c *gin.Context) {
 	switch c.GetHeader("accept") {
-	case "application/json":
-		my.JSON(c)
 	case "application/xml":
 		my.XML(c)
 	case "application/yaml":
@@ -79,6 +80,19 @@ func (my HTTPResponse) WithAccept(c *gin.Context) {
 		my.TOML(c)
 	default:
 		my.JSON(c)
+	}
+}
+
+func (my HTTPResponse) WithAcceptWithoutCode(c *gin.Context) {
+	switch c.GetHeader("accept") {
+	case "application/xml":
+		my.WithoutCodeXML(c)
+	case "application/yaml":
+		my.WithoutCodeYAML(c)
+	case "application/toml":
+		my.WithoutCodeTOML(c)
+	default:
+		my.WithoutCodeJSON(c)
 	}
 }
 
@@ -121,11 +135,14 @@ func UnPermission() HTTPResponseAttributer {
 func Forbidden() HTTPResponseAttributer {
 	return AttrCode{code: http.StatusForbidden, msg: "操作失败"}
 }
+func UnprocessableEntity() HTTPResponseAttributer {
+	return AttrCode{code: http.StatusUnprocessableEntity, msg: "表单验证失败"}
+}
 func NotFound() HTTPResponseAttributer {
 	return AttrCode{code: http.StatusNotFound, msg: "资源不存在"}
 }
 func InternalServerError() HTTPResponseAttributer {
-	return AttrCode{code: http.StatusInternalServerError, msg: "服务器内部错误"}
+	return AttrCode{code: http.StatusInternalServerError, msg: "其他错误"}
 }
 func (my AttrCode) Register(res *HTTPResponse) { res.Code = my.code; res.Msg = my.msg }
 

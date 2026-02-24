@@ -9,14 +9,8 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
+        "contact": {},
         "license": {
-            "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
         "version": "{{.Version}}"
@@ -30,7 +24,10 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "produces": [
-                    "application/json"
+                    "application/json",
+                    "application/xml",
+                    "application/x-yaml",
+                    "application/toml"
                 ],
                 "tags": [
                     "文件管理"
@@ -56,6 +53,12 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "删除失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "表单验证失败",
                         "schema": {
                             "$ref": "#/definitions/httpModule.HTTPResponse"
                         }
@@ -103,6 +106,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/httpModule.HTTPResponse"
                         }
+                    },
+                    "422": {
+                        "description": "表单验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
                     }
                 }
             }
@@ -114,7 +123,10 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "produces": [
-                    "application/json"
+                    "application/json",
+                    "application/xml",
+                    "application/x-yaml",
+                    "application/toml"
                 ],
                 "tags": [
                     "文件管理"
@@ -155,6 +167,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/httpModule.HTTPResponse"
                         }
+                    },
+                    "422": {
+                        "description": "表单验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
                     }
                 }
             }
@@ -191,6 +209,12 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "创建文件夹失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "表单验证失败",
                         "schema": {
                             "$ref": "#/definitions/httpModule.HTTPResponse"
                         }
@@ -254,6 +278,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/httpModule.HTTPResponse"
                         }
+                    },
+                    "422": {
+                        "description": "表单验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
                     }
                 }
             }
@@ -264,7 +294,10 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "produces": [
-                    "application/json"
+                    "application/json",
+                    "application/xml",
+                    "application/x-yaml",
+                    "application/toml"
                 ],
                 "tags": [
                     "文件管理"
@@ -285,11 +318,35 @@ const docTemplate = `{
                     "200": {
                         "description": "压缩成功",
                         "schema": {
-                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/httpModule.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "content": {
+                                            "$ref": "#/definitions/response.FileZipResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "403": {
                         "description": "压缩失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "获取路径错误",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "表单验证失败",
                         "schema": {
                             "$ref": "#/definitions/httpModule.HTTPResponse"
                         }
@@ -388,6 +445,14 @@ const docTemplate = `{
                 },
                 "size": {
                     "type": "integer"
+                }
+            }
+        },
+        "response.FileZipResponse": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
                 }
             }
         }

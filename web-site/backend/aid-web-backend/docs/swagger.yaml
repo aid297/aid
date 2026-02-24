@@ -59,17 +59,17 @@ definitions:
       size:
         type: integer
     type: object
+  response.FileZipResponse:
+    properties:
+      name:
+        type: string
+    type: object
 host: localhost:9900
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
+  contact: {}
   description: Aid Web Backend API 服务
   license:
-    name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
   title: Aid Web Backend API
   version: "1.0"
 paths:
@@ -86,6 +86,9 @@ paths:
           $ref: '#/definitions/request.FileDestroyRequest'
       produces:
       - application/json
+      - application/xml
+      - application/x-yaml
+      - application/toml
       responses:
         "200":
           description: 删除成功
@@ -93,6 +96,10 @@ paths:
             $ref: '#/definitions/httpModule.HTTPResponse'
         "403":
           description: 删除失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "422":
+          description: 表单验证失败
           schema:
             $ref: '#/definitions/httpModule.HTTPResponse'
       summary: 删除文件或目录
@@ -124,6 +131,10 @@ paths:
           description: 下载失败
           schema:
             $ref: '#/definitions/httpModule.HTTPResponse'
+        "422":
+          description: 表单验证失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
       summary: 下载文件
       tags:
       - 文件管理
@@ -141,6 +152,9 @@ paths:
           $ref: '#/definitions/request.FileListRequest'
       produces:
       - application/json
+      - application/xml
+      - application/x-yaml
+      - application/toml
       responses:
         "200":
           description: 获取成功
@@ -153,6 +167,10 @@ paths:
               type: object
         "403":
           description: 获取失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "422":
+          description: 表单验证失败
           schema:
             $ref: '#/definitions/httpModule.HTTPResponse'
       summary: 获取文件列表
@@ -178,6 +196,10 @@ paths:
             $ref: '#/definitions/httpModule.HTTPResponse'
         "403":
           description: 创建文件夹失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "422":
+          description: 表单验证失败
           schema:
             $ref: '#/definitions/httpModule.HTTPResponse'
       summary: 创建文件夹
@@ -218,6 +240,10 @@ paths:
           description: 获取上传文件失败
           schema:
             $ref: '#/definitions/httpModule.HTTPResponse'
+        "422":
+          description: 表单验证失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
       summary: 上传文件
       tags:
       - 文件管理
@@ -234,13 +260,29 @@ paths:
           $ref: '#/definitions/request.FileZipRequest'
       produces:
       - application/json
+      - application/xml
+      - application/x-yaml
+      - application/toml
       responses:
         "200":
           description: 压缩成功
           schema:
-            $ref: '#/definitions/httpModule.HTTPResponse'
+            allOf:
+            - $ref: '#/definitions/httpModule.HTTPResponse'
+            - properties:
+                content:
+                  $ref: '#/definitions/response.FileZipResponse'
+              type: object
         "403":
           description: 压缩失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "404":
+          description: 获取路径错误
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "422":
+          description: 表单验证失败
           schema:
             $ref: '#/definitions/httpModule.HTTPResponse'
       summary: 压缩文件或目录
