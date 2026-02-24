@@ -13,6 +13,7 @@ import (
 )
 
 type File struct {
+	mu       sync.RWMutex `json:"-"`                              // 读写锁
 	Error    error        `json:"error" swaggertype:"string"`     // 错误信息
 	Name     string       `json:"name" swaggertype:"string"`      // 文件名
 	BasePath string       `json:"basePath" swaggertype:"string"`  // 基础路径
@@ -21,7 +22,6 @@ type File struct {
 	Info     os.FileInfo  `json:"info" swaggertype:"string"`      // 文件信息
 	Mode     os.FileMode  `json:"mode" swaggertype:"string"`      // 文件权限
 	Exist    bool         `json:"exist" swaggertype:"boolean"`    // 文件是否存在
-	mu       sync.RWMutex `json:"-"`                              // 读写锁
 	Ext      string       `json:"extension" swaggertype:"string"` // 文件扩展名
 	Mime     string       `json:"mime" swaggertype:"string"`      // 文件 Mime 类型
 	Kind     string       `json:"kind" swaggertype:"string"`      // 类型
