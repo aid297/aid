@@ -37,6 +37,15 @@ definitions:
       path:
         type: string
     type: object
+  response.FileListResponse:
+    properties:
+      currentPath:
+        type: string
+      filesystemers:
+        items:
+          type: object
+        type: array
+    type: object
   response.FileUploadResponse:
     properties:
       contentType:
@@ -136,7 +145,12 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/httpModule.HTTPResponse'
+            allOf:
+            - $ref: '#/definitions/httpModule.HTTPResponse'
+            - properties:
+                content:
+                  $ref: '#/definitions/response.FileListResponse'
+              type: object
         "403":
           description: 获取失败
           schema:

@@ -82,7 +82,7 @@ func (*FileManagerAPI) Upload(c *gin.Context) {
 // @Accept      application/json
 // @Param       data	body	request.FileListRequest	true	"请求参数"
 // @Router      /fileManager/list	[post]
-// @Success     200	{object}	httpModule.HTTPResponse	"获取成功"
+// @Success     200	{object}	httpModule.HTTPResponse{content=response.FileListResponse}	"获取成功"
 // @Failure     403	{object}	httpModule.HTTPResponse	"获取失败"
 func (*FileManagerAPI) List(c *gin.Context) {
 	type FilesystemerItem struct {

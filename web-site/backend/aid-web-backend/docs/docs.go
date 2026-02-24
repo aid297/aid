@@ -135,7 +135,19 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/httpModule.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "content": {
+                                            "$ref": "#/definitions/response.FileListResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "403": {
@@ -342,6 +354,20 @@ const docTemplate = `{
                 },
                 "path": {
                     "type": "string"
+                }
+            }
+        },
+        "response.FileListResponse": {
+            "type": "object",
+            "properties": {
+                "currentPath": {
+                    "type": "string"
+                },
+                "filesystemers": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
                 }
             }
         },
