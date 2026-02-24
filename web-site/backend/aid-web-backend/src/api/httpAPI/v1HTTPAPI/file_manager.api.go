@@ -68,8 +68,6 @@ func (*FileManagerAPI) Upload(c *gin.Context) {
 		httpModule.Content(response.FileUploadResponse{
 			FileName:    file.Filename,
 			Size:        file.Size,
-			SavedAs:     file.Filename,
-			SavedPath:   savePath,
 			ContentType: file.Header.Get("Content-Type"),
 		}),
 	).WithAccept(c)
