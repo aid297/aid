@@ -9,9 +9,9 @@ import (
 
 // ******************** HTTPResponse 定义 ******************** //
 type HTTPResponse struct {
-	Code    int    `json:"code"`
-	Msg     string `json:"msg"`
-	Content any    `json:"content"`
+	Code    int    `json:"code" swaggertype:"integer"`
+	Msg     string `json:"msg" swaggertype:"string"`
+	Content any    `json:"content" swaggertype:"object" x-nullable:"true"`
 }
 
 func New(attrs ...HTTPResponseAttributer) HTTPResponse {

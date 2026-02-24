@@ -12,22 +12,20 @@ import (
 	"github.com/aid297/aid/operation/operationV2"
 )
 
-type (
-	File struct {
-		Error    error        `json:"error"`     // 错误信息
-		Name     string       `json:"name"`      // 文件名
-		BasePath string       `json:"basePath"`  // 基础路径
-		FullPath string       `json:"fullPath"`  // 完整路径
-		Size     int64        `json:"size"`      // 文件大小
-		Info     os.FileInfo  `json:"info"`      // 文件信息
-		Mode     os.FileMode  `json:"mode"`      // 文件权限
-		Exist    bool         `json:"exist"`     // 文件是否存在
-		mu       sync.RWMutex `json:"-"`         // 读写锁
-		Ext      string       `json:"extension"` // 文件扩展名
-		Mime     string       `json:"mime"`      // 文件 Mime 类型
-		Kind     string       `json:"kind"`      // 类型
-	}
-)
+type File struct {
+	Error    error        `json:"error" swaggertype:"string"`     // 错误信息
+	Name     string       `json:"name" swaggertype:"string"`      // 文件名
+	BasePath string       `json:"basePath" swaggertype:"string"`  // 基础路径
+	FullPath string       `json:"fullPath" swaggertype:"string"`  // 完整路径
+	Size     int64        `json:"size" swaggertype:"integer"`     // 文件大小
+	Info     os.FileInfo  `json:"info" swaggertype:"string"`      // 文件信息
+	Mode     os.FileMode  `json:"mode" swaggertype:"string"`      // 文件权限
+	Exist    bool         `json:"exist" swaggertype:"boolean"`    // 文件是否存在
+	mu       sync.RWMutex `json:"-"`                              // 读写锁
+	Ext      string       `json:"extension" swaggertype:"string"` // 文件扩展名
+	Mime     string       `json:"mime" swaggertype:"string"`      // 文件 Mime 类型
+	Kind     string       `json:"kind" swaggertype:"string"`      // 类型
+}
 
 var (
 	DefaultCreateMode = os.O_APPEND | os.O_CREATE | os.O_WRONLY

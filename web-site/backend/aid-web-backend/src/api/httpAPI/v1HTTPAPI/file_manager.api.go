@@ -11,6 +11,7 @@ import (
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
+	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/response"
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
@@ -18,8 +19,17 @@ import (
 
 type FileManagerAPI struct{}
 
-// Upload 上传单个文件
-// * POST /api/v1/fileManger/upload
+// Upload       上传单个文件
+// @Tags        文件管理
+// @Summary     上传文件
+// @Description 上传单个文件到指定路径
+// @Produce     application/json,application/xml,application/x-yaml,application/toml
+// @Accept      multipart/form-data
+// @Router      /fileManager/upload [post]
+// @Param       path	query	string	true	"上传路径"
+// @Param       file	formData	file	true	"上传文件内容"
+// @Success     200	{object}	httpModule.HTTPResponse{content=response.FileUploadResponse}	"上传成功"
+// @Failure     403	{object}	httpModule.HTTPResponse	"获取上传文件失败"
 func (*FileManagerAPI) Upload(c *gin.Context) {
 	var (
 		title = "上传文件"
@@ -31,14 +41,14 @@ func (*FileManagerAPI) Upload(c *gin.Context) {
 	// 获取上传的文件
 	if file, err = c.FormFile("file"); err != nil {
 		global.LOG.Error(title, zap.Errors("接收文件", []error{err}))
-		httpModule.NewForbidden(httpModule.Errorf("获取上传文件失败：%w", err)).JSON(c)
+		httpModule.NewForbidden(httpModule.Errorf("获取上传文件失败：%w", err)).WithAccept(c)
 		return
 	}
 
 	// 确保上传目录存在
 	if err = os.MkdirAll(filepath.Join(global.CONFIG.FileManager.Dir, path), 0755); err != nil {
 		global.LOG.Error(title, zap.Errors("创建上传目录", []error{err}))
-		httpModule.NewInternalServerError(httpModule.Errorf("创建上传目录失败：%w", err)).JSON(c)
+		httpModule.NewInternalServerError(httpModule.Errorf("创建上传目录失败：%w", err)).WithAccept(c)
 		return
 	}
 
@@ -47,25 +57,33 @@ func (*FileManagerAPI) Upload(c *gin.Context) {
 	// 保存文件到本地
 	if err = c.SaveUploadedFile(file, savePath); err != nil {
 		global.LOG.Error(title, zap.Errors("保存文件到本地", []error{err}))
-		httpModule.NewForbidden(httpModule.Errorf("保存文件到本地失败：%w", err)).JSON(c)
+		httpModule.NewForbidden(httpModule.Errorf("保存文件到本地失败：%w", err)).WithAccept(c)
 		return
 	}
 
 	global.LOG.Info(title, zap.Any("成功", ""))
 	httpModule.NewOK(
 		httpModule.Msg("文件上传成功"),
-		httpModule.Content(gin.H{
-			"filename":     file.Filename,
-			"size":         file.Size,
-			"saved_as":     file.Filename,
-			"saved_path":   savePath,
-			"content_type": file.Header.Get("Content-Type"),
+		httpModule.Content(response.FileUploadResponse{
+			FileName:    file.Filename,
+			Size:        file.Size,
+			SavedAs:     file.Filename,
+			SavedPath:   savePath,
+			ContentType: file.Header.Get("Content-Type"),
 		}),
 	).WithAccept(c)
 }
 
 // List 列出上传的文件
-// * POST /api/v1/fileManger/list
+// @Tags        文件管理
+// @Summary     获取文件列表
+// @Description 按路径获取当前目录文件/目录列表
+// @Produce     application/json
+// @Accept      application/json
+// @Param       data	body	request.FileListRequest	true	"请求参数"
+// @Router      /fileManager/list	[post]
+// @Success     200	{object}	httpModule.HTTPResponse	"获取成功"
+// @Failure     403	{object}	httpModule.HTTPResponse	"获取失败"
 func (*FileManagerAPI) List(c *gin.Context) {
 	type FilesystemerItem struct {
 		Path string `json:"path"`
@@ -111,11 +129,18 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	currentPath, _ = strings.CutPrefix(dir.GetFullPath(), rootPath.GetFullPath())
 
 	global.LOG.Info(title, zap.Any("成功", filesystemers))
-	httpModule.NewOK(httpModule.Content(gin.H{"filesystemers": filesystemers, "currentPath": currentPath})).WithAccept(c)
+	httpModule.NewOK(httpModule.Content(response.FileListResponse{Filesystemers: filesystemers, CurrentPath: currentPath})).WithAccept(c)
 }
 
-// StoreFolder 创建文件夹
-// * POST /api/v1/fileManger/storeFolder
+// StoreFolder  创建文件夹
+// @Tags        文件管理
+// @Summary     创建文件夹
+// @Produce     application/json
+// @Accept      application/json
+// @Param       data  body      request.FileStoreFolderRequest  true  "请求参数"
+// @Router      /fileManager/storeFolder [post]
+// @Success     200   {object}  httpModule.HTTPResponse  "创建成功"
+// @Failure     403   {object}  httpModule.HTTPResponse  "创建文件夹失败"
 func (*FileManagerAPI) StoreFolder(c *gin.Context) {
 	var (
 		title        = "创建文件夹"
@@ -142,8 +167,15 @@ func (*FileManagerAPI) StoreFolder(c *gin.Context) {
 	httpModule.NewOK(httpModule.Msg("创建成功")).WithAccept(c)
 }
 
-// Delete 删除文件或目录
-// * POST /api/v1/fileManger/destroy
+// Delete   删除文件或目录
+// @Tags    文件管理
+// @Summary 删除文件或目录
+// @Produce application/json
+// @Accept  application/json
+// @Param   data	body	request.FileDestroyRequest	true	"请求参数"
+// @Router  /api/v1/fileManger/destroy	[post]
+// @Success	200	{object}	httpModule.HTTPResponse	"删除成功"
+// @Failure 403	{object}	httpModule.HTTPResponse	"删除失败"
 func (*FileManagerAPI) Destroy(c *gin.Context) {
 	var (
 		title        = "删除文件或目录"
@@ -176,7 +208,15 @@ func (*FileManagerAPI) Destroy(c *gin.Context) {
 }
 
 // Download 下载文件
-// * GET /api/v1/fileManger/download
+// @Tags    文件管理
+// @Summary 下载文件
+// @Produce application/octet-stream
+// @Accept  application/json
+// @Param   path	query	string	true	"文件路径"
+// @Param   name	query	string	true	"文件名"
+// @Router  /fileManager/download	[get]
+// @Success 200	{file}	file	"下载成功"
+// @Failure 403	{object}	httpModule.HTTPResponse	"下载失败"
 func (*FileManagerAPI) Download(c *gin.Context) {
 	var (
 		dir  filesystemV4.Filesystemer
@@ -195,7 +235,14 @@ func (*FileManagerAPI) Download(c *gin.Context) {
 }
 
 // Zip 压缩文件或目录
-// * POST /api/v1/fileManger/zip
+// @Tags        文件管理
+// @Summary     压缩文件或目录
+// @Produce     application/json
+// @Accept      application/json
+// @Param       data	body	request.FileZipRequest	true	"请求参数"
+// @Router      /fileManager/zip	[post]
+// @Success     200	{object}	httpModule.HTTPResponse	"压缩成功"
+// @Failure     403	{object}	httpModule.HTTPResponse	"压缩失败"
 func (*FileManagerAPI) Zip(c *gin.Context) {
 	var (
 		title                = "压缩文件或目录"

@@ -14,17 +14,17 @@ import (
 
 type Dir struct {
 	mu       sync.RWMutex   // 读写锁
-	Error    error          `json:"error"`    // 错误信息
-	Name     string         `json:"name"`     // 文件名
-	BasePath string         `json:"basePath"` // 基础路径
-	FullPath string         `json:"fullPath"` // 完整路径
-	Size     int64          `json:"size"`     // 文件大小
-	Info     os.FileInfo    `json:"info"`     // 文件信息
-	Mode     os.FileMode    `json:"mode"`     // 文件权限
-	Exist    bool           `json:"exist"`    // 文件是否存在
-	Files    []Filesystemer `json:"files"`    // 目录下的文件列表
-	Dirs     []Filesystemer `json:"dirs"`     // 子目录列表
-	Kind     string         `json:"kind"`     // 类型
+	Error    error          `json:"error" swaggertype:"string"`    // 错误信息
+	Name     string         `json:"name" swaggertype:"string"`     // 文件名
+	BasePath string         `json:"basePath" swaggertype:"string"` // 基础路径
+	FullPath string         `json:"fullPath" swaggertype:"string"` // 完整路径
+	Size     int64          `json:"size" swaggertype:"integer"`    // 文件大小
+	Info     os.FileInfo    `json:"info" swaggertype:"string"`     // 文件信息
+	Mode     os.FileMode    `json:"mode" swaggertype:"string"`     // 文件权限
+	Exist    bool           `json:"exist" swaggertype:"boolean"`   // 文件是否存在
+	Files    []Filesystemer `json:"files" swaggertype:"array"`     // 目录下的文件列表
+	Dirs     []Filesystemer `json:"dirs" swaggertype:"array"`      // 子目录列表
+	Kind     string         `json:"kind" swaggertype:"string"`     // 类型
 }
 
 func NewDir(attrs ...PathAttributer) Filesystemer {

@@ -1,0 +1,235 @@
+basePath: /api/v1
+definitions:
+  httpModule.HTTPResponse:
+    properties:
+      code:
+        type: integer
+      content:
+        type: object
+      msg:
+        type: string
+    type: object
+  request.FileDestroyRequest:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  request.FileListRequest:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  request.FileStoreFolderRequest:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  request.FileZipRequest:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  response.FileUploadResponse:
+    properties:
+      contentType:
+        type: string
+      filename:
+        type: string
+      savedAs:
+        type: string
+      savedPath:
+        type: string
+      size:
+        type: integer
+    type: object
+host: localhost:9900
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Aid Web Backend API 服务
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Aid Web Backend API
+  version: "1.0"
+paths:
+  /api/v1/fileManger/destroy:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.FileDestroyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "403":
+          description: 删除失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+      summary: 删除文件或目录
+      tags:
+      - 文件管理
+  /fileManager/download:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 文件路径
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: 文件名
+        in: query
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 下载成功
+          schema:
+            type: file
+        "403":
+          description: 下载失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+      summary: 下载文件
+      tags:
+      - 文件管理
+  /fileManager/list:
+    post:
+      consumes:
+      - application/json
+      description: 按路径获取当前目录文件/目录列表
+      parameters:
+      - description: 请求参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.FileListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "403":
+          description: 获取失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+      summary: 获取文件列表
+      tags:
+      - 文件管理
+  /fileManager/storeFolder:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.FileStoreFolderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "403":
+          description: 创建文件夹失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+      summary: 创建文件夹
+      tags:
+      - 文件管理
+  /fileManager/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传单个文件到指定路径
+      parameters:
+      - description: 上传路径
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: 上传文件内容
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      - application/xml
+      - application/x-yaml
+      - application/toml
+      responses:
+        "200":
+          description: 上传成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpModule.HTTPResponse'
+            - properties:
+                content:
+                  $ref: '#/definitions/response.FileUploadResponse'
+              type: object
+        "403":
+          description: 获取上传文件失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+      summary: 上传文件
+      tags:
+      - 文件管理
+  /fileManager/zip:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.FileZipRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 压缩成功
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "403":
+          description: 压缩失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+      summary: 压缩文件或目录
+      tags:
+      - 文件管理
+swagger: "2.0"

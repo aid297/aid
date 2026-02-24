@@ -9,7 +9,10 @@ import (
 	v1HTTPMiddleware2 "github.com/aid297/aid/web-site/backend/aid-web-backend/src/middleware/httpMiddleware/v1HTTPMiddleware"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/route/httpRoute/v1HTTPRoute"
 
+	_ "github.com/aid297/aid/web-site/backend/aid-web-backend/docs" // 导入生成的 docs
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type IndexRoute struct{}
@@ -20,6 +23,10 @@ func (*IndexRoute) Register(app *gin.Engine) {
 	if global.CONFIG.WebService.Cors {
 		app.Use(v1HTTPMiddleware2.Cors())
 	}
+
+	// 注册 Swagger 路由
+	app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	app.Use(httpMiddleware.RecoverHandler)
 
 	apiRout := app.Group("api")
