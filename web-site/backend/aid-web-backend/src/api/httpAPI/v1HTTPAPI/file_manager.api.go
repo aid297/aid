@@ -137,11 +137,11 @@ func (*FileManagerAPI) List(c *gin.Context) {
 // @Summary     创建文件夹
 // @Produce     application/json
 // @Accept      application/json
-// @Param       data  body      request.FileStoreFolderRequest  true  "请求参数"
+// @Param       data body request.FileStoreFolderRequest true "请求参数"
 // @Router      /fileManager/storeFolder [post]
-// @Success     200   {object}  httpModule.HTTPResponse  "创建成功"
+// @Success     200 {object} httpModule.HTTPResponse "创建成功"
 // @Failure     422 {object} httpModule.HTTPResponse "表单验证失败"
-// @Failure     403   {object}  httpModule.HTTPResponse  "创建文件夹失败"
+// @Failure     403 {object} httpModule.HTTPResponse "创建文件夹失败"
 func (*FileManagerAPI) StoreFolder(c *gin.Context) {
 	var (
 		title        = "创建文件夹"
