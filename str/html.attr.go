@@ -1,5 +1,7 @@
 package str
 
+import "github.com/spf13/cast"
+
 type (
 	HtmlAttributer interface{ Register(html *HTML) }
 
@@ -38,6 +40,11 @@ type (
 	AttrHtmlTBody struct {
 		properties []HtmlProperty
 		options    []HtmlAttributer
+	}
+	AttrHtmlH struct {
+		properties []HtmlProperty
+		options    []HtmlAttributer
+		level      int
 	}
 
 	HtmlProperty struct {
@@ -257,4 +264,29 @@ func (my AttrHtmlTBody) Register(html *HTML) {
 func (my AttrHtmlTBody) AppendProperties(properties ...HtmlProperty) AttrHtmlTBody {
 	my.properties = append(my.properties, properties...)
 	return my
+}
+
+func HtmlH(level int, options ...HtmlAttributer) AttrHtmlH {
+	if level < 1 {
+		level = 1
+	} else if level > 6 {
+		level = 6
+	}
+	return AttrHtmlH{options: options, properties: []HtmlProperty{}, level: level}
+}
+
+func (my AttrHtmlH) Register(html *HTML) {
+	html.buffer.S("<h", cast.ToString(my.level))
+	if len(my.properties) > 0 {
+		for idx := range my.properties {
+			html.buffer.S(" ", my.properties[idx].Key, `="`, my.properties[idx].Value, `"`)
+		}
+	}
+	html.buffer.S(">")
+	if len(my.options) > 0 {
+		for idx := range my.options {
+			my.options[idx].Register(html)
+		}
+	}
+	html.buffer.S("</h", cast.ToString(my.level), ">")
 }

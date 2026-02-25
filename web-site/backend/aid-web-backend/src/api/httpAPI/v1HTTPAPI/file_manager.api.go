@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/aid297/aid/filesystem/filesystemV4"
+	"github.com/aid297/aid/str"
 	"github.com/aid297/aid/validator/validatorV3"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
@@ -228,7 +229,10 @@ func (*FileManagerAPI) Download(c *gin.Context) {
 	)
 
 	if dir = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir, path, name)); !dir.GetExist() {
-		httpModule.NewNotFound(httpModule.Msg("文件不存在")).WithAccept(c)
+		c.String(404, str.APP.HTML.New(
+			str.HtmlH(1, str.HtmlNormal("错误：文件不存在")),
+			str.HtmlH(2, str.HtmlNormal(dir.GetFullPath())),
+		).End())
 		return
 	}
 
