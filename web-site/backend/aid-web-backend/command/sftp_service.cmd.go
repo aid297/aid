@@ -38,16 +38,6 @@ func (*SFTPServiceCommand) Launch() {
 		dir.Create()
 	}
 
-	// // 验证共享目录是否存在
-	// if absDir, err = filepath.Abs(global.CONFIG.FileManager.Dir); err != nil {
-	// 	global.LOG.Error("目录路径错误", zap.Error(err))
-	// 	return
-	// }
-	// if _, err = os.Stat(absDir); os.IsNotExist(err) {
-	// 	global.LOG.Error("目录不存在", zap.String("dir", absDir), zap.Error(err))
-	// 	return
-	// }
-
 	// 获取Mac的局域网方便虚拟桌面访问
 	localIP := getLocalIP()
 	if localIP == "" {
