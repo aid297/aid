@@ -39,18 +39,17 @@ func (my *Check) Wrongs() []error { return my.wrongs }
 func (my *Check) OK() bool { return len(my.wrongs) == 0 }
 
 func (my *Check) Wrong() error {
-	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString("")) })).GetByValue(len(my.wrongs) > 0)
+	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString("")) })).
+		GetByValue(len(my.wrongs) > 0)
 }
 
 func (my *Check) WrongToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
-		ret = anySlice.FillFunc(
-			my.wrongs,
-			func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) },
-		).
+		ret = anySlice.FillFunc(my.wrongs, func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) }).
 			JoinNotEmpty(operationV2.NewTernary(
 				operationV2.TrueValue(limit),
-				operationV2.FalseValue(my.defaultLimit)).GetByValue(limit != ""))
+				operationV2.FalseValue(my.defaultLimit),
+			).GetByValue(limit != ""))
 	}
 
 	return
@@ -107,7 +106,10 @@ func callExCheckFn(fn any, data any) error {
 	}
 	ft := fv.Type()
 	if ft.NumIn() != 1 || ft.NumOut() < 1 {
-		return fmt.Errorf("callback must have signature func(T) error (or similar), got %s", ft.String())
+		return fmt.Errorf(
+			"callback must have signature func(T) error (or similar), got %s",
+			ft.String(),
+		)
 	}
 
 	argType := ft.In(0)
@@ -146,7 +148,10 @@ func callExCheckFn(fn any, data any) error {
 	}
 	errIface := reflect.TypeOf((*error)(nil)).Elem()
 	if !first.Type().Implements(errIface) {
-		return fmt.Errorf("callback first return does not implement error: %s", first.Type().String())
+		return fmt.Errorf(
+			"callback first return does not implement error: %s",
+			first.Type().String(),
+		)
 	}
 	return first.Interface().(error)
 }
@@ -240,16 +245,21 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 						// 空数组/切片，使用零值递归
 						infos = append(
 							infos,
-							getStructFieldInfos(reflect.Zero(elemElemType).Interface(), vNameTag)...,
+							getStructFieldInfos(
+								reflect.Zero(elemElemType).Interface(),
+								vNameTag,
+							)...,
 						)
 					}
 				}
 			case reflect.Struct:
-				if elemType != reflect.TypeOf(time.Time{}) && elemType != reflect.TypeOf(&time.Time{}) { // 如果不是时间类型则递归 struct
+				if elemType != reflect.TypeOf(time.Time{}) &&
+					elemType != reflect.TypeOf(&time.Time{}) { // 如果不是时间类型则递归 struct
 					infos = append(
 						infos,
 						getStructFieldInfos(
-							operationV2.NewTernary(operationV2.TrueFn(reflect.Zero(elemType).Interface), operationV2.FalseValue(value)).GetByValue(isPtr && isNil),
+							operationV2.NewTernary(operationV2.TrueFn(reflect.Zero(elemType).Interface), operationV2.FalseValue(value)).
+								GetByValue(isPtr && isNil),
 							vNameTag,
 						)...,
 					)
