@@ -2,6 +2,7 @@ package v1HTTPAPI
 
 import (
 	"mime/multipart"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -237,7 +238,7 @@ func (*FileManagerAPI) Download(c *gin.Context) {
 	}
 
 	// 设置文件名
-	c.Header("Content-Disposition", "attachment; filename="+name)
+	c.Header("Content-Disposition", str.APP.Buffer.JoinString("attachment; filename=", url.QueryEscape(name)))
 	c.File(dir.GetFullPath())
 }
 

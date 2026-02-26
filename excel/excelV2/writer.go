@@ -1,475 +1,309 @@
 package excelV2
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"reflect"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/spf13/cast"
 	"github.com/xuri/excelize/v2"
 
+	"github.com/aid297/aid/array/anySlice"
+	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
 )
 
-type Writer struct {
-	Error      error
-	lock       sync.RWMutex
-	rawFile    *excelize.File
-	filename   string
-	sheetName  string
-	isSheetSet bool
-}
-
-func (*Writer) New(attrs ...WriterAttributer) *Writer {
-	return (&Writer{lock: sync.RWMutex{}, rawFile: excelize.NewFile()}).setAttrs(attrs...)
-}
-
-func (my *Writer) setAttrs(attrs ...WriterAttributer) *Writer {
-	for i := range attrs {
-		attrs[i].Register(my)
-	}
-	return my
-}
-
-func (my *Writer) SetAttrs(attrs ...WriterAttributer) *Writer {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-	return my.setAttrs(attrs...)
-}
-
-func (my *Writer) getFilename() string { return my.filename }
-func (my *Writer) GetFilename() string {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getFilename()
-}
-func (my *Writer) getSheetName() string { return my.sheetName }
-func (my *Writer) GetSheetName() string {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getSheetName()
-}
-
-// setCell 设置 cells 值和格式
-func (my *Writer) setCell(cell *Cell) *Writer {
-	return my.setSheet().setCellValue(cell).setCellStyle(cell)
-}
-
-// setCellValue 设置 cells 值
-func (my *Writer) setCellValue(cell *Cell) *Writer {
-	var err error
-
-	switch cell.GetContentType() {
-	case CellContentTypeFormula:
-		if err = my.rawFile.SetCellFormula(my.sheetName, cell.GetCoordinate(), cast.ToString(cell.GetContent())); err != nil {
-			my.Error = fmt.Errorf("%w：%s %s %w", ErrWriteCellFormula, cell.GetCoordinate(), cell.GetContent(), err)
-			return my
-		}
-	case CellContentTypeInt:
-		if err = my.rawFile.SetCellInt(my.sheetName, cell.GetCoordinate(), cast.ToInt(cell.GetContent())); err != nil {
-			my.Error = fmt.Errorf("%w：%s %s %w", ErrWriteCellInt, cell.GetCoordinate(), cell.GetContent(), err)
-			return my
-		}
-	case CellContentTypeFloat:
-		if err = my.rawFile.SetCellFloat(my.sheetName, cell.GetCoordinate(), cast.ToFloat64(cell.GetContent()), 2, 64); err != nil {
-			my.Error = fmt.Errorf("%w：%s %s %w", ErrWriteCellFloat, cell.GetCoordinate(), cell.GetContent(), err)
-			return my
-		}
-	case CellContentTypeBool:
-		if err = my.rawFile.SetCellBool(my.sheetName, cell.GetCoordinate(), cast.ToBool(cell.GetContent())); err != nil {
-			my.Error = fmt.Errorf("%w：%s %s %w", ErrWriteCellBool, cell.GetCoordinate(), cell.GetContent(), err)
-			return my
-		}
-	case CellContentTypeTime:
-		if err = my.rawFile.SetCellValue(my.sheetName, cell.GetCoordinate(), cast.ToTime(cell.GetContent())); err != nil {
-			my.Error = fmt.Errorf("%w：%s %s %w", ErrWriteCellTime, cell.GetCoordinate(), cell.GetContent(), err)
-			return my
-		}
-	default:
-		if err = my.rawFile.SetCellValue(my.sheetName, cell.GetCoordinate(), cell.GetContent()); err != nil {
-			my.Error = fmt.Errorf("%w：%s %s %w", ErrWriteCellAny, cell.GetCoordinate(), cell.GetContent(), err)
-			return my
-		}
+type (
+	Writer interface {
+		GetRawExcel() *excelize.File
+		setFilename(filename string)
+		SetFilename(attr ExcelAttributer) Writer
+		setSheetByName(name string)
+		setSheetByIndex(index int)
+		SetSheet(attr SheetAttributer) Writer
+		createSheet(name string)
+		CreateSheet(attr SheetAttributer) Writer
+		Save() (err error)
+		Download(writer http.ResponseWriter) error
+		Write(rows ...IRows) Writer
+		setCellStyle(cell ICell)
 	}
 
-	return my
+	Write struct {
+		Error     error
+		mu        sync.RWMutex
+		filename  string
+		excel     *excelize.File
+		sheetName string
+	}
+)
+
+func NewWriter() Writer { return &Write{mu: sync.RWMutex{}, excel: excelize.NewFile()} }
+
+// GetRawExcel 获取原始 excelize.File 对象
+func (my *Write) GetRawExcel() *excelize.File {
+	my.mu.RLock()
+	defer my.mu.RUnlock()
+
+	return my.excel
 }
 
-// setCellStyle 设置 cells 格式
-func (my *Writer) setCellStyle(cell *Cell) *Writer {
-	fill := excelize.Fill{Type: "pattern", Pattern: 0, Color: []string{""}}
-	if cell.GetPatternRGB() != "" {
-		fill.Pattern = 1
-		fill.Color[0] = cell.GetPatternRGB()
-	}
+// setFilename 设置文件名
+func (my *Write) setFilename(filename string) {
+	my.mu.Lock()
+	defer my.mu.Unlock()
 
-	var borders = make([]excelize.Border, 0)
-	if cell.GetBorder().LengthNotEmpty() > 0 {
-		cell.GetBorder().Each(func(_ int, item border) {
-			borders = append(borders, excelize.Border{
-				Type:  item.Type,
-				Color: item.RGB,
-				Style: item.Style,
-			})
-		})
-	}
-
-	if style, err := my.rawFile.NewStyle(&excelize.Style{
-		Font: &excelize.Font{
-			Bold:   cell.GetFontBold(),
-			Italic: cell.GetFontItalic(),
-			Family: cell.GetFontFamily(),
-			Size:   cell.GetFontSize(),
-			Color:  cell.GetFontRGB(),
-		},
-		Alignment: &excelize.Alignment{WrapText: cell.GetWrapText()},
-		Fill:      fill,
-		Border:    borders,
-	}); err != nil {
-		my.Error = fmt.Errorf("%w：%s", ErrSetFont, cell.GetCoordinate())
-	} else {
-		my.Error = my.rawFile.SetCellStyle(my.sheetName, cell.GetCoordinate(), cell.GetCoordinate(), style)
-	}
-
-	return my
+	my.filename = filename
 }
 
-func (my *Writer) createSheet(sheetName string) *Writer {
-	if sheetName == "" {
-		my.Error = ErrSheetNameRequired
-		return my
-	}
-	sheetIndex, err := my.rawFile.NewSheet(sheetName)
-	if err != nil {
-		my.Error = fmt.Errorf("%w：%w", ErrCreateSheet, err)
-		return my
+// SetFilename 设置文件名
+func (my *Write) SetFilename(attr ExcelAttributer) Writer { attr.RegisterForWriter(my); return my }
+
+// setSheetByName 通过名称设置工作表
+func (my *Write) setSheetByName(name string) {
+	var (
+		err   error
+		index int
+	)
+
+	my.mu.Lock()
+	defer my.mu.Unlock()
+
+	if index, err = my.excel.GetSheetIndex(name); err != nil {
+		my.Error = fmt.Errorf("通过名称设置 Sheet 失败：%v", err)
+		return
 	}
 
-	my.rawFile.SetActiveSheet(sheetIndex)
-	my.sheetName = my.rawFile.GetSheetName(sheetIndex)
+	my.sheetName = name
+	my.excel.SetActiveSheet(index)
+}
 
-	return my
+// setSheetByIndex 通过索引设置工作表
+func (my *Write) setSheetByIndex(index int) {
+	my.mu.Lock()
+	defer my.mu.Unlock()
+
+	if index < 0 {
+		my.Error = errors.New("工作表索引不能小于0")
+		return
+	}
+
+	my.sheetName = my.excel.GetSheetName(index)
+	my.excel.SetActiveSheet(index)
+}
+
+// SetSheet 设置当前工作表，参数为 SheetAttributer 接口类型，可以通过 SheetName 或 SheetIndex 来指定工作表
+func (my *Write) SetSheet(attr SheetAttributer) Writer { attr.RegisterForWriter(my); return my }
+
+// createSheet 创建工作表
+func (my *Write) createSheet(name string) {
+	var (
+		err   error
+		index int
+	)
+
+	my.mu.Lock()
+
+	if index, err = my.excel.NewSheet(name); err != nil {
+		my.Error = fmt.Errorf("设置工作表失败：%v", err)
+		return
+	}
+
+	my.sheetName = name
+	my.excel.SetActiveSheet(index)
+	my.mu.Unlock()
 }
 
 // CreateSheet 创建工作表
-func (my *Writer) CreateSheet(sheetName string) *Writer {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-	return my.createSheet(sheetName)
+func (my *Write) CreateSheet(attr SheetAttributer) Writer { attr.RegisterForWriter(my); return my }
+
+// Write 写入数据
+func (my *Write) Write(rows ...IRows) Writer {
+	my.mu.Lock()
+	defer my.mu.Unlock()
+
+	for _, row := range rows {
+		for _, cells := range row.GetRows() {
+			for _, cell := range cells.GetCells() {
+				switch cell.GetContentType() {
+				case CellContentTypeFormula:
+					if err := my.excel.SetCellFormula(
+						my.sheetName,
+						cell.GetCoordinate(),
+						cell.GetContent().(string),
+					); err != nil {
+						my.Error = fmt.Errorf(
+							"写入数据错误（公式）%s %s：%v",
+							cell.GetCoordinate(),
+							cell.GetContent(),
+							err.Error(),
+						)
+						return my
+					}
+				case CellContentTypeAny:
+					if err := my.excel.SetCellValue(
+						my.sheetName,
+						cell.GetCoordinate(),
+						cell.GetContent(),
+					); err != nil {
+						my.Error = fmt.Errorf(
+							"写入ExcelCell（通用） %s %s：%v",
+							cell.GetCoordinate(),
+							cell.GetContent(),
+							err.Error(),
+						)
+						return my
+					}
+				case CellContentTypeInt:
+					if err := my.excel.SetCellInt(
+						my.sheetName,
+						cell.GetCoordinate(),
+						cell.GetContent().(int),
+					); err != nil {
+						my.Error = fmt.Errorf(
+							"写入ExcelCell（整数） %s %s：%v",
+							cell.GetCoordinate(),
+							cell.GetContent(),
+							err.Error(),
+						)
+						return my
+					}
+				case CellContentTypeFloat64:
+					if err := my.excel.SetCellFloat(
+						my.sheetName,
+						cell.GetCoordinate(),
+						cell.GetContent().(float64),
+						2,
+						64,
+					); err != nil {
+						my.Error = fmt.Errorf(
+							"写入ExcelCell（浮点） %s %s：%v",
+							cell.GetCoordinate(),
+							cell.GetContent(),
+							err.Error(),
+						)
+						return my
+					}
+				case CellContentTypeBool:
+					if err := my.excel.SetCellBool(
+						my.sheetName,
+						cell.GetCoordinate(),
+						cell.GetContent().(bool),
+					); err != nil {
+						my.Error = fmt.Errorf(
+							"写入ExcelCell（布尔） %s %s：%v",
+							cell.GetCoordinate(),
+							cell.GetContent(),
+							err.Error(),
+						)
+						return my
+					}
+				case CellContentTypeTime:
+					if err := my.excel.SetCellValue(
+						my.sheetName,
+						cell.GetCoordinate(),
+						cell.GetContent().(time.Time),
+					); err != nil {
+						my.Error = fmt.Errorf(
+							"写入ExcelCell（时间） %s %s：%v",
+							cell.GetCoordinate(),
+							cell.GetContent(),
+							err.Error(),
+						)
+					}
+				}
+
+				my.setCellStyle(cell)
+			}
+		}
+	}
+
+	return my
 }
 
-func (my *Writer) setSheet() *Writer {
+// setStyle 设置单元格样式
+func (my *Write) setCellStyle(cell ICell) {
 	var (
-		sheetIndex int
-		err        error
+		err           error
+		style         int
+		cellBorders   anySlice.AnySlicer[excelize.Border]
+		fill          excelize.Fill
+		cellFont      CellFontOpt
+		cellAlignment CellAlignmentOpt
 	)
 
-	if my.isSheetSet {
-		return my
+	// 设置填充
+	fill = excelize.Fill{Type: "pattern", Pattern: 0, Color: []string{""}}
+	cellFont = cell.GetFont()
+	if cellFont.PatternRGB != "" {
+		fill.Pattern = 1
+		fill.Color[0] = cellFont.PatternRGB
 	}
 
-	if my.sheetName == "" {
-		my.Error = ErrSheetNameRequired
-		return my
+	cellBorders = cell.GetBorder()
+	cellAlignment = cell.GetAlignment()
+	if style, err = my.excel.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold:   cellFont.Bold,
+			Italic: cellFont.Italic,
+			Family: cellFont.Family,
+			Size: operationV2.NewTernary(
+				operationV2.TrueValue(cellFont.Size),
+				operationV2.FalseValue[float64](9),
+			).GetByValue(cellFont.Size > 0),
+			Color: cellFont.RGB,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: cellAlignment.Horizontal,
+			Vertical:   cellAlignment.Vertical,
+			WrapText:   cellAlignment.WrapText,
+		},
+		Fill:   fill,
+		Border: cellBorders.ToSlice(),
+	}); err != nil {
+		my.Error = fmt.Errorf("设置字体错误：%s", cell.GetCoordinate())
+		return
 	}
 
-	if sheetIndex, err = my.rawFile.GetSheetIndex(my.sheetName); err != nil {
-		my.Error = fmt.Errorf("%w：%w %s", ErrSetSheet, err, my.sheetName)
-		return my
-	}
-
-	if sheetIndex == -1 {
-		// sheet 不存在，创建sheet
-		my.createSheet(my.sheetName)
-	} else {
-		// sheet 存在，设置为活动sheet
-		my.rawFile.SetActiveSheet(sheetIndex)
-	}
-
-	my.isSheetSet = true
-	return my
+	my.Error = my.excel.SetCellStyle(
+		my.sheetName,
+		cell.GetCoordinate(),
+		cell.GetCoordinate(),
+		style,
+	)
 }
 
 // Save 保存文件
-func (my *Writer) Save() *Writer {
-	var err error
+func (my *Write) Save() (err error) {
+	my.mu.RLock()
+	defer my.mu.RUnlock()
 
-	my.lock.Lock()
+	if my.Error != nil {
+		return my.Error
+	}
 
 	if my.filename == "" {
-		my.Error = ErrFilenameRequired
-		return my
+		return errors.New("保存文件失败：未设置文件名")
 	}
 
-	if err = my.rawFile.SaveAs(my.filename); err != nil {
-		my.Error = fmt.Errorf("%w：%w", ErrSave, err)
-		return my
+	if err = my.excel.SaveAs(my.filename); err != nil {
+		return fmt.Errorf("保存文件失败：%w", err)
 	}
 
-	my.lock.Unlock()
-	return my
+	return
 }
 
-func (my *Writer) FromStruct(data any, title []string, offset int, attrs ...CellAttributer) *Writer {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-	if defaultOffset := 1; offset <= 0 {
-		offset = defaultOffset
-	}
-	if data == nil {
-		my.Error = fmt.Errorf("data 不能为空")
-		return my
-	}
-
-	rv := reflect.ValueOf(data)
-	if rv.Kind() != reflect.Ptr {
-		my.Error = fmt.Errorf("data 必须是指向切片的指针")
-		return my
+// Download 下载Excel
+func (my *Write) Download(writer http.ResponseWriter) error {
+	{
+		writer.Header().Set("Content-Type", "application/octet-stream")
+		writer.Header().
+			Set("Content-Disposition", str.APP.Buffer.JoinString("attachment; filename=", url.QueryEscape(my.filename)))
+		writer.Header().Set("Content-Transfer-Encoding", "binary")
+		writer.Header().Set("Access-Control-Expose-Headers", "Content-Disposition")
 	}
 
-	sv := rv.Elem()
-	if sv.Kind() != reflect.Slice {
-		my.Error = fmt.Errorf("data 必须是指向切片的指针")
-		return my
-	}
-
-	elemType := sv.Type().Elem()
-	isElemPtr := false
-	structType := elemType
-	if elemType.Kind() == reflect.Ptr {
-		isElemPtr = true
-		structType = elemType.Elem()
-	}
-
-	if structType.Kind() != reflect.Struct {
-		my.Error = fmt.Errorf("切片元素必须为结构体或结构体指针")
-		return my
-	}
-
-	// 构建字段映射：优先 excel tag, 然后 json tag, 最后字段名（小写）
-	fieldIndex := make(map[string]int)
-	for i := 0; i < structType.NumField(); i++ {
-		f := structType.Field(i)
-		if f.PkgPath != "" { // unexported
-			continue
-		}
-		if et := f.Tag.Get("excel"); et != "" {
-			if et == "-" {
-				continue
-			}
-			parts := strings.Split(et, ",")
-			if parts[0] != "" {
-				fieldIndex[strings.ToLower(parts[0])] = i
-			}
-		}
-		if jt := f.Tag.Get("json"); jt != "" {
-			if jt == "-" {
-				continue
-			}
-			parts := strings.Split(jt, ",")
-			if parts[0] != "" {
-				fieldIndex[strings.ToLower(parts[0])] = i
-			}
-		}
-		name := strings.ToLower(f.Name)
-		fieldIndex[name] = i
-	}
-
-	// 写标题（如果提供）
-	// writeCell 使用 rn/cn 为 0-based index
-	rn := offset - 1
-	if len(title) > 0 {
-		for cn, t := range title {
-			cell := APP.Cell.New(APP.CellAttr.Content.Set(t), APP.CellAttr.ContentType.Set(CellContentTypeAny))
-			writeCell(cell, rn, cn, my)
-		}
-		rn++
-	}
-
-	// 遍历切片元素并写入
-	for i := 0; i < sv.Len(); i++ {
-		item := sv.Index(i)
-		if isElemPtr {
-			if item.IsNil() {
-				// skip nil pointer element
-				continue
-			}
-			item = item.Elem()
-		}
-
-		// 对于每一列，根据 title 找到字段并写入
-		for cn, t := range title {
-			key := strings.ToLower(strings.TrimSpace(t))
-			if key == "" {
-				continue
-			}
-			fi, ok := fieldIndex[key]
-			if !ok {
-				continue
-			}
-			f := item.Field(fi)
-			sf := structType.Field(fi)
-			// 未导出字段或不可设置跳过
-			if !f.IsValid() || !f.CanInterface() {
-				continue
-			}
-
-			// prepare per-field attributes from struct tags
-			localAttrs := make([]CellAttributer, 0)
-			if v := strings.TrimSpace(sf.Tag.Get("excel-font-size")); v != "" {
-				if fv, err := strconv.ParseFloat(v, 64); err == nil {
-					localAttrs = append(localAttrs, AttrCellFontSize{}.Set(fv))
-				}
-			}
-			if v := strings.TrimSpace(sf.Tag.Get("excel-font-rgb")); v != "" {
-				localAttrs = append(localAttrs, AttrCellFontRGB{}.Set(v))
-			}
-			if v := strings.TrimSpace(sf.Tag.Get("excel-pattern-rgb")); v != "" {
-				localAttrs = append(localAttrs, AttrCellPatternRGB{}.Set(v))
-			}
-			if v := strings.TrimSpace(sf.Tag.Get("excel-font-bold")); v != "" {
-				if b, err := strconv.ParseBool(v); err == nil {
-					if b {
-						localAttrs = append(localAttrs, AttrCellFontBold{}.SetTrue())
-					} else {
-						localAttrs = append(localAttrs, AttrCellFontBold{}.SetFalse())
-					}
-				}
-			}
-			if v := strings.TrimSpace(sf.Tag.Get("excel-font-italic")); v != "" {
-				if b, err := strconv.ParseBool(v); err == nil {
-					if b {
-						localAttrs = append(localAttrs, AttrCellFontItalic{}.SetTrue())
-					} else {
-						localAttrs = append(localAttrs, AttrCellFontItalic{}.SetFalse())
-					}
-				}
-			}
-			if v := strings.TrimSpace(sf.Tag.Get("excel-border-rgb")); v != "" {
-				parts := strings.Split(v, ",")
-				for len(parts) < 4 {
-					parts = append(parts, "")
-				}
-				localAttrs = append(localAttrs, AttrCellBorderRGB{}.Set(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), strings.TrimSpace(parts[2]), strings.TrimSpace(parts[3])))
-			}
-			if v := strings.TrimSpace(sf.Tag.Get("excel-border-style")); v != "" {
-				parts := strings.Split(v, ",")
-				ints := make([]int, 4)
-				for idx := 0; idx < 4 && idx < len(parts); idx++ {
-					if iv, err := strconv.Atoi(strings.TrimSpace(parts[idx])); err == nil {
-						ints[idx] = iv
-					}
-				}
-				localAttrs = append(localAttrs, AttrCellBorderStyle{}.Set(ints[0], ints[1], ints[2], ints[3]))
-			}
-			if v := strings.TrimSpace(sf.Tag.Get("excel-diagonal-rgb")); v != "" {
-				parts := strings.Split(v, ",")
-				up, down := "", ""
-				if len(parts) > 0 {
-					up = strings.TrimSpace(parts[0])
-				}
-				if len(parts) > 1 {
-					down = strings.TrimSpace(parts[1])
-				}
-				localAttrs = append(localAttrs, AttrCellDiagonalRGB{}.Set(up, down))
-			}
-			if v := strings.TrimSpace(sf.Tag.Get("excel-diagonal-style")); v != "" {
-				parts := strings.Split(v, ",")
-				up, down := 0, 0
-				if len(parts) > 0 {
-					if iv, err := strconv.Atoi(strings.TrimSpace(parts[0])); err == nil {
-						up = iv
-					}
-				}
-				if len(parts) > 1 {
-					if iv, err := strconv.Atoi(strings.TrimSpace(parts[1])); err == nil {
-						down = iv
-					}
-				}
-				localAttrs = append(localAttrs, AttrCellDiagonalStyle{}.Set(up, down))
-			}
-			if v := strings.TrimSpace(sf.Tag.Get("excel-wrap-text")); v != "" {
-				if b, err := strconv.ParseBool(v); err == nil {
-					if b {
-						localAttrs = append(localAttrs, AttrCellWrapText{}.SetTrue())
-					} else {
-						localAttrs = append(localAttrs, AttrCellWrapText{}.SetFalse())
-					}
-				}
-			}
-
-			// 处理指针字段
-			if f.Kind() == reflect.Ptr {
-				if f.IsNil() {
-					// 空指针写空值
-					merged := make([]CellAttributer, 0, len(attrs)+len(localAttrs))
-					merged = append(merged, attrs...)
-					merged = append(merged, localAttrs...)
-					cell := APP.Cell.New(APP.CellAttr.Content.Set(""), APP.CellAttr.ContentType.Set(CellContentTypeAny)).setAttrs(merged...)
-					writeCell(cell, rn+i, cn, my)
-					continue
-				}
-				f = f.Elem()
-			}
-
-			var content any
-			var ctype CellContentType = CellContentTypeAny
-
-			switch f.Kind() {
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				content = int(f.Int())
-				ctype = CellContentTypeInt
-			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-				content = int(f.Uint())
-				ctype = CellContentTypeInt
-			case reflect.Float32, reflect.Float64:
-				content = f.Float()
-				ctype = CellContentTypeFloat
-			case reflect.Bool:
-				content = f.Bool()
-				ctype = CellContentTypeBool
-			case reflect.String:
-				content = f.String()
-				ctype = CellContentTypeAny
-			case reflect.Struct:
-				// special case: time.Time
-				if f.Type() == reflect.TypeOf(time.Time{}) {
-					content = f.Interface()
-					ctype = CellContentTypeTime
-				} else {
-					// unsupported struct, marshal to string via fmt
-					content = fmt.Sprintf("%v", f.Interface())
-					ctype = CellContentTypeAny
-				}
-			default:
-				// fallback to string representation
-				content = fmt.Sprintf("%v", f.Interface())
-				ctype = CellContentTypeAny
-			}
-
-			cell := APP.Cell.New(APP.CellAttr.Content.Set(content), APP.CellAttr.ContentType.Set(ctype))
-			writeCell(cell, rn+i, cn, my)
-		}
-	}
-
-	return my
-}
-
-// Download 下载文件
-func (my *Writer) Download(w http.ResponseWriter) *Writer {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", str.APP.Buffer.JoinString("attachment; filename=%s", url.QueryEscape(my.filename)))
-	w.Header().Set("Content-Transfer-Encoding", "binary")
-	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition")
-
-	my.Error = my.rawFile.Write(w)
-	return my
+	return my.excel.Write(writer)
 }

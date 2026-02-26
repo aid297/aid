@@ -3,111 +3,134 @@ package excelV2
 import (
 	"testing"
 	"time"
+
+	"github.com/aid297/aid/filesystem/filesystemV4"
 )
 
-func TestFromStruct_BasicTypesAndHeader(t *testing.T) {
-	w := APP.Writer.New(APP.WriterAttr.SheetName.Set("Sheet1"))
+func TestWriter1(t *testing.T) {
+	excelByFile := NewWriter().
+		SetFilename(File(filesystemV4.NewFile(filesystemV4.Rel("./test-by-file.xlsx")))).
+		SetSheet(SheetName("Sheet 1")) // 通过名称选择一个工作表
 
-	type User struct {
-		ID     int     `excel:"编号"`
-		Name   string  `excel:"姓名"`
-		Active bool    `excel:"激活"`
-		Score  float64 `excel:"得分"`
+	if err := excelByFile.Save(); err != nil {
+		t.Errorf("保存失败(by file)：%v\n", err)
 	}
 
-	data := []User{{ID: 1, Name: "Alice", Active: true, Score: 3.5}, {ID: 2, Name: "Bob", Active: false, Score: 4.0}}
-	titles := []string{"编号", "姓名", "激活", "得分"}
+	excelByFilename := NewWriter().
+		SetFilename(Filename("./test-by-filename.xlsx")).
+		SetSheet(CreateSheet("Sheet B")) // 创建一个新的工作表
 
-	w.FromStruct(&data, titles, 1)
-	if w.Error != nil {
-		t.Fatalf("unexpected error: %v", w.Error)
-	}
-
-	v, _ := w.rawFile.GetCellValue(w.sheetName, "A1")
-	if v != "编号" {
-		t.Fatalf("expected header A1=编号 got %q", v)
+	if err := excelByFilename.Save(); err != nil {
+		t.Errorf("保存失败(by filename)：%v\n", err)
 	}
 
-	v, _ = w.rawFile.GetCellValue(w.sheetName, "B1")
-	if v != "姓名" {
-		t.Fatalf("expected header B1=姓名 got %q", v)
-	}
-
-	// first data row
-	v, _ = w.rawFile.GetCellValue(w.sheetName, "A2")
-	if v != "1" {
-		t.Fatalf("expected A2=1 got %q", v)
-	}
-	v, _ = w.rawFile.GetCellValue(w.sheetName, "B2")
-	if v != "Alice" {
-		t.Fatalf("expected B2=Alice got %q", v)
-	}
+	t.Logf("OK")
 }
 
-func TestFromStruct_PointerElementsAndIgnore(t *testing.T) {
-	w := APP.Writer.New(APP.WriterAttr.SheetName.Set("Sheet2"))
+func TestWriter2(t *testing.T) {
+	var err error
 
-	type U struct {
-		ID    int     `json:"id"`
-		Name  *string `json:"name"`
-		Email *string `excel:"邮箱" json:"email"`
-		Skip  string  `excel:"-"`
+	// 设置三行数据
+	rows := NewRows(
+		3, // 从第三行开始
+		NewRow(
+			NewCellInt(1),
+			NewCell("张三"),
+			NewCellBool(true),
+			NewCellTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.Local)),
+		),
+		NewRow(
+			NewCellInt(2),
+			NewCell("李四"),
+			NewCellBool(false),
+			NewCellTime(time.Date(2024, 3, 4, 0, 0, 0, 0, time.Local)),
+		),
+		NewRow(
+			NewCellInt(3),
+			NewCell("王五"),
+			NewCellBool(true),
+			NewCellTime(time.Date(2023, 5, 6, 0, 0, 0, 0, time.Local)),
+		),
+	)
+
+	// 追加两行数据
+	rows.AppendRows(
+		NewRow(
+			NewCellInt(4),
+			NewCell("赵六"),
+			NewCellBool(false),
+			NewCellTime(time.Date(2022, 7, 8, 0, 0, 0, 0, time.Local)),
+		),
+		NewRow(
+			NewCellInt(5),
+			NewCell("孙七"),
+			NewCellBool(true),
+			NewCellTime(time.Date(2021, 9, 10, 0, 0, 0, 0, time.Local)),
+		),
+	)
+
+	excelWriter := NewWriter().SetFilename(Filename("./test.xlsx")).
+		SetSheet(SheetIndex(0)). // 通过索引选择一个工作表
+		Write(rows)
+
+	if err = excelWriter.Save(); err != nil {
+		t.Errorf("保存失败：%v\n", err)
 	}
 
-	n := "Nina"
-	e := "nina@ex.com"
-	data := []*U{{ID: 10, Name: &n, Email: &e, Skip: "shouldskip"}, nil}
-	titles := []string{"id", "name", "邮箱", "skip"}
-
-	w.FromStruct(&data, titles, 2)
-	if w.Error != nil {
-		t.Fatalf("unexpected error: %v", w.Error)
-	}
-
-	v, _ := w.rawFile.GetCellValue(w.sheetName, "A2")
-	if v != "id" {
-		t.Fatalf("expected header A2=id got %q", v)
-	}
-
-	v, _ = w.rawFile.GetCellValue(w.sheetName, "A3")
-	if v != "10" {
-		t.Fatalf("expected A3=10 got %q", v)
-	}
-
-	v, _ = w.rawFile.GetCellValue(w.sheetName, "B3")
-	if v != "Nina" {
-		t.Fatalf("expected B3=Nina got %q", v)
-	}
-
-	v, _ = w.rawFile.GetCellValue(w.sheetName, "C3")
-	if v != "nina@ex.com" {
-		t.Fatalf("expected C3=nina@ex.com got %q", v)
-	}
-
-	v, _ = w.rawFile.GetCellValue(w.sheetName, "D3")
-	if v != "" {
-		t.Fatalf("expected D3 empty got %q", v)
-	}
+	t.Logf("OK")
 }
 
-func TestFromStruct_TimeField(t *testing.T) {
-	w := APP.Writer.New(APP.WriterAttr.SheetName.Set("Sheet3"))
+func TestWriter3(t *testing.T) {
+	rows := NewRows(
+		5, // 从第5行开始
+		NewRow(
+			NewCellInt(
+				1, // 设置内容
+				Font(CellFontOpt{
+					Family:     "宋体",
+					Bold:       true,
+					Italic:     false,
+					RGB:        "red",
+					PatternRGB: "pink",
+					Size:       15,
+				}), // 设置字体样式
+				Border(
+					CellBorderRGBOpt{
+						Top:          "green",
+						Bottom:       "black",
+						Left:         "white",
+						Right:        "red",
+						DiagonalUp:   "purple",
+						DiagonalDown: "blue",
+					},
+					CellBorderStyleOpt{
+						Top:          1,
+						Bottom:       2,
+						Left:         3,
+						Right:        4,
+						DiagonalUp:   5,
+						DiagonalDown: 6,
+					},
+				), // 设置边框样式
+				Alignment(CellAlignmentOpt{
+					Horizontal: "right",
+					Vertical:   "bottom",
+					WrapText:   true,
+				}), // 设置字体对齐
+			),
+			NewCell("张三"),
+			NewCellBool(true),
+			NewCellTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.Local)),
+		),
+	)
 
-	type T struct {
-		When time.Time `excel:"时间"`
+	excelWriter := NewWriter().SetFilename(Filename("./test.xlsx")).
+		SetSheet(SheetIndex(0)). // 通过索引选择一个工作表
+		Write(rows)
+
+	if err := excelWriter.Save(); err != nil {
+		t.Errorf("保存失败：%v\n", err)
 	}
 
-	now := time.Date(2020, 1, 2, 15, 4, 5, 0, time.UTC)
-	data := []T{{When: now}}
-	titles := []string{"时间"}
-
-	w.FromStruct(&data, titles, 1)
-	if w.Error != nil {
-		t.Fatalf("unexpected error: %v", w.Error)
-	}
-
-	v, _ := w.rawFile.GetCellValue(w.sheetName, "A2")
-	if v == "" {
-		t.Fatalf("expected non-empty time cell, got empty")
-	}
+	t.Logf("OK")
 }

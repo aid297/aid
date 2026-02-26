@@ -1,173 +1,227 @@
 package excelV2
 
 import (
+	"regexp"
 	"sync"
+	"time"
 
-	"github.com/aid297/aid/array/anyArrayV2"
+	"github.com/spf13/cast"
+	"github.com/xuri/excelize/v2"
+
+	"github.com/aid297/aid/array/anySlice"
 )
 
 type (
-	Cell struct {
-		lock                                                                                                                 sync.RWMutex
-		content                                                                                                              any
-		contentType                                                                                                          CellContentType
-		coordinate, fontRGB, patternRGB                                                                                      string
-		fontBold, fontItalic                                                                                                 bool
-		fontFamily                                                                                                           string
-		fontSize                                                                                                             float64
-		borderTopRGB, borderBottomRGB, borderLeftRGB, borderRightRGB, borderDiagonalUpRGB, borderDiagonalDownRGB             string
-		borderTopStyle, borderBottomStyle, borderLeftStyle, borderRightStyle, borderDiagonalUpStyle, borderDiagonalDownStyle int
-		wrapText                                                                                                             bool
+	CellContentType string
+
+	ICell interface {
+		SetAttrs(attrs ...CellAttributer) ICell
+		GetCoordinate() string
+		SetCoordinate(coordinate string) ICell
+		SetRowNum(rowNum uint) ICell
+		GetContent() any
+		GetContentType() CellContentType
+		GetFont() CellFontOpt
+		GetBorder() anySlice.AnySlicer[excelize.Border]
+		GetAlignment() CellAlignmentOpt
 	}
 
-	// border 单元格边框
-	border struct {
+	Cell struct {
+		mu          sync.RWMutex
+		content     any
+		contentType CellContentType
+		coordinate  string
+		font        CellFontOpt
+		borderRGB   CellBorderRGBOpt
+		borderStyle CellBorderStyleOpt
+		alignment   CellAlignmentOpt
+	}
+
+	CellAlignmentOpt struct {
+		Horizontal, Vertical string
+		WrapText             bool
+	}
+	CellBorderOpt struct {
 		Type  string
 		RGB   string
 		Style int
 	}
+	CellBorderRGBOpt   struct{ Top, Bottom, Left, Right, DiagonalUp, DiagonalDown string }
+	CellBorderStyleOpt struct{ Top, Bottom, Left, Right, DiagonalUp, DiagonalDown int }
+	CellFontOpt        struct {
+		Family          string
+		Bold, Italic    bool
+		RGB, PatternRGB string
+		Size            float64
+	}
 )
 
 const (
-	CellContentTypeAny     CellContentType = "any"
-	CellContentTypeFormula CellContentType = "formula"
-	CellContentTypeInt     CellContentType = "int"
-	CellContentTypeFloat   CellContentType = "float64"
-	CellContentTypeBool    CellContentType = "bool"
-	CellContentTypeTime    CellContentType = "time"
+	CellContentTypeAny     CellContentType = "ANY"
+	CellContentTypeFormula CellContentType = "FORMULA"
+	CellContentTypeInt     CellContentType = "INT"
+	CellContentTypeFloat64 CellContentType = "FLOAT"
+	CellContentTypeBool    CellContentType = "BOOL"
+	CellContentTypeTime    CellContentType = "TIME"
 )
 
-func (*Cell) New(attrs ...CellAttributer) *Cell {
-	return (&Cell{lock: sync.RWMutex{}, contentType: CellContentTypeAny}).setAttrs(attrs...)
+func NewCell(content any, attrs ...CellAttributer) ICell {
+	return (&Cell{content: content, contentType: CellContentTypeAny, mu: sync.RWMutex{}}).SetAttrs(
+		attrs...)
 }
 
-func (*Cell) NewAny(content any, attrs ...CellAttributer) *Cell {
-	return APP.Cell.New(APP.CellAttr.Content.Set(content), APP.CellAttr.ContentType.Set(CellContentTypeAny)).setAttrs(attrs...)
+func NewCellFormula(content string, attrs ...CellAttributer) ICell {
+	return (&Cell{content: content, contentType: CellContentTypeFormula, mu: sync.RWMutex{}}).SetAttrs(
+		attrs...)
 }
 
-func (*Cell) NewFormula(content any, attrs ...CellAttributer) *Cell {
-	return APP.Cell.New(APP.CellAttr.Content.Set(content), APP.CellAttr.ContentType.Set(CellContentTypeFormula)).setAttrs(attrs...)
+func NewCellInt(content int, attrs ...CellAttributer) ICell {
+	return (&Cell{content: content, contentType: CellContentTypeInt, mu: sync.RWMutex{}}).SetAttrs(
+		attrs...)
 }
 
-func (*Cell) NewInt(content any, attrs ...CellAttributer) *Cell {
-	return APP.Cell.New(APP.CellAttr.Content.Set(content), APP.CellAttr.ContentType.Set(CellContentTypeInt)).setAttrs(attrs...)
+func NewCellFloat64(content float64, attrs ...CellAttributer) ICell {
+	return (&Cell{content: content, contentType: CellContentTypeFloat64, mu: sync.RWMutex{}}).SetAttrs(
+		attrs...)
 }
 
-func (*Cell) NewFloat(content any, attrs ...CellAttributer) *Cell {
-	return APP.Cell.New(APP.CellAttr.Content.Set(content), APP.CellAttr.ContentType.Set(CellContentTypeFloat)).setAttrs(attrs...)
+func NewCellBool(content bool, attrs ...CellAttributer) ICell {
+	return (&Cell{content: content, contentType: CellContentTypeBool, mu: sync.RWMutex{}}).SetAttrs(
+		attrs...)
 }
 
-func (*Cell) NewBool(content any, attrs ...CellAttributer) *Cell {
-	return APP.Cell.New(APP.CellAttr.Content.Set(content), APP.CellAttr.ContentType.Set(CellContentTypeBool)).setAttrs(attrs...)
+func NewCellTime(content time.Time, attrs ...CellAttributer) ICell {
+	return (&Cell{content: content, contentType: CellContentTypeTime, mu: sync.RWMutex{}}).SetAttrs(
+		attrs...)
 }
 
-func (*Cell) NewTime(content any, attrs ...CellAttributer) *Cell {
-	return APP.Cell.New(APP.CellAttr.Content.Set(content), APP.CellAttr.ContentType.Set(CellContentTypeTime)).setAttrs(attrs...)
-}
+// SetAttrs 设置属性
+func (my *Cell) SetAttrs(attrs ...CellAttributer) ICell {
+	my.mu.Lock()
+	defer my.mu.Unlock()
 
-func (my *Cell) setAttrs(attrs ...CellAttributer) *Cell {
-	for idx := range attrs {
-		attrs[idx].Register(my)
+	for _, attr := range attrs {
+		attr.Register(my)
 	}
 	return my
 }
-func (my *Cell) SetAttrs(attrs ...CellAttributer) *Cell {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-	return my.setAttrs(attrs...)
-}
 
-func (my *Cell) getContent() any { return my.content }
-func (my *Cell) GetContent() any {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getContent()
-}
-func (my *Cell) getContentType() CellContentType { return my.contentType }
-func (my *Cell) GetContentType() CellContentType {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getContentType()
-}
-func (my *Cell) getCoordinate() string { return my.coordinate }
+// GetCoordinate 获取坐标
 func (my *Cell) GetCoordinate() string {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getCoordinate()
-}
-func (my *Cell) getFontRGB() string { return my.fontRGB }
-func (my *Cell) GetFontRGB() string {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getFontRGB()
-}
-func (my *Cell) getPatternRGB() string { return my.patternRGB }
-func (my *Cell) GetPatternRGB() string {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getPatternRGB()
-}
-func (my *Cell) getFontBold() bool { return my.fontBold }
-func (my *Cell) GetFontBold() bool {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getFontBold()
-}
-func (my *Cell) getFontItalic() bool { return my.fontItalic }
-func (my *Cell) GetFontItalic() bool {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getFontItalic()
-}
-func (my *Cell) getFontFamily() string { return my.fontFamily }
-func (my *Cell) GetFontFamily() string {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getFontFamily()
-}
-func (my *Cell) getFontSize() float64 { return my.fontSize }
-func (my *Cell) GetFontSize() float64 {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getFontSize()
-}
-func (my *Cell) getBorder() anyArrayV2.AnyArray[border] {
-	borders := anyArrayV2.New[border]()
+	my.mu.RLock()
+	defer my.mu.RUnlock()
 
-	if my.borderTopRGB != "" {
-		borders = borders.Append(border{Type: "top", RGB: my.borderTopRGB, Style: my.borderTopStyle})
+	return my.coordinate
+}
+
+// SetCoordinate 设置坐标
+func (my *Cell) SetCoordinate(coordinate string) ICell {
+	my.mu.Lock()
+	defer my.mu.Unlock()
+
+	my.coordinate = coordinate
+	return my
+}
+
+// SetRowNum 设置行号
+func (my *Cell) SetRowNum(rowNum uint) ICell {
+	my.mu.Lock()
+	defer my.mu.Unlock()
+
+	my.coordinate = regexp.MustCompile(`[A-Za-z]+`).
+		FindString(my.coordinate) +
+		cast.ToString(
+			rowNum,
+		)
+	return my
+}
+
+// GetContent 获取内容
+func (my *Cell) GetContent() any {
+	my.mu.RLock()
+	defer my.mu.RUnlock()
+
+	return my.content
+}
+
+// GetContentType 获取内容类型
+func (my *Cell) GetContentType() CellContentType {
+	my.mu.RLock()
+	defer my.mu.RUnlock()
+
+	return my.contentType
+}
+
+// GetFont 获取字体属性
+func (my *Cell) GetFont() CellFontOpt {
+	my.mu.RLock()
+	defer my.mu.RUnlock()
+
+	return my.font
+}
+
+// GetBorder 获取边框属性
+func (my *Cell) GetBorder() anySlice.AnySlicer[excelize.Border] {
+	my.mu.RLock()
+	defer my.mu.RUnlock()
+
+	borders := anySlice.New(anySlice.Cap[excelize.Border](6))
+
+	if my.borderRGB.Top != "" && my.borderStyle.Top > 0 {
+		borders.Append(
+			excelize.Border{Type: "top", Color: my.borderRGB.Top, Style: my.borderStyle.Top},
+		)
 	}
 
-	if my.borderBottomRGB != "" {
-		borders = borders.Append(border{Type: "bottom", RGB: my.borderBottomRGB, Style: my.borderBottomStyle})
+	if my.borderRGB.Bottom != "" && my.borderStyle.Bottom > 0 {
+		borders.Append(
+			excelize.Border{
+				Type:  "bottom",
+				Color: my.borderRGB.Bottom,
+				Style: my.borderStyle.Bottom,
+			},
+		)
 	}
 
-	if my.borderLeftRGB != "" {
-		borders = borders.Append(border{Type: "left", RGB: my.borderLeftRGB, Style: my.borderLeftStyle})
+	if my.borderRGB.Left != "" && my.borderStyle.Left > 0 {
+		borders.Append(
+			excelize.Border{Type: "left", Color: my.borderRGB.Left, Style: my.borderStyle.Left},
+		)
 	}
 
-	if my.borderRightRGB != "" {
-		borders = borders.Append(border{Type: "right", RGB: my.borderRightRGB, Style: my.borderRightStyle})
+	if my.borderRGB.Right != "" && my.borderStyle.Right > 0 {
+		borders.Append(
+			excelize.Border{Type: "right", Color: my.borderRGB.Right, Style: my.borderStyle.Right},
+		)
 	}
 
-	if my.borderDiagonalUpRGB != "" {
-		borders = borders.Append(border{Type: "diagonalUp", RGB: my.borderDiagonalUpRGB, Style: my.borderDiagonalUpStyle})
+	if my.borderRGB.DiagonalUp != "" && my.borderStyle.DiagonalUp > 0 {
+		borders.Append(
+			excelize.Border{
+				Type:  "diagonalUp",
+				Color: my.borderRGB.DiagonalUp,
+				Style: my.borderStyle.DiagonalUp,
+			},
+		)
 	}
 
-	if my.borderDiagonalDownRGB != "" {
-		borders = borders.Append(border{Type: "diagonalDown", RGB: my.borderDiagonalDownRGB, Style: my.borderDiagonalDownStyle})
+	if my.borderRGB.DiagonalDown != "" && my.borderStyle.DiagonalDown > 0 {
+		borders.Append(
+			excelize.Border{
+				Type:  "diagonalDown",
+				Color: my.borderRGB.DiagonalDown,
+				Style: my.borderStyle.DiagonalDown,
+			},
+		)
 	}
 
 	return borders
 }
-func (my *Cell) GetBorder() anyArrayV2.AnyArray[border] {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getBorder()
-}
-func (my *Cell) getWrapText() bool { return my.wrapText }
-func (my *Cell) GetWrapText() bool {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-	return my.getWrapText()
+
+// GetAlignment 获取字体对齐
+func (my *Cell) GetAlignment() CellAlignmentOpt {
+	my.mu.RLock()
+	defer my.mu.RUnlock()
+
+	return my.alignment
 }
