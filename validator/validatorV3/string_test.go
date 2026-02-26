@@ -20,7 +20,7 @@ func Test1(t *testing.T) {
 		// 例如，检查 Firstname 是否等于 "John"
 		if userForm, ok := form.(*UserRequest); ok {
 			if userForm.Firstname != "John" {
-				err = errors.New("firstname must be 'John'")
+				err = errors.New(`firstname must be "John"`)
 			}
 		} else {
 			err = errors.New("invalid form type")
