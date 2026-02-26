@@ -174,8 +174,8 @@
    
    				return
    			},
-   			OriginalRow(5),
-   			FinishedRow(10),
+   			OriginalRow(5),  // 起始行
+   			FinishedRow(10),  // 终止行
    		)
    	_ = reader.GetRawExcel()
    }

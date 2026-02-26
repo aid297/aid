@@ -20,16 +20,19 @@ func Test1(t *testing.T) {
 		// 例如，检查 Firstname 是否等于 "John"
 		if userForm, ok := form.(*UserRequest); ok {
 			if userForm.Firstname != "John" {
-				err = errors.New("Firstname must be 'John'")
+				err = errors.New("firstname must be 'John'")
 			}
 		} else {
-			err = errors.New("Invalid form type")
+			err = errors.New("invalid form type")
 		}
 		return
 	})
+
 	t.Logf("验证是否通过：%v\n", checker.OK())
+
 	for _, wrong := range checker.Wrongs() {
 		t.Logf("%v\n", wrong)
 	}
+
 	t.Logf("如果验证通过：%v\n", form)
 }
