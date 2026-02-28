@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"go.uber.org/zap"
+
 	"github.com/aid297/aid/filesystem/filesystemV4"
 	"github.com/aid297/aid/str"
 	"github.com/aid297/aid/validator/validatorV3"
@@ -14,7 +16,6 @@ import (
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/response"
-	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 )
@@ -121,17 +122,15 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	filesystemers = make([]filesystemV4.Filesystemer, 0, len(dir.GetDirs())+len(dir.GetFiles()))
 	filesystemers = append(append(filesystemers, dir.GetDirs()...), dir.GetFiles()...)
 
-	rootPath, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir))
-	if err != nil {
+	if rootPath, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir)); err != nil {
 		global.LOG.Error(title, zap.Errors("获取根路径错误", []error{err}))
 		httpModule.NewInternalServerError(httpModule.Errorf("获取根路径错误：%w", err)).WithAccept(c)
 		return
 	}
-
 	currentPath, _ = strings.CutPrefix(dir.GetFullPath(), rootPath.GetFullPath())
 
 	global.LOG.Info(title, zap.Any("成功", filesystemers))
-	httpModule.NewOK(httpModule.Content(response.FileListResponse{Filesystemers: filesystemers, CurrentPath: currentPath})).WithAccept(c)
+	httpModule.NewOK(httpModule.Content(response.FileListResponse{Items: filesystemers, CurrentPath: currentPath})).WithAccept(c)
 }
 
 // StoreFolder  创建文件夹

@@ -10,8 +10,8 @@ type (
 	}
 
 	FileListResponse struct {
-		Filesystemers []filesystemV4.Filesystemer `json:"filesystemers" swaggertype:"array,object"`
-		CurrentPath   string                      `json:"currentPath" swaggertype:"string"`
+		Items       []filesystemV4.Filesystemer `json:"items" swaggertype:"array,object"`
+		CurrentPath string                      `json:"currentPath" swaggertype:"string"`
 	}
 
 	FileZipResponse struct {

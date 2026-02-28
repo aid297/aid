@@ -103,9 +103,9 @@ const inputStoreFolder = ref(null);
  * @param name 操作的文件或目录名称，默认为空表示加载当前目录列表
  */
 const loadList = async (name = '') => {
-    const { currentPath:newCurrentDir, filesystemers } = (await axios.post('/fileManager/list', { body: { path: currentDir.value, name } })).data.content;
+    const { currentPath: newCurrentDir, items } = (await axios.post('/fileManager/list', { body: { path: currentDir.value, name } })).data.content;
     currentDir.value = newCurrentDir;
-    rows.value = [{ path: newCurrentDir, name: '..', kind: 'DIR' }, ...filesystemers]; // 在文件列表前添加返回上级目录的项;
+    rows.value = [{ path: newCurrentDir, name: '..', kind: 'DIR' }, ...items]; // 在文件列表前添加返回上级目录的项;
     newFolderName.value = '';
     inputStoreFolder.value.focus();
 };
