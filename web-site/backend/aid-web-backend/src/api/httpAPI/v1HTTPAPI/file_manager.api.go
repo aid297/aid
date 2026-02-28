@@ -88,21 +88,21 @@ func (*FileManagerAPI) Upload(c *gin.Context) {
 // @Failure 422 {object} httpModule.HTTPResponse "表单验证失败"
 // @Failure 403 {object} httpModule.HTTPResponse "获取失败"
 func (*FileManagerAPI) List(c *gin.Context) {
-	type FilesystemerItem struct {
+	type IFilesystemItem struct {
 		Path string `json:"path"`
 		Name string `json:"name"`
 		Kind string `json:"kind"`
 	}
 
 	var (
-		title         = "获取文件列表"
-		err           error
-		dir           filesystemV4.Filesystemer
-		form          request.FileListRequest
-		checker       validatorV3.Checker
-		filesystemers []filesystemV4.Filesystemer
-		rootPath      filesystemV4.Filesystemer
-		currentPath   string
+		title        = "获取文件列表"
+		err          error
+		dir          filesystemV4.IFilesystem
+		form         request.FileListRequest
+		checker      validatorV3.Checker
+		iFilesystems []filesystemV4.IFilesystem
+		rootPath     filesystemV4.IFilesystem
+		currentPath  string
 	)
 
 	if form, checker = validatorV3.WithGin[request.FileListRequest](c); !checker.OK() {
@@ -119,8 +119,8 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	}
 	dir.LS()
 
-	filesystemers = make([]filesystemV4.Filesystemer, 0, len(dir.GetDirs())+len(dir.GetFiles()))
-	filesystemers = append(append(filesystemers, dir.GetDirs()...), dir.GetFiles()...)
+	iFilesystems = make([]filesystemV4.IFilesystem, 0, len(dir.GetDirs())+len(dir.GetFiles()))
+	iFilesystems = append(append(iFilesystems, dir.GetDirs()...), dir.GetFiles()...)
 
 	if rootPath, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir)); err != nil {
 		global.LOG.Error(title, zap.Errors("获取根路径错误", []error{err}))
@@ -129,8 +129,8 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	}
 	currentPath, _ = strings.CutPrefix(dir.GetFullPath(), rootPath.GetFullPath())
 
-	global.LOG.Info(title, zap.Any("成功", filesystemers))
-	httpModule.NewOK(httpModule.Content(response.FileListResponse{Items: filesystemers, CurrentPath: currentPath})).WithAccept(c)
+	global.LOG.Info(title, zap.Any("成功", iFilesystems))
+	httpModule.NewOK(httpModule.Content(response.FileListResponse{Items: iFilesystems, CurrentPath: currentPath})).WithAccept(c)
 }
 
 // StoreFolder  创建文件夹
@@ -145,11 +145,11 @@ func (*FileManagerAPI) List(c *gin.Context) {
 // @Failure     403 {object} httpModule.HTTPResponse "创建文件夹失败"
 func (*FileManagerAPI) StoreFolder(c *gin.Context) {
 	var (
-		title        = "创建文件夹"
-		err          error
-		filesystemer filesystemV4.Filesystemer
-		form         request.FileStoreFolderRequest
-		checker      validatorV3.Checker
+		title       = "创建文件夹"
+		err         error
+		iFilesystem filesystemV4.IFilesystem
+		form        request.FileStoreFolderRequest
+		checker     validatorV3.Checker
 	)
 
 	if form, checker = validatorV3.WithGin[request.FileStoreFolderRequest](c); !checker.OK() {
@@ -158,14 +158,14 @@ func (*FileManagerAPI) StoreFolder(c *gin.Context) {
 		return
 	}
 
-	filesystemer = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name))
-	if err = filesystemer.Create(filesystemV4.Flag(0644)).GetError(); err != nil {
+	iFilesystem = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name))
+	if err = iFilesystem.Create(filesystemV4.Flag(0644)).GetError(); err != nil {
 		global.LOG.Error(title, zap.Errors("创建文件夹失败", []error{err}))
 		httpModule.NewForbidden(httpModule.Errorf("创建文件夹失败：%w", err)).WithAccept(c)
 		return
 	}
 
-	global.LOG.Info(title, zap.String("成功", filesystemer.GetFullPath()))
+	global.LOG.Info(title, zap.String("成功", iFilesystem.GetFullPath()))
 	httpModule.NewOK(httpModule.Msg("创建成功")).WithAccept(c)
 }
 
@@ -181,11 +181,11 @@ func (*FileManagerAPI) StoreFolder(c *gin.Context) {
 // @Failure 403 {object} httpModule.HTTPResponse "删除失败"
 func (*FileManagerAPI) Destroy(c *gin.Context) {
 	var (
-		title        = "删除文件或目录"
-		err          error
-		filesystemer filesystemV4.Filesystemer
-		form         request.FileDestroyRequest
-		checker      validatorV3.Checker
+		title       = "删除文件或目录"
+		err         error
+		iFilesystem filesystemV4.IFilesystem
+		form        request.FileDestroyRequest
+		checker     validatorV3.Checker
 	)
 
 	if form, checker = validatorV3.WithGin[request.FileDestroyRequest](c); !checker.OK() {
@@ -194,13 +194,13 @@ func (*FileManagerAPI) Destroy(c *gin.Context) {
 		return
 	}
 
-	if filesystemer, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name)); err != nil {
+	if iFilesystem, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name)); err != nil {
 		global.LOG.Error(title, zap.Errors("获取路径错误", []error{err}))
 		httpModule.NewNotFound(httpModule.Errorf("获取路径错误：%w", err)).WithAccept(c)
 		return
 	}
 
-	if err = filesystemer.RemoveAll().GetError(); err != nil {
+	if err = iFilesystem.RemoveAll().GetError(); err != nil {
 		global.LOG.Error(title, zap.Errors("删除文件或目录失败", []error{err}))
 		httpModule.NewForbidden(httpModule.Errorf("删除文件或目录失败：%w", err)).WithAccept(c)
 		return
@@ -223,7 +223,7 @@ func (*FileManagerAPI) Destroy(c *gin.Context) {
 // @Failure 403 {object} httpModule.HTTPResponse "下载失败"
 func (*FileManagerAPI) Download(c *gin.Context) {
 	var (
-		dir  filesystemV4.Filesystemer
+		dir  filesystemV4.IFilesystem
 		path = c.Query("path")
 		name = c.Query("name")
 	)
@@ -254,11 +254,11 @@ func (*FileManagerAPI) Download(c *gin.Context) {
 // @Failure 404 {object} httpModule.HTTPResponse "获取路径错误"
 func (*FileManagerAPI) Zip(c *gin.Context) {
 	var (
-		title                = "压缩文件或目录"
-		err                  error
-		filesystemer, zipped filesystemV4.Filesystemer
-		form                 request.FileZipRequest
-		checker              validatorV3.Checker
+		title               = "压缩文件或目录"
+		err                 error
+		iFilesystem, zipped filesystemV4.IFilesystem
+		form                request.FileZipRequest
+		checker             validatorV3.Checker
 	)
 
 	if form, checker = validatorV3.WithGin[request.FileZipRequest](c); !checker.OK() {
@@ -267,16 +267,16 @@ func (*FileManagerAPI) Zip(c *gin.Context) {
 		return
 	}
 
-	if filesystemer, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name)); err != nil {
+	if iFilesystem, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name)); err != nil {
 		global.LOG.Error(title, zap.Errors("获取路径错误", []error{err}))
-		httpModule.NewNotFound(httpModule.Errorf("获取路径错误：%w", err)).WithAccept(c)
+		httpModule.NewNotFound(httpModule.Errorf("获取路径错误：%v", err)).WithAccept(c)
 		return
 	}
 
-	zipped = filesystemer.Zip()
+	zipped = iFilesystem.Zip()
 	if err = zipped.GetError(); err != nil {
 		global.LOG.Error(title, zap.Errors("压缩文件或目录失败", []error{err}))
-		httpModule.NewForbidden(httpModule.Errorf("压缩文件或目录失败：%w", err)).WithAccept(c)
+		httpModule.NewForbidden(httpModule.Errorf("压缩文件或目录失败：%v", err)).WithAccept(c)
 		return
 	}
 

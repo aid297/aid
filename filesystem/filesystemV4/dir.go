@@ -13,35 +13,35 @@ import (
 )
 
 type Dir struct {
-	mu       sync.RWMutex   // 读写锁
-	Error    error          `json:"error" swaggertype:"string"`       // 错误信息
-	Name     string         `json:"name" swaggertype:"string"`        // 文件名
-	BasePath string         `json:"basePath" swaggertype:"string"`    // 基础路径
-	FullPath string         `json:"fullPath" swaggertype:"string"`    // 完整路径
-	Size     int64          `json:"size" swaggertype:"integer"`       // 文件大小
-	Info     os.FileInfo    `json:"info" swaggertype:"string"`        // 文件信息
-	Mode     os.FileMode    `json:"mode" swaggertype:"string"`        // 文件权限
-	Exist    bool           `json:"exist" swaggertype:"boolean"`      // 文件是否存在
-	Files    []Filesystemer `json:"files" swaggertype:"array,object"` // 目录下的文件列表
-	Dirs     []Filesystemer `json:"dirs" swaggertype:"array,object"`  // 子目录列表
-	Kind     string         `json:"kind" swaggertype:"string"`        // 类型
+	mu       sync.RWMutex  // 读写锁
+	Error    error         `json:"error" swaggertype:"string"`       // 错误信息
+	Name     string        `json:"name" swaggertype:"string"`        // 文件名
+	BasePath string        `json:"basePath" swaggertype:"string"`    // 基础路径
+	FullPath string        `json:"fullPath" swaggertype:"string"`    // 完整路径
+	Size     int64         `json:"size" swaggertype:"integer"`       // 文件大小
+	Info     os.FileInfo   `json:"info" swaggertype:"string"`        // 文件信息
+	Mode     os.FileMode   `json:"mode" swaggertype:"string"`        // 文件权限
+	Exist    bool          `json:"exist" swaggertype:"boolean"`      // 文件是否存在
+	Files    []IFilesystem `json:"files" swaggertype:"array,object"` // 目录下的文件列表
+	Dirs     []IFilesystem `json:"dirs" swaggertype:"array,object"`  // 子目录列表
+	Kind     string        `json:"kind" swaggertype:"string"`        // 类型
 }
 
-func NewDir(attrs ...PathAttributer) Filesystemer {
+func NewDir(attrs ...PathAttributer) IFilesystem {
 	return (&Dir{mu: sync.RWMutex{}, Kind: "DIR"}).SetAttrs(attrs...).refresh()
 }
 
-func (my *Dir) GetName() string          { return my.Name }
-func (my *Dir) GetExist() bool           { return my.Exist }
-func (my *Dir) GetError() error          { return my.Error }
-func (my *Dir) GetBasePath() string      { return my.BasePath }
-func (my *Dir) GetFullPath() string      { return my.FullPath }
-func (my *Dir) GetInfo() os.FileInfo     { return my.Info }
-func (my *Dir) GetDirs() []Filesystemer  { return my.Dirs }
-func (my *Dir) GetFiles() []Filesystemer { return my.Files }
-func (my *Dir) GetKind() string          { return my.Kind }
+func (my *Dir) GetName() string         { return my.Name }
+func (my *Dir) GetExist() bool          { return my.Exist }
+func (my *Dir) GetError() error         { return my.Error }
+func (my *Dir) GetBasePath() string     { return my.BasePath }
+func (my *Dir) GetFullPath() string     { return my.FullPath }
+func (my *Dir) GetInfo() os.FileInfo    { return my.Info }
+func (my *Dir) GetDirs() []IFilesystem  { return my.Dirs }
+func (my *Dir) GetFiles() []IFilesystem { return my.Files }
+func (my *Dir) GetKind() string         { return my.Kind }
 
-func (my *Dir) SetAttrs(attrs ...PathAttributer) Filesystemer {
+func (my *Dir) SetAttrs(attrs ...PathAttributer) IFilesystem {
 	my.mu.Lock()
 	defer my.mu.Unlock()
 	for idx := range attrs {
@@ -50,13 +50,13 @@ func (my *Dir) SetAttrs(attrs ...PathAttributer) Filesystemer {
 	return my
 }
 
-func (my *Dir) SetFullPathForAttr(path string) Filesystemer { my.FullPath = path; return my }
+func (my *Dir) SetFullPathForAttr(path string) IFilesystem { my.FullPath = path; return my }
 
-func (my *Dir) SetFullPathByAttr(attrs ...PathAttributer) Filesystemer {
+func (my *Dir) SetFullPathByAttr(attrs ...PathAttributer) IFilesystem {
 	return my.SetAttrs(attrs...).refresh()
 }
 
-func (my *Dir) refresh() Filesystemer {
+func (my *Dir) refresh() IFilesystem {
 	var err error
 	if my.FullPath != "" {
 		if my.Info, err = os.Stat(my.FullPath); err != nil {
@@ -89,24 +89,24 @@ func (my *Dir) refresh() Filesystemer {
 }
 
 // Lock 加锁 → 写
-func (my *Dir) Lock() Filesystemer { my.mu.Lock(); return my }
+func (my *Dir) Lock() IFilesystem { my.mu.Lock(); return my }
 
 // Unlock 解锁 → 写
-func (my *Dir) Unlock() Filesystemer { my.mu.Unlock(); return my }
+func (my *Dir) Unlock() IFilesystem { my.mu.Unlock(); return my }
 
 // RLock 加锁 → 读
-func (my *Dir) RLock() Filesystemer { my.mu.RLock(); return my }
+func (my *Dir) RLock() IFilesystem { my.mu.RLock(); return my }
 
 // RUnlock 解锁 → 读
-func (my *Dir) RUnlock() Filesystemer { my.mu.RUnlock(); return my }
+func (my *Dir) RUnlock() IFilesystem { my.mu.RUnlock(); return my }
 
-func (my *Dir) Join(paths ...string) Filesystemer {
+func (my *Dir) Join(paths ...string) IFilesystem {
 	my.FullPath = filepath.Join(append([]string{my.FullPath}, paths...)...)
 	return my.refresh()
 }
 
 // Create 创建多级目录
-func (my *Dir) Create(attrs ...OperationAttributer) Filesystemer {
+func (my *Dir) Create(attrs ...OperationAttributer) IFilesystem {
 	var (
 		err       error
 		operation = NewOperation(attrs...)
@@ -126,7 +126,7 @@ func (my *Dir) Create(attrs ...OperationAttributer) Filesystemer {
 }
 
 // Rename 重命名目录
-func (my *Dir) Rename(newName string) Filesystemer {
+func (my *Dir) Rename(newName string) IFilesystem {
 	var err error
 
 	if my.FullPath == "" {
@@ -144,7 +144,7 @@ func (my *Dir) Rename(newName string) Filesystemer {
 }
 
 // Remove 删除目录
-func (my *Dir) Remove() Filesystemer {
+func (my *Dir) Remove() IFilesystem {
 	var err error
 
 	if my.FullPath == "" {
@@ -161,7 +161,7 @@ func (my *Dir) Remove() Filesystemer {
 }
 
 // RemoveAll 递归删除目录
-func (my *Dir) RemoveAll() Filesystemer {
+func (my *Dir) RemoveAll() IFilesystem {
 	var err error
 
 	if my.FullPath == "" {
@@ -177,12 +177,12 @@ func (my *Dir) RemoveAll() Filesystemer {
 	return my.refresh()
 }
 
-func (my *Dir) Write(content []byte, attrs ...OperationAttributer) Filesystemer { return my }
+func (my *Dir) Write(content []byte, attrs ...OperationAttributer) IFilesystem { return my }
 
 func (my *Dir) Read(attrs ...OperationAttributer) ([]byte, error) { return nil, nil }
 
 // LS 列出当前目录下的所有文件和子目录
-func (my *Dir) LS() Filesystemer {
+func (my *Dir) LS() IFilesystem {
 	var (
 		err     error
 		entries []os.DirEntry
@@ -214,7 +214,7 @@ func (my *Dir) LS() Filesystemer {
 func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 	var (
 		err error
-		dst Filesystemer
+		dst IFilesystem
 	)
 
 	if my.FullPath == "" {
@@ -274,10 +274,10 @@ func (my *Dir) CopyDirsTo(isRel bool, dstPaths ...string) *Dir {
 }
 
 // CopyAllTo 复制当前目录下的所有文件和子目录到目标路径
-func (my *Dir) CopyTo(isRel bool, dstPaths ...string) Filesystemer {
+func (my *Dir) CopyTo(isRel bool, dstPaths ...string) IFilesystem {
 	var (
 		err error
-		dst Filesystemer
+		dst IFilesystem
 	)
 
 	if my.FullPath == "" {
@@ -314,7 +314,7 @@ func (my *Dir) CopyTo(isRel bool, dstPaths ...string) Filesystemer {
 }
 
 // Zip 压缩整个目录到 zip 文件
-func (my *Dir) Zip() Filesystemer {
+func (my *Dir) Zip() IFilesystem {
 	var (
 		err       error
 		zipFile   *os.File
@@ -422,7 +422,7 @@ func (my *Dir) addFileToZip(zipWriter *zip.Writer, filePath, zipPath string) err
 }
 
 // Copy 复制当前对象
-func (my *Dir) Copy() Filesystemer { return NewDir(Abs(my.FullPath)) }
+func (my *Dir) Copy() IFilesystem { return NewDir(Abs(my.FullPath)) }
 
 // Up 向上一级目录
-func (my *Dir) Up() Filesystemer { my.FullPath = my.BasePath; return my.refresh() }
+func (my *Dir) Up() IFilesystem { my.FullPath = my.BasePath; return my.refresh() }

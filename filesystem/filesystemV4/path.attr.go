@@ -5,7 +5,7 @@ import "path/filepath"
 type (
 	PathAttributer interface {
 		Joins(paths ...string) PathAttributer
-		Register(f Filesystemer)
+		Register(f IFilesystem)
 		GetPath() string
 	}
 
@@ -15,7 +15,7 @@ type (
 func Rel(paths ...string) PathAttributer { return AttrPath{path: getRootPath(filepath.Join(paths...))} }
 func Abs(paths ...string) PathAttributer { return AttrPath{path: filepath.Join(paths...)} }
 
-func (my AttrPath) Register(f Filesystemer) { f.SetFullPathForAttr(my.path) }
+func (my AttrPath) Register(f IFilesystem) { f.SetFullPathForAttr(my.path) }
 func (my AttrPath) Joins(paths ...string) PathAttributer {
 	my.path = filepath.Join(append([]string{my.path}, paths...)...)
 	return my

@@ -53,8 +53,8 @@ func (*Daemon) SetLogEnable(enable bool) *Daemon { i.enable = enable; return i }
 func (my *Daemon) Launch() {
 	var (
 		err  error
-		dir  filesystemV4.Filesystemer
-		file filesystemV4.Filesystemer
+		dir  filesystemV4.IFilesystem
+		file filesystemV4.IFilesystem
 		fp   *os.File
 	)
 

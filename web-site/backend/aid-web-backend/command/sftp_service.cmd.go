@@ -26,7 +26,7 @@ func (*SFTPServiceCommand) Launch() {
 	var (
 		port       = flag.String("port", "8080", "监听端口，如8080、9000") // 定义命令行参数：端口（默认8080）、共享目录（默认当前目录）
 		outputTemp *str.Template[output]
-		dir        filesystemV4.Filesystemer
+		dir        filesystemV4.IFilesystem
 	)
 	flag.Parse()
 
