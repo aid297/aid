@@ -56,12 +56,13 @@
                                         <q-td align="left" key="name" :props="props">
                                             <a class="text-white text-decoration-none" v-if="props.row.kind === 'DIR'"
                                                 href="#" @click.prevent="loadList(props.row.name);">
-                                                <i class="fa fa-folder">&nbsp;</i>{{ props.row.name || '' }}
+                                                <i class="fa fa-folder">&nbsp;</i><q-badge color="red" v-if="props.row.name === '..'">返回上一级</q-badge>
+                                                <q-badge v-else color="teal">{{ props.row.name || '' }}</q-badge>
                                             </a>
                                             <span v-else>
                                                 <a class="text-white text-decoration-none" href="#"
                                                     @click.prevent="handleDownload(props.row)">
-                                                    <i class="fa-regular fa-file">&nbsp;</i>{{ props.row.name || '' }}
+                                                    <i class="fa-regular fa-file">&nbsp;</i><q-badge color="white">{{ props.row.name || '' }}</q-badge>
                                                 </a>
                                             </span>
                                         </q-td>
