@@ -62,7 +62,7 @@
                                             <span v-else>
                                                 <a class="text-white text-decoration-none" href="#"
                                                     @click.prevent="handleDownload(props.row)">
-                                                    <i class="fa-regular fa-file">&nbsp;</i><q-badge color="white">{{ props.row.name || '' }}</q-badge>
+                                                    <i class="fa-regular fa-file">&nbsp;</i><q-badge color="green">{{ props.row.name || '' }}</q-badge>
                                                 </a>
                                             </span>
                                         </q-td>
