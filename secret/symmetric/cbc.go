@@ -11,17 +11,19 @@ import (
 	"github.com/aid297/aid/str"
 )
 
-type Cbc struct{}
+type CBC struct{}
 
-var CbcApp Cbc
+func NewCBC() *CBC { return new(CBC) }
 
-func (Cbc) padPKCS7(src []byte, blockSize int) []byte {
+func (*CBC) New() *CBC { return NewCBC() }
+
+func (*CBC) padPKCS7(src []byte, blockSize int) []byte {
 	padding := blockSize - len(src)%blockSize
-	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(src, padtext...)
+	padText := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(src, padText...)
 }
 
-func (Cbc) unPadPKCS7(src []byte, blockSize int) ([]byte, error) {
+func (*CBC) unPadPKCS7(src []byte, blockSize int) ([]byte, error) {
 	length := len(src)
 	if blockSize <= 0 {
 		return nil, fmt.Errorf("invalid blockSize: %d", blockSize)
@@ -31,28 +33,28 @@ func (Cbc) unPadPKCS7(src []byte, blockSize int) ([]byte, error) {
 		return nil, errors.New("invalid data len")
 	}
 
-	unpadding := int(src[length-1])
-	if unpadding > blockSize || unpadding == 0 {
-		return nil, errors.New("invalid unpadding")
+	unPadding := int(src[length-1])
+	if unPadding > blockSize || unPadding == 0 {
+		return nil, errors.New("invalid unPadding")
 	}
 
-	padding := src[length-unpadding:]
-	for i := 0; i < unpadding; i++ {
-		if padding[i] != byte(unpadding) {
+	padding := src[length-unPadding:]
+	for i := 0; i < unPadding; i++ {
+		if padding[i] != byte(unPadding) {
 			return nil, errors.New("invalid padding")
 		}
 	}
 
-	return src[:(length - unpadding)], nil
+	return src[:(length - unPadding)], nil
 }
 
-func (Cbc) Encrypt(plainText, key, iv []byte, ivs ...[]byte) ([]byte, error) {
+func (*CBC) Encrypt(plainText, key, iv []byte, ivs ...[]byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 	blockSize := block.BlockSize()
-	plainText = Cbc{}.padPKCS7(plainText, blockSize)
+	plainText = NewCBC().padPKCS7(plainText, blockSize)
 	ivValue := ([]byte)(nil)
 	if len(ivs) > 0 {
 		ivValue = ivs[0]
@@ -66,7 +68,7 @@ func (Cbc) Encrypt(plainText, key, iv []byte, ivs ...[]byte) ([]byte, error) {
 	return cipherText, nil
 }
 
-func (Cbc) Decrypt(cipherText, key, iv []byte, ivs ...[]byte) ([]byte, error) {
+func (*CBC) Decrypt(cipherText, key, iv []byte, ivs ...[]byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -87,18 +89,18 @@ func (Cbc) Decrypt(cipherText, key, iv []byte, ivs ...[]byte) ([]byte, error) {
 	blockModel := cipher.NewCBCDecrypter(block, ivValue)
 	plainText := make([]byte, len(cipherText))
 	blockModel.CryptBlocks(plainText, cipherText)
-	plainText, e := Cbc{}.unPadPKCS7(plainText, blockSize)
+	plainText, e := NewCBC().unPadPKCS7(plainText, blockSize)
 	if e != nil {
 		return nil, e
 	}
 	return plainText, nil
 }
 
-func (Cbc) Demo() {
+func (*CBC) Demo() {
 	key := "tjp5OPIU1ETF5s33fsLWdA=="
 	iv := "0987654321098765"
 
-	encrypted, err := Cbc{}.Encrypt([]byte("abcdefghijklmnopqrstuvwxyz"), []byte(key), []byte(iv))
+	encrypted, err := NewCBC().Encrypt([]byte("abcdefghijklmnopqrstuvwxyz"), []byte(key), []byte(iv))
 	if err != nil {
 		str.TerminalLogApp.New("[CBC] encrypt: %v").Error(err)
 	}
@@ -111,7 +113,7 @@ func (Cbc) Demo() {
 		str.TerminalLogApp.New("[CBC] base64 decode %v").Error(base64DecodeErr)
 	}
 
-	decryptCBC, err := Cbc{}.Decrypt(base64Decoded, []byte(key), []byte(iv))
+	decryptCBC, err := NewCBC().Decrypt(base64Decoded, []byte(key), []byte(iv))
 	if err != nil {
 		str.TerminalLogApp.New("[CBC] decrypt: %v").Error(err)
 	}

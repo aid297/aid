@@ -7,16 +7,16 @@ import (
 )
 
 type (
-	// Aes Aes密钥对象
-	Aes struct {
+	// AES Aes密钥对象
+	AES struct {
 		Err     error
-		Encrypt *AesEncrypt
-		Decrypt *AesDecrypt
+		Encrypt *AESEncrypt
+		Decrypt *AESDecrypt
 		sailStr string
 	}
 
-	// AesEncrypt Aes加密密钥对象
-	AesEncrypt struct {
+	// AESEncrypt Aes加密密钥对象
+	AESEncrypt struct {
 		Err      error
 		sailStr  string
 		sailByte []byte
@@ -25,8 +25,8 @@ type (
 		openKey  string
 	}
 
-	// AesDecrypt Aes解密密钥对象
-	AesDecrypt struct {
+	// AESDecrypt Aes解密密钥对象
+	AESDecrypt struct {
 		Err      error
 		sailStr  string
 		sailByte []byte
@@ -36,37 +36,33 @@ type (
 	}
 )
 
-var AesApp Aes
+// NewAES 实例化：Aes密钥
+func NewAES(sail string) *AES { return &AES{sailStr: sail} }
 
-func (*Aes) New(sail string) *Aes { return &Aes{sailStr: sail} }
-
-// NewAes 实例化：Aes密钥
-//
-//go:fix 推荐使用：New方法
-func NewAes(sail string) *Aes { return &Aes{sailStr: sail} }
+func (*AES) New(sail string) *AES { return NewAES(sail) }
 
 // NewEncrypt 实例化：Aes加密密钥对象
-func (my *Aes) NewEncrypt() *Aes {
-	my.Encrypt = NewAesEncrypt(my.sailStr)
+func (my *AES) NewEncrypt() *AES {
+	my.Encrypt = NewAESEncrypt(my.sailStr)
 	return my
 }
 
 // NewDecrypt 实例化：Aes解密密钥对象
-func (my *Aes) NewDecrypt(openKey string) *Aes {
-	my.Decrypt = NewAesDecrypt(my.sailStr, openKey)
+func (my *AES) NewDecrypt(openKey string) *AES {
+	my.Decrypt = NewAESDecrypt(my.sailStr, openKey)
 
 	return my
 }
 
 // GetEncrypt 获取加密密钥
-func (my *Aes) GetEncrypt() *AesEncrypt { return my.Encrypt }
+func (my *AES) GetEncrypt() *AESEncrypt { return my.Encrypt }
 
 // GetDecrypt 获取解密密钥
-func (my *Aes) GetDecrypt() *AesDecrypt { return my.Decrypt }
+func (my *AES) GetDecrypt() *AESDecrypt { return my.Decrypt }
 
-// NewAesEncrypt 实例化：Aes加密密钥对象
-func NewAesEncrypt(sail string) *AesEncrypt {
-	aesHelper := &AesEncrypt{
+// NewAESEncrypt 实例化：Aes加密密钥对象
+func NewAESEncrypt(sail string) *AESEncrypt {
+	aesHelper := &AESEncrypt{
 		sailStr:  sail,
 		sailByte: make([]byte, 16),
 		randKey:  make([]byte, 16),
@@ -82,7 +78,7 @@ func NewAesEncrypt(sail string) *AesEncrypt {
 }
 
 // sailByByte 密码加盐：使用byte盐
-func (r *AesEncrypt) sailByByte() *AesEncrypt {
+func (r *AESEncrypt) sailByByte() *AESEncrypt {
 	copy(r.aesKey, r.randKey)
 
 	for i := 0; i < 4; i++ {
@@ -96,20 +92,20 @@ func (r *AesEncrypt) sailByByte() *AesEncrypt {
 }
 
 // GetAesKey 获取加盐后的密钥
-func (r *AesEncrypt) GetAesKey() []byte { return r.aesKey }
+func (r *AESEncrypt) GetAesKey() []byte { return r.aesKey }
 
 // SetAesKey 设置加盐后的密钥
-func (r *AesEncrypt) SetAesKey(aesKey []byte) *AesEncrypt {
+func (r *AESEncrypt) SetAesKey(aesKey []byte) *AESEncrypt {
 	r.aesKey = aesKey
 	return r
 }
 
 // GetOpenKey 获取公开密码
-func (r *AesEncrypt) GetOpenKey() string { return r.openKey }
+func (r *AESEncrypt) GetOpenKey() string { return r.openKey }
 
-// NewAesDecrypt 实例化：Aes解密密钥对象
-func NewAesDecrypt(sailStr, openKey string) *AesDecrypt {
-	aesDecrypt := &AesDecrypt{
+// NewAESDecrypt 实例化：Aes解密密钥对象
+func NewAESDecrypt(sailStr, openKey string) *AESDecrypt {
+	aesDecrypt := &AESDecrypt{
 		sailStr:  sailStr,
 		sailByte: make([]byte, 16),
 		randKey:  make([]byte, 16),
@@ -125,7 +121,7 @@ func NewAesDecrypt(sailStr, openKey string) *AesDecrypt {
 }
 
 // deSailByByte 密码解盐：使用byte盐
-func (r *AesDecrypt) deSailByByte() *AesDecrypt {
+func (r *AESDecrypt) deSailByByte() *AESDecrypt {
 	index := r.randKey[:4]
 
 	// 替换key中的字节
@@ -138,17 +134,17 @@ func (r *AesDecrypt) deSailByByte() *AesDecrypt {
 }
 
 // GetAesKey 获取加盐后的密钥
-func (r *AesDecrypt) GetAesKey() []byte {
+func (r *AESDecrypt) GetAesKey() []byte {
 	return r.aesKey
 }
 
 // SetAesKey 设置加盐后的密钥
-func (r *AesDecrypt) SetAesKey(aesKey []byte) *AesDecrypt {
+func (r *AESDecrypt) SetAesKey(aesKey []byte) *AESDecrypt {
 	r.aesKey = aesKey
 	return r
 }
 
 // GetOpenKey 获取公开密码
-func (r *AesDecrypt) GetOpenKey() string {
+func (r *AESDecrypt) GetOpenKey() string {
 	return r.openKey
 }

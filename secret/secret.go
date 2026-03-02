@@ -35,7 +35,7 @@ func EncryptAuthorization(key, secretKey string, iv []byte, randStr ...string) (
 		}
 	}
 
-	token, err = symmetric.Cbc{}.Encrypt([]byte(key+uuid), []byte(secretKey), iv)
+	token, err = new(APP).Symmetric.CBC.Encrypt([]byte(key+uuid), []byte(secretKey), iv)
 	if err != nil {
 		return "", "", err
 	}
@@ -57,7 +57,7 @@ func DecryptAuthorization(token, secretKey string, iv []byte) (string, string, e
 	if err != nil {
 		return "", "", fmt.Errorf("base64解码token失败：%s", err.Error())
 	}
-	decryptToken, err = symmetric.Cbc{}.Decrypt(token64, []byte(secretKey), iv)
+	decryptToken, err = new(APP).Symmetric.CBC.Decrypt(token64, []byte(secretKey), iv)
 	if err != nil {
 		return "", "", fmt.Errorf("解密失败：%s", err.Error())
 	}
@@ -80,7 +80,7 @@ func MustEncrypt(data any) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func Ecb16Encrypt(data any, needEncrypt, needZip bool, aes *symmetric.Aes) (string, error) {
+func Ecb16Encrypt(data any, needEncrypt, needZip bool, aes *symmetric.AES) (string, error) {
 	var (
 		jsonByte, b                        []byte
 		jsonMarshalErr, zipErr, encryptErr error
@@ -102,7 +102,7 @@ func Ecb16Encrypt(data any, needEncrypt, needZip bool, aes *symmetric.Aes) (stri
 
 	// 加密
 	if needEncrypt {
-		b, encryptErr = symmetric.Ecb{}.Encrypt(b, aes.Encrypt.GetAesKey())
+		b, encryptErr = new(APP).Symmetric.ECB.Encrypt(b, aes.Encrypt.GetAesKey())
 		if encryptErr != nil {
 			return "", encryptErr
 		}
@@ -110,12 +110,12 @@ func Ecb16Encrypt(data any, needEncrypt, needZip bool, aes *symmetric.Aes) (stri
 
 	if !needZip && !needEncrypt {
 		return string(b), nil
-	} else {
-		return base64.StdEncoding.EncodeToString(b), nil
 	}
+
+	return base64.StdEncoding.EncodeToString(b), nil
 }
 
-func Ecb16Decrypt(data string, needEncrypt, needZip bool, aes *symmetric.Aes) (any, error) {
+func Ecb16Decrypt(data string, needEncrypt, needZip bool, aes *symmetric.AES) (any, error) {
 	var (
 		r                                                     any
 		cipherText, decryptedByte, decompressedByte           []byte
@@ -130,7 +130,7 @@ func Ecb16Decrypt(data string, needEncrypt, needZip bool, aes *symmetric.Aes) (a
 		}
 
 		// aes解密：ecb
-		decryptedByte, decryptErr = symmetric.Ecb{}.Decrypt(cipherText, aes.Encrypt.GetAesKey())
+		decryptedByte, decryptErr = new(APP).Symmetric.ECB.Decrypt(cipherText, aes.Encrypt.GetAesKey())
 		if decryptErr != nil {
 			return nil, decryptErr
 		}
@@ -148,20 +148,20 @@ func Ecb16Decrypt(data string, needEncrypt, needZip bool, aes *symmetric.Aes) (a
 			}
 
 			return r, nil
-		} else {
-			// 将data反序列化
-			jsonUnmarshalErr = json.Unmarshal(decryptedByte, &r)
-			if jsonUnmarshalErr != nil {
-				return nil, jsonUnmarshalErr
-			}
-
-			return r, nil
 		}
-	} else {
-		jsonUnmarshalErr = json.Unmarshal([]byte(data), &r)
+
+		// 将data反序列化
+		jsonUnmarshalErr = json.Unmarshal(decryptedByte, &r)
 		if jsonUnmarshalErr != nil {
 			return nil, jsonUnmarshalErr
 		}
+
+		return r, nil
+	}
+
+	jsonUnmarshalErr = json.Unmarshal([]byte(data), &r)
+	if jsonUnmarshalErr != nil {
+		return nil, jsonUnmarshalErr
 	}
 
 	return r, nil

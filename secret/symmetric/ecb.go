@@ -7,27 +7,29 @@ import (
 	"fmt"
 )
 
-type Ecb struct{}
+type ECB struct{}
 
-var EcbApp Ecb
+func NewECB() *ECB { return &ECB{} }
+
+func (*ECB) New() *ECB { return NewECB() }
 
 // padPKCS7 pads the plaintext to be a multiple of the block size
-func (Ecb) padPKCS7(plaintext []byte, blockSize int) []byte {
+func (*ECB) padPKCS7(plaintext []byte, blockSize int) []byte {
 	padding := blockSize - len(plaintext)%blockSize
-	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	padText := bytes.Repeat([]byte{byte(padding)}, padding)
 
-	return append(plaintext, padtext...)
+	return append(plaintext, padText...)
 }
 
 // unPadPKCS7 removes the padding from the decrypted text
-func (Ecb) unPadPKCS7(plaintext []byte) []byte {
+func (*ECB) unPadPKCS7(plaintext []byte) []byte {
 	length := len(plaintext)
-	unpadding := int(plaintext[length-1])
+	unPadding := int(plaintext[length-1])
 
-	return plaintext[:(length - unpadding)]
+	return plaintext[:(length - unPadding)]
 }
 
-func (Ecb) unPadPKCS72(src []byte, blockSize int) ([]byte, error) {
+func (*ECB) unPadPKCS72(src []byte, blockSize int) ([]byte, error) {
 	length := len(src)
 	if blockSize <= 0 {
 		return nil, fmt.Errorf("invalid blockSize: %d", blockSize)
@@ -37,34 +39,34 @@ func (Ecb) unPadPKCS72(src []byte, blockSize int) ([]byte, error) {
 		return nil, errors.New("invalid data len")
 	}
 
-	unpadding := int(src[length-1])
-	if unpadding > blockSize {
-		return nil, fmt.Errorf("invalid unpadding: %d", unpadding)
+	unPadding := int(src[length-1])
+	if unPadding > blockSize {
+		return nil, fmt.Errorf("invalid unPadding: %d", unPadding)
 	}
 
-	if unpadding == 0 {
-		return nil, errors.New("invalid unpadding: 0")
+	if unPadding == 0 {
+		return nil, errors.New("invalid unPadding: 0")
 	}
 
-	padding := src[length-unpadding:]
-	for i := 0; i < unpadding; i++ {
-		if padding[i] != byte(unpadding) {
+	padding := src[length-unPadding:]
+	for i := 0; i < unPadding; i++ {
+		if padding[i] != byte(unPadding) {
 			return nil, errors.New("invalid padding")
 		}
 	}
 
-	return src[:(length - unpadding)], nil
+	return src[:(length - unPadding)], nil
 }
 
 // Encrypt encrypts plaintext using AES in ECB mode
-func (Ecb) Encrypt(key, plaintext []byte) ([]byte, error) {
+func (*ECB) Encrypt(key, plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
 	blockSize := block.BlockSize()
-	plaintext = Ecb{}.padPKCS7(plaintext, blockSize)
+	plaintext = NewECB().padPKCS7(plaintext, blockSize)
 	cipherText := make([]byte, len(plaintext))
 
 	for start := 0; start < len(plaintext); start += blockSize {
@@ -75,7 +77,7 @@ func (Ecb) Encrypt(key, plaintext []byte) ([]byte, error) {
 }
 
 // Decrypt decrypts cipherText using AES in ECB mode
-func (Ecb) Decrypt(key, cipherText []byte) ([]byte, error) {
+func (*ECB) Decrypt(key, cipherText []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -92,5 +94,5 @@ func (Ecb) Decrypt(key, cipherText []byte) ([]byte, error) {
 		block.Decrypt(plaintext[start:start+blockSize], cipherText[start:start+blockSize])
 	}
 
-	return Ecb{}.unPadPKCS72(plaintext, blockSize)
+	return (&ECB{}).unPadPKCS72(plaintext, blockSize)
 }

@@ -1,9 +1,9 @@
 package symmetric
 
 type APP struct {
-	Cbc        Cbc
-	Aes        Aes
-	AesEncrypt AesEncrypt
-	AesDecrypt AesDecrypt
-	Ecb        Ecb
+	CBC        CBC
+	AES        AES
+	AESEncrypt AESEncrypt
+	AESDecrypt AESDecrypt
+	ECB        ECB
 }

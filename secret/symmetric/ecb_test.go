@@ -18,7 +18,7 @@ func TestEcbDemo(t *testing.T) {
 			ciphertext                                 string
 		)
 
-		a := NewAes("tjp5OPIU1ETF5s33fsLWdA==")
+		a := NewAES("tjp5OPIU1ETF5s33fsLWdA==")
 		aesEncrypt := a.NewEncrypt().GetEncrypt()
 		openKey := aesEncrypt.GetOpenKey()
 		aesDecrypt := a.NewDecrypt(openKey).GetDecrypt()
@@ -36,7 +36,7 @@ func TestEcbDemo(t *testing.T) {
 			}
 
 			// encrypt step2: aes-ecb-encrypt
-			encrypted, err = Ecb{}.Encrypt(aesEncrypt.GetAesKey(), zipped)
+			encrypted, err = ECB{}.Encrypt(aesEncrypt.GetAesKey(), zipped)
 			if err != nil {
 				t.Errorf("[ECB] encrypting: %v", err)
 			}
@@ -46,7 +46,7 @@ func TestEcbDemo(t *testing.T) {
 			fmt.Printf("encrypted: %s", ciphertext)
 
 			// decrypt step1: decrypt
-			decrypted, err = Ecb{}.Decrypt(aesDecrypt.GetAesKey(), encrypted)
+			decrypted, err = ECB{}.Decrypt(aesDecrypt.GetAesKey(), encrypted)
 			if err != nil {
 				t.Errorf("[ECB] decrypting: %v", err)
 			}

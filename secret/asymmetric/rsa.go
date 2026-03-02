@@ -16,7 +16,7 @@ import (
 )
 
 type (
-	Rsa       struct{}
+	RSA       struct{}
 	UnEncrypt struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -24,23 +24,19 @@ type (
 	}
 )
 
-var RsaApp Rsa
+// NewRSA 实例化：Rsa加密
+func NewRSA() *RSA { return &RSA{} }
 
-func (*Rsa) New() *Rsa { return &Rsa{} }
-
-// NewRsa 实例化：Rsa加密
-//
-//go:fix 推荐使用：New方法
-func NewRsa() *Rsa { return &Rsa{} }
+func (*RSA) New() *RSA { return NewRSA() }
 
 // EncryptByBase64 通过base64公钥加密
-func (my *Rsa) EncryptByBase64(base64PublicKey string, plainText []byte) ([]byte, error) {
+func (my *RSA) EncryptByBase64(base64PublicKey string, plainText []byte) ([]byte, error) {
 	var (
-		pemBase64 *PemBase64
+		pemBase64 *PEMBase64
 		err       error
 	)
 
-	pemBase64, err = NewPemBase64().
+	pemBase64, err = NewPEMBase64().
 		SetBase64PublicKey(base64PublicKey).
 		GeneratePemPublicKey()
 	if err != nil {
@@ -51,7 +47,7 @@ func (my *Rsa) EncryptByBase64(base64PublicKey string, plainText []byte) ([]byte
 }
 
 // EncryptByPem 通过pem公钥加密
-func (my *Rsa) EncryptByPem(pemPublicKey []byte, plainText []byte) ([]byte, error) {
+func (my *RSA) EncryptByPem(pemPublicKey []byte, plainText []byte) ([]byte, error) {
 	var (
 		err                error
 		block              *pem.Block
@@ -89,7 +85,7 @@ func (my *Rsa) EncryptByPem(pemPublicKey []byte, plainText []byte) ([]byte, erro
 }
 
 // encryptWithTooLong 分段加密处理
-func (my *Rsa) encryptWithTooLong(publicKey *rsa.PublicKey, plainText []byte) ([]byte, error) {
+func (my *RSA) encryptWithTooLong(publicKey *rsa.PublicKey, plainText []byte) ([]byte, error) {
 	var (
 		maxChunkSize = publicKey.N.BitLen()/8 - 11 // 计算每个分段的最大长度
 		cipherTexts  [][]byte                      // 存储每个分段加密后的结果
@@ -119,13 +115,13 @@ func (my *Rsa) encryptWithTooLong(publicKey *rsa.PublicKey, plainText []byte) ([
 }
 
 // DecryptByBase64 通过base64私钥解密
-func (my *Rsa) DecryptByBase64(base64PrivateKey string, cipherText []byte) ([]byte, error) {
+func (my *RSA) DecryptByBase64(base64PrivateKey string, cipherText []byte) ([]byte, error) {
 	var (
-		pemBase64 *PemBase64
+		pemBase64 *PEMBase64
 		err       error
 	)
 
-	pemBase64, err = NewPemBase64().SetBase64PrivateKye(base64PrivateKey).GeneratePemPrivateKey()
+	pemBase64, err = NewPEMBase64().SetBase64PrivateKye(base64PrivateKey).GeneratePemPrivateKey()
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +130,7 @@ func (my *Rsa) DecryptByBase64(base64PrivateKey string, cipherText []byte) ([]by
 }
 
 // DecryptByPem 使用PEM私钥进行RSA解密
-func (my *Rsa) DecryptByPem(pemPrivateKey []byte, cipherText []byte) ([]byte, error) {
+func (my *RSA) DecryptByPem(pemPrivateKey []byte, cipherText []byte) ([]byte, error) {
 	var (
 		err                       error
 		block                     *pem.Block
@@ -184,7 +180,7 @@ func (my *Rsa) DecryptByPem(pemPrivateKey []byte, cipherText []byte) ([]byte, er
 }
 
 // decryptWithTooLong 分段解密
-func (my *Rsa) decryptWithTooLong(privateKey *rsa.PrivateKey, cipherText []byte) ([]byte, error) {
+func (my *RSA) decryptWithTooLong(privateKey *rsa.PrivateKey, cipherText []byte) ([]byte, error) {
 	var (
 		maxChunkSize int
 		plainTexts   [][]byte
@@ -216,17 +212,17 @@ func (my *Rsa) decryptWithTooLong(privateKey *rsa.PrivateKey, cipherText []byte)
 	return finalPlainText, nil
 }
 
-func (*Rsa) DemoEncryptRsa(unEncrypt []byte) string {
+func (*RSA) DemoEncryptRsa(unEncrypt []byte) string {
 	var (
 		base64PublicKey                     = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCFbbjNGuqhF3HhmvnZxjG6mS6Q3OmD/vh9voriZTyNCVLJ7y2r0bHZZ7brWwkgtGPQXosZ0IzUZAvlMuZ0m11DiuXZzlCnRz1owwMXKalJeeKQwA8CoJBSy99zCo9fxIErqTMhGwPFCKUaByt8TEIkNq8fUsmqjqqshRLKSazWuwIDAQAB"
 		encrypted                           []byte
 		base64Encrypted                     string
 		pemPublicKey                        []byte
-		pemBase64                           *PemBase64
+		pemBase64                           *PEMBase64
 		generatePemPublicKeyErr, encryptErr error
 	)
 
-	pemBase64, generatePemPublicKeyErr = PemBase64App.New().SetBase64PublicKey(base64PublicKey).GeneratePemPublicKey()
+	pemBase64, generatePemPublicKeyErr = NewPEMBase64().SetBase64PublicKey(base64PublicKey).GeneratePemPublicKey()
 	if generatePemPublicKeyErr != nil {
 		str.TerminalLogApp.New("[RSA] generate public key: %v").Error(generatePemPublicKeyErr)
 	}
@@ -234,7 +230,7 @@ func (*Rsa) DemoEncryptRsa(unEncrypt []byte) string {
 	pemPublicKey = pemBase64.GetPemPublicKey()
 	str.TerminalLogApp.New("[RSA] generate public key: \n%s").Info(pemPublicKey)
 
-	encrypted, encryptErr = RsaApp.New().EncryptByPem(pemPublicKey, unEncrypt)
+	encrypted, encryptErr = NewRSA().EncryptByPem(pemPublicKey, unEncrypt)
 	if encryptErr != nil {
 		str.TerminalLogApp.New("[RSA] encrypt: %v").Error(encryptErr)
 	}
@@ -243,16 +239,16 @@ func (*Rsa) DemoEncryptRsa(unEncrypt []byte) string {
 	return base64Encrypted
 }
 
-func (*Rsa) DemoDecryptRsa(base64Encrypted string) string {
+func (*RSA) DemoDecryptRsa(base64Encrypted string) string {
 	var (
 		base64PrivateKey                                     = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAIVtuM0a6qEXceGa+dnGMbqZLpDc6YP++H2+iuJlPI0JUsnvLavRsdlntutbCSC0Y9BeixnQjNRkC+Uy5nSbXUOK5dnOUKdHPWjDAxcpqUl54pDADwKgkFLL33MKj1/EgSupMyEbA8UIpRoHK3xMQiQ2rx9SyaqOqqyFEspJrNa7AgMBAAECgYATaA4E5vFRVNOfeKb2YblB5p27PCZKqH8D6v7QRuEzsjN0Y3FFGE7BzC/ys170fsg1ukqJCqgxDAwe3fRe6Wn6/Y5IEF/wRYODQn6yAXhCUepheaRl9zK+P+XXbGWENdL2N/KchNZrKUF97Eu00OhBI7uEKpUrhPuzaYDPiHujQQJBAOvc+Xwz3j/srv26bk5UJOAJtU096pNseEeVzFqSTU903NdgFUQupTsPeokUtMBeMihAYlfDZypIK0kvBoymTNkCQQCQ0e/vEGnqh9C0y340HUlIZe0Q5mAJ5e+3a7lR21LS9ki5vQLUf2Wjxw/QVbPDZthGK33BusrobyuwcVOMmROzAkEAz9lefeZTb6/Kkcvtktcx28CSZawvgJTw9dx7RkFxIZkRWDbS5s/YSdCdIhn+IxufRbtfLooC6s7IXmizc9TFGQJAZP1hum7RzbFkg4+ctK7vmcMqbKyasIxefKRsmX6+5UrGMHB0dsdYk7uPdZMuRseDbnuJuP2P3kMYTnTY9KUTLQJANq7Cy5OjtHiJ5EsRBePfGm9Qvs3mwJZAKDpZsmTRSyaQCTCpL6RQ+7gVFIEmiEU4REjag9/aq8C1G0MyvwxkiA=="
 		pemPrivateKey, encrypted                             []byte
 		base64DecodeErr, generatePemPublicKeyErr, decryptErr error
-		pemBase64                                            *PemBase64
+		pemBase64                                            *PEMBase64
 		decrypted                                            []byte
 	)
 
-	pemBase64, generatePemPublicKeyErr = PemBase64App.New().SetBase64PrivateKye(base64PrivateKey).GeneratePemPrivateKey()
+	pemBase64, generatePemPublicKeyErr = NewPEMBase64().SetBase64PrivateKye(base64PrivateKey).GeneratePemPrivateKey()
 	if generatePemPublicKeyErr != nil {
 		str.TerminalLogApp.New("[RSA] generate private key: %v").Info(generatePemPublicKeyErr)
 	}
@@ -265,7 +261,7 @@ func (*Rsa) DemoDecryptRsa(base64Encrypted string) string {
 		str.TerminalLogApp.New("[RSA] base64 decode: %v").Error(base64DecodeErr)
 	}
 
-	decrypted, decryptErr = RsaApp.New().DecryptByPem(pemPrivateKey, encrypted)
+	decrypted, decryptErr = NewRSA().DecryptByPem(pemPrivateKey, encrypted)
 	if decryptErr != nil {
 		str.TerminalLogApp.New("[RSA] decrypt: %v").Error(decryptErr)
 	}
@@ -273,7 +269,7 @@ func (*Rsa) DemoDecryptRsa(base64Encrypted string) string {
 	return string(decrypted)
 }
 
-func (my *Rsa) Demo() {
+func (my *RSA) Demo() {
 	var (
 		unEncrypt = UnEncrypt{
 			Username: "cbit",
