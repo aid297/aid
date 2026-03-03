@@ -25,6 +25,7 @@ func EncryptAuthorization(key, secretKey string, iv []byte, randStr ...string) (
 	if key == "" {
 		return "", "", err
 	}
+
 	// 生成随机串
 	if len(randStr) > 0 {
 		uuid = randStr[0]
@@ -35,7 +36,7 @@ func EncryptAuthorization(key, secretKey string, iv []byte, randStr ...string) (
 		}
 	}
 
-	token, err = new(APP).Symmetric.CBC.Encrypt([]byte(key+uuid), []byte(secretKey), iv)
+	token, err = symmetric.NewCBC().Encrypt([]byte(key+uuid), []byte(secretKey), iv)
 	if err != nil {
 		return "", "", err
 	}
@@ -53,12 +54,10 @@ func DecryptAuthorization(token, secretKey string, iv []byte) (string, string, e
 		return "", "", errors.New("token 不能为空")
 	}
 
-	token64, err = base64.StdEncoding.DecodeString(token)
-	if err != nil {
+	if token64, err = base64.StdEncoding.DecodeString(token); err != nil {
 		return "", "", fmt.Errorf("base64解码token失败：%s", err.Error())
 	}
-	decryptToken, err = new(APP).Symmetric.CBC.Decrypt(token64, []byte(secretKey), iv)
-	if err != nil {
+	if decryptToken, err = symmetric.NewCBC().Decrypt(token64, []byte(secretKey), iv); err != nil {
 		return "", "", fmt.Errorf("解密失败：%s", err.Error())
 	}
 
@@ -82,29 +81,26 @@ func MustEncrypt(data any) (string, error) {
 
 func ECB16Encrypt(data any, needEncrypt, needZip bool, aes *symmetric.AES) (string, error) {
 	var (
-		jsonByte, b                        []byte
-		jsonMarshalErr, zipErr, encryptErr error
+		err         error
+		jsonByte, b []byte
 	)
 
 	// json序列化
-	jsonByte, jsonMarshalErr = json.Marshal(data)
-	if jsonMarshalErr != nil {
-		return "", jsonMarshalErr
+	if jsonByte, err = json.Marshal(data); err != nil {
+		return "", err
 	}
 
 	// 压缩
 	if needZip {
-		b, zipErr = compression.NewZlib().Compress(jsonByte)
-		if zipErr != nil {
-			return "", zipErr
+		if b, err = compression.NewZlib().Compress(jsonByte); err != nil {
+			return "", err
 		}
 	}
 
 	// 加密
 	if needEncrypt {
-		b, encryptErr = new(APP).Symmetric.ECB.Encrypt(b, aes.Encrypt.GetAesKey())
-		if encryptErr != nil {
-			return "", encryptErr
+		if b, err = symmetric.NewECB().Encrypt(b, aes.Encrypt.GetAesKey()); err != nil {
+			return "", err
 		}
 	}
 
@@ -117,51 +113,45 @@ func ECB16Encrypt(data any, needEncrypt, needZip bool, aes *symmetric.AES) (stri
 
 func ECB16Decrypt(data string, needEncrypt, needZip bool, aes *symmetric.AES) (any, error) {
 	var (
-		r                                                     any
-		cipherText, decryptedByte, decompressedByte           []byte
-		base64DecodeErr, jsonUnmarshalErr, decryptErr, zipErr error
+		err                                         error
+		r                                           any
+		cipherText, decryptedByte, decompressedByte []byte
 	)
 
 	if needEncrypt {
 		// base64 解码
-		cipherText, base64DecodeErr = base64.StdEncoding.DecodeString(data)
-		if base64DecodeErr != nil {
-			return nil, base64DecodeErr
+		if cipherText, err = base64.StdEncoding.DecodeString(data); err != nil {
+			return nil, err
 		}
 
 		// aes解密：ecb
-		decryptedByte, decryptErr = new(APP).Symmetric.ECB.Decrypt(cipherText, aes.Encrypt.GetAesKey())
-		if decryptErr != nil {
-			return nil, decryptErr
+		if decryptedByte, err = symmetric.NewECB().Decrypt(cipherText, aes.Encrypt.GetAesKey()); err != nil {
+			return nil, err
 		}
 
 		// 解压
 		if needZip {
-			decompressedByte, zipErr = compression.NewZlib().Decompress(decryptedByte)
-			if zipErr != nil {
-				return nil, zipErr
+			if decompressedByte, err = compression.NewZlib().Decompress(decryptedByte); err != nil {
+				return nil, err
 			}
 
-			jsonUnmarshalErr = json.Unmarshal(decompressedByte, &r)
-			if jsonUnmarshalErr != nil {
-				return nil, jsonUnmarshalErr
+			if err = json.Unmarshal(decompressedByte, &r); err != nil {
+				return nil, err
 			}
 
 			return r, nil
 		}
 
 		// 将data反序列化
-		jsonUnmarshalErr = json.Unmarshal(decryptedByte, &r)
-		if jsonUnmarshalErr != nil {
-			return nil, jsonUnmarshalErr
+		if err = json.Unmarshal(decryptedByte, &r); err != nil {
+			return nil, err
 		}
 
 		return r, nil
 	}
 
-	jsonUnmarshalErr = json.Unmarshal([]byte(data), &r)
-	if jsonUnmarshalErr != nil {
-		return nil, jsonUnmarshalErr
+	if err = json.Unmarshal([]byte(data), &r); err != nil {
+		return nil, err
 	}
 
 	return r, nil

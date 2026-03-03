@@ -39,8 +39,6 @@ type (
 // NewAES 实例化：Aes密钥
 func NewAES(sail string) *AES { return &AES{sailStr: sail} }
 
-func (*AES) New(sail string) *AES { return NewAES(sail) }
-
 // NewEncrypt 实例化：Aes加密密钥对象
 func (my *AES) NewEncrypt() *AES {
 	my.Encrypt = NewAESEncrypt(my.sailStr)

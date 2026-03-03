@@ -15,8 +15,6 @@ type CBC struct{}
 
 func NewCBC() *CBC { return new(CBC) }
 
-func (*CBC) New() *CBC { return NewCBC() }
-
 func (*CBC) padPKCS7(src []byte, blockSize int) []byte {
 	padding := blockSize - len(src)%blockSize
 	padText := bytes.Repeat([]byte{byte(padding)}, padding)
