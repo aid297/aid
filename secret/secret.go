@@ -80,7 +80,7 @@ func MustEncrypt(data any) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func Ecb16Encrypt(data any, needEncrypt, needZip bool, aes *symmetric.AES) (string, error) {
+func ECB16Encrypt(data any, needEncrypt, needZip bool, aes *symmetric.AES) (string, error) {
 	var (
 		jsonByte, b                        []byte
 		jsonMarshalErr, zipErr, encryptErr error
@@ -115,7 +115,7 @@ func Ecb16Encrypt(data any, needEncrypt, needZip bool, aes *symmetric.AES) (stri
 	return base64.StdEncoding.EncodeToString(b), nil
 }
 
-func Ecb16Decrypt(data string, needEncrypt, needZip bool, aes *symmetric.AES) (any, error) {
+func ECB16Decrypt(data string, needEncrypt, needZip bool, aes *symmetric.AES) (any, error) {
 	var (
 		r                                                     any
 		cipherText, decryptedByte, decompressedByte           []byte

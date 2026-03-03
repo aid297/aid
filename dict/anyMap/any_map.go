@@ -27,6 +27,7 @@ type (
 		Copy() AnyMapper[K, V]
 		ToString() string
 		ToMap() map[K]V
+		ToOrderlyMap() anySlice.AnySlicer[AnyMapOrderlyItem[K, V]]
 		IsEmpty() bool
 		IsNotEmpty() bool
 		Has(key K) bool
@@ -70,6 +71,11 @@ type (
 		keys   anySlice.AnySlicer[K]
 		values anySlice.AnySlicer[V]
 		mu     sync.RWMutex
+	}
+
+	AnyMapOrderlyItem[K comparable, V any] struct {
+		Key   K
+		Value V
 	}
 )
 
@@ -161,6 +167,20 @@ func (my *AnyMap[K, V]) Copy() AnyMapper[K, V] { return New(Map(my.data)) }
 func (my *AnyMap[K, V]) ToString() string { return fmt.Sprintf("%v", my.data) }
 
 func (my *AnyMap[K, V]) ToMap() map[K]V { return my.data }
+
+func (my *AnyMap[K, V]) ToOrderlyMap() anySlice.AnySlicer[AnyMapOrderlyItem[K, V]] {
+	res := anySlice.New(anySlice.Cap[AnyMapOrderlyItem[K, V]](len(my.data)))
+
+	if my.Length() == 0 {
+		return res
+	}
+
+	my.keys.Each(func(idx int, item K) {
+		res.Append(AnyMapOrderlyItem[K, V]{Key: item, Value: my.data[item]})
+	})
+
+	return res
+}
 
 func (my *AnyMap[K, V]) IsEmpty() bool { return len(my.data) == 0 }
 
