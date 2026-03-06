@@ -2,6 +2,7 @@ package websocketPool
 
 import (
 	"errors"
+	"log"
 	"net/url"
 	"sync"
 	"time"
@@ -47,28 +48,31 @@ func NewClient(
 	insName, name, host, path string,
 	receiveMessageFunc func(insName, clientName string, prototypeMsg []byte) ([]byte, error),
 ) (*Client, error) {
-	u := url.URL{
-		Scheme: "ws",
-		Host:   host,
-		Path:   path,
-	}
-	client, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	var (
+		err    error
+		conn   *websocket.Conn
+		client *Client = &Client{
+			insName:      insName,
+			Name:         name,
+			url:          url.URL{},
+			Conn:         nil,
+			onReceiveMsg: receiveMessageFunc,
+		}
+	)
+	u := url.URL{Scheme: "ws", Host: "127.0.0.1:38000", Path: "/cbit_db/ws"}
+	log.Printf("真实连接：%s", u.String())
+
+	// 建立连接
+	conn, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		return nil, err
+		log.Fatal("dial:", err)
 	}
 
-	c := &Client{
-		insName:      insName,
-		Name:         name,
-		url:          u,
-		Conn:         client,
-		onReceiveMsg: receiveMessageFunc,
-	}
+	client.Conn = conn
+	client.syncChan = make(chan []byte, 1)
+	client.closeChan = make(chan struct{}, 1)
 
-	c.syncChan = make(chan []byte, 1)
-	c.closeChan = make(chan struct{}, 1)
-
-	return c, nil
+	return client, nil
 }
 
 // SendMsg 发送消息：通过链接

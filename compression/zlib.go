@@ -8,8 +8,11 @@ import (
 
 type Zlib struct{}
 
-// NewZlib 实例化Zlib
+// NewZlib 实例化
 func NewZlib() *Zlib { return &Zlib{} }
+
+// New 实例化：Zlib压缩
+func (*Zlib) New() *Zlib { return NewZlib() }
 
 // Compress 压缩
 func (*Zlib) Compress(originalData []byte) ([]byte, error) {

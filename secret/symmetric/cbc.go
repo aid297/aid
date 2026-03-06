@@ -13,7 +13,11 @@ import (
 
 type CBC struct{}
 
+// NewCBC 实例化
 func NewCBC() *CBC { return new(CBC) }
+
+// New 实例化：CBC加密
+func (*CBC) New() *CBC { return NewCBC() }
 
 func (*CBC) padPKCS7(src []byte, blockSize int) []byte {
 	padding := blockSize - len(src)%blockSize

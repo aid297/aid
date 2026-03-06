@@ -36,8 +36,11 @@ type (
 	}
 )
 
-// NewAES 实例化：Aes密钥
+// NewAES 实例化
 func NewAES(sail string) *AES { return &AES{sailStr: sail} }
+
+// New 实例化：AES密钥对象
+func (*AES) New(sail string) *AES { return NewAES(sail) }
 
 // NewEncrypt 实例化：Aes加密密钥对象
 func (my *AES) NewEncrypt() *AES {
@@ -79,7 +82,7 @@ func NewAESEncrypt(sail string) *AESEncrypt {
 func (r *AESEncrypt) sailByByte() *AESEncrypt {
 	copy(r.aesKey, r.randKey)
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		index := int(r.randKey[i]) % 16
 		r.aesKey[index] = r.sailByte[index]
 	}

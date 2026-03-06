@@ -12,15 +12,16 @@ type Retry struct {
 	ctx   context.Context
 }
 
-func (Retry) New(attrs ...Attributer) Retry {
-	ins := Retry{fn: nil, ctx: context.TODO()}
-	return ins.Set(attrs...)
+func NewRetry(attrs ...Attributer) *Retry {
+	return (&Retry{fn: nil, ctx: context.TODO()}).Set(attrs...)
 }
 
-func (my Retry) Set(attrs ...Attributer) Retry {
+func (*Retry) New(attrs ...Attributer) *Retry { return NewRetry(attrs...) }
+
+func (my *Retry) Set(attrs ...Attributer) *Retry {
 	if len(attrs) > 0 {
 		for idx := range attrs {
-			attrs[idx].Register(&my)
+			attrs[idx].Register(my)
 		}
 	}
 
@@ -28,7 +29,7 @@ func (my Retry) Set(attrs ...Attributer) Retry {
 }
 
 // Simple 线性重试
-func (my Retry) Simple(attempts int) error {
+func (my *Retry) Simple(attempts int) error {
 	if my.fn == nil {
 		return nil
 	}
@@ -45,7 +46,7 @@ func (my Retry) Simple(attempts int) error {
 }
 
 // Do 指数退避
-func (my Retry) Do(attempts int) error {
+func (my *Retry) Do(attempts int) error {
 	if my.fn == nil {
 		return nil
 	}
@@ -62,7 +63,7 @@ func (my Retry) Do(attempts int) error {
 }
 
 // WithContext 带上下文的重试
-func (my Retry) WithContext(attempts int) error {
+func (my *Retry) WithContext(attempts int) error {
 	if my.fn == nil {
 		return nil
 	}
@@ -82,7 +83,7 @@ func (my Retry) WithContext(attempts int) error {
 	return nil
 }
 
-func (my Retry) WithContextAndJitter(attempts int) error {
+func (my *Retry) WithContextAndJitter(attempts int) error {
 	if my.fn == nil {
 		return nil
 	}

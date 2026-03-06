@@ -6,9 +6,7 @@ import (
 )
 
 type (
-	Attributer interface {
-		Register(retry *Retry)
-	}
+	Attributer interface{ Register(retry *Retry) }
 
 	AttrSleep   struct{ sleep time.Duration }
 	AttrFn      struct{ fn func() error }

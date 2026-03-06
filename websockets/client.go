@@ -1,6 +1,7 @@
 package websockets
 
 import (
+	"maps"
 	"net/http"
 	"time"
 
@@ -32,20 +33,7 @@ type (
 	}
 )
 
-var ClientApp Client
-
-// New 实例化：链接
-func (*Client) New(
-	groupName, name, addr string,
-	clientCallbackConfig ClientCallbackConfig,
-	options ...any,
-) (*Client, error) {
-	return NewClient(groupName, name, addr, clientCallbackConfig, options...)
-}
-
 // NewClient 实例化：链接
-//
-//go:fix 推荐使用：New方法
 func NewClient(
 	groupName, name, addr string,
 	clientCallbackConfig ClientCallbackConfig,
@@ -75,7 +63,7 @@ func NewClient(
 	}
 
 	if len(options) > 0 {
-		for i := 0; i < len(options); i++ {
+		for i := range options {
 			if v, ok := options[i].(http.Header); ok {
 				client.requestHeader = v
 			}
@@ -123,9 +111,7 @@ func (my *Client) AppendReqHdr(hdr http.Header) *Client { return my.AppendReques
 
 // AppendRequestHeader 新增请求头
 func (my *Client) AppendRequestHeader(header http.Header) *Client {
-	for k, v := range header {
-		my.requestHeader[k] = v
-	}
+	maps.Copy(my.requestHeader, header)
 
 	return my
 }

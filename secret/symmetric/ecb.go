@@ -9,7 +9,11 @@ import (
 
 type ECB struct{}
 
+// NewECB 实例化
 func NewECB() *ECB { return &ECB{} }
+
+// New 实例化：ECB加密
+func (*ECB) New() *ECB { return NewECB() }
 
 // padPKCS7 pads the plaintext to be a multiple of the block size
 func (*ECB) padPKCS7(plaintext []byte, blockSize int) []byte {

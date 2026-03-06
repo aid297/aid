@@ -5,9 +5,7 @@ import (
 	"github.com/aid297/aid/rpc/rpcServer"
 )
 
-var APP Launch
-
-type Launch struct {
+var APP struct {
 	RPCClient struct {
 		Client rpcClient.Client
 		Pool   rpcClient.Pool

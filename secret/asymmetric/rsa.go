@@ -24,8 +24,11 @@ type (
 	}
 )
 
-// NewRSA 实例化：Rsa加密
+// NewRSA 实例化
 func NewRSA() *RSA { return &RSA{} }
+
+// New 实例化：RSA加密
+func (*RSA) New() *RSA { return NewRSA() }
 
 // EncryptByBase64 通过base64公钥加密
 func (my *RSA) EncryptByBase64(base64PublicKey string, plainText []byte) ([]byte, error) {

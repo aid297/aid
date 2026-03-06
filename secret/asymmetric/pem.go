@@ -18,6 +18,9 @@ type PEMBase64 struct {
 // NewPEMBase64 实例化
 func NewPEMBase64() *PEMBase64 { return &PEMBase64{} }
 
+// New 实例化：PEMBase64
+func (*PEMBase64) New() *PEMBase64 { return NewPEMBase64() }
+
 func (my *PEMBase64) SetBase64PublicKey(base64PublicKey string) *PEMBase64 {
 	my.base64PublicKey = base64PublicKey
 
