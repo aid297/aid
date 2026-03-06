@@ -41,67 +41,79 @@ func (db *SimpleDB) Put(key string, value []byte) (err error) {
 	return
 }
 
-func (db *SimpleDB) Delete(key string) error {
-	if err := validateKey(key); err != nil {
-		return err
+func (db *SimpleDB) Delete(key string) (err error) {
+	var (
+		current entry
+		exists  bool
+		record  logRecord
+	)
+
+	if err = validateKey(key); err != nil {
+		return
 	}
 
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if err := db.ensureOpen(); err != nil {
-		return err
+	if err = db.ensureOpen(); err != nil {
+		return
 	}
 
-	current, exists := db.index[key]
-	if !exists {
+	if current, exists = db.index[key]; !exists {
 		return ErrKeyNotFound
 	}
+
 	if current.Deleted {
 		return ErrKeyDeleted
 	}
 
-	record := logRecord{
+	record = logRecord{
 		Operation: opDelete,
 		Key:       key,
 		CreatedAt: time.Now().UnixNano(),
 	}
 
-	if err := db.appendRecord(record); err != nil {
-		return err
+	if err = db.appendRecord(record); err != nil {
+		return
 	}
 
 	current.Value = nil
 	current.Deleted = true
 	current.UpdatedAt = record.CreatedAt
 	db.index[key] = current
-	return nil
+
+	return
 }
 
-func (db *SimpleDB) appendRecord(record logRecord) error {
-	if _, err := db.file.Seek(0, io.SeekEnd); err != nil {
-		return err
+func (db *SimpleDB) appendRecord(record logRecord) (err error) {
+	if _, err = db.file.Seek(0, io.SeekEnd); err != nil {
+		return
 	}
-	if err := writeRecord(db.file, record); err != nil {
-		return err
+	if err = writeRecord(db.file, record); err != nil {
+		return
 	}
+
 	return db.file.Sync()
 }
 
-func (db *SimpleDB) Update(key string, value []byte) error {
-	if err := validateKey(key); err != nil {
-		return err
+func (db *SimpleDB) Update(key string, value []byte) (err error) {
+	var (
+		current entry
+		exists  bool
+	)
+
+	if err = validateKey(key); err != nil {
+		return
 	}
 
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if err := db.ensureOpen(); err != nil {
-		return err
+	if err = db.ensureOpen(); err != nil {
+		return
 	}
 
-	current, exists := db.index[key]
-	if !exists {
+	if current, exists = db.index[key]; !exists {
 		return ErrKeyNotFound
 	}
 	if current.Deleted {
@@ -115,34 +127,39 @@ func (db *SimpleDB) Update(key string, value []byte) error {
 		CreatedAt: time.Now().UnixNano(),
 	}
 
-	if err := db.appendRecord(record); err != nil {
-		return err
+	if err = db.appendRecord(record); err != nil {
+		return
 	}
 
 	db.index[key] = entry{Value: cloneBytes(value), UpdatedAt: record.CreatedAt}
+
 	return nil
 }
 
-func (db *SimpleDB) ensureOpen() error {
+func (db *SimpleDB) ensureOpen() (err error) {
 	if db.closed {
 		return ErrDatabaseClosed
 	}
-	return nil
+	return
 }
 
-func (db *SimpleDB) load() error {
-	if _, err := db.file.Seek(0, io.SeekStart); err != nil {
+func (db *SimpleDB) load() (err error) {
+	var (
+		reader *bufio.Reader
+		record logRecord
+	)
+
+	if _, err = db.file.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
 
-	reader := bufio.NewReader(db.file)
+	reader = bufio.NewReader(db.file)
 	for {
-		record, err := readRecord(reader)
-		if errors.Is(err, io.EOF) {
-			return nil
+		if record, err = readRecord(reader); errors.Is(err, io.EOF) {
+			return
 		}
 		if err != nil {
-			return err
+			return
 		}
 
 		switch record.Operation {
@@ -158,7 +175,7 @@ func (db *SimpleDB) load() error {
 			current.UpdatedAt = record.CreatedAt
 			db.index[record.Key] = current
 		default:
-			return fmt.Errorf("%w: unknown operation %d", ErrCorruptedRecord, record.Operation)
+			return fmt.Errorf("%w：%d", ErrCorruptedRecord, record.Operation)
 		}
 	}
 }
