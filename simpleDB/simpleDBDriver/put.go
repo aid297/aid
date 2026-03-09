@@ -12,8 +12,6 @@ import (
 )
 
 func (db *SimpleDB) Put(key string, value []byte) (err error) {
-	var record logRecord
-
 	if err = validateKey(key); err != nil {
 		return
 	}
@@ -25,27 +23,13 @@ func (db *SimpleDB) Put(key string, value []byte) (err error) {
 		return
 	}
 
-	record = logRecord{
-		Operation: opPut,
-		Key:       key,
-		Value:     cloneBytes(value),
-		CreatedAt: time.Now().UnixNano(),
-	}
-
-	if err = db.appendRecord(record); err != nil {
-		return
-	}
-
-	db.index[key] = entry{Value: cloneBytes(value), UpdatedAt: record.CreatedAt}
-
-	return
+	return db.putRawLocked(key, value)
 }
 
 func (db *SimpleDB) Delete(key string) (err error) {
 	var (
 		current entry
 		exists  bool
-		record  logRecord
 	)
 
 	if err = validateKey(key); err != nil {
@@ -67,28 +51,11 @@ func (db *SimpleDB) Delete(key string) (err error) {
 		return ErrKeyDeleted
 	}
 
-	record = logRecord{
-		Operation: opDelete,
-		Key:       key,
-		CreatedAt: time.Now().UnixNano(),
-	}
-
-	if err = db.appendRecord(record); err != nil {
-		return
-	}
-
-	current.Value = nil
-	current.Deleted = true
-	current.UpdatedAt = record.CreatedAt
-	db.index[key] = current
-
-	return
+	_ = current
+	return db.deleteRawLocked(key)
 }
 
 func (db *SimpleDB) appendRecord(record logRecord) (err error) {
-	if _, err = db.file.Seek(0, io.SeekEnd); err != nil {
-		return
-	}
 	if err = writeRecord(db.file, record); err != nil {
 		return
 	}
@@ -126,14 +93,8 @@ func (db *SimpleDB) Update(key string, value []byte) (err error) {
 		Value:     cloneBytes(value),
 		CreatedAt: time.Now().UnixNano(),
 	}
-
-	if err = db.appendRecord(record); err != nil {
-		return
-	}
-
-	db.index[key] = entry{Value: cloneBytes(value), UpdatedAt: record.CreatedAt}
-
-	return nil
+	_ = record
+	return db.putRawLocked(key, value)
 }
 
 func (db *SimpleDB) ensureOpen() (err error) {
@@ -156,7 +117,7 @@ func (db *SimpleDB) load() (err error) {
 	reader = bufio.NewReader(db.file)
 	for {
 		if record, err = readRecord(reader); errors.Is(err, io.EOF) {
-			return
+			return nil
 		}
 		if err != nil {
 			return
@@ -203,5 +164,40 @@ func writeRecord(writer io.Writer, record logRecord) error {
 	if _, err = writer.Write(checksum[:]); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (db *SimpleDB) putRawLocked(key string, value []byte) error {
+	record := logRecord{
+		Operation: opPut,
+		Key:       key,
+		Value:     cloneBytes(value),
+		CreatedAt: time.Now().UnixNano(),
+	}
+
+	if err := db.appendRecord(record); err != nil {
+		return err
+	}
+
+	db.index[key] = entry{Value: cloneBytes(value), UpdatedAt: record.CreatedAt}
+	return nil
+}
+
+func (db *SimpleDB) deleteRawLocked(key string) error {
+	record := logRecord{
+		Operation: opDelete,
+		Key:       key,
+		CreatedAt: time.Now().UnixNano(),
+	}
+
+	if err := db.appendRecord(record); err != nil {
+		return err
+	}
+
+	current := db.index[key]
+	current.Value = nil
+	current.Deleted = true
+	current.UpdatedAt = record.CreatedAt
+	db.index[key] = current
 	return nil
 }

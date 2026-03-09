@@ -1,18 +1,29 @@
 package simpleDBDriver
 
 import (
-	"io"
+	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/aid297/aid/filesystem/filesystemV4"
 )
 
 const (
-	dbLogTitle      = "[SIMPLE-DB]"
-	defaultDataFile = "data.db"
-	tempDataFile    = "data.db.compact"
+	dbLogTitle = "[SIMPLE-DB]"
+	// defaultDataFile = "data.db"
+	tempDataFile    = ".db.compact"
+	lockFileEx      = ".lock"
+	defaultDBFileEx = ".tbl"
 	maxRecordSize   = 32 * 1024 * 1024
+)
+
+type fileLockMethod uint8
+
+const (
+	fileLockMethodNone fileLockMethod = iota
+	fileLockMethodFlock
+	fileLockMethodFcntl
 )
 
 type operation uint8
@@ -36,49 +47,90 @@ type entry struct {
 }
 
 type SimpleDB struct {
-	mu       sync.RWMutex
-	dir      string
-	dataPath string
-	file     *os.File
-	index    map[string]entry
-	closed   bool
+	mu         sync.RWMutex
+	database   string
+	table      string
+	dir        string
+	dataPath   string
+	file       *os.File
+	lockPath   string
+	lockFile   *os.File
+	lockMethod fileLockMethod
+	index      map[string]entry
+	schema     *TableSchema
+	autoSeq    int64
+	uniqueIdx  map[string]map[string]string
+	indexIdx   map[string]map[string]map[string]struct{}
+	closed     bool
+	config     DatabaseConfig
 }
 
-func newSimpleDB(path string) (*SimpleDB, error) {
+func newSimpleDB(dbName, tableName string) (*SimpleDB, error) {
 	var (
-		err      error
-		dataPath string
-		file     *os.File
-		db       *SimpleDB
+		err        error
+		dbPath     string
+		lockPath   string
+		file       *os.File
+		lockFile   *os.File
+		lockMethod fileLockMethod
+		db         *SimpleDB
+		dir        = filesystemV4.NewDir(filesystemV4.Rel(dbName, tableName))
 	)
 
-	if path == "" {
+	if dbName == "" || tableName == "" {
 		return nil, ErrDBPathEmpty
 	}
 
-	if err = os.MkdirAll(path, 0o755); err != nil {
+	if dir.Create(filesystemV4.Mode(0o755)).GetError() != nil {
+		return nil, fmt.Errorf("%w: 无法创建数据库目录", ErrInitDB)
+	}
+
+	dbPath = filesystemV4.NewFile(filesystemV4.Abs(dir.GetFullPath(), tableName+defaultDBFileEx)).GetFullPath()
+	lockPath = dbPath + lockFileEx
+	if lockFile, err = os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o644); err != nil {
 		return nil, err
 	}
 
-	dataPath = filepath.Join(path, defaultDataFile)
-	if file, err = os.OpenFile(dataPath, os.O_CREATE|os.O_RDWR, 0o644); err != nil {
+	if lockMethod, err = lockFileExclusive(lockFile); err != nil {
+		_ = lockFile.Close()
+		return nil, err
+	}
+
+	if file, err = os.OpenFile(dbPath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0o644); err != nil {
+		_ = unlockFile(lockFile, lockMethod)
+		_ = lockFile.Close()
 		return nil, err
 	}
 
 	db = &SimpleDB{
-		dir:      path,
-		dataPath: dataPath,
-		file:     file,
-		index:    make(map[string]entry),
+		database:   dbName,
+		table:      tableName,
+		dir:        dir.GetFullPath(),
+		dataPath:   dbPath,
+		file:       file,
+		lockPath:   lockPath,
+		lockFile:   lockFile,
+		lockMethod: lockMethod,
+		index:      make(map[string]entry),
+		uniqueIdx:  make(map[string]map[string]string),
+		indexIdx:   make(map[string]map[string]map[string]struct{}),
+		config: DatabaseConfig{
+			DefaultUUIDVersion:     DefaultUUIDVersion,
+			DefaultCascadeMaxDepth: DefaultCascadeMaxDepth,
+		},
 	}
 
 	if err = db.load(); err != nil {
 		_ = file.Close()
+		_ = unlockFile(lockFile, lockMethod)
+		_ = lockFile.Close()
 		return nil, err
 	}
 
-	if _, err = db.file.Seek(0, io.SeekEnd); err != nil {
-		_ = db.file.Close()
+	if err = db.rebuildStructuredState(); err != nil {
+		_ = file.Close()
+		_ = unlockFile(lockFile, lockMethod)
+		_ = lockFile.Close()
 		return nil, err
 	}
 
@@ -93,7 +145,55 @@ func (db *SimpleDB) Close() error {
 		return nil
 	}
 	db.closed = true
-	return db.file.Close()
+
+	var firstErr error
+	if db.file != nil {
+		if err := db.file.Close(); err != nil {
+			captureFirstError(&firstErr, err)
+		}
+	}
+	if db.lockFile != nil {
+		if err := unlockFile(db.lockFile, db.lockMethod); err != nil {
+			captureFirstError(&firstErr, err)
+		}
+		if err := db.lockFile.Close(); err != nil {
+			captureFirstError(&firstErr, err)
+		}
+	}
+
+	return firstErr
+}
+
+func (db *SimpleDB) SetConfig(config DatabaseConfig) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if config.DefaultUUIDVersion >= 1 && config.DefaultUUIDVersion <= 8 {
+		db.config.DefaultUUIDVersion = config.DefaultUUIDVersion
+	}
+	if config.DefaultCascadeMaxDepth > 0 && config.DefaultCascadeMaxDepth <= HardCascadeMaxDepthLimit {
+		db.config.DefaultCascadeMaxDepth = config.DefaultCascadeMaxDepth
+	}
+}
+
+func (db *SimpleDB) GetConfig() DatabaseConfig {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	return db.config
+}
+
+func (db *SimpleDB) getDefaultUUIDVersion() int {
+	if db.config.DefaultUUIDVersion >= 1 && db.config.DefaultUUIDVersion <= 8 {
+		return db.config.DefaultUUIDVersion
+	}
+	return DefaultUUIDVersion
+}
+
+func (db *SimpleDB) getDefaultCascadeMaxDepth() int {
+	if db.config.DefaultCascadeMaxDepth > 0 && db.config.DefaultCascadeMaxDepth <= HardCascadeMaxDepthLimit {
+		return db.config.DefaultCascadeMaxDepth
+	}
+	return DefaultCascadeMaxDepth
 }
 
 func cloneBytes(value []byte) []byte {
@@ -110,4 +210,13 @@ func validateKey(key string) error {
 		return ErrEmptyKey
 	}
 	return nil
+}
+
+func captureFirstError(target *error, err error) {
+	if target == nil || err == nil {
+		return
+	}
+	if *target == nil {
+		*target = err
+	}
 }
