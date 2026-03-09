@@ -92,9 +92,13 @@ func demoUserCRUD() error {
 	fmt.Println("\nInserted user:")
 	printJSON(newUser)
 
-	// Read by unique field (username)
-	fmt.Println("\nFind by username (unique index):")
-	foundUser, exists, err := db.FindByUnique("username", "alice_2026")
+	// Read by condition (engine auto-plans index usage)
+	fmt.Println("\nFindOne by username (auto index planning):")
+	foundUser, exists, err := db.FindOne(simpleDBDriver.QueryCondition{
+		Field:    "username",
+		Operator: simpleDBDriver.QueryOpEQ,
+		Value:    "alice_2026",
+	})
 	if err != nil {
 		return err
 	}
@@ -103,9 +107,13 @@ func demoUserCRUD() error {
 	}
 	printJSON(foundUser)
 
-	// Read by indexed field (nickname)
-	fmt.Println("\nFind by nickname (indexed):")
-	users, err := db.FindByIndex("nickname", "Alice Wang")
+	// Read by condition (indexed field)
+	fmt.Println("\nFind by nickname (auto index planning):")
+	users, err := db.Find(simpleDBDriver.QueryCondition{
+		Field:    "nickname",
+		Operator: simpleDBDriver.QueryOpEQ,
+		Value:    "Alice Wang",
+	})
 	if err != nil {
 		return err
 	}
@@ -114,7 +122,11 @@ func demoUserCRUD() error {
 	// Read by primary key (UUID)
 	userID := newUser["id"]
 	fmt.Printf("\nFind by primary key (UUID: %v):\n", userID)
-	userByPK, exists, err := db.FindByUnique("id", userID)
+	userByPK, exists, err := db.FindOne(simpleDBDriver.QueryCondition{
+		Field:    "id",
+		Operator: simpleDBDriver.QueryOpEQ,
+		Value:    userID,
+	})
 	if err != nil {
 		return err
 	}
@@ -211,9 +223,9 @@ func demoBatchInsertAndQuery() error {
 	fmt.Println("Inserted rows:")
 	printJSON(insertedRows)
 
-	// Query all rows (by scanning with empty condition)
-	fmt.Println("\nQuery all rows (using FindByConditions with empty conditions):")
-	allRows, err := db.FindByConditions([]simpleDBDriver.QueryCondition{})
+	// Query all rows (empty conditions)
+	fmt.Println("\nQuery all rows (using Find with empty conditions):")
+	allRows, err := db.Find()
 	if err != nil {
 		return err
 	}
@@ -221,7 +233,11 @@ func demoBatchInsertAndQuery() error {
 
 	// Query by indexed field (nickname)
 	fmt.Println("\nQuery by nickname = 'Bob Smith':")
-	bobRows, err := db.FindByIndex("nickname", "Bob Smith")
+	bobRows, err := db.Find(simpleDBDriver.QueryCondition{
+		Field:    "nickname",
+		Operator: simpleDBDriver.QueryOpEQ,
+		Value:    "Bob Smith",
+	})
 	if err != nil {
 		return err
 	}
@@ -229,12 +245,10 @@ func demoBatchInsertAndQuery() error {
 
 	// Query by condition (age >= 28)
 	fmt.Println("\nQuery by condition (age >= 28):")
-	ageFilteredRows, err := db.FindByConditions([]simpleDBDriver.QueryCondition{
-		{
-			Field:    "age",
-			Operator: simpleDBDriver.QueryOpGTE,
-			Value:    28,
-		},
+	ageFilteredRows, err := db.Find(simpleDBDriver.QueryCondition{
+		Field:    "age",
+		Operator: simpleDBDriver.QueryOpGTE,
+		Value:    28,
 	})
 	if err != nil {
 		return err

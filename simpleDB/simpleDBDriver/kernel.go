@@ -12,7 +12,7 @@ import (
 const (
 	dbLogTitle = "[SIMPLE-DB]"
 	// defaultDataFile = "data.db"
-	tempDataFile    = ".db.compact"
+	tempDataFile    = ".compact"
 	lockFileEx      = ".lock"
 	defaultDBFileEx = ".tbl"
 	maxRecordSize   = 32 * 1024 * 1024

@@ -521,6 +521,26 @@ func (db *SimpleDB) FindByConditions(conditions []QueryCondition) ([]Row, error)
 	return rows, nil
 }
 
+// Find is the unified query entry. It accepts arbitrary conditions and
+// automatically chooses index-based candidates when possible, then falls back
+// to row scan for non-indexed predicates.
+func (db *SimpleDB) Find(conditions ...QueryCondition) ([]Row, error) {
+	return db.FindByConditions(conditions)
+}
+
+// FindOne returns the first matched row for a given condition set.
+// The second returned value indicates whether a row is found.
+func (db *SimpleDB) FindOne(conditions ...QueryCondition) (Row, bool, error) {
+	rows, err := db.FindByConditions(conditions)
+	if err != nil {
+		return nil, false, err
+	}
+	if len(rows) == 0 {
+		return nil, false, nil
+	}
+	return rows[0], true, nil
+}
+
 func (db *SimpleDB) planConditionCandidatePKsLocked(conditions []QueryCondition) (map[string]struct{}, error) {
 	var candidatePKs map[string]struct{}
 	for _, condition := range conditions {
