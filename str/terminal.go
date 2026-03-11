@@ -118,22 +118,22 @@ func (my *Str) ToLong(length int, ends ...string) string {
 
 // New 实例化：控制台日志
 func (*TerminalLog) New(format ...string) *TerminalLog {
-	var f string
+	var f strings.Builder
 	for _, v := range format {
-		f += v
+		f.WriteString(v)
 	}
 
-	return &TerminalLog{format: f, enable: cast.ToBool(os.Getenv("AID__STR__TERMINAL_LOG__ENABLE"))}
+	return &TerminalLog{format: f.String(), enable: cast.ToBool(os.Getenv("AID__STR__TERMINAL_LOG__ENABLE"))}
 }
 
 // NewTerminalLog 实例化：控制台日志
 func NewTerminalLog(format ...string) *TerminalLog {
-	var f string
+	var f strings.Builder
 	for _, v := range format {
-		f += v
+		f.WriteString(v)
 	}
 
-	return &TerminalLog{format: f, enable: cast.ToBool(os.Getenv("AID__STR__TERMINAL_LOG__ENABLE"))}
+	return &TerminalLog{format: f.String(), enable: cast.ToBool(os.Getenv("AID__STR__TERMINAL_LOG__ENABLE"))}
 }
 
 // Default 打印日志行

@@ -3,6 +3,7 @@ package initialize
 import (
 	"log"
 
+	"github.com/aid297/aid/debugLogger"
 	"github.com/aid297/aid/simpleDB/simpleDBDriver"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 )
@@ -34,7 +35,7 @@ func (*SDB) Boot() {
 			},
 		},
 	}); err != nil {
-		log.Printf("数据库配置失败：%v", err)
+		debugLogger.Print("数据库配置失败：%v", err)
 	}
 
 }

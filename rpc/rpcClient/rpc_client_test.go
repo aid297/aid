@@ -3,6 +3,8 @@ package rpcClient
 import (
 	"log"
 	"testing"
+
+	"github.com/aid297/aid/debugLogger"
 )
 
 type Args struct{ A, B int }
@@ -24,5 +26,5 @@ func Test1(t *testing.T) {
 		log.Fatalf("调用失败: %v", err)
 	}
 
-	log.Printf("计算结果：%d + %d = %d", args.A, args.B, reply)
+	debugLogger.Print("计算结果：%d + %d = %d", args.A, args.B, reply)
 }

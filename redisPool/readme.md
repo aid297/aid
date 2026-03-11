@@ -29,7 +29,7 @@ func main() {
 	if err = res.Err(); err != nil {
 		panic(err)
 	}
-	fmt.Printf("some-value: %s\n", res2.String())
+    debugLogger.Print("some-value: %s\n", res2.String())
 
 	if _, err = rp.Set("default", "some-key2", "some-value2", 5*time.Minute); err != nil {
 		panic(err)
@@ -40,7 +40,7 @@ func main() {
 		panic(err)
 	}
 
-	log.Printf("some-value2: %v", someValue2)
+	debugLogger.Print("some-value2: %v", someValue2)
 }
 ```
 

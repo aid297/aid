@@ -1,6 +1,6 @@
 package command
 
-import "fmt"
+import "github.com/aid297/aid/debugLogger"
 
 type HelpCommand struct{}
 
@@ -29,6 +29,6 @@ var helpTexts = []string{
 
 func (HelpCommand) Launch() {
 	for idx := range helpTexts {
-		fmt.Println(helpTexts[idx])
+		debugLogger.Print(helpTexts[idx])
 	}
 }

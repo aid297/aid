@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/aid297/aid/debugLogger"
 	"github.com/aid297/aid/filesystem/filesystemV4"
 	"github.com/aid297/aid/str"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
@@ -55,7 +56,7 @@ func (*SFTPServiceCommand) Launch() {
 		global.LOG.Error("生成输出字符串失败", zap.Error(outputTemp.Error()))
 		return
 	}
-	fmt.Println(outputTemp.String())
+	debugLogger.Print(outputTemp.String())
 
 	// 启动HTTP文件服务器，支持目录浏览和文件下载
 	http.Handle("/", http.FileServer(http.Dir(dir.GetFullPath())))

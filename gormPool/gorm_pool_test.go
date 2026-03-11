@@ -1,9 +1,9 @@
 package gormPool
 
 import (
-	"log"
 	"testing"
 
+	"github.com/aid297/aid/debugLogger"
 	"github.com/aid297/aid/filesystem/filesystemV2"
 )
 
@@ -27,5 +27,5 @@ func Test1(t *testing.T) {
 	testTables := []TestTable1{}
 	APP.Finder.New(conn.Model(&TestTable1{})).WhenIn(len(names) > 0, "name", names).GetDB().Find(&testTables)
 
-	log.Printf("%v", testTables)
+	debugLogger.Print("%v", testTables)
 }

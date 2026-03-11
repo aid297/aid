@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/aid297/aid/debugLogger"
 	"github.com/aid297/aid/simpleDB/kernal"
 )
 
@@ -45,7 +46,7 @@ func demoUserCRUD() error {
 		kernal.MaxCPUCores(4),       // 最大CPU核心数（默认：0，表示不限制，如果超过实际CPU核心数则按照最大计算）
 		kernal.MaxMemoryGB(16),      // 最大内存使用量（默认：0，表示不限制，如果超出最大内存则按照不限制计算）
 	)
-	fmt.Printf("Config: %+v\n", db.GetConfig())
+	debugLogger.Print("Config: %+v\n", db.GetConfig())
 
 	// 配置数据库表结构
 	if err = db.Configure(kernal.TableSchema{
@@ -101,7 +102,7 @@ func demoUserCRUD() error {
 		return err
 	}
 
-	fmt.Println("Schema configured successfully")
+	debugLogger.Print("Schema configured successfully")
 
 	// Insert a user
 	if newUser, err = db.InsertRow(kernal.Row{
@@ -113,11 +114,11 @@ func demoUserCRUD() error {
 		return err
 	}
 
-	fmt.Println("\nInserted user:")
+	debugLogger.Print("\nInserted user:")
 	printJSON(newUser)
 
 	// Read by condition (engine auto-plans index usage)
-	fmt.Println("\nFindOne by username (auto index planning):")
+	debugLogger.Print("\nFindOne by username (auto index planning):")
 	if foundUser, exists, err = db.FindOne(kernal.QueryCondition{
 		Field:    "username",
 		Operator: kernal.QueryOpEQ,
@@ -131,7 +132,7 @@ func demoUserCRUD() error {
 	printJSON(foundUser)
 
 	// Read by condition (indexed field)
-	fmt.Println("\nFind by nickname (auto index planning):")
+	debugLogger.Print("\nFind by nickname (auto index planning):")
 	if users, err = db.Find(kernal.QueryCondition{
 		Field:    "nickname",
 		Operator: kernal.QueryOpEQ,
@@ -142,7 +143,7 @@ func demoUserCRUD() error {
 	printJSON(users)
 
 	// Read by primary key (UUID)
-	fmt.Printf("\nFind by primary key (UUID: %v):\n", newUser["id"])
+	debugLogger.Print("\nFind by primary key (UUID: %v):\n", newUser["id"])
 	if userByPK, exists, err = db.FindOne(kernal.QueryCondition{
 		Field:    "id",
 		Operator: kernal.QueryOpEQ,
@@ -218,10 +219,10 @@ func demoBatchInsertAndQuery() error {
 		return err
 	}
 
-	fmt.Println("Schema configured successfully")
+	debugLogger.Print("Schema configured successfully")
 
 	// Batch insert two users
-	fmt.Println("\nBatch inserting 2 users:")
+	debugLogger.Print("\nBatch inserting 2 users:")
 	rows := []kernal.Row{
 		{
 			"username": "bob_2026",
@@ -241,18 +242,18 @@ func demoBatchInsertAndQuery() error {
 		return err
 	}
 
-	fmt.Println("Inserted rows:")
+	debugLogger.Print("Inserted rows:")
 	printJSON(insertedRows)
 
 	// Query all rows (empty conditions)
-	fmt.Println("\nQuery all rows (using Find with empty conditions):")
+	debugLogger.Print("\nQuery all rows (using Find with empty conditions):")
 	if allRows, err = db.Find(); err != nil {
 		return err
 	}
 	printJSON(allRows)
 
 	// Query by indexed field (nickname)
-	fmt.Println("\nQuery by nickname = 'Bob Smith':")
+	debugLogger.Print("\nQuery by nickname = 'Bob Smith':")
 	if bobRows, err = db.Find(kernal.QueryCondition{
 		Field:    "nickname",
 		Operator: kernal.QueryOpEQ,
@@ -263,7 +264,7 @@ func demoBatchInsertAndQuery() error {
 	printJSON(bobRows)
 
 	// Query by condition (age >= 28)
-	fmt.Println("\nQuery by condition (age >= 28):")
+	debugLogger.Print("\nQuery by condition (age >= 28):")
 	if ageFilteredRows, err = db.Find(kernal.QueryCondition{
 		Field:    "age",
 		Operator: kernal.QueryOpGTE,
@@ -321,7 +322,7 @@ func demoDelete() error {
 	}
 
 	// Insert test data
-	fmt.Println("Inserting 3 test users:")
+	debugLogger.Print("Inserting 3 test users:")
 	rows = []kernal.Row{
 		{"username": "user_a", "age": 20},
 		{"username": "user_b", "age": 25},
@@ -333,7 +334,7 @@ func demoDelete() error {
 	printJSON(insertedRows)
 
 	// Get a user ID for deletion
-	fmt.Println("\nUsers before deletion:")
+	debugLogger.Print("\nUsers before deletion:")
 	if allBefore, err = db.Find(); err != nil {
 		return err
 	}
@@ -341,7 +342,7 @@ func demoDelete() error {
 
 	// Delete by ID (using the first user's ID)
 	deleteID := insertedRows[0]["id"]
-	fmt.Printf("\nDeleting user with ID: %v\n", deleteID)
+	debugLogger.Print("\nDeleting user with ID: %v\n", deleteID)
 	deletedCount, err := db.RemoveByCondition(kernal.QueryCondition{
 		Field:    "id",
 		Operator: kernal.QueryOpEQ,
@@ -350,17 +351,17 @@ func demoDelete() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Deleted %d row(s)\n", deletedCount)
+	debugLogger.Print("Deleted %d row(s)\n", deletedCount)
 
 	// Query remaining users
-	fmt.Println("\nUsers after deletion:")
+	debugLogger.Print("\nUsers after deletion:")
 	if allAfter, err = db.Find(); err != nil {
 		return err
 	}
 	printJSON(allAfter)
 
 	// Delete by condition (age >= 25)
-	fmt.Println("\nDeleting users with age >= 25:")
+	debugLogger.Print("\nDeleting users with age >= 25:")
 	deletedCount, err = db.RemoveByCondition(kernal.QueryCondition{
 		Field:    "age",
 		Operator: kernal.QueryOpGTE,
@@ -369,15 +370,15 @@ func demoDelete() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Deleted %d row(s)\n", deletedCount)
+	debugLogger.Print("Deleted %d row(s)\n", deletedCount)
 
 	// Query final state
-	fmt.Println("\nFinal users:")
+	debugLogger.Print("\nFinal users:")
 	if finalUsers, err = db.Find(); err != nil {
 		return err
 	}
 	if len(finalUsers) == 0 {
-		fmt.Println("(empty)")
+		debugLogger.Print("(empty)")
 	} else {
 		printJSON(finalUsers)
 	}

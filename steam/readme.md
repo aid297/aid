@@ -22,7 +22,7 @@ func main() {
 		}),
 	)
 
-	fmt.Printf(ctx.Value("copy").(string))
+	debugLogger.Print(ctx.Value("copy").(string))
 }
 ```
 

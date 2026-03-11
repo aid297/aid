@@ -17,7 +17,7 @@
    	}
    
    	res := hc.ToBytes()
-   	fmt.Println(string(res))
+   	debugLogger.Print(string(res))
    
    	// 输出结果
    	// <!DOCTYPE html>
@@ -88,7 +88,7 @@
    	// wrongs: 在重试过程中产生的错误
    	if len(wrongs) > 0 {
    		for _, wrong := range wrongs {
-   			log.Printf("错误：%v\n", wrong)
+   			debugLogger.Print("错误：%v\n", wrong)
    		}
    	}
    }

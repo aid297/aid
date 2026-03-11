@@ -1,15 +1,16 @@
 package operationV2
 
 import (
-	"fmt"
 	"testing"
+
+	"github.com/aid297/aid/debugLogger"
 )
 
 func Test1(t *testing.T) {
 	m := NewMultivariate[string]().
-		Append(MultivariateAttr[string]{Item: "a", HitFunc: func(_ int, _ string) { fmt.Printf("采用高级") }}).       // A 最高优先级：终端命令
-		Append(MultivariateAttr[string]{Item: "b", HitFunc: func(idx int, item string) { fmt.Printf("采用次高级") }}). // B 次高优先级：全局变量
-		SetDefault(MultivariateAttr[string]{Item: "c"})                                                           // 设置默认值
+		Append(MultivariateAttr[string]{Item: "a", HitFunc: func(_ int, _ string) { debugLogger.Print("采用高级") }}).       // A 最高优先级：终端命令
+		Append(MultivariateAttr[string]{Item: "b", HitFunc: func(idx int, item string) { debugLogger.Print("采用次高级") }}). // B 次高优先级：全局变量
+		SetDefault(MultivariateAttr[string]{Item: "c"})                                                                  // 设置默认值
 
 	_, f := m.Finally(func(item string) bool { return item != "" })
 

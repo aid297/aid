@@ -2,27 +2,28 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/aid297/aid/debugLogger"
 )
 
 func run(title string, fn func() error) {
-	fmt.Printf("\n===== %s =====\n", title)
+	debugLogger.Print("\n===== %s =====\n", title)
 	if err := fn(); err != nil {
-		fmt.Printf("ERROR: %v\n", err)
+		debugLogger.Print("ERROR: %v\n", err)
 		return
 	}
-	fmt.Println("DONE")
+	debugLogger.Print("DONE\n")
 }
 
 func printJSON(value any) {
 	payload, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
-		fmt.Println("marshal error:", err)
+		debugLogger.Print("marshal error：%v", err)
 		return
 	}
-	fmt.Println(string(payload))
+	debugLogger.Print("%s", string(payload))
 }
 
 func cleanupAll() {

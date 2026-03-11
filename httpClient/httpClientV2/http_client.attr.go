@@ -17,6 +17,7 @@ import (
 
 	"github.com/spf13/cast"
 
+	"github.com/aid297/aid/debugLogger"
 	"github.com/aid297/aid/dict/anyDictV2"
 	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
@@ -420,7 +421,7 @@ func File(filename string) *AttrBody {
 	}
 	defer func(file *os.File) {
 		if err := file.Close(); err != nil {
-			fmt.Printf("Failed to close file: %v", err)
+			debugLogger.Error("Failed to close file: %v", err)
 		}
 	}(file)
 

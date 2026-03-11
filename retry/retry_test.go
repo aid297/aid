@@ -3,13 +3,14 @@ package retry
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
+
+	"github.com/aid297/aid/debugLogger"
 )
 
 func operation() error {
-	fmt.Println("Executing operation...")
+	debugLogger.Print("Executing operation...")
 	return errors.New("transient error")
 }
 

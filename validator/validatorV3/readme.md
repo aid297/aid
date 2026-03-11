@@ -30,10 +30,10 @@
    	checker := validatorV3.APP.Validator.Once().Checker(&userRequest)
    
    	checker.Validate()
-   	fmt.Printf("验证结果：%v\n", checker.OK())
+   	debugLogger.Print("验证结果：%v\n", checker.OK())
    
    	for _, wrong := range checker.Wrongs() {
-   		fmt.Printf("%v\n", wrong)
+   		debugLogger.Print("%v\n", wrong)
    	}
    	// 验证结果：false
    	// [姓] 长度错误 期望：> 0

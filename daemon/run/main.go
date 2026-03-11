@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"github.com/aid297/aid/daemon"
+	"github.com/aid297/aid/debugLogger"
 )
 
 // 主程序
@@ -12,12 +12,12 @@ import (
 func main() {
 	d := flag.Bool("D", false, "daemon")
 	flag.Parse()
-	log.Printf("参数：D %v", *d)
+	debugLogger.Print("启动参数：D %v", *d)
 
 	if *d {
 		daemon.OnceDaemon().SetTitle("daemon-test").SetLogDir(".").SetLogEnable(true).Launch()
-		log.Printf("daemon 模式启动")
+		debugLogger.Print("daemon 模式启动")
 	} else {
-		log.Printf("非 daemon 模式启动")
+		debugLogger.Print("非 daemon 模式启动")
 	}
 }

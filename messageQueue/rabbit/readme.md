@@ -49,7 +49,7 @@
    	rbt.NewQueue("message")
    	consumer := rbt.Consume("message", "", func(prototypeMessage []byte) error {
    		message := rabbit.APP.Message.Parse(prototypeMessage)
-   		log.Printf("接收消息错误：%v", message.Content)
+   		debugLogger.Print("接收消息错误：%v", message.Content)
    		return nil
    	})
    	go consumer.Go()

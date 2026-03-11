@@ -34,4 +34,6 @@ var (
 	ErrCascadeDepthExceeded  = fmt.Errorf("%s 查询错误：级联查询深度超限", dbLogTitle)
 	ErrCascadeCycleNotAllow  = fmt.Errorf("%s 查询错误：不允许级联环", dbLogTitle)
 	ErrBatchEmpty            = fmt.Errorf("%s 写入错误：批量操作数据为空", dbLogTitle)
+	ErrTxConflict            = fmt.Errorf("%s 事务错误：检测到写冲突", dbLogTitle)
+	ErrTxClosed              = fmt.Errorf("%s 事务错误：事务已关闭", dbLogTitle)
 )

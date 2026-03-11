@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aid297/aid/debugLogger"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
@@ -60,7 +61,7 @@ func NewClient(
 		}
 	)
 	u := url.URL{Scheme: "ws", Host: "127.0.0.1:38000", Path: "/cbit_db/ws"}
-	log.Printf("真实连接：%s", u.String())
+	debugLogger.Print("真实连接：%s", u.String())
 
 	// 建立连接
 	conn, _, err = websocket.DefaultDialer.Dial(u.String(), nil)

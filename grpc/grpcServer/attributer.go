@@ -2,9 +2,9 @@ package grpcServer
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"github.com/aid297/aid/debugLogger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -41,7 +41,7 @@ func defaultUnaryLogger(
 ) (any, error) {
 	start := time.Now()
 	resp, err := handler(ctx, req)
-	log.Printf("[UNARY] %s took=%s err=%v", info.FullMethod, time.Since(start), err)
+	debugLogger.Print("[UNARY] %s took=%s err=%v", info.FullMethod, time.Since(start), err)
 	return resp, err
 }
 
@@ -54,7 +54,7 @@ func defaultStreamLogger(
 ) error {
 	start := time.Now()
 	err := handler(srv, ss)
-	log.Printf("[STREAM] %s took=%s err=%v", info.FullMethod, time.Since(start), err)
+	debugLogger.Print("[STREAM] %s took=%s err=%v", info.FullMethod, time.Since(start), err)
 	return err
 }
 

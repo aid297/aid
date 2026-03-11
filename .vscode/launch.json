@@ -9,7 +9,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "/Users/yujizhou/development/projects/go/aid"
+            "program": "/Users/yujizhou/development/projects/go/aid",
+            "env":{
+                "AID_DEBUG_LOG": "true"
+            }
         },
         {
             "name": "simpleDBDriver.demo",

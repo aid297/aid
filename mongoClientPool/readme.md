@@ -23,8 +23,8 @@
    	}
    	mc = mp.GetClient("default").SetDatabase("test_db").SetCollection("test_collection")
    
-   	fmt.Printf("连接池：%v\n", mp)
-   	fmt.Printf("客户端：%v\n", mc)
+    debugLogger.Print("连接池：%v", mp)
+    debugLogger.Print("客户端：%v", mc)
    }
    ```
 

@@ -4,6 +4,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/aid297/aid/debugLogger"
 	"github.com/gorilla/websocket"
 )
 
@@ -14,7 +15,7 @@ func online() {
 		"127.0.0.1:8080",
 		"ws",
 		func(insName, clientName string, prototypeMsg []byte) ([]byte, error) {
-			log.Printf("收到消息[%s:%s]：%s", insName, clientName, prototypeMsg)
+			debugLogger.Print("收到消息[%s:%s]：%s", insName, clientName, prototypeMsg)
 			return prototypeMsg, nil
 		},
 	)

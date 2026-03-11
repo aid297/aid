@@ -3,11 +3,10 @@ package symmetric
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
-	"log"
 	"testing"
 
 	"github.com/aid297/aid/compression"
+	"github.com/aid297/aid/debugLogger"
 )
 
 func TestEcbDemo(t *testing.T) {
@@ -26,7 +25,7 @@ func TestEcbDemo(t *testing.T) {
 		if plaintext, jsonErr := json.Marshal([]map[string]any{{"name": "张三", "age": 18}, {"name": "李四", "age": 20}}); jsonErr != nil {
 			t.Errorf("[ECB] json marshal: %v", jsonErr)
 		} else {
-			log.Printf("[ECB] json marshal: %s\n", plaintext)
+			debugLogger.Print("[ECB] json marshal: %s\n", plaintext)
 
 			// encrypt
 			// encrypt step1: zip
@@ -43,7 +42,7 @@ func TestEcbDemo(t *testing.T) {
 
 			// encrypt step3: encode base64
 			ciphertext = base64.StdEncoding.EncodeToString(encrypted)
-			fmt.Printf("encrypted: %s", ciphertext)
+			debugLogger.Print("encrypted: %s", ciphertext)
 
 			// decrypt step1: decrypt
 			decrypted, err = new(ECB).Decrypt(aesDecrypt.GetAesKey(), encrypted)
@@ -56,7 +55,7 @@ func TestEcbDemo(t *testing.T) {
 			if err != nil {
 				t.Errorf("[ECB] decompressing: %v", err)
 			}
-			fmt.Printf("decrypted: %s\n", decompressed)
+			debugLogger.Print("decrypted: %s\n", decompressed)
 		}
 	})
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/aid297/aid/debugLogger"
 )
 
 func Test1(t *testing.T) {
@@ -326,7 +328,7 @@ func Test32(t *testing.T) {
 func Test33(t *testing.T) {
 	t.Run("test33 Each", func(t *testing.T) {
 		d := Make[string, int]().Set("分数", 18).Set("年龄", 100).Set("税务", 0)
-		d.Each(func(key string, value int) { fmt.Println(key, value) })
+		d.Each(func(key string, value int) { debugLogger.Print(key, value) })
 	})
 }
 

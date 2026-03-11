@@ -18,6 +18,7 @@ import (
 
 	jsonIter "github.com/json-iterator/go"
 
+	"github.com/aid297/aid/debugLogger"
 	"github.com/aid297/aid/operation"
 	"github.com/aid297/aid/str"
 )
@@ -361,7 +362,7 @@ func (my *HttpClient) SetSteamBodyByFile(filename string) *HttpClient {
 	}
 	defer func(file *os.File) {
 		if err := file.Close(); err != nil {
-			fmt.Printf("Failed to close file: %v", err)
+			debugLogger.Error("Failed to close file:", err)
 		}
 	}(file)
 

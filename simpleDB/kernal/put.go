@@ -130,12 +130,14 @@ func (db *SimpleDB) load() (err error) {
 				Value:     cloneBytes(record.Value),
 				UpdatedAt: record.CreatedAt,
 			}
+			db.appendVersionLocked(record.Key, cloneBytes(record.Value), false, record.CreatedAt)
 		case opDelete:
 			current := db.index[record.Key]
 			current.Value = nil
 			current.Deleted = true
 			current.UpdatedAt = record.CreatedAt
 			db.index[record.Key] = current
+			db.appendVersionLocked(record.Key, nil, true, record.CreatedAt)
 		default:
 			return fmt.Errorf("%w：%d", ErrCorruptedRecord, record.Operation)
 		}
@@ -173,13 +175,17 @@ func writeRecord(writer io.Writer, record logRecord) error {
 }
 
 func (db *SimpleDB) putRawLocked(key string, value []byte) error {
+	return db.putRawAtLocked(key, value, time.Now().UnixNano())
+}
+
+func (db *SimpleDB) putRawAtLocked(key string, value []byte, at int64) error {
 	var (
 		err    error
 		record = logRecord{
 			Operation: opPut,
 			Key:       key,
 			Value:     cloneBytes(value),
-			CreatedAt: time.Now().UnixNano(),
+			CreatedAt: at,
 		}
 	)
 
@@ -188,17 +194,22 @@ func (db *SimpleDB) putRawLocked(key string, value []byte) error {
 	}
 
 	db.index[key] = entry{Value: cloneBytes(value), UpdatedAt: record.CreatedAt}
+	db.appendVersionLocked(key, cloneBytes(value), false, record.CreatedAt)
 
 	return nil
 }
 
 func (db *SimpleDB) deleteRawLocked(key string) error {
+	return db.deleteRawAtLocked(key, time.Now().UnixNano())
+}
+
+func (db *SimpleDB) deleteRawAtLocked(key string, at int64) error {
 	var (
 		err    error
 		record = logRecord{
 			Operation: opDelete,
 			Key:       key,
-			CreatedAt: time.Now().UnixNano(),
+			CreatedAt: at,
 		}
 		current entry
 	)
@@ -212,6 +223,7 @@ func (db *SimpleDB) deleteRawLocked(key string) error {
 	current.Deleted = true
 	current.UpdatedAt = record.CreatedAt
 	db.index[key] = current
+	db.appendVersionLocked(key, nil, true, record.CreatedAt)
 
 	return nil
 }

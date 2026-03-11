@@ -33,7 +33,7 @@ defer db.Close()
 
 // 查看当前配置
 config := db.GetConfig()
-fmt.Printf("UUID Version: %d, Cascade Depth: %d\n", 
+debugLogger.Print("UUID Version: %d, Cascade Depth: %d\n", 
     config.DefaultUUIDVersion, config.DefaultCascadeMaxDepth)
 ```
 
@@ -122,7 +122,7 @@ func main() {
     row, _ := db.InsertRow(simpleDBDriver.Row{
         "name": "Alice",
     })
-    fmt.Println(row["id"]) // 输出 UUID v7 格式
+    debugLogger.Print(row["id"]) // 输出 UUID v7 格式
 }
 ```
 

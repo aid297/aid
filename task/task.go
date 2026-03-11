@@ -2,8 +2,9 @@ package task
 
 import (
 	"container/heap"
-	"fmt"
 	"sync"
+
+	"github.com/aid297/aid/debugLogger"
 )
 
 type (
@@ -84,6 +85,6 @@ func Demo() {
 		&Task{ID: "task-medium", Priority: 5},
 	).GO()
 	for idx := range tasks {
-		fmt.Printf("执行ID：%s (优先级：%d)\n", tasks[idx].ID, tasks[idx].Priority)
+		debugLogger.Print("执行ID：%s (优先级：%d)\n", tasks[idx].ID, tasks[idx].Priority)
 	}
 }

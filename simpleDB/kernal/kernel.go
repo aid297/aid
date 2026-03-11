@@ -52,6 +52,12 @@ type entry struct {
 	UpdatedAt int64
 }
 
+type versionedEntry struct {
+	Value     []byte
+	Deleted   bool
+	UpdatedAt int64
+}
+
 type SimpleDB struct {
 	mu         sync.RWMutex
 	database   string
@@ -63,6 +69,8 @@ type SimpleDB struct {
 	lockFile   *os.File
 	lockMethod fileLockMethod
 	index      map[string]entry
+	versions   map[string][]versionedEntry
+	lastMVCCAt int64
 	schema     *TableSchema
 	autoSeq    int64
 	uniqueIdx  map[string]map[string]string
@@ -118,6 +126,7 @@ func newSimpleDB(dbName, tableName string, attrs ...SchemaAttributer) (*SimpleDB
 		lockFile:   lockFile,
 		lockMethod: lockMethod,
 		index:      make(map[string]entry),
+		versions:   make(map[string][]versionedEntry),
 		uniqueIdx:  make(map[string]map[string]string),
 		indexIdx:   make(map[string]map[string]map[string]struct{}),
 		config: DatabaseConfig{
