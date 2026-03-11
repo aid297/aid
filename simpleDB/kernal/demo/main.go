@@ -16,6 +16,7 @@ func main() {
 	run("Create User with UUID v7 Primary Key", demoUserCRUD)
 	run("Batch Insert and Query", demoBatchInsertAndQuery)
 	run("Delete by Condition", demoDelete)
+	run("DDL Update (SchemaDiff / SyncSchema / AlterTable)", demoDDLUpdate)
 }
 
 func demoUserCRUD() error {
@@ -49,7 +50,7 @@ func demoUserCRUD() error {
 	debugLogger.Print("Config: %+v\n", db.GetConfig())
 
 	// 配置数据库表结构
-	if err = db.Configure(kernal.TableSchema{
+	if err = db.AutoMigrate(kernal.TableSchema{
 		Columns: []kernal.Column{
 			{
 				Name:          "id",
@@ -179,7 +180,7 @@ func demoBatchInsertAndQuery() error {
 	db.SetAttrs(kernal.UUIDVersion(7))
 
 	// Configure schema
-	if err = db.Configure(kernal.TableSchema{
+	if err = db.AutoMigrate(kernal.TableSchema{
 		Columns: []kernal.Column{
 			{
 				Name:          "id",
@@ -295,7 +296,7 @@ func demoDelete() error {
 	defer func() { _ = db.Close() }()
 
 	// Configure schema
-	if err = db.Configure(kernal.TableSchema{
+	if err = db.AutoMigrate(kernal.TableSchema{
 		Columns: []kernal.Column{
 			{
 				Name:          "id",
@@ -382,6 +383,91 @@ func demoDelete() error {
 	} else {
 		printJSON(finalUsers)
 	}
+
+	return nil
+}
+
+func demoDDLUpdate() error {
+	var (
+		err     error
+		table   = "users_ddl_update"
+		db      *kernal.SimpleDB
+		plan    *kernal.AlterTablePlan
+		exists  bool
+		current kernal.Row
+		found   bool
+		rows    []kernal.Row
+	)
+
+	cleanupTable(table)
+	defer cleanupTable(table)
+
+	if db, err = kernal.New.DB(demoDatabase, table); err != nil {
+		return err
+	}
+	defer func() { _ = db.Close() }()
+
+	baseSchema := kernal.TableSchema{Columns: []kernal.Column{
+		{Name: "id", Type: "uuid:v7", PrimaryKey: true, AutoIncrement: true},
+		{Name: "username", Type: "string", Unique: true, Required: true},
+		{Name: "age", Type: "int", Required: true, Default: 0},
+	}}
+
+	if err = db.AutoMigrate(baseSchema); err != nil {
+		return err
+	}
+
+	seed, err := db.InsertRow(kernal.Row{"username": "ddl_user_1", "age": 20})
+	if err != nil {
+		return err
+	}
+
+	debugLogger.Print("Base row:")
+	printJSON(seed)
+
+	// 目标结构：删除 age，新增 email
+	targetSchema := kernal.TableSchema{Columns: []kernal.Column{
+		{Name: "id", Type: "uuid:v7", PrimaryKey: true, AutoIncrement: true},
+		{Name: "username", Type: "string", Unique: true, Required: true},
+		{Name: "email", Type: "string", Indexed: true, Default: ""},
+	}}
+
+	if plan, exists, err = db.SchemaDiff(targetSchema); err != nil {
+		return err
+	}
+	debugLogger.Print("SchemaDiff exists=%v plan=%+v\n", exists, plan)
+
+	if err = db.SyncSchema(targetSchema); err != nil {
+		return err
+	}
+
+	if current, found, err = db.FindRow(seed["id"]); err != nil {
+		return err
+	}
+	if !found {
+		return fmt.Errorf("row not found after SyncSchema")
+	}
+
+	debugLogger.Print("Row after SyncSchema (age removed, email added):")
+	printJSON(current)
+
+	if err = db.AlterTable(kernal.AlterTablePlan{
+		AddColumns: []kernal.Column{{Name: "nickname", Type: "string", Default: ""}},
+		AddIndexes: []string{"nickname"},
+	}); err != nil {
+		return err
+	}
+
+	if _, err = db.InsertRow(kernal.Row{"username": "ddl_user_2", "email": "ddl2@aid.dev", "nickname": "demo"}); err != nil {
+		return err
+	}
+
+	if rows, err = db.Find(); err != nil {
+		return err
+	}
+
+	debugLogger.Print("Final rows after AlterTable:")
+	printJSON(rows)
 
 	return nil
 }

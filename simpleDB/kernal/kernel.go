@@ -178,6 +178,7 @@ func (db *SimpleDB) Close() error {
 			captureFirstError(&firstErr, err)
 		}
 	}
+
 	if db.lockFile != nil {
 		if err = unlockFile(db.lockFile, db.lockMethod); err != nil {
 			captureFirstError(&firstErr, err)

@@ -65,6 +65,26 @@ func (db *SimpleDB) QueryCascadeJSON(query CascadeQuery) ([]byte, error) {
 	return json.Marshal(rows)
 }
 
+// QueryCascade 返回级联查询的对象结构（非 JSON）。
+// 如需序列化输出，可使用 QueryCascadeJSON。
+func (db *SimpleDB) QueryCascade(query CascadeQuery) ([]map[string]any, error) {
+	var (
+		err      error
+		maxDepth int
+		rows     []map[string]any
+	)
+
+	if maxDepth, err = db.normalizeCascadeMaxDepth(query.MaxDepth); err != nil {
+		return nil, err
+	}
+
+	if rows, err = db.queryCascadeObjects(query, maxDepth, 0, []string{db.table}); err != nil {
+		return nil, err
+	}
+
+	return rows, nil
+}
+
 func (db *SimpleDB) queryCascadeObjects(query CascadeQuery, maxDepth int, depth int, path []string) ([]map[string]any, error) {
 	var (
 		err      error
