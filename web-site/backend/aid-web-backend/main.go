@@ -60,15 +60,16 @@ func parseArgs() ConsoleArgs {
 // @version         1.0
 // @description     Aid Web Backend API 服务
 // @license.url     http://www.apache.org/licenses/LICENSE-2.0.html
-// @host            localhost:9900
+// @host            localhost:19900
 // @BasePath        /api/v1
 func main() {
 	var consoleArgs = parseArgs()
 
-	initialize.Catalog.Config.Boot(consoleArgs.configPath)
-	initialize.Catalog.Zap.Boot()
-	initialize.Catalog.Timezone.Boot()
-	initialize.Catalog.FileManager.Boot()
+	initialize.New.Config().Boot(consoleArgs.configPath)
+	initialize.New.Zap().Boot()
+	initialize.New.Timezone().Boot()
+	initialize.New.FileManager().Boot()
+	initialize.New.DB().Boot()
 
 	launch(consoleArgs)
 }

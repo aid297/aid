@@ -1,4 +1,4 @@
-package simpleDBDriver
+package kernal
 
 import (
 	"encoding/base64"
@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aid297/aid/array/anySlice"
 	"github.com/google/uuid"
 )
 
@@ -45,11 +46,17 @@ const (
 	DefaultUUIDVersion       = 6
 	DefaultCascadeMaxDepth   = 6
 	HardCascadeMaxDepthLimit = 6
+	DefaultUUIDWithHyphen    = true
+	DefaultUUIDUppercase     = true
 )
 
 type DatabaseConfig struct {
-	DefaultUUIDVersion     int `json:"defaultUUIDVersion,omitempty"`
-	DefaultCascadeMaxDepth int `json:"defaultCascadeMaxDepth,omitempty"`
+	DefaultUUIDVersion     int    `json:"defaultUUIDVersion,omitempty"`
+	DefaultUUIDWithHyphen  *bool  `json:"defaultUUIDWithHyphen,omitempty"`
+	DefaultUUIDUppercase   *bool  `json:"defaultUUIDUppercase,omitempty"`
+	DefaultCascadeMaxDepth int    `json:"defaultCascadeMaxDepth,omitempty"`
+	MaxCPUCores            int    `json:"maxCpuCores,omitempty"`
+	MaxMemoryBytes         uint64 `json:"maxMemoryBytes,omitempty"`
 }
 
 const (
@@ -129,16 +136,20 @@ type TableSchema struct {
 	AutoIncrement bool         `json:"autoIncrement,omitempty"`
 }
 
-func (db *SimpleDB) Configure(schema TableSchema) error {
+func (db *SimpleDB) Configure(schema TableSchema) (err error) {
+	var (
+		normalized TableSchema
+		payload    []byte
+	)
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if err := db.ensureOpen(); err != nil {
+	if err = db.ensureOpen(); err != nil {
 		return err
 	}
 
-	normalized, err := normalizeSchema(schema)
-	if err != nil {
+	if normalized, err = normalizeSchema(schema); err != nil {
 		return err
 	}
 
@@ -149,10 +160,10 @@ func (db *SimpleDB) Configure(schema TableSchema) error {
 		return ErrSchemaAlreadyExists
 	}
 
-	payload, err := json.Marshal(normalized)
-	if err != nil {
+	if payload, err = json.Marshal(normalized); err != nil {
 		return err
 	}
+
 	if err = db.putRawLocked(metaSchemaKey, payload); err != nil {
 		return err
 	}
@@ -166,64 +177,89 @@ func (db *SimpleDB) Configure(schema TableSchema) error {
 	db.schema = &normalized
 	db.autoSeq = 0
 	db.resetSecondaryIndexesLocked()
+
 	return nil
 }
 
 func (db *SimpleDB) GetSchema() (*TableSchema, error) {
+	var (
+		err    error
+		cloned TableSchema
+	)
+
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
-	if err := db.ensureOpen(); err != nil {
+	if err = db.ensureOpen(); err != nil {
 		return nil, err
 	}
+
 	if db.schema == nil {
 		return nil, ErrSchemaNotConfigured
 	}
-	cloned := cloneSchema(*db.schema)
+
+	cloned = cloneSchema(*db.schema)
+
 	return &cloned, nil
 }
 
-func (db *SimpleDB) InsertRow(values Row) (Row, error) {
+func (db *SimpleDB) InsertRow(values Row) (row Row, err error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if err := db.ensureOpen(); err != nil {
+	if err = db.ensureOpen(); err != nil {
 		return nil, err
 	}
+
 	if db.schema == nil {
 		return nil, ErrSchemaNotConfigured
 	}
+
 	return db.insertRowLocked(values)
 }
 
 func (db *SimpleDB) InsertRows(values []Row) ([]Row, error) {
+	var (
+		err     error
+		results anySlice.AnySlicer[Row]
+	)
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if err := db.ensureOpen(); err != nil {
+	if err = db.ensureOpen(); err != nil {
 		return nil, err
 	}
+
 	if db.schema == nil {
 		return nil, ErrSchemaNotConfigured
 	}
+
 	if len(values) == 0 {
 		return nil, ErrBatchEmpty
 	}
 
-	results := make([]Row, 0, len(values))
+	results = anySlice.New(anySlice.Cap[Row](len(values)))
 	for _, value := range values {
 		row, err := db.insertRowLocked(value)
 		if err != nil {
 			return nil, err
 		}
-		results = append(results, row)
+		results.Append(row)
 	}
-	return results, nil
+
+	return results.ToSlice(), nil
 }
 
 func (db *SimpleDB) insertRowLocked(values Row) (Row, error) {
-	row, err := db.prepareInsertRowLocked(values)
-	if err != nil {
+	var (
+		err        error
+		row        Row
+		rowKey     string
+		encodedRow []byte
+	)
+
+	if row, err = db.prepareInsertRowLocked(values); err != nil {
 		return nil, err
 	}
 
@@ -232,7 +268,7 @@ func (db *SimpleDB) insertRowLocked(values Row) (Row, error) {
 	if err != nil {
 		return nil, err
 	}
-	rowKey := buildRowKey(pkToken)
+	rowKey = buildRowKey(pkToken)
 	if current, exists := db.index[rowKey]; exists && !current.Deleted {
 		return nil, ErrPrimaryKeyConflict
 	}
@@ -241,28 +277,33 @@ func (db *SimpleDB) insertRowLocked(values Row) (Row, error) {
 		return nil, err
 	}
 
-	encodedRow, err := encodeRow(row)
-	if err != nil {
+	if encodedRow, err = encodeRow(row); err != nil {
 		return nil, err
 	}
+
 	if err = db.putRawLocked(rowKey, encodedRow); err != nil {
 		return nil, err
 	}
 
 	db.addRowToIndexesLocked(row, pkToken)
+
 	return cloneRow(row), nil
 }
 
 func (db *SimpleDB) UpdateRow(primaryKey any, updates Row) (Row, error) {
+	var err error
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if err := db.ensureOpen(); err != nil {
+	if err = db.ensureOpen(); err != nil {
 		return nil, err
 	}
+
 	if db.schema == nil {
 		return nil, ErrSchemaNotConfigured
 	}
+
 	return db.updateRowLocked(primaryKey, updates)
 }
 
@@ -433,7 +474,7 @@ func (db *SimpleDB) FindByIndex(field string, value any) ([]Row, error) {
 		return nil, fmt.Errorf("%w: %s", ErrFieldNotIndexed, field)
 	}
 	column, _ := db.columnByName(field)
-	normalizedValue, err := normalizeColumnValue(column, value)
+	normalizedValue, err := db.normalizeColumnValueLocked(column, value)
 	if err != nil {
 		return nil, err
 	}
@@ -539,6 +580,67 @@ func (db *SimpleDB) FindOne(conditions ...QueryCondition) (Row, bool, error) {
 		return nil, false, nil
 	}
 	return rows[0], true, nil
+}
+
+// RemoveByCondition removes all rows matching the given conditions.
+// It returns the count of deleted rows.
+func (db *SimpleDB) RemoveByCondition(conditions ...QueryCondition) (int, error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if err := db.ensureOpen(); err != nil {
+		return 0, err
+	}
+	if db.schema == nil {
+		return 0, ErrSchemaNotConfigured
+	}
+
+	normalizedConditions, err := db.normalizeQueryConditionsLocked(conditions)
+	if err != nil {
+		return 0, err
+	}
+
+	candidatePKs, err := db.planConditionCandidatePKsLocked(normalizedConditions)
+	if err != nil {
+		return 0, err
+	}
+
+	pkTokens := db.collectRowPKTokensLocked(candidatePKs)
+
+	pkField := db.schema.PrimaryKey
+	deletedCount := 0
+	for _, pkToken := range pkTokens {
+		row, err := db.getRowByTokenLocked(pkToken)
+		if err == ErrKeyNotFound {
+			continue
+		}
+		if err != nil {
+			return 0, err
+		}
+
+		// Check if this row matches all conditions
+		matched, err := db.rowMatchesConditionsLocked(row, normalizedConditions)
+		if err != nil {
+			return 0, err
+		}
+
+		if matched {
+			pkValue := row[pkField]
+			if err = db.deleteRowLocked(pkValue); err != nil {
+				return 0, err
+			}
+			deletedCount++
+		}
+	}
+
+	return deletedCount, nil
+}
+
+// RemoveOneByCondition removes the first row matching the given conditions.
+// It returns a boolean indicating whether a row was deleted.
+func (db *SimpleDB) RemoveOneByCondition(conditions ...QueryCondition) (bool, error) {
+	count, err := db.RemoveByCondition(conditions...)
+	return count > 0, err
 }
 
 func (db *SimpleDB) planConditionCandidatePKsLocked(conditions []QueryCondition) (map[string]struct{}, error) {
@@ -688,9 +790,9 @@ func (db *SimpleDB) indexBucketValueLocked(column Column, token string, pkToken 
 		if decodeErr != nil {
 			return nil, decodeErr
 		}
-		return normalizeColumnValue(column, decoded)
+		return db.normalizeColumnValueLocked(column, decoded)
 	}
-	return normalizeColumnValue(column, value)
+	return db.normalizeColumnValueLocked(column, value)
 }
 
 func (db *SimpleDB) collectRowPKTokensLocked(candidatePKs map[string]struct{}) []string {
@@ -809,7 +911,7 @@ func (db *SimpleDB) prepareInsertRowLocked(values Row) (Row, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate UUID v%d: %w", version, err)
 			}
-			row[pkField] = generatedUUID.String()
+			row[pkField] = db.formatUUIDLocked(generatedUUID)
 		default:
 			db.autoSeq++
 			row[pkField] = db.autoSeq
@@ -820,7 +922,7 @@ func (db *SimpleDB) prepareInsertRowLocked(values Row) (Row, error) {
 	} else if db.schema.AutoIncrement {
 		switch ColumnType(normalizeColumnType(pkColumn.Type)) {
 		case ColumnTypeUUID:
-			uuidValue, err := normalizeUUIDValue(pkColumn, pkValue)
+			uuidValue, err := db.normalizeColumnValueLocked(pkColumn, pkValue)
 			if err != nil {
 				return nil, err
 			}
@@ -861,7 +963,7 @@ func (db *SimpleDB) findRowLocked(primaryKey any) (Row, string, error) {
 	if !ok {
 		return nil, "", ErrPrimaryKeyMissing
 	}
-	normalizedPrimaryKey, err := normalizeColumnValue(column, primaryKey)
+	normalizedPrimaryKey, err := db.normalizeColumnValueLocked(column, primaryKey)
 	if err != nil {
 		return nil, "", err
 	}
@@ -897,7 +999,7 @@ func (db *SimpleDB) findByUniqueLocked(field string, value any) (Row, bool, erro
 		return nil, false, fmt.Errorf("%w: %s", ErrFieldNotIndexed, field)
 	}
 
-	normalizedValue, err := normalizeColumnValue(column, value)
+	normalizedValue, err := db.normalizeColumnValueLocked(column, value)
 	if err != nil {
 		return nil, false, err
 	}
@@ -931,7 +1033,7 @@ func (db *SimpleDB) normalizeQueryConditionsLocked(conditions []QueryCondition) 
 		if !ok {
 			return nil, fmt.Errorf("%w: %s", ErrFieldNotDefined, condition.Field)
 		}
-		normalizedCondition, err := normalizeQueryCondition(column, condition)
+		normalizedCondition, err := db.normalizeQueryConditionWithConfigLocked(column, condition)
 		if err != nil {
 			return nil, err
 		}
@@ -1310,7 +1412,7 @@ func (db *SimpleDB) applyColumnConstraintsLocked(row Row, supplied map[string]st
 			}
 			continue
 		}
-		nextValue, err := normalizeColumnValue(column, value)
+		nextValue, err := db.normalizeColumnValueLocked(column, value)
 		if err != nil {
 			return nil, err
 		}
@@ -1378,6 +1480,91 @@ func generateUUIDByVersion(version int) (uuid.UUID, error) {
 	default:
 		return uuid.Nil, fmt.Errorf("unsupported UUID version: %d (supported: 1, 4, 6, 7)", version)
 	}
+}
+
+func formatUUIDString(raw uuid.UUID, withHyphen bool, uppercase bool) string {
+	value := raw.String()
+	if !withHyphen {
+		value = strings.ReplaceAll(value, "-", "")
+	}
+	if uppercase {
+		return strings.ToUpper(value)
+	}
+	return strings.ToLower(value)
+}
+
+func (db *SimpleDB) formatUUIDLocked(raw uuid.UUID) string {
+	return formatUUIDString(raw, db.getDefaultUUIDWithHyphen(), db.getDefaultUUIDUppercase())
+}
+
+func (db *SimpleDB) normalizeColumnValueLocked(column Column, value any) (any, error) {
+	normalizedValue, err := normalizeColumnValue(column, value)
+	if err != nil {
+		return nil, err
+	}
+
+	if ColumnType(normalizeColumnType(column.Type)) != ColumnTypeUUID || normalizedValue == nil {
+		return normalizedValue, nil
+	}
+
+	parsed, err := uuid.Parse(fmt.Sprint(normalizedValue))
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s requires uuid", ErrFieldTypeMismatch, column.Name)
+	}
+
+	return db.formatUUIDLocked(parsed), nil
+}
+
+func (db *SimpleDB) normalizeQueryConditionWithConfigLocked(column Column, condition QueryCondition) (QueryCondition, error) {
+	normalizedCondition, err := normalizeQueryCondition(column, condition)
+	if err != nil {
+		return QueryCondition{}, err
+	}
+
+	if ColumnType(normalizeColumnType(column.Type)) != ColumnTypeUUID {
+		return normalizedCondition, nil
+	}
+
+	if normalizedCondition.Value != nil {
+		normalizedValue, err := db.normalizeColumnValueLocked(column, normalizedCondition.Value)
+		if err != nil {
+			return QueryCondition{}, err
+		}
+		normalizedCondition.Value = normalizedValue
+	}
+
+	if len(normalizedCondition.Values) > 0 {
+		formatted := make([]any, 0, len(normalizedCondition.Values))
+		for _, item := range normalizedCondition.Values {
+			if item == nil {
+				formatted = append(formatted, nil)
+				continue
+			}
+			normalizedValue, err := db.normalizeColumnValueLocked(column, item)
+			if err != nil {
+				return QueryCondition{}, err
+			}
+			formatted = append(formatted, normalizedValue)
+		}
+		normalizedCondition.Values = formatted
+	}
+
+	if normalizedCondition.Lower != nil {
+		normalizedLower, err := db.normalizeColumnValueLocked(column, normalizedCondition.Lower)
+		if err != nil {
+			return QueryCondition{}, err
+		}
+		normalizedCondition.Lower = normalizedLower
+	}
+	if normalizedCondition.Upper != nil {
+		normalizedUpper, err := db.normalizeColumnValueLocked(column, normalizedCondition.Upper)
+		if err != nil {
+			return QueryCondition{}, err
+		}
+		normalizedCondition.Upper = normalizedUpper
+	}
+
+	return normalizedCondition, nil
 }
 
 func parseInt(s string) int64 {

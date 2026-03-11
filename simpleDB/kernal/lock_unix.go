@@ -1,6 +1,6 @@
 //go:build darwin || linux || freebsd || netbsd || openbsd || dragonfly || solaris
 
-package simpleDBDriver
+package kernal
 
 import (
 	"errors"
@@ -11,11 +11,16 @@ import (
 )
 
 func lockFileExclusive(file *os.File) (fileLockMethod, error) {
+	var (
+		err  error
+		lock unix.Flock_t
+	)
+
 	if file == nil {
 		return fileLockMethodNone, ErrInitDB
 	}
 
-	if err := unix.Flock(int(file.Fd()), unix.LOCK_EX|unix.LOCK_NB); err == nil {
+	if err = unix.Flock(int(file.Fd()), unix.LOCK_EX|unix.LOCK_NB); err == nil {
 		return fileLockMethodFlock, nil
 	} else if isLockBusy(err) {
 		return fileLockMethodNone, ErrDatabaseLocked
@@ -23,8 +28,9 @@ func lockFileExclusive(file *os.File) (fileLockMethod, error) {
 		return fileLockMethodNone, err
 	}
 
-	lock := unix.Flock_t{Type: unix.F_WRLCK, Whence: int16(unix.SEEK_SET), Start: 0, Len: 0}
-	if err := unix.FcntlFlock(file.Fd(), unix.F_SETLK, &lock); err != nil {
+	lock = unix.Flock_t{Type: unix.F_WRLCK, Whence: int16(unix.SEEK_SET), Start: 0, Len: 0}
+
+	if err = unix.FcntlFlock(file.Fd(), unix.F_SETLK, &lock); err != nil {
 		if isLockBusy(err) {
 			return fileLockMethodNone, ErrDatabaseLocked
 		}

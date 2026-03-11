@@ -1,6 +1,6 @@
 //go:build windows
 
-package simpleDBDriver
+package kernal
 
 import "os"
 

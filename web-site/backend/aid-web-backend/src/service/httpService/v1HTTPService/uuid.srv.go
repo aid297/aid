@@ -11,10 +11,8 @@ import (
 
 type UUIDService struct{}
 
-var UUID UUIDService
-
 // GenerateOne 生成单个UUID
-func (UUIDService) GenerateOne(form *request.UUIDGenerateRequest) (response.UUIDResponse, error) {
+func (*UUIDService) GenerateOne(form *request.UUIDGenerateRequest) (response.UUIDResponse, error) {
 	var (
 		err     error
 		u       uuid.UUID

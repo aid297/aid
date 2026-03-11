@@ -1,4 +1,4 @@
-package simpleDBDriver
+package kernal
 
 import (
 	"bufio"
@@ -9,6 +9,8 @@ import (
 	"hash/crc32"
 	"io"
 	"time"
+
+	"github.com/aid297/aid/operation/operationV2"
 )
 
 func (db *SimpleDB) Put(key string, value []byte) (err error) {
@@ -67,6 +69,7 @@ func (db *SimpleDB) Update(key string, value []byte) (err error) {
 	var (
 		current entry
 		exists  bool
+		record  logRecord
 	)
 
 	if err = validateKey(key); err != nil {
@@ -87,21 +90,19 @@ func (db *SimpleDB) Update(key string, value []byte) (err error) {
 		return ErrKeyDeleted
 	}
 
-	record := logRecord{
+	record = logRecord{
 		Operation: opPut,
 		Key:       key,
 		Value:     cloneBytes(value),
 		CreatedAt: time.Now().UnixNano(),
 	}
+
 	_ = record
 	return db.putRawLocked(key, value)
 }
 
 func (db *SimpleDB) ensureOpen() (err error) {
-	if db.closed {
-		return ErrDatabaseClosed
-	}
-	return
+	return operationV2.NewTernary(operationV2.TrueValue(ErrDatabaseClosed)).GetByValue(db.closed)
 }
 
 func (db *SimpleDB) load() (err error) {
@@ -142,15 +143,19 @@ func (db *SimpleDB) load() (err error) {
 }
 
 func writeRecord(writer io.Writer, record logRecord) error {
-	payload, err := json.Marshal(record)
-	if err != nil {
+	var (
+		err              error
+		payload          []byte
+		header, checksum [4]byte
+	)
+
+	if payload, err = json.Marshal(record); err != nil {
 		return err
 	}
 	if len(payload) > maxRecordSize {
 		return fmt.Errorf("simpleDB: record too large: %d", len(payload))
 	}
 
-	var header [4]byte
 	binary.BigEndian.PutUint32(header[:], uint32(len(payload)))
 	if _, err = writer.Write(header[:]); err != nil {
 		return err
@@ -159,45 +164,54 @@ func writeRecord(writer io.Writer, record logRecord) error {
 		return err
 	}
 
-	var checksum [4]byte
 	binary.BigEndian.PutUint32(checksum[:], crc32.ChecksumIEEE(payload))
 	if _, err = writer.Write(checksum[:]); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (db *SimpleDB) putRawLocked(key string, value []byte) error {
-	record := logRecord{
-		Operation: opPut,
-		Key:       key,
-		Value:     cloneBytes(value),
-		CreatedAt: time.Now().UnixNano(),
-	}
+	var (
+		err    error
+		record = logRecord{
+			Operation: opPut,
+			Key:       key,
+			Value:     cloneBytes(value),
+			CreatedAt: time.Now().UnixNano(),
+		}
+	)
 
-	if err := db.appendRecord(record); err != nil {
+	if err = db.appendRecord(record); err != nil {
 		return err
 	}
 
 	db.index[key] = entry{Value: cloneBytes(value), UpdatedAt: record.CreatedAt}
+
 	return nil
 }
 
 func (db *SimpleDB) deleteRawLocked(key string) error {
-	record := logRecord{
-		Operation: opDelete,
-		Key:       key,
-		CreatedAt: time.Now().UnixNano(),
-	}
+	var (
+		err    error
+		record = logRecord{
+			Operation: opDelete,
+			Key:       key,
+			CreatedAt: time.Now().UnixNano(),
+		}
+		current entry
+	)
 
-	if err := db.appendRecord(record); err != nil {
+	if err = db.appendRecord(record); err != nil {
 		return err
 	}
 
-	current := db.index[key]
+	current = db.index[key]
 	current.Value = nil
 	current.Deleted = true
 	current.UpdatedAt = record.CreatedAt
 	db.index[key] = current
+
 	return nil
 }

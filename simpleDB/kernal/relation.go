@@ -1,8 +1,9 @@
-package simpleDBDriver
+package kernal
 
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -35,56 +36,77 @@ type resolvedRelation struct {
 }
 
 func (db *SimpleDB) FindByConditionsJSON(conditions []QueryCondition) ([]byte, error) {
-	rows, err := db.FindByConditions(conditions)
-	if err != nil {
+	var (
+		err  error
+		rows []Row
+	)
+	if rows, err = db.FindByConditions(conditions); err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(rows)
 }
 
 func (db *SimpleDB) QueryCascadeJSON(query CascadeQuery) ([]byte, error) {
-	maxDepth, err := db.normalizeCascadeMaxDepth(query.MaxDepth)
-	if err != nil {
+	var (
+		err      error
+		maxDepth int
+		rows     []map[string]any
+	)
+
+	if maxDepth, err = db.normalizeCascadeMaxDepth(query.MaxDepth); err != nil {
 		return nil, err
 	}
-	rows, err := db.queryCascadeObjects(query, maxDepth, 0, []string{db.table})
-	if err != nil {
+
+	if rows, err = db.queryCascadeObjects(query, maxDepth, 0, []string{db.table}); err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(rows)
 }
 
 func (db *SimpleDB) queryCascadeObjects(query CascadeQuery, maxDepth int, depth int, path []string) ([]map[string]any, error) {
-	rows, err := db.FindByConditions(query.Conditions)
-	if err != nil {
+	var (
+		err      error
+		rows     []Row
+		objects  []map[string]any
+		expanded Row
+	)
+	if rows, err = db.FindByConditions(query.Conditions); err != nil {
 		return nil, err
 	}
 
-	objects := make([]map[string]any, 0, len(rows))
+	objects = make([]map[string]any, 0, len(rows))
 	for _, row := range rows {
-		expanded, err := db.expandCascadeRow(row, query.Includes, maxDepth, depth, path)
-		if err != nil {
+		if expanded, err = db.expandCascadeRow(row, query.Includes, maxDepth, depth, path); err != nil {
 			return nil, err
 		}
 		objects = append(objects, expanded)
 	}
+
 	return objects, nil
 }
 
 func (db *SimpleDB) expandCascadeRow(row Row, includes []CascadeInclude, maxDepth int, depth int, path []string) (map[string]any, error) {
-	result := make(map[string]any, len(row)+len(includes))
+	var (
+		err         error
+		result      = make(map[string]any, len(row)+len(includes))
+		targetTable string
+		relation    *resolvedRelation
+		closeTarget func() error
+		nestedValue any
+	)
+
 	for key, value := range row {
 		result[key] = value
 	}
 
 	for _, include := range includes {
-		targetTable := strings.TrimSpace(include.Table)
-		if targetTable != "" && tableInPath(path, targetTable) {
+		if targetTable = strings.TrimSpace(include.Table); targetTable != "" && tableInPath(path, targetTable) {
 			return nil, fmt.Errorf("%w: %s", ErrCascadeCycleNotAllow, targetTable)
 		}
 
-		relation, closeTarget, err := db.resolveCascadeRelation(include)
-		if err != nil {
+		if relation, closeTarget, err = db.resolveCascadeRelation(include); err != nil {
 			return nil, err
 		}
 		if closeTarget != nil {
@@ -97,8 +119,14 @@ func (db *SimpleDB) expandCascadeRow(row Row, includes []CascadeInclude, maxDept
 			return nil, fmt.Errorf("%w: %s", ErrCascadeCycleNotAllow, relation.targetDB.table)
 		}
 
-		nestedValue, err := db.fetchCascadeRelationValue(row, include, relation, maxDepth, depth+1, append(path, relation.targetDB.table))
-		if err != nil {
+		if nestedValue, err = db.fetchCascadeRelationValue(
+			row,
+			include,
+			relation,
+			maxDepth,
+			depth+1,
+			append(path, relation.targetDB.table),
+		); err != nil {
 			return nil, err
 		}
 		result[relation.alias] = nestedValue
@@ -108,23 +136,31 @@ func (db *SimpleDB) expandCascadeRow(row Row, includes []CascadeInclude, maxDept
 }
 
 func (db *SimpleDB) resolveCascadeRelation(include CascadeInclude) (*resolvedRelation, func() error, error) {
-	targetTable := strings.TrimSpace(include.Table)
-	if targetTable == "" {
+	var (
+		err           error
+		targetTable   string
+		currentSchema *TableSchema
+		targetSchema  *TableSchema
+		foreignKey    ForeignKey
+		ok            bool
+		targetDB      *SimpleDB
+		closeTarget   func() error
+	)
+
+	if targetTable = strings.TrimSpace(include.Table); targetTable == "" {
 		return nil, nil, fmt.Errorf("%w: include table is required", ErrRelationNotFound)
 	}
 
-	currentSchema, err := db.GetSchema()
-	if err != nil {
+	if currentSchema, err = db.GetSchema(); err != nil {
 		return nil, nil, err
 	}
 
-	if foreignKey, ok, err := selectForeignKey(currentSchema.ForeignKeys, func(foreignKey ForeignKey) bool {
+	if foreignKey, ok, err = selectForeignKey(currentSchema.ForeignKeys, func(foreignKey ForeignKey) bool {
 		return foreignKey.RefTable == targetTable
 	}, include.ForeignKey); err != nil {
 		return nil, nil, err
 	} else if ok {
-		targetDB, closeTarget, err := db.openRelatedTable(targetTable)
-		if err != nil {
+		if targetDB, closeTarget, err = db.openRelatedTable(targetTable); err != nil {
 			return nil, nil, err
 		}
 		return &resolvedRelation{
@@ -135,23 +171,20 @@ func (db *SimpleDB) resolveCascadeRelation(include CascadeInclude) (*resolvedRel
 		}, closeTarget, nil
 	}
 
-	targetDB, closeTarget, err := db.openRelatedTable(targetTable)
-	if err != nil {
+	if targetDB, closeTarget, err = db.openRelatedTable(targetTable); err != nil {
 		return nil, nil, err
 	}
 
-	targetSchema, err := targetDB.GetSchema()
-	if err != nil {
+	if targetSchema, err = targetDB.GetSchema(); err != nil {
 		if closeTarget != nil {
 			_ = closeTarget()
 		}
 		return nil, nil, err
 	}
 
-	foreignKey, ok, err := selectForeignKey(targetSchema.ForeignKeys, func(foreignKey ForeignKey) bool {
+	if foreignKey, ok, err = selectForeignKey(targetSchema.ForeignKeys, func(foreignKey ForeignKey) bool {
 		return foreignKey.RefTable == db.table
-	}, include.ForeignKey)
-	if err != nil {
+	}, include.ForeignKey); err != nil {
 		if closeTarget != nil {
 			_ = closeTarget()
 		}
@@ -172,36 +205,67 @@ func (db *SimpleDB) resolveCascadeRelation(include CascadeInclude) (*resolvedRel
 	}, closeTarget, nil
 }
 
-func (db *SimpleDB) fetchCascadeRelationValue(row Row, include CascadeInclude, relation *resolvedRelation, maxDepth int, depth int, path []string) (any, error) {
+func (db *SimpleDB) fetchCascadeRelationValue(
+	row Row,
+	include CascadeInclude,
+	relation *resolvedRelation,
+	maxDepth int,
+	depth int,
+	path []string,
+) (any, error) {
+	var (
+		err        error
+		conditions = make([]QueryCondition, 0, len(include.Conditions)+1)
+		results    []map[string]any
+	)
+
 	switch relation.direction {
 	case relationDirectionParent:
 		value, exists := row[relation.foreignKey.Field]
 		if !exists || value == nil {
 			return nil, nil
 		}
-		conditions := make([]QueryCondition, 0, len(include.Conditions)+1)
 		conditions = append(conditions, QueryCondition{Field: relation.foreignKey.RefField, Operator: QueryOpEQ, Value: value})
 		conditions = append(conditions, include.Conditions...)
-		results, err := relation.targetDB.queryCascadeObjects(CascadeQuery{Conditions: conditions, Includes: include.Includes}, maxDepth, depth, path)
-		if err != nil {
+		if results, err = relation.
+			targetDB.
+			queryCascadeObjects(
+				CascadeQuery{
+					Conditions: conditions,
+					Includes:   include.Includes,
+				},
+				maxDepth,
+				depth,
+				path,
+			); err != nil {
 			return nil, err
 		}
-		if len(results) == 0 {
+		switch len(results) {
+		case 0:
 			return nil, nil
-		}
-		if len(results) == 1 {
+		case 1:
 			return results[0], nil
 		}
+
 		return results, nil
 	case relationDirectionChild:
 		value, exists := row[relation.foreignKey.RefField]
 		if !exists || value == nil {
 			return []map[string]any{}, nil
 		}
-		conditions := make([]QueryCondition, 0, len(include.Conditions)+1)
 		conditions = append(conditions, QueryCondition{Field: relation.foreignKey.Field, Operator: QueryOpEQ, Value: value})
 		conditions = append(conditions, include.Conditions...)
-		return relation.targetDB.queryCascadeObjects(CascadeQuery{Conditions: conditions, Includes: include.Includes}, maxDepth, depth, path)
+		return relation.
+			targetDB.
+			queryCascadeObjects(
+				CascadeQuery{
+					Conditions: conditions,
+					Includes:   include.Includes,
+				},
+				maxDepth,
+				depth,
+				path,
+			)
 	default:
 		return nil, fmt.Errorf("%w: unsupported relation direction", ErrRelationNotFound)
 	}
@@ -220,38 +284,39 @@ func (db *SimpleDB) normalizeCascadeMaxDepth(value int) (int, error) {
 	return value, nil
 }
 
-func tableInPath(path []string, table string) bool {
-	for _, item := range path {
-		if item == table {
-			return true
-		}
-	}
-	return false
-}
+func tableInPath(path []string, table string) bool { return slices.Contains(path, table) }
 
 func (db *SimpleDB) openRelatedTable(table string) (*SimpleDB, func() error, error) {
+	var (
+		err     error
+		related *SimpleDB
+	)
+
 	table = strings.TrimSpace(table)
-	if table == "" {
+	switch table {
+	case "":
 		return nil, nil, fmt.Errorf("%w: empty target table", ErrRelationNotFound)
-	}
-	if table == db.table {
+	case db.table:
 		return db, nil, nil
+	default:
+		if related, err = newSimpleDB(db.database, table); err != nil {
+			return nil, nil, err
+		}
+		return related, related.Close, nil
 	}
-	related, err := newSimpleDB(db.database, table)
-	if err != nil {
-		return nil, nil, err
-	}
-	return related, related.Close, nil
 }
 
-func selectForeignKey(foreignKeys []ForeignKey, predicate func(ForeignKey) bool, requested string) (ForeignKey, bool, error) {
+func selectForeignKey(
+	foreignKeys []ForeignKey,
+	predicate func(ForeignKey) bool,
+	requested string,
+) (ForeignKey, bool, error) {
+	var matches = make([]ForeignKey, 0, len(foreignKeys))
+
 	requested = strings.TrimSpace(requested)
-	matches := make([]ForeignKey, 0, len(foreignKeys))
+
 	for _, foreignKey := range foreignKeys {
-		if !predicate(foreignKey) {
-			continue
-		}
-		if requested != "" && requested != foreignKey.Name && requested != foreignKey.Field && requested != foreignKey.Alias {
+		if !predicate(foreignKey) || (requested != "" && requested != foreignKey.Name && requested != foreignKey.Field && requested != foreignKey.Alias) {
 			continue
 		}
 		matches = append(matches, foreignKey)
@@ -266,11 +331,15 @@ func selectForeignKey(foreignKeys []ForeignKey, predicate func(ForeignKey) bool,
 }
 
 func relationAlias(include CascadeInclude, foreignKey ForeignKey, fallback string) string {
-	if alias := strings.TrimSpace(include.Alias); alias != "" {
+	var alias string
+
+	if alias = strings.TrimSpace(include.Alias); alias != "" {
 		return alias
 	}
-	if alias := strings.TrimSpace(foreignKey.Alias); alias != "" {
+
+	if alias = strings.TrimSpace(foreignKey.Alias); alias != "" {
 		return alias
 	}
+
 	return fallback
 }

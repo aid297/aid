@@ -79,6 +79,12 @@
 						<i class="fa-solid fa-briefcase" :style="{ fontSize: '18px' }">&nbsp;文件管理</i>
 					</q-item-section>
 				</q-item>
+
+                <q-item dense clickable v-ripple @click="hrefTo(router, '/messageBoard')" :class="{ 'bg-orange': isActive('/messageBoard'), 'text-white': isActive('/messageBoard') }">
+					<q-item-section avatar class="q-mt-md q-mb-md">
+						<i class="fa-solid fa-briefcase" :style="{ fontSize: '18px' }">&nbsp;留言板</i>
+					</q-item-section>
+				</q-item>
 			</q-list>
 			<!-- drawer content -->
 		</q-drawer>

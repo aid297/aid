@@ -119,7 +119,7 @@ type (
 )
 
 func OK() HTTPResponseAttributer      { return AttrCode{code: http.StatusOK, msg: "操作成功"} }
-func Created() HTTPResponseAttributer { return AttrCode{code: http.StatusCreated, msg: "新建成功"} }
+func Created() HTTPResponseAttributer { return AttrCode{code: http.StatusCreated, msg: "创建成功"} }
 func Updated() HTTPResponseAttributer {
 	return AttrCode{code: http.StatusAccepted, msg: "更新成功"}
 }

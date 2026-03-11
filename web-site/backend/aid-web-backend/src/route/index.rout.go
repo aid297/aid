@@ -34,15 +34,16 @@ func (*IndexRoute) Register(app *gin.Engine) {
 	v1Rout.Use(httpMiddleware.RecoverHandler, v1HTTPMiddleware2.Timeout(120))
 
 	{
-		app.Any("/health/json", httpAPI.Catalog.Health.JSON)
-		app.Any("/health/yaml", httpAPI.Catalog.Health.YAML)
-		app.Any("/health/toml", httpAPI.Catalog.Health.TOML)
-		app.Any("/health", httpAPI.Catalog.Health.TOML)
+		app.Any("/health/json", httpAPI.New.Health().JSON)
+		app.Any("/health/yaml", httpAPI.New.Health().YAML)
+		app.Any("/health/toml", httpAPI.New.Health().TOML)
+		app.Any("/health", httpAPI.New.Health().TOML)
 		app.StaticFS("/upload/rezip", http.Dir(global.CONFIG.Rezip.OutDir)) // 静态资源 (压缩包)
 
-		v1HTTPRoute.Catalog.Rezip.Register(v1Rout)
-		v1HTTPRoute.Catalog.UUID.Register(v1Rout)
-		v1HTTPRoute.Catalog.Upload.Register(v1Rout)
+		v1HTTPRoute.New.Rezip().Register(v1Rout)
+		v1HTTPRoute.New.UUID().Register(v1Rout)
+		v1HTTPRoute.New.Upload().Register(v1Rout)
+		v1HTTPRoute.New.MessageBoard().Register(v1Rout)
 
 		for idx := range global.CONFIG.WebService.StaticDirs {
 			app.Static(global.CONFIG.WebService.StaticDirs[idx].URL, global.CONFIG.WebService.StaticDirs[idx].Dir) // 静态资源路由

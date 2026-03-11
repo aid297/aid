@@ -11,6 +11,6 @@ type RezipRoute struct{}
 func (*RezipRoute) Register(app *gin.RouterGroup) {
 	r := app.Group("rezip")
 	{
-		r.POST("/upload", v1HTTPAPI.Catalog.Rezip.Upload)
+		r.POST("/upload", v1HTTPAPI.New.Rezip().Upload)
 	}
 }

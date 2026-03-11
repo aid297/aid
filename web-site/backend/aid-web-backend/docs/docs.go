@@ -353,6 +353,169 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/messageBoard/destroy": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml",
+                    "application/x-yaml",
+                    "application/toml"
+                ],
+                "tags": [
+                    "留言板"
+                ],
+                "summary": "删除留言板信息",
+                "parameters": [
+                    {
+                        "description": "请求参数",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.MessageBoardDestroyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除留言板信息成功",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "删除留言板信息失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "获取路径错误",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "表单验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messageBoard/list": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml",
+                    "application/x-yaml",
+                    "application/toml"
+                ],
+                "tags": [
+                    "留言板"
+                ],
+                "summary": "获取留言板信息列表",
+                "responses": {
+                    "200": {
+                        "description": "获取留言板信息列表成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/httpModule.HTTPResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "content": {
+                                            "$ref": "#/definitions/response.MessageBoardListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "获取留言板信息列表失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "获取路径错误",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "表单验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messageBoard/store": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml",
+                    "application/x-yaml",
+                    "application/toml"
+                ],
+                "tags": [
+                    "留言板"
+                ],
+                "summary": "保存留言板信息",
+                "parameters": [
+                    {
+                        "description": "请求参数",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.MessageBoardStoreRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "保存留言板信息成功",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "保存留言板信息失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "获取路径错误",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "表单验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/httpModule.HTTPResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -414,13 +577,29 @@ const docTemplate = `{
                 }
             }
         },
+        "request.MessageBoardDestroyRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.MessageBoardStoreRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
         "response.FileListResponse": {
             "type": "object",
             "properties": {
                 "currentPath": {
                     "type": "string"
                 },
-                "filesystemers": {
+                "items": {
                     "type": "array",
                     "items": {
                         "type": "object"
@@ -437,12 +616,6 @@ const docTemplate = `{
                 "filename": {
                     "type": "string"
                 },
-                "savedAs": {
-                    "type": "string"
-                },
-                "savedPath": {
-                    "type": "string"
-                },
                 "size": {
                     "type": "integer"
                 }
@@ -455,6 +628,17 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "response.MessageBoardListResponse": {
+            "type": "object",
+            "properties": {
+                "messageBoards": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                }
+            }
         }
     }
 }`
@@ -462,7 +646,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:9900",
+	Host:             "localhost:19900",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Aid Web Backend API",

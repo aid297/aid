@@ -37,11 +37,21 @@ definitions:
       path:
         type: string
     type: object
+  request.MessageBoardDestroyRequest:
+    properties:
+      id:
+        type: string
+    type: object
+  request.MessageBoardStoreRequest:
+    properties:
+      content:
+        type: string
+    type: object
   response.FileListResponse:
     properties:
       currentPath:
         type: string
-      filesystemers:
+      items:
         items:
           type: object
         type: array
@@ -52,10 +62,6 @@ definitions:
         type: string
       filename:
         type: string
-      savedAs:
-        type: string
-      savedPath:
-        type: string
       size:
         type: integer
     type: object
@@ -64,7 +70,14 @@ definitions:
       name:
         type: string
     type: object
-host: localhost:9900
+  response.MessageBoardListResponse:
+    properties:
+      messageBoards:
+        items:
+          type: object
+        type: array
+    type: object
+host: localhost:19900
 info:
   contact: {}
   description: Aid Web Backend API 服务
@@ -288,4 +301,110 @@ paths:
       summary: 压缩文件或目录
       tags:
       - 文件管理
+  /messageBoard/destroy:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.MessageBoardDestroyRequest'
+      produces:
+      - application/json
+      - application/xml
+      - application/x-yaml
+      - application/toml
+      responses:
+        "200":
+          description: 删除留言板信息成功
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "403":
+          description: 删除留言板信息失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "404":
+          description: 获取路径错误
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "422":
+          description: 表单验证失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+      summary: 删除留言板信息
+      tags:
+      - 留言板
+  /messageBoard/list:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      - application/xml
+      - application/x-yaml
+      - application/toml
+      responses:
+        "200":
+          description: 获取留言板信息列表成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpModule.HTTPResponse'
+            - properties:
+                content:
+                  $ref: '#/definitions/response.MessageBoardListResponse'
+              type: object
+        "403":
+          description: 获取留言板信息列表失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "404":
+          description: 获取路径错误
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "422":
+          description: 表单验证失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+      summary: 获取留言板信息列表
+      tags:
+      - 留言板
+  /messageBoard/store:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.MessageBoardStoreRequest'
+      produces:
+      - application/json
+      - application/xml
+      - application/x-yaml
+      - application/toml
+      responses:
+        "200":
+          description: 保存留言板信息成功
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "403":
+          description: 保存留言板信息失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "404":
+          description: 获取路径错误
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+        "422":
+          description: 表单验证失败
+          schema:
+            $ref: '#/definitions/httpModule.HTTPResponse'
+      summary: 保存留言板信息
+      tags:
+      - 留言板
 swagger: "2.0"

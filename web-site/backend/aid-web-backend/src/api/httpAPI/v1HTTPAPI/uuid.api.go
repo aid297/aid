@@ -34,7 +34,7 @@ func (*UUIDAPI) Generate(c *gin.Context) {
 	uuids = make([]response.UUIDResponse, form.Number)
 
 	for idx := range form.Number {
-		if uuids[idx], err = v1HTTPService.UUID.GenerateOne(&form); err != nil {
+		if uuids[idx], err = v1HTTPService.New.UUID().GenerateOne(&form); err != nil {
 			global.LOG.Error(title, zap.Any("生成UUID失败", err.Error()))
 			httpModule.NewForbidden(httpModule.Errorf("生成UUID失败：%w", err)).WithAccept(c)
 			return

@@ -1,4 +1,4 @@
-package simpleDBDriver
+package kernal
 
 import (
 	"bufio"

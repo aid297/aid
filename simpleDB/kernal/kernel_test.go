@@ -1,10 +1,11 @@
-package simpleDBDriver
+package kernal
 
 import (
 	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -482,8 +483,13 @@ func TestSimpleDB_UUIDAutoIncrementPrimaryKey(t *testing.T) {
 		if insertErr != nil {
 			t.Fatalf("InsertRow(uuid version sample %d) error = %v", index+1, insertErr)
 		}
-		if row["id"] != id {
-			t.Fatalf("stored uuid = %#v, want %s", row["id"], id)
+		parsedID, parseErr := uuid.Parse(id)
+		if parseErr != nil {
+			t.Fatalf("uuid sample parse error = %v", parseErr)
+		}
+		expectedID := formatUUIDString(parsedID, DefaultUUIDWithHyphen, DefaultUUIDUppercase)
+		if row["id"] != expectedID {
+			t.Fatalf("stored uuid = %#v, want %s", row["id"], expectedID)
 		}
 	}
 
@@ -1196,19 +1202,47 @@ func TestSimpleDB_ConfigAndUUIDVersions(t *testing.T) {
 	if defaultConfig.DefaultCascadeMaxDepth != DefaultCascadeMaxDepth {
 		t.Fatalf("default cascade depth = %d, want %d", defaultConfig.DefaultCascadeMaxDepth, DefaultCascadeMaxDepth)
 	}
+	if defaultConfig.DefaultUUIDWithHyphen == nil || *defaultConfig.DefaultUUIDWithHyphen != DefaultUUIDWithHyphen {
+		t.Fatalf("default uuid with hyphen = %v, want %v", defaultConfig.DefaultUUIDWithHyphen, DefaultUUIDWithHyphen)
+	}
+	if defaultConfig.DefaultUUIDUppercase == nil || *defaultConfig.DefaultUUIDUppercase != DefaultUUIDUppercase {
+		t.Fatalf("default uuid uppercase = %v, want %v", defaultConfig.DefaultUUIDUppercase, DefaultUUIDUppercase)
+	}
+	if defaultConfig.MaxCPUCores != detectSystemCPUCores() {
+		t.Fatalf("default max cpu cores = %d, want %d", defaultConfig.MaxCPUCores, detectSystemCPUCores())
+	}
+	actualMemory := detectSystemMemoryBytes()
+	if actualMemory > 0 && defaultConfig.MaxMemoryBytes != actualMemory {
+		t.Fatalf("default max memory bytes = %d, want %d", defaultConfig.MaxMemoryBytes, actualMemory)
+	}
 
 	// Test SetConfig
-	newConfig := DatabaseConfig{
-		DefaultUUIDVersion:     7,
-		DefaultCascadeMaxDepth: 4,
-	}
-	db.SetConfig(newConfig)
+	db.SetAttrs(
+		UUIDVersion(7),
+		CascadeMaxDepth(4),
+		UUIDWithHyphen(false),
+		UUIDUpper(false),
+		MaxCPUCores(uint8(detectSystemCPUCores()+20)),
+		MaxMemoryBytes(detectSystemMemoryBytes()+(1<<30)),
+	)
 	retrievedConfig := db.GetConfig()
 	if retrievedConfig.DefaultUUIDVersion != 7 {
 		t.Fatalf("set UUID version = %d, want 7", retrievedConfig.DefaultUUIDVersion)
 	}
 	if retrievedConfig.DefaultCascadeMaxDepth != 4 {
 		t.Fatalf("set cascade depth = %d, want 4", retrievedConfig.DefaultCascadeMaxDepth)
+	}
+	if retrievedConfig.DefaultUUIDWithHyphen == nil || *retrievedConfig.DefaultUUIDWithHyphen {
+		t.Fatalf("set uuid with hyphen = %v, want false", retrievedConfig.DefaultUUIDWithHyphen)
+	}
+	if retrievedConfig.DefaultUUIDUppercase == nil || *retrievedConfig.DefaultUUIDUppercase {
+		t.Fatalf("set uuid uppercase = %v, want false", retrievedConfig.DefaultUUIDUppercase)
+	}
+	if retrievedConfig.MaxCPUCores != detectSystemCPUCores() {
+		t.Fatalf("set max cpu cores = %d, want %d", retrievedConfig.MaxCPUCores, detectSystemCPUCores())
+	}
+	if actualMemory > 0 && retrievedConfig.MaxMemoryBytes != actualMemory {
+		t.Fatalf("set max memory bytes = %d, want %d", retrievedConfig.MaxMemoryBytes, actualMemory)
 	}
 
 	// Test UUID type with version format (uuid:v6)
@@ -1231,5 +1265,11 @@ func TestSimpleDB_ConfigAndUUIDVersions(t *testing.T) {
 	}
 	if _, err = uuid.Parse(id); err != nil {
 		t.Fatalf("generated id parse error = %v", err)
+	}
+	if strings.Contains(id, "-") {
+		t.Fatalf("generated id = %s, want no hyphen", id)
+	}
+	if id != strings.ToLower(id) {
+		t.Fatalf("generated id = %s, want lower case", id)
 	}
 }

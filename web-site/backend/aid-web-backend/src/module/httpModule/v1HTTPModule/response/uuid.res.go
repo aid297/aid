@@ -11,3 +11,7 @@ func (UUIDResponse) New(uuid string) UUIDResponse { return UUIDResponse{UUID: uu
 type UUIDGenerateResponse struct {
 	UUIDs []UUIDResponse `json:"uuids" yaml:"uuids" toml:"uuids" swaggertype:"array"`
 }
+
+type UUIDVersionsResponse struct {
+	Versions map[string]string `json:"versions" yaml:"versions" toml:"versions" swaggertype:"object"`
+}
