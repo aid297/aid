@@ -19,6 +19,7 @@ transport:
             initSDBPassword: /auth/init-sdb-password
             sql: /sql/execute
             sqlGrant: /sql/grant
+            sqlRevoke: /sql/revoke
             admin: /admin
             report: /reports
         limit:

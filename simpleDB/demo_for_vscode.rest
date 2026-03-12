@@ -7,8 +7,13 @@
 ### 执行顺序：从上到下逐条 Send Request
 @baseUrl = http://127.0.0.1:18080
 @loginPath = /auth/login
+@registerPath = /auth/register
+@activatePath = /auth/activate
 @sqlPath = /sql/execute
+@grantPath = /sql/grant
 @table = demo_users
+@grantUser = demo_user_1
+@grantUserPassword = 123456
 
 
 ### 1) 登录（默认管理员）
@@ -24,6 +29,41 @@ Content-Type: application/json
 
 ### 从登录响应提取 token
 @accessToken = {{login.response.body.$.token.accessToken}}
+
+
+### 1.1) 注册普通用户
+# @name registerUser
+POST {{baseUrl}}{{registerPath}}
+Content-Type: application/json
+
+{
+  "username": "{{grantUser}}",
+  "password": "{{grantUserPassword}}",
+  "displayName": "Demo User"
+}
+
+
+### 1.2) 激活普通用户（需要 super_admin）
+# @name activateUser
+POST {{baseUrl}}{{activatePath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "username": "{{grantUser}}"
+}
+
+
+### 1.3) 给普通用户授权当前库（库级绑定）
+# @name grantUserDatabase
+POST {{baseUrl}}{{grantPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "database": "demo_transport",
+  "username": "{{grantUser}}"
+}
 
 
 ### 2) 建表

@@ -27,6 +27,14 @@ func (*app) BindUserDatabase(database string, approver *AuthenticatedUser, usern
 	return nil
 }
 
+func (*app) RevokeUserDatabase(database string, approver *AuthenticatedUser, username string) error {
+	err := kernal.New.RevokeUserDatabase(database, approver, username)
+	if err != nil {
+		return wrapError(err)
+	}
+	return nil
+}
+
 func (*app) Authenticate(database, username, password string) (*AuthenticatedUser, error) {
 	user, err := kernal.New.Authenticate(database, username, password)
 	if err != nil {

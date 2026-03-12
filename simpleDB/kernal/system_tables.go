@@ -3,6 +3,7 @@ package kernal
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -16,10 +17,11 @@ const (
 	systemTableUserRoles         = "_sys_user_roles"
 	systemTableRolePermissions   = "_sys_role_permissions"
 	systemTableUserDBBindings    = "_sys_user_db_bindings"
+	systemTableDatabaseOwners    = "_sys_db_owners"
 	systemTableTableOwners       = "_sys_table_owners"
 	systemTableTableAccessGrants = "_sys_table_access_grants"
 
-	systemDatabaseSuffix = "__sys"
+	systemDatabaseName = "__simpledb_sys"
 
 	defaultSystemAdminUsername = "sdb"
 	defaultSystemAdminPassword = "simpleDB"
@@ -63,10 +65,15 @@ func systemDatabaseFor(database string) string {
 	if trimmed == "" {
 		return ""
 	}
-	if strings.HasSuffix(trimmed, systemDatabaseSuffix) {
+	cleaned := filepath.Clean(trimmed)
+	if filepath.Base(cleaned) == systemDatabaseName {
 		return trimmed
 	}
-	return trimmed + systemDatabaseSuffix
+	parent := filepath.Dir(cleaned)
+	if parent == "." || strings.TrimSpace(parent) == "" {
+		return systemDatabaseName
+	}
+	return filepath.Join(parent, systemDatabaseName)
 }
 
 func systemTableDefinitions() []systemTableDefinition {
@@ -76,10 +83,21 @@ func systemTableDefinitions() []systemTableDefinition {
 		{name: systemTablePermissions, schema: systemPermissionsSchema()},
 		{name: systemTableUserRoles, schema: systemUserRolesSchema()},
 		{name: systemTableRolePermissions, schema: systemRolePermissionsSchema()},
+		{name: systemTableDatabaseOwners, schema: systemDatabaseOwnersSchema()},
 		{name: systemTableUserDBBindings, schema: systemUserDBBindingsSchema()},
 		{name: systemTableTableOwners, schema: systemTableOwnersSchema()},
 		{name: systemTableTableAccessGrants, schema: systemTableAccessGrantsSchema()},
 	}
+}
+
+func systemDatabaseOwnersSchema() TableSchema {
+	return TableSchema{Columns: []Column{
+		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+		{Name: "databaseName", Type: "string", Required: true, Unique: true},
+		{Name: "ownerUserId", Type: "uuid", Required: true},
+		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+		{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
+	}}
 }
 
 func systemUserDBBindingsSchema() TableSchema {

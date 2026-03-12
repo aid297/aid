@@ -78,6 +78,7 @@ func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*trans
 		transport.WithInitSDBPasswordPath(config.Transport.HTTP.Route.InitSDBPassword),
 		transport.WithSQLExecutePath(config.Transport.HTTP.Route.SQLExecute),
 		transport.WithSQLGrantPath(config.Transport.HTTP.Route.SQLGrant),
+		transport.WithSQLRevokePath(config.Transport.HTTP.Route.SQLRevoke),
 		transport.WithSQLAllowedOps(config.Transport.HTTP.SQLAllowedOps),
 		transport.WithTokenRateLimit(
 			config.Transport.HTTP.Limit.Enabled,
@@ -138,6 +139,7 @@ func printServeSummary(stdout *os.File, configPath string, config configpkg.Conf
 	_, _ = fmt.Fprintf(stdout, "- init sdb password: POST %s (requires init password)\n", config.Transport.HTTP.Route.InitSDBPassword)
 	_, _ = fmt.Fprintf(stdout, "- sql execute: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLExecute)
 	_, _ = fmt.Fprintf(stdout, "- sql grant: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLGrant)
+	_, _ = fmt.Fprintf(stdout, "- sql revoke: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLRevoke)
 	if config.Transport.HTTP.Limit.Enabled {
 		_, _ = fmt.Fprintf(stdout, "- limit: enabled (%d requests / %s)\n", config.Transport.HTTP.Limit.Requests, config.Transport.HTTP.Limit.Window)
 	} else {

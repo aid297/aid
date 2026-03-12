@@ -40,6 +40,7 @@ type (
 		InitSDBPassword      string `yaml:"initSDBPassword"`
 		SQLExecute           string `yaml:"sql"`
 		SQLGrant             string `yaml:"sqlGrant"`
+		SQLRevoke            string `yaml:"sqlRevoke"`
 		Admin                string `yaml:"admin"`
 		Report               string `yaml:"report"`
 	}
@@ -90,6 +91,7 @@ func Default() Config {
 				InitSDBPassword:      "/auth/init-sdb-password",
 				SQLExecute:           "/sql/execute",
 				SQLGrant:             "/sql/grant",
+				SQLRevoke:            "/sql/revoke",
 				Admin:                "/admin",
 				Report:               "/reports",
 			},
@@ -199,6 +201,9 @@ func (c *Config) ApplyDefaults() {
 	if strings.TrimSpace(c.Transport.HTTP.Route.SQLGrant) == "" {
 		c.Transport.HTTP.Route.SQLGrant = defaults.Transport.HTTP.Route.SQLGrant
 	}
+	if strings.TrimSpace(c.Transport.HTTP.Route.SQLRevoke) == "" {
+		c.Transport.HTTP.Route.SQLRevoke = defaults.Transport.HTTP.Route.SQLRevoke
+	}
 	if strings.TrimSpace(c.Transport.HTTP.TokenTTL) == "" {
 		c.Transport.HTTP.TokenTTL = defaults.Transport.HTTP.TokenTTL
 	}
@@ -297,6 +302,7 @@ type rawHTTPConfig struct {
 	InitSDBPasswordPath      string `yaml:"initSDBPasswordPath"`
 	SQLExecutePath           string `yaml:"sqlExecutePath"`
 	SQLGrantPath             string `yaml:"sqlGrantPath"`
+	SQLRevokePath            string `yaml:"sqlRevokePath"`
 	AdminPath                string `yaml:"adminPath"`
 	ReportPath               string `yaml:"reportPath"`
 	LimitEnabled             *bool  `yaml:"limitEnabled"`
@@ -325,6 +331,7 @@ type rawHTTPRouteConfig struct {
 	InitSDBPassword      string `yaml:"initSDBPassword"`
 	SQLExecute           string `yaml:"sql"`
 	SQLGrant             string `yaml:"sqlGrant"`
+	SQLRevoke            string `yaml:"sqlRevoke"`
 	Admin                string `yaml:"admin"`
 	Report               string `yaml:"report"`
 }
@@ -380,6 +387,9 @@ func applyRawConfig(config *Config, raw rawConfig) {
 	}
 	if value := firstNonEmpty(raw.Transport.HTTP.Route.SQLGrant, raw.Transport.HTTP.SQLGrantPath); value != "" {
 		config.Transport.HTTP.Route.SQLGrant = value
+	}
+	if value := firstNonEmpty(raw.Transport.HTTP.Route.SQLRevoke, raw.Transport.HTTP.SQLRevokePath); value != "" {
+		config.Transport.HTTP.Route.SQLRevoke = value
 	}
 	if raw.Transport.HTTP.InitPassword != "" {
 		config.Transport.HTTP.InitPassword = raw.Transport.HTTP.InitPassword

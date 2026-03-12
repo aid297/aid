@@ -30,6 +30,7 @@ const DefaultAssignRolePermissionsPath = "/auth/assign-role-permissions"
 const DefaultInitSDBPasswordPath = "/auth/init-sdb-password"
 const DefaultSQLExecutePath = "/sql/execute"
 const DefaultSQLGrantPath = "/sql/grant"
+const DefaultSQLRevokePath = "/sql/revoke"
 const SuperAdminRoleCode = "super_admin"
 
 const ContextUserKey = "simpledb.transport.user"
@@ -47,6 +48,7 @@ type Authenticator interface {
 	AssignRolePermissions(database, roleCode string, permissionCodes []string) error
 	InitSDBPassword(database string) error
 	BindUserDatabase(database string, approver *driver.AuthenticatedUser, username string) error
+	RevokeUserDatabase(database string, approver *driver.AuthenticatedUser, username string) error
 }
 
 type HTTPServer struct {
@@ -62,6 +64,7 @@ type HTTPServer struct {
 	InitSDBPasswordPath      string
 	SQLExecutePath           string
 	SQLGrantPath             string
+	SQLRevokePath            string
 	SQLAllowedOps            map[string]struct{} // nil = 不限制
 	LimitEnabled             bool
 	LimitRequests            int
@@ -178,6 +181,7 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 		InitSDBPasswordPath:      DefaultInitSDBPasswordPath,
 		SQLExecutePath:           DefaultSQLExecutePath,
 		SQLGrantPath:             DefaultSQLGrantPath,
+		SQLRevokePath:            DefaultSQLRevokePath,
 		LimitEnabled:             false,
 		LimitRequests:            60,
 		LimitWindow:              time.Minute,
@@ -222,6 +226,9 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 	}
 	if server.SQLGrantPath == "" {
 		server.SQLGrantPath = DefaultSQLGrantPath
+	}
+	if server.SQLRevokePath == "" {
+		server.SQLRevokePath = DefaultSQLRevokePath
 	}
 	if server.LimitRequests <= 0 {
 		server.LimitRequests = 60
@@ -300,6 +307,12 @@ func WithSQLExecutePath(path string) Option {
 func WithSQLGrantPath(path string) Option {
 	return func(server *HTTPServer) {
 		server.SQLGrantPath = normalizePath(path, DefaultSQLGrantPath)
+	}
+}
+
+func WithSQLRevokePath(path string) Option {
+	return func(server *HTTPServer) {
+		server.SQLRevokePath = normalizePath(path, DefaultSQLRevokePath)
 	}
 }
 
@@ -475,6 +488,7 @@ func (s *HTTPServer) registerRoutes() {
 	s.engine.POST(s.InitSDBPasswordPath, s.handleInitSDBPassword)
 	s.engine.POST(s.SQLExecutePath, s.AuthMiddleware(), s.handleSQLExecute)
 	s.engine.POST(s.SQLGrantPath, s.AuthMiddleware(), s.handleSQLGrant)
+	s.engine.POST(s.SQLRevokePath, s.AuthMiddleware(), s.handleSQLRevoke)
 }
 
 func (s *HTTPServer) tokenRateLimitMiddleware() gin.HandlerFunc {
@@ -942,6 +956,55 @@ func (s *HTTPServer) handleSQLGrant(ctx *gin.Context) {
 	err := s.authenticator.BindUserDatabase(targetDatabase, approver, targetUsername)
 	if err != nil {
 		status, code, message := mapDriverError(err, "database bind failed")
+		ctx.JSON(status, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: code, Message: message}})
+		return
+	}
+	ctx.JSON(http.StatusOK, SQLGrantResponse{Success: true})
+}
+
+func (s *HTTPServer) handleSQLRevoke(ctx *gin.Context) {
+	if s.Database == "" {
+		ctx.JSON(http.StatusInternalServerError, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "database_required", Message: "database is required"}})
+		return
+	}
+
+	claims, ok := ctx.MustGet(ContextUserKey).(*TokenClaims)
+	if !ok || claims == nil {
+		ctx.JSON(http.StatusUnauthorized, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "unauthorized", Message: "not authenticated"}})
+		return
+	}
+	approver := &driver.AuthenticatedUser{
+		ID:          claims.Subject,
+		Username:    claims.Username,
+		DisplayName: claims.DisplayName,
+		Roles:       claims.Roles,
+		Permissions: claims.Permissions,
+	}
+
+	var req SQLGrantRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
+		return
+	}
+	targetDatabase := strings.TrimSpace(req.Database)
+	if targetDatabase == "" {
+		targetDatabase = strings.TrimSpace(req.Table)
+	}
+	if targetDatabase == "" {
+		targetDatabase = s.Database
+	}
+	targetUsername := strings.TrimSpace(req.Username)
+	if targetUsername == "" {
+		targetUsername = strings.TrimSpace(req.Grantee)
+	}
+	if targetUsername == "" {
+		ctx.JSON(http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "username is required"}})
+		return
+	}
+
+	err := s.authenticator.RevokeUserDatabase(targetDatabase, approver, targetUsername)
+	if err != nil {
+		status, code, message := mapDriverError(err, "database revoke failed")
 		ctx.JSON(status, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: code, Message: message}})
 		return
 	}
