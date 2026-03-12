@@ -73,3 +73,22 @@ func TestEngine_Execute_DeleteWithoutWhereRejected(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestEngine_Execute_BacktickIdentifiers(t *testing.T) {
+	eng := NewEngine(t.TempDir(), BackendDriver)
+
+	if _, err := eng.Execute("CREATE TABLE `users` (`id` int PRIMARY KEY AUTO_INCREMENT, `name` string REQUIRED)"); err != nil {
+		t.Fatalf("create with backticks: %v", err)
+	}
+	if _, err := eng.Execute("INSERT INTO `users` (`name`) VALUES ('alice')"); err != nil {
+		t.Fatalf("insert with backticks: %v", err)
+	}
+
+	res, err := eng.Execute("SELECT `id`, `name` FROM `users` WHERE `name`='alice'")
+	if err != nil {
+		t.Fatalf("select with backticks: %v", err)
+	}
+	if len(res.Rows) != 1 {
+		t.Fatalf("rows=%d, want 1", len(res.Rows))
+	}
+}

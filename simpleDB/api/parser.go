@@ -25,6 +25,7 @@ func Parse(sql string) (Statement, error) {
 	if sql == "" {
 		return nil, fmt.Errorf("empty sql")
 	}
+	sql = normalizeBacktickIdentifiers(sql)
 
 	if m := reCreate.FindStringSubmatch(sql); len(m) == 3 {
 		return parseCreateTable(m[1], m[2])
@@ -52,6 +53,59 @@ func Parse(sql string) (Statement, error) {
 	}
 
 	return nil, fmt.Errorf("unsupported sql")
+}
+
+func normalizeBacktickIdentifiers(sql string) string {
+	if !strings.Contains(sql, "`") {
+		return sql
+	}
+
+	var b strings.Builder
+	b.Grow(len(sql))
+
+	inSingle := false
+	inDouble := false
+
+	for i := 0; i < len(sql); i++ {
+		ch := sql[i]
+		switch ch {
+		case '\'':
+			if !inDouble {
+				inSingle = !inSingle
+			}
+			b.WriteByte(ch)
+			continue
+		case '"':
+			if !inSingle {
+				inDouble = !inDouble
+			}
+			b.WriteByte(ch)
+			continue
+		case '`':
+			if inSingle || inDouble {
+				b.WriteByte(ch)
+				continue
+			}
+
+			j := i + 1
+			for j < len(sql) && sql[j] != '`' {
+				j++
+			}
+			if j >= len(sql) {
+				b.WriteByte(ch)
+				continue
+			}
+
+			ident := strings.TrimSpace(sql[i+1 : j])
+			b.WriteString(ident)
+			i = j
+			continue
+		}
+
+		b.WriteByte(ch)
+	}
+
+	return b.String()
 }
 
 func parseCreateTable(table, body string) (Statement, error) {
