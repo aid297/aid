@@ -31,7 +31,7 @@ func authenticate(database, username, password string) (*AuthenticatedUser, erro
 		return nil, err
 	}
 
-	usersDB, err := newSimpleDB(database, systemTableUsers)
+	usersDB, err := newSimpleDB(systemDatabaseFor(database), systemTableUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func authenticate(database, username, password string) (*AuthenticatedUser, erro
 }
 
 func collectUserAccess(database string, userID any) ([]string, []string, error) {
-	userRolesDB, err := newSimpleDB(database, systemTableUserRoles)
+	userRolesDB, err := newSimpleDB(systemDatabaseFor(database), systemTableUserRoles)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -89,19 +89,19 @@ func collectUserAccess(database string, userID any) ([]string, []string, error) 
 		return nil, nil, nil
 	}
 
-	rolesDB, err := newSimpleDB(database, systemTableRoles)
+	rolesDB, err := newSimpleDB(systemDatabaseFor(database), systemTableRoles)
 	if err != nil {
 		return nil, nil, err
 	}
 	defer rolesDB.Close()
 
-	rolePermissionsDB, err := newSimpleDB(database, systemTableRolePermissions)
+	rolePermissionsDB, err := newSimpleDB(systemDatabaseFor(database), systemTableRolePermissions)
 	if err != nil {
 		return nil, nil, err
 	}
 	defer rolePermissionsDB.Close()
 
-	permissionsDB, err := newSimpleDB(database, systemTablePermissions)
+	permissionsDB, err := newSimpleDB(systemDatabaseFor(database), systemTablePermissions)
 	if err != nil {
 		return nil, nil, err
 	}

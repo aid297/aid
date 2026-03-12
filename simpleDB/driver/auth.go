@@ -3,6 +3,29 @@ package driver
 import "github.com/aid297/aid/simpleDB/kernal"
 
 type AuthenticatedUser = kernal.AuthenticatedUser
+type TableAccessScope = kernal.TableAccessScope
+type TableAccessGrant = kernal.TableAccessGrant
+
+const (
+	TableAccessScopeDML = kernal.TableAccessScopeDML
+	TableAccessScopeDDL = kernal.TableAccessScopeDDL
+)
+
+func (*app) ApproveTableAccess(database string, approver *AuthenticatedUser, tableName, granteeUsername string, scope TableAccessScope) (*TableAccessGrant, error) {
+	grant, err := kernal.New.ApproveTableAccess(database, approver, tableName, granteeUsername, scope)
+	if err != nil {
+		return nil, wrapError(err)
+	}
+	return grant, nil
+}
+
+func (*app) BindUserDatabase(database string, approver *AuthenticatedUser, username string) error {
+	err := kernal.New.BindUserDatabase(database, approver, username)
+	if err != nil {
+		return wrapError(err)
+	}
+	return nil
+}
 
 func (*app) Authenticate(database, username, password string) (*AuthenticatedUser, error) {
 	user, err := kernal.New.Authenticate(database, username, password)

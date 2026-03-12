@@ -18,6 +18,7 @@ transport:
             assignRolePermission: /auth/assign-role-permissions
             initSDBPassword: /auth/init-sdb-password
             sql: /sql/execute
+            sqlGrant: /sql/grant
             admin: /admin
             report: /reports
         initPassword: mSdUvQw1V-AElhbrIkjLIbuo

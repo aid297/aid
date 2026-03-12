@@ -54,20 +54,24 @@ func wrapError(err error) error {
 		errors.Is(err, kernal.ErrBatchEmpty),
 		errors.Is(err, kernal.ErrInvalidRegistration),
 		errors.Is(err, kernal.ErrInvalidPermissionAssignment),
-		errors.Is(err, kernal.ErrInvalidInitPassword):
+		errors.Is(err, kernal.ErrInvalidInitPassword),
+		errors.Is(err, kernal.ErrInvalidTableAccessGrant):
 		return &DriverError{Code: ErrorCodeInvalidArgument, Err: err}
 	case errors.Is(err, kernal.ErrKeyNotFound),
 		errors.Is(err, kernal.ErrRelationNotFound),
 		errors.Is(err, kernal.ErrUserNotFound),
-		errors.Is(err, kernal.ErrRoleNotFound):
+		errors.Is(err, kernal.ErrRoleNotFound),
+		errors.Is(err, kernal.ErrTableOwnerNotFound):
 		return &DriverError{Code: ErrorCodeNotFound, Err: err}
 	case errors.Is(err, kernal.ErrInvalidCredentials),
-		errors.Is(err, kernal.ErrUserInactive):
+		errors.Is(err, kernal.ErrUserInactive),
+		errors.Is(err, kernal.ErrTableAccessDenied):
 		return &DriverError{Code: ErrorCodeUnauthorized, Err: err}
 	case errors.Is(err, kernal.ErrUniqueConflict),
 		errors.Is(err, kernal.ErrPrimaryKeyConflict),
 		errors.Is(err, kernal.ErrTxConflict),
-		errors.Is(err, kernal.ErrUserAlreadyExists):
+		errors.Is(err, kernal.ErrUserAlreadyExists),
+		errors.Is(err, kernal.ErrTableOwnerAlreadyAssigned):
 		return &DriverError{Code: ErrorCodeConflict, Err: err}
 	case errors.Is(err, kernal.ErrSuperAdminRoleReserved):
 		return &DriverError{Code: ErrorCodeUnauthorized, Err: err}

@@ -17,7 +17,7 @@ func TestSystemTables_AutoBootstrapAndDefaultAdmin(t *testing.T) {
 	defer db.Close()
 
 	for _, definition := range systemTableDefinitions() {
-		tableDB, err := newSimpleDB(dir, definition.name)
+		tableDB, err := newSimpleDB(systemDatabaseFor(dir), definition.name)
 		if err != nil {
 			t.Fatalf("open %s: %v", definition.name, err)
 		}
@@ -35,7 +35,7 @@ func TestSystemTables_AutoBootstrapAndDefaultAdmin(t *testing.T) {
 		}
 	}
 
-	usersDB, err := newSimpleDB(dir, systemTableUsers)
+	usersDB, err := newSimpleDB(systemDatabaseFor(dir), systemTableUsers)
 	if err != nil {
 		t.Fatalf("open users db: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestSystemTables_AutoBootstrapAndDefaultAdmin(t *testing.T) {
 		t.Fatal("default admin should be admin")
 	}
 
-	roleLinksDB, err := newSimpleDB(dir, systemTableUserRoles)
+	roleLinksDB, err := newSimpleDB(systemDatabaseFor(dir), systemTableUserRoles)
 	if err != nil {
 		t.Fatalf("open user role db: %v", err)
 	}
@@ -78,7 +78,7 @@ func TestSystemTables_AutoBootstrapAndDefaultAdmin(t *testing.T) {
 func TestSystemTables_SchemaMismatchReturnsError(t *testing.T) {
 	dir := t.TempDir()
 
-	usersDB, err := newSimpleDB(dir, systemTableUsers)
+	usersDB, err := newSimpleDB(systemDatabaseFor(dir), systemTableUsers)
 	if err != nil {
 		t.Fatalf("open malformed users db: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestSystemTables_RecreateMissingDefaultAdmin(t *testing.T) {
 	}
 	_ = db.Close()
 
-	usersDB, err := newSimpleDB(dir, systemTableUsers)
+	usersDB, err := newSimpleDB(systemDatabaseFor(dir), systemTableUsers)
 	if err != nil {
 		t.Fatalf("open users db: %v", err)
 	}
@@ -125,7 +125,7 @@ func TestSystemTables_RecreateMissingDefaultAdmin(t *testing.T) {
 	}
 	_ = db.Close()
 
-	usersDB, err = newSimpleDB(dir, systemTableUsers)
+	usersDB, err = newSimpleDB(systemDatabaseFor(dir), systemTableUsers)
 	if err != nil {
 		t.Fatalf("re-open users db: %v", err)
 	}

@@ -28,6 +28,7 @@ const DefaultAssignRolesPath = "/auth/assign-roles"
 const DefaultAssignRolePermissionsPath = "/auth/assign-role-permissions"
 const DefaultInitSDBPasswordPath = "/auth/init-sdb-password"
 const DefaultSQLExecutePath = "/sql/execute"
+const DefaultSQLGrantPath = "/sql/grant"
 const SuperAdminRoleCode = "super_admin"
 
 const ContextUserKey = "simpledb.transport.user"
@@ -44,6 +45,7 @@ type Authenticator interface {
 	AssignRoles(database, username string, roleCodes []string) (*driver.AuthenticatedUser, error)
 	AssignRolePermissions(database, roleCode string, permissionCodes []string) error
 	InitSDBPassword(database string) error
+	BindUserDatabase(database string, approver *driver.AuthenticatedUser, username string) error
 }
 
 type HTTPServer struct {
@@ -58,6 +60,7 @@ type HTTPServer struct {
 	AssignRolePermissionPath string
 	InitSDBPasswordPath      string
 	SQLExecutePath           string
+	SQLGrantPath             string
 	SQLAllowedOps            map[string]struct{} // nil = 不限制
 	InitPassword             string
 	initPasswordMu           sync.RWMutex
@@ -162,6 +165,7 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 		AssignRolePermissionPath: DefaultAssignRolePermissionsPath,
 		InitSDBPasswordPath:      DefaultInitSDBPasswordPath,
 		SQLExecutePath:           DefaultSQLExecutePath,
+		SQLGrantPath:             DefaultSQLGrantPath,
 		TokenTTL:                 12 * time.Hour,
 		authenticator:            &driver.New,
 		engine:                   engine,
@@ -200,6 +204,9 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 	}
 	if server.SQLExecutePath == "" {
 		server.SQLExecutePath = DefaultSQLExecutePath
+	}
+	if server.SQLGrantPath == "" {
+		server.SQLGrantPath = DefaultSQLGrantPath
 	}
 	server.tokenManager = NewTokenManager(server.Database, server.TokenSecret, server.TokenTTL)
 	server.registerRoutes()
@@ -263,6 +270,12 @@ func WithInitSDBPasswordPath(path string) Option {
 func WithSQLExecutePath(path string) Option {
 	return func(server *HTTPServer) {
 		server.SQLExecutePath = normalizePath(path, DefaultSQLExecutePath)
+	}
+}
+
+func WithSQLGrantPath(path string) Option {
+	return func(server *HTTPServer) {
+		server.SQLGrantPath = normalizePath(path, DefaultSQLGrantPath)
 	}
 }
 
@@ -413,6 +426,7 @@ func (s *HTTPServer) registerRoutes() {
 	s.engine.POST(s.AssignRolePermissionPath, s.AuthMiddleware(), s.RequireRoles(SuperAdminRoleCode), s.handleAssignRolePermissions)
 	s.engine.POST(s.InitSDBPasswordPath, s.handleInitSDBPassword)
 	s.engine.POST(s.SQLExecutePath, s.AuthMiddleware(), s.handleSQLExecute)
+	s.engine.POST(s.SQLGrantPath, s.AuthMiddleware(), s.handleSQLGrant)
 }
 
 func (s *HTTPServer) handleRegister(ctx *gin.Context) {
@@ -730,6 +744,70 @@ func (s *HTTPServer) handleSQLExecute(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, SQLExecuteResponse{Success: true, Result: &result})
+}
+
+// SQLGrantRequest is the request body for POST /sql/grant.
+type SQLGrantRequest struct {
+	Database string `json:"database,omitempty"`
+	Username string `json:"username,omitempty"`
+	// legacy aliases
+	Table   string `json:"table,omitempty"`
+	Grantee string `json:"grantee,omitempty"`
+}
+
+// SQLGrantResponse is the response body for POST /sql/grant.
+type SQLGrantResponse struct {
+	Success bool       `json:"success"`
+	Error   *ErrorBody `json:"error,omitempty"`
+}
+
+func (s *HTTPServer) handleSQLGrant(ctx *gin.Context) {
+	if s.Database == "" {
+		ctx.JSON(http.StatusInternalServerError, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "database_required", Message: "database is required"}})
+		return
+	}
+
+	claims, ok := ctx.MustGet(ContextUserKey).(*TokenClaims)
+	if !ok || claims == nil {
+		ctx.JSON(http.StatusUnauthorized, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "unauthorized", Message: "not authenticated"}})
+		return
+	}
+	approver := &driver.AuthenticatedUser{
+		ID:          claims.Subject,
+		Username:    claims.Username,
+		DisplayName: claims.DisplayName,
+		Roles:       claims.Roles,
+		Permissions: claims.Permissions,
+	}
+
+	var req SQLGrantRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
+		return
+	}
+	targetDatabase := strings.TrimSpace(req.Database)
+	if targetDatabase == "" {
+		targetDatabase = strings.TrimSpace(req.Table)
+	}
+	if targetDatabase == "" {
+		targetDatabase = s.Database
+	}
+	targetUsername := strings.TrimSpace(req.Username)
+	if targetUsername == "" {
+		targetUsername = strings.TrimSpace(req.Grantee)
+	}
+	if targetUsername == "" {
+		ctx.JSON(http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "username is required"}})
+		return
+	}
+
+	err := s.authenticator.BindUserDatabase(targetDatabase, approver, targetUsername)
+	if err != nil {
+		status, code, message := mapDriverError(err, "database bind failed")
+		ctx.JSON(status, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: code, Message: message}})
+		return
+	}
+	ctx.JSON(http.StatusOK, SQLGrantResponse{Success: true})
 }
 
 func bindSQLParams(sql string, paramMap map[string]any, paramList []any) (string, error) {

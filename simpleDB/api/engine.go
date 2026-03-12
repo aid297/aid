@@ -84,7 +84,11 @@ type tableDB interface {
 }
 
 func (e *Engine) open(table string) (tableDB, error) {
-	if err := e.authorizeTable(table); err != nil {
+	return e.openWithScope(table, kernal.TableAccessScopeDML)
+}
+
+func (e *Engine) openWithScope(table string, scope kernal.TableAccessScope) (tableDB, error) {
+	if err := e.authorizeTableOp(table, scope); err != nil {
 		return nil, err
 	}
 	if e.Backend == BackendKernal {
@@ -94,14 +98,21 @@ func (e *Engine) open(table string) (tableDB, error) {
 }
 
 func (e *Engine) authorizeTable(table string) error {
+	return e.authorizeTableOp(table, kernal.TableAccessScopeDML)
+}
+
+func (e *Engine) authorizeTableOp(table string, scope kernal.TableAccessScope) error {
 	table = strings.TrimSpace(table)
-	if !strings.HasPrefix(table, "_sys_") {
-		return nil
+	// system tables: only super_admin can access
+	if strings.HasPrefix(table, "_sys_") {
+		if e.Actor != nil && hasRole(e.Actor.Roles, superAdminRoleCode) {
+			return nil
+		}
+		return ErrSystemTableAccessDenied
 	}
-	if e.Actor != nil && hasRole(e.Actor.Roles, superAdminRoleCode) {
-		return nil
-	}
-	return ErrSystemTableAccessDenied
+	_ = scope
+	// user tables: check database-level binding
+	return kernal.New.CheckDatabaseBinding(e.Database, e.Actor)
 }
 
 func hasRole(roles []string, roleCode string) bool {
@@ -114,7 +125,7 @@ func hasRole(roles []string, roleCode string) bool {
 }
 
 func (e *Engine) execCreate(s CreateTableStmt) (ExecResult, error) {
-	db, err := e.open(s.Table)
+	db, err := e.openWithScope(s.Table, kernal.TableAccessScopeDDL)
 	if err != nil {
 		return ExecResult{}, err
 	}
@@ -122,11 +133,17 @@ func (e *Engine) execCreate(s CreateTableStmt) (ExecResult, error) {
 	if err = db.CreateTable(s.Schema); err != nil {
 		return ExecResult{}, err
 	}
+	// register creator as table owner
+	if e.Actor != nil && strings.TrimSpace(e.Actor.ID) != "" {
+		if err = kernal.New.RegisterTableOwner(e.Database, s.Table, e.Actor.ID); err != nil {
+			return ExecResult{}, err
+		}
+	}
 	return ExecResult{Statement: StmtCreateTable, Affected: 1}, nil
 }
 
 func (e *Engine) execAlter(s AlterTableStmt) (ExecResult, error) {
-	db, err := e.open(s.Table)
+	db, err := e.openWithScope(s.Table, kernal.TableAccessScopeDDL)
 	if err != nil {
 		return ExecResult{}, err
 	}
@@ -597,7 +614,7 @@ func compareRowValues(a, b any) int {
 }
 
 func (e *Engine) execDrop(s DropTableStmt) (ExecResult, error) {
-	db, err := e.open(s.Table)
+	db, err := e.openWithScope(s.Table, kernal.TableAccessScopeDDL)
 	if err != nil {
 		return ExecResult{}, err
 	}
@@ -609,7 +626,7 @@ func (e *Engine) execDrop(s DropTableStmt) (ExecResult, error) {
 }
 
 func (e *Engine) execTruncate(s TruncateTableStmt) (ExecResult, error) {
-	db, err := e.open(s.Table)
+	db, err := e.openWithScope(s.Table, kernal.TableAccessScopeDDL)
 	if err != nil {
 		return ExecResult{}, err
 	}

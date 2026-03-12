@@ -52,4 +52,8 @@ var (
 	ErrSuperAdminRoleReserved      = fmt.Errorf("%s 角色错误：super_admin 仅允许 sdb 使用", dbLogTitle)
 	ErrInvalidInitPassword         = fmt.Errorf("%s 初始化错误：初始化口令无效", dbLogTitle)
 	ErrUserInactive                = fmt.Errorf("%s 认证错误：用户未激活", dbLogTitle)
+	ErrTableAccessDenied           = fmt.Errorf("%s 权限错误：无访问权限", dbLogTitle)
+	ErrTableOwnerAlreadyAssigned   = fmt.Errorf("%s 权限错误：表已有 owner", dbLogTitle)
+	ErrTableOwnerNotFound          = fmt.Errorf("%s 权限错误：表 owner 不存在", dbLogTitle)
+	ErrInvalidTableAccessGrant     = fmt.Errorf("%s 权限错误：授权参数无效", dbLogTitle)
 )

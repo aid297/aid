@@ -80,6 +80,9 @@ type SimpleDB struct {
 }
 
 func newSimpleDB(dbName, tableName string, attrs ...SchemaAttributer) (*SimpleDB, error) {
+	if strings.HasPrefix(strings.TrimSpace(tableName), "_sys_") {
+		dbName = systemDatabaseFor(dbName)
+	}
 	var (
 		err        error
 		dbPath     string

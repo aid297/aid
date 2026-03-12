@@ -10,11 +10,16 @@ import (
 )
 
 const (
-	systemTableUsers           = "_sys_users"
-	systemTableRoles           = "_sys_roles"
-	systemTablePermissions     = "_sys_permissions"
-	systemTableUserRoles       = "_sys_user_roles"
-	systemTableRolePermissions = "_sys_role_permissions"
+	systemTableUsers             = "_sys_users"
+	systemTableRoles             = "_sys_roles"
+	systemTablePermissions       = "_sys_permissions"
+	systemTableUserRoles         = "_sys_user_roles"
+	systemTableRolePermissions   = "_sys_role_permissions"
+	systemTableUserDBBindings    = "_sys_user_db_bindings"
+	systemTableTableOwners       = "_sys_table_owners"
+	systemTableTableAccessGrants = "_sys_table_access_grants"
+
+	systemDatabaseSuffix = "__sys"
 
 	defaultSystemAdminUsername = "sdb"
 	defaultSystemAdminPassword = "simpleDB"
@@ -32,7 +37,8 @@ type systemTableDefinition struct {
 }
 
 func ensureSystemTables(database string) error {
-	if strings.TrimSpace(database) == "" {
+	systemDatabase := systemDatabaseFor(database)
+	if strings.TrimSpace(systemDatabase) == "" {
 		return ErrDBPathEmpty
 	}
 
@@ -40,16 +46,27 @@ func ensureSystemTables(database string) error {
 	defer systemBootstrapMu.Unlock()
 
 	for _, definition := range systemTableDefinitions() {
-		if err := ensureSystemTable(database, definition); err != nil {
+		if err := ensureSystemTable(systemDatabase, definition); err != nil {
 			return err
 		}
 	}
 
-	if err := ensureDefaultAdmin(database); err != nil {
+	if err := ensureDefaultAdmin(systemDatabase); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func systemDatabaseFor(database string) string {
+	trimmed := strings.TrimSpace(database)
+	if trimmed == "" {
+		return ""
+	}
+	if strings.HasSuffix(trimmed, systemDatabaseSuffix) {
+		return trimmed
+	}
+	return trimmed + systemDatabaseSuffix
 }
 
 func systemTableDefinitions() []systemTableDefinition {
@@ -59,7 +76,43 @@ func systemTableDefinitions() []systemTableDefinition {
 		{name: systemTablePermissions, schema: systemPermissionsSchema()},
 		{name: systemTableUserRoles, schema: systemUserRolesSchema()},
 		{name: systemTableRolePermissions, schema: systemRolePermissionsSchema()},
+		{name: systemTableUserDBBindings, schema: systemUserDBBindingsSchema()},
+		{name: systemTableTableOwners, schema: systemTableOwnersSchema()},
+		{name: systemTableTableAccessGrants, schema: systemTableAccessGrantsSchema()},
 	}
+}
+
+func systemUserDBBindingsSchema() TableSchema {
+	return TableSchema{Columns: []Column{
+		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+		{Name: "userId", Type: "uuid", Required: true},
+		{Name: "databaseName", Type: "string", Required: true},
+		{Name: "enabled", Type: "bool", Default: true},
+		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+		{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
+	}}
+}
+
+func systemTableOwnersSchema() TableSchema {
+	return TableSchema{Columns: []Column{
+		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+		{Name: "tableName", Type: "string", Required: true, Unique: true},
+		{Name: "ownerUserId", Type: "uuid", Required: true},
+		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+	}}
+}
+
+func systemTableAccessGrantsSchema() TableSchema {
+	return TableSchema{Columns: []Column{
+		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+		{Name: "tableName", Type: "string", Required: true},
+		{Name: "granteeUserId", Type: "uuid", Required: true},
+		{Name: "scope", Type: "string", Required: true},
+		{Name: "ownerApproved", Type: "bool", Default: false},
+		{Name: "adminApproved", Type: "bool", Default: false},
+		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+		{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
+	}}
 }
 
 func systemUsersSchema() TableSchema {

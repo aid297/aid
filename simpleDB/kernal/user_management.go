@@ -41,7 +41,7 @@ func registerUser(database, username, password, displayName string) (*Authentica
 		return nil, err
 	}
 
-	usersDB, err := newSimpleDB(database, systemTableUsers)
+	usersDB, err := newSimpleDB(systemDatabaseFor(database), systemTableUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func activateUser(database, username string) (*AuthenticatedUser, error) {
 		return nil, err
 	}
 
-	usersDB, err := newSimpleDB(database, systemTableUsers)
+	usersDB, err := newSimpleDB(systemDatabaseFor(database), systemTableUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func deactivateUser(database, username string) (*AuthenticatedUser, error) {
 		return nil, err
 	}
 
-	usersDB, err := newSimpleDB(database, systemTableUsers)
+	usersDB, err := newSimpleDB(systemDatabaseFor(database), systemTableUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func assignRoles(database, username string, roleCodes []string) (*AuthenticatedU
 		return nil, err
 	}
 
-	usersDB, err := newSimpleDB(database, systemTableUsers)
+	usersDB, err := newSimpleDB(systemDatabaseFor(database), systemTableUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -204,13 +204,13 @@ func assignRoles(database, username string, roleCodes []string) (*AuthenticatedU
 		return nil, ErrUserNotFound
 	}
 
-	rolesDB, err := newSimpleDB(database, systemTableRoles)
+	rolesDB, err := newSimpleDB(systemDatabaseFor(database), systemTableRoles)
 	if err != nil {
 		return nil, err
 	}
 	defer rolesDB.Close()
 
-	userRolesDB, err := newSimpleDB(database, systemTableUserRoles)
+	userRolesDB, err := newSimpleDB(systemDatabaseFor(database), systemTableUserRoles)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +279,7 @@ func initSDBPassword(database string) error {
 		return err
 	}
 
-	usersDB, err := newSimpleDB(database, systemTableUsers)
+	usersDB, err := newSimpleDB(systemDatabaseFor(database), systemTableUsers)
 	if err != nil {
 		return err
 	}

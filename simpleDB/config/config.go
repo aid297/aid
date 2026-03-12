@@ -39,6 +39,7 @@ type (
 		AssignRolePermission string `yaml:"assignRolePermission"`
 		InitSDBPassword      string `yaml:"initSDBPassword"`
 		SQLExecute           string `yaml:"sql"`
+		SQLGrant             string `yaml:"sqlGrant"`
 		Admin                string `yaml:"admin"`
 		Report               string `yaml:"report"`
 	}
@@ -80,6 +81,7 @@ func Default() Config {
 				AssignRolePermission: "/auth/assign-role-permissions",
 				InitSDBPassword:      "/auth/init-sdb-password",
 				SQLExecute:           "/sql/execute",
+				SQLGrant:             "/sql/grant",
 				Admin:                "/admin",
 				Report:               "/reports",
 			},
@@ -180,6 +182,9 @@ func (c *Config) ApplyDefaults() {
 	if strings.TrimSpace(c.Transport.HTTP.Route.SQLExecute) == "" {
 		c.Transport.HTTP.Route.SQLExecute = defaults.Transport.HTTP.Route.SQLExecute
 	}
+	if strings.TrimSpace(c.Transport.HTTP.Route.SQLGrant) == "" {
+		c.Transport.HTTP.Route.SQLGrant = defaults.Transport.HTTP.Route.SQLGrant
+	}
 	if strings.TrimSpace(c.Transport.HTTP.TokenTTL) == "" {
 		c.Transport.HTTP.TokenTTL = defaults.Transport.HTTP.TokenTTL
 	}
@@ -251,6 +256,7 @@ type rawHTTPConfig struct {
 	AssignRolePermissionPath string `yaml:"assignRolePermissionPath"`
 	InitSDBPasswordPath      string `yaml:"initSDBPasswordPath"`
 	SQLExecutePath           string `yaml:"sqlExecutePath"`
+	SQLGrantPath             string `yaml:"sqlGrantPath"`
 	AdminPath                string `yaml:"adminPath"`
 	ReportPath               string `yaml:"reportPath"`
 }
@@ -268,6 +274,7 @@ type rawHTTPRouteConfig struct {
 	AssignRolePermission string `yaml:"assignRolePermission"`
 	InitSDBPassword      string `yaml:"initSDBPassword"`
 	SQLExecute           string `yaml:"sql"`
+	SQLGrant             string `yaml:"sqlGrant"`
 	Admin                string `yaml:"admin"`
 	Report               string `yaml:"report"`
 }
@@ -320,6 +327,9 @@ func applyRawConfig(config *Config, raw rawConfig) {
 	}
 	if value := firstNonEmpty(raw.Transport.HTTP.Route.SQLExecute, raw.Transport.HTTP.SQLExecutePath); value != "" {
 		config.Transport.HTTP.Route.SQLExecute = value
+	}
+	if value := firstNonEmpty(raw.Transport.HTTP.Route.SQLGrant, raw.Transport.HTTP.SQLGrantPath); value != "" {
+		config.Transport.HTTP.Route.SQLGrant = value
 	}
 	if raw.Transport.HTTP.InitPassword != "" {
 		config.Transport.HTTP.InitPassword = raw.Transport.HTTP.InitPassword

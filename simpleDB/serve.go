@@ -73,6 +73,7 @@ func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*trans
 		transport.WithAssignRolePermissionPath(config.Transport.HTTP.Route.AssignRolePermission),
 		transport.WithInitSDBPasswordPath(config.Transport.HTTP.Route.InitSDBPassword),
 		transport.WithSQLExecutePath(config.Transport.HTTP.Route.SQLExecute),
+		transport.WithSQLGrantPath(config.Transport.HTTP.Route.SQLGrant),
 		transport.WithSQLAllowedOps(config.Transport.HTTP.SQLAllowedOps),
 		transport.WithInitPassword(config.Transport.HTTP.InitPassword),
 		transport.WithInitPasswordRotator(func() (string, error) {
@@ -126,6 +127,7 @@ func printServeSummary(stdout *os.File, configPath string, config configpkg.Conf
 	_, _ = fmt.Fprintf(stdout, "- assign role permissions: POST %s (requires super_admin)\n", config.Transport.HTTP.Route.AssignRolePermission)
 	_, _ = fmt.Fprintf(stdout, "- init sdb password: POST %s (requires init password)\n", config.Transport.HTTP.Route.InitSDBPassword)
 	_, _ = fmt.Fprintf(stdout, "- sql execute: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLExecute)
+	_, _ = fmt.Fprintf(stdout, "- sql grant: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLGrant)
 	_, _ = fmt.Fprintf(stdout, "- health: GET %s\n", config.Transport.HTTP.Route.Health)
 	_, _ = fmt.Fprintf(stdout, "- profile: GET %s\n", config.Transport.HTTP.Route.Profile)
 	if config.Transport.HTTP.EnableAdmin {

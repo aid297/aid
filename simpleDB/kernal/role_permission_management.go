@@ -17,7 +17,7 @@ func assignRolePermissions(database, roleCode string, permissionCodes []string) 
 		return err
 	}
 
-	rolesDB, err := newSimpleDB(database, systemTableRoles)
+	rolesDB, err := newSimpleDB(systemDatabaseFor(database), systemTableRoles)
 	if err != nil {
 		return err
 	}
@@ -35,13 +35,13 @@ func assignRolePermissions(database, roleCode string, permissionCodes []string) 
 		return ErrRoleNotFound
 	}
 
-	permissionsDB, err := newSimpleDB(database, systemTablePermissions)
+	permissionsDB, err := newSimpleDB(systemDatabaseFor(database), systemTablePermissions)
 	if err != nil {
 		return err
 	}
 	defer permissionsDB.Close()
 
-	rolePermissionsDB, err := newSimpleDB(database, systemTableRolePermissions)
+	rolePermissionsDB, err := newSimpleDB(systemDatabaseFor(database), systemTableRolePermissions)
 	if err != nil {
 		return err
 	}
