@@ -39,15 +39,17 @@ func (s AlterTableStmt) TableName() string   { return s.Table }
 type InsertStmt struct {
 	Table string
 	Row   kernal.Row
+	Rows  []kernal.Row
 }
 
 func (s InsertStmt) Type() StatementType { return StmtInsert }
 func (s InsertStmt) TableName() string   { return s.Table }
 
 type UpdateStmt struct {
-	Table      string
-	PrimaryKey any
-	Updates    kernal.Row
+	Table       string
+	PrimaryKey  any
+	PrimaryKeys []any
+	Updates     kernal.Row
 }
 
 func (s UpdateStmt) Type() StatementType { return StmtUpdate }
@@ -61,9 +63,57 @@ type DeleteStmt struct {
 func (s DeleteStmt) Type() StatementType { return StmtDelete }
 func (s DeleteStmt) TableName() string   { return s.Table }
 
+// SubqueryCondition 表示 IN/NOT IN 子查询条件，由 engine 展开为具体值列表后传入 kernal
+type SubqueryCondition struct {
+	Field   string
+	NotIn   bool
+	SubStmt SelectStmt
+}
+
+type JoinType string
+
+const (
+	JoinInner JoinType = "INNER"
+	JoinLeft  JoinType = "LEFT"
+)
+
+type JoinClause struct {
+	Type       JoinType // INNER | LEFT
+	Table      string   // 从表名
+	LeftAlias  string   // 主表字段（可含 "alias.field"）
+	RightAlias string   // 从表字段（可含 "alias.field"）
+}
+
+type AggFunc string
+
+const (
+	AggNone  AggFunc = ""
+	AggCount AggFunc = "COUNT"
+	AggSum   AggFunc = "SUM"
+	AggAvg   AggFunc = "AVG"
+	AggMin   AggFunc = "MIN"
+	AggMax   AggFunc = "MAX"
+)
+
+type SelectField struct {
+	Star     bool    // SELECT *
+	Field    string  // plain column name
+	Agg      AggFunc // COUNT / SUM / AVG / MIN / MAX
+	AggField string  // field inside aggregate ("*" for COUNT(*))
+	Alias    string  // AS alias
+}
+
 type SelectStmt struct {
 	Table      string
+	Fields     []SelectField
+	Joins      []JoinClause
 	Conditions []kernal.QueryCondition
+	SubConds   []SubqueryCondition
+	GroupBy    []string
+	OrderBy    string
+	OrderDesc  bool
+	Limit      int
+	Offset     int
 }
 
 func (s SelectStmt) Type() StatementType { return StmtSelect }
@@ -80,9 +130,11 @@ func (s TruncateTableStmt) Type() StatementType { return StmtTruncate }
 func (s TruncateTableStmt) TableName() string   { return s.Table }
 
 type ExecResult struct {
-	Rows      []kernal.Row
-	Affected  int
-	Inserted  kernal.Row
-	Updated   kernal.Row
-	Statement StatementType
+	Rows         []kernal.Row  `json:"rows,omitempty"`
+	Affected     int           `json:"affected"`
+	Inserted     kernal.Row    `json:"inserted,omitempty"`
+	InsertedRows []kernal.Row  `json:"insertedRows,omitempty"`
+	Updated      kernal.Row    `json:"updated,omitempty"`
+	UpdatedRows  []kernal.Row  `json:"updatedRows,omitempty"`
+	Statement    StatementType `json:"statement"`
 }

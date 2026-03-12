@@ -15,6 +15,7 @@ const (
 	ErrorCodeConflict        ErrorCode = "conflict"
 	ErrorCodeClosed          ErrorCode = "closed"
 	ErrorCodeReadOnly        ErrorCode = "read_only"
+	ErrorCodeUnauthorized    ErrorCode = "unauthorized"
 	ErrorCodeDDL             ErrorCode = "ddl_error"
 	ErrorCodeInternal        ErrorCode = "internal"
 )
@@ -50,15 +51,26 @@ func wrapError(err error) error {
 	case errors.Is(err, kernal.ErrEmptyKey),
 		errors.Is(err, kernal.ErrInvalidSchema),
 		errors.Is(err, kernal.ErrInvalidQueryCondition),
-		errors.Is(err, kernal.ErrBatchEmpty):
+		errors.Is(err, kernal.ErrBatchEmpty),
+		errors.Is(err, kernal.ErrInvalidRegistration),
+		errors.Is(err, kernal.ErrInvalidPermissionAssignment),
+		errors.Is(err, kernal.ErrInvalidInitPassword):
 		return &DriverError{Code: ErrorCodeInvalidArgument, Err: err}
 	case errors.Is(err, kernal.ErrKeyNotFound),
-		errors.Is(err, kernal.ErrRelationNotFound):
+		errors.Is(err, kernal.ErrRelationNotFound),
+		errors.Is(err, kernal.ErrUserNotFound),
+		errors.Is(err, kernal.ErrRoleNotFound):
 		return &DriverError{Code: ErrorCodeNotFound, Err: err}
+	case errors.Is(err, kernal.ErrInvalidCredentials),
+		errors.Is(err, kernal.ErrUserInactive):
+		return &DriverError{Code: ErrorCodeUnauthorized, Err: err}
 	case errors.Is(err, kernal.ErrUniqueConflict),
 		errors.Is(err, kernal.ErrPrimaryKeyConflict),
-		errors.Is(err, kernal.ErrTxConflict):
+		errors.Is(err, kernal.ErrTxConflict),
+		errors.Is(err, kernal.ErrUserAlreadyExists):
 		return &DriverError{Code: ErrorCodeConflict, Err: err}
+	case errors.Is(err, kernal.ErrSuperAdminRoleReserved):
+		return &DriverError{Code: ErrorCodeUnauthorized, Err: err}
 	case errors.Is(err, kernal.ErrDatabaseClosed),
 		errors.Is(err, kernal.ErrTxClosed):
 		return &DriverError{Code: ErrorCodeClosed, Err: err}
@@ -68,6 +80,8 @@ func wrapError(err error) error {
 		errors.Is(err, kernal.ErrColumnAlreadyExists),
 		errors.Is(err, kernal.ErrColumnNotFound),
 		errors.Is(err, kernal.ErrCannotDropPrimaryKey),
+		errors.Is(err, kernal.ErrSystemBootstrap),
+		errors.Is(err, kernal.ErrSystemTableSchema),
 		errors.Is(err, kernal.ErrSchemaAlreadyExists),
 		errors.Is(err, kernal.ErrSchemaNotConfigured):
 		return &DriverError{Code: ErrorCodeDDL, Err: err}

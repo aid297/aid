@@ -1,0 +1,273 @@
+### simpleDB HTTP SQL Demo (.rest)
+
+
+### 适用于 VS Code REST Client 扩展
+
+
+### 执行顺序：从上到下逐条 Send Request
+@baseUrl = http://127.0.0.1:18080
+@loginPath = /auth/login
+@sqlPath = /sql/execute
+@table = demo_users
+
+
+### 1) 登录（默认管理员）
+# @name login
+POST {{baseUrl}}{{loginPath}}
+Content-Type: application/json
+
+{
+  "username": "sdb",
+  "password": "simpleDB"
+}
+
+
+### 从登录响应提取 token
+@accessToken = {{login.response.body.$.token.accessToken}}
+
+
+### 2) 建表
+# @name createTable
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "CREATE TABLE {{table}} (id int PRIMARY KEY AUTO_INCREMENT, username string UNIQUE REQUIRED, age int DEFAULT 0)"
+}
+
+
+### 3) 单条插入（参数化）
+# @name insertOne
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "INSERT INTO {{table}} (username, age) VALUES (:username, :age)",
+  "paramMap": {
+    "username": "alice",
+    "age": 20
+  }
+}
+
+
+### 4) 批量插入
+# @name insertBatch
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "INSERT INTO {{table}} (username, age) VALUES (?, ?), (?, ?)",
+  "paramList": ["bob", 21, "carol", 22]
+}
+
+
+### 5) 批量更新（参数化 IN）
+# @name updateBatch
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "UPDATE {{table}} SET age=:age WHERE id IN :ids",
+  "paramMap": {
+    "age": 30,
+    "ids": [
+      1,
+      2,
+      3
+    ]
+  }
+}
+
+
+### 6) 字段投影查询（只返回 id 和 username）
+# @name selectProjection
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT id, username FROM {{table}} WHERE username = ?",
+  "paramList": ["alice"]
+}
+
+
+### 7) 混合参数查询（paramMap + paramList + 分页）
+# @name selectMixedPage
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM {{table}} WHERE age >= :minAge AND username != ? ORDER BY id DESC LIMIT ? OFFSET ?",
+  "paramMap": {
+    "minAge": 20
+  },
+  "paramList": ["alice", 2, 1]
+}
+
+
+### 8) 全表聚合（COUNT / AVG / MAX / MIN）
+# @name selectAgg
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT COUNT(*) AS total, AVG(age) AS avg_age, MAX(age) AS max_age, MIN(age) AS min_age FROM {{table}}"
+}
+
+
+### 9) GROUP BY 分组统计
+# @name selectGroupBy
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT age, COUNT(*) AS cnt FROM {{table}} GROUP BY age ORDER BY cnt DESC"
+}
+
+
+### 10) 验证：无条件删除会被拒绝（应返回 400）
+# @name deleteWithoutWhere
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "DELETE FROM {{table}}"
+}
+
+### ── JOIN 链表查询演示 ──────────────────────────────────────────
+
+
+### 13) 建从表 demo_orders
+# @name createOrders
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "CREATE TABLE demo_orders (id int PRIMARY KEY AUTO_INCREMENT, user_id int REQUIRED, amount int DEFAULT 0)"
+}
+
+
+### 14) 向 demo_orders 插入数据（user_id=3 关联 carol，user_id=99 不存在用于 LEFT JOIN 测试）
+# @name insertOrders
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "INSERT INTO demo_orders (user_id, amount) VALUES (?, ?), (?, ?), (?, ?)",
+  "paramList": [3, 100, 3, 200, 99, 50]
+}
+
+
+### 15) INNER JOIN：只返回两表都匹配的行
+# @name innerJoin
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM demo_orders INNER JOIN demo_users ON demo_orders.user_id = demo_users.id"
+}
+
+
+### 16) LEFT JOIN：demo_orders 全部保留，user_id=99 对应 demo_users 字段为 null
+# @name leftJoin
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM demo_orders LEFT JOIN demo_users ON demo_orders.user_id = demo_users.id"
+}
+
+
+### 17) JOIN + 字段投影 + WHERE + ORDER BY
+# @name joinWithFilter
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT demo_orders.id, demo_users.username, demo_orders.amount FROM demo_orders INNER JOIN demo_users ON demo_orders.user_id = demo_users.id WHERE demo_orders.amount >= 100 ORDER BY demo_orders.amount DESC"
+}
+
+
+### ── IN / NOT IN 子查询演示 ──────────────────────────────────────
+
+
+### 18) NOT IN 字面量：排除指定 id
+# @name notInLiteral
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM {{table}} WHERE id NOT IN (?, ?)",
+  "paramList": [1, 2]
+}
+
+
+### 19) IN 子查询：查询有订单的用户（user_id 在 demo_orders 中存在）
+# @name inSubquery
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM demo_users WHERE id IN (SELECT user_id FROM demo_orders)"
+}
+
+
+### 20) NOT IN 子查询：查询没有订单的用户
+# @name notInSubquery
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM demo_users WHERE id NOT IN (SELECT user_id FROM demo_orders)"
+}
+
+
+### 21) IN 子查询 + 子查询带 WHERE：只查高金额订单关联的用户
+# @name inSubqueryWithFilter
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM demo_users WHERE id IN (SELECT user_id FROM demo_orders WHERE amount >= ?)",
+  "paramList": [200]
+}
+
+
+### 11) 条件删除（允许）
+# @name deleteWithWhere
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "DELETE FROM {{table}} WHERE id IN (?, ?)",
+  "paramList": [1, 2]
+}
+
+
+### 12) 删除后再查一次（验证结果）
+# @name selectAfterDelete
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM {{table}}"
+}

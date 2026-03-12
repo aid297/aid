@@ -1,0 +1,27 @@
+database:
+    path: demo_transport
+transport:
+    http:
+        enabled: true
+        address: :18080
+        ginMode: release
+        route:
+            health: /health
+            profile: /me
+            login: /auth/login
+            register: /auth/register
+            refresh: /auth/refresh
+            logout: /auth/logout
+            activate: /auth/activate
+            deactivate: /auth/deactivate
+            assignRole: /auth/assign-roles
+            assignRolePermission: /auth/assign-role-permissions
+            initSDBPassword: /auth/init-sdb-password
+            sql: /sql/execute
+            admin: /admin
+            report: /reports
+        initPassword: mSdUvQw1V-AElhbrIkjLIbuo
+        tokenTTL: 12h
+        tokenSecret: ""
+        enableAdminRoute: true
+        enableReportRoute: true

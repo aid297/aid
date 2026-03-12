@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"fmt"
 
+	"github.com/aid297/aid/debugLogger"
 	"github.com/aid297/aid/simpleDB/driver"
 )
 
@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("schema exists=%v, diff=%+v\n", exists, plan)
+	debugLogger.Print("schema exists=%v, diff=%+v\n", exists, plan)
 
 	if err = db.SyncSchema(evolvedSchema); err != nil {
 		panic(err)
@@ -61,7 +61,7 @@ func main() {
 	if err != nil {
 		var dErr *driver.DriverError
 		if errors.As(err, &dErr) {
-			fmt.Printf("driver error code=%s err=%v\n", dErr.Code, dErr.Err)
+			debugLogger.Print("driver error code=%s err=%v\n", dErr.Code, dErr.Err)
 		}
 	}
 
@@ -69,7 +69,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("rows=%v\n", rows)
+	debugLogger.Print("rows=%v\n", rows)
 
 	if err = demoLinkLayer(); err != nil {
 		panic(err)
@@ -129,6 +129,6 @@ func demoLinkLayer() error {
 		return err
 	}
 
-	fmt.Printf("link-layer cascade rows=%v\n", cascadeRows)
+	debugLogger.Print("link-layer cascade rows=%v\n", cascadeRows)
 	return nil
 }

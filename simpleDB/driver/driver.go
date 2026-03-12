@@ -64,6 +64,10 @@ func (*app) DB(database, table string, attrs ...kernal.SchemaAttributer) (*DB, e
 	return &DB{core: core}, nil
 }
 
+func (*app) EnsureSystemTables(database string) error {
+	return wrapError(kernal.New.EnsureSystemTables(database))
+}
+
 func (db *DB) Close() error { return wrapError(db.core.Close()) }
 
 func (db *DB) SetAttrs(attrs ...kernal.SchemaAttributer) *DB {
