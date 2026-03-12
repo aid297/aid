@@ -21,6 +21,15 @@ transport:
             sqlGrant: /sql/grant
             admin: /admin
             report: /reports
+        limit:
+            enabled: true
+            requests: 60
+            window: 1m
+            noTokenPaths:
+                - /auth/login
+                - /auth/register
+                - /auth/init-sdb-password
+                - /health
         initPassword: mSdUvQw1V-AElhbrIkjLIbuo
         tokenTTL: 12h
         tokenSecret: ""

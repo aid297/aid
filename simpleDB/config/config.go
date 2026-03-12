@@ -49,6 +49,7 @@ type (
 		Address      string          `yaml:"address"`
 		GinMode      string          `yaml:"ginMode"`
 		Route        HTTPRouteConfig `yaml:"route"`
+		Limit        HTTPLimitConfig `yaml:"limit"`
 		InitPassword string          `yaml:"initPassword"`
 		TokenTTL     string          `yaml:"tokenTTL"`
 		TokenSecret  string          `yaml:"tokenSecret"`
@@ -58,6 +59,13 @@ type (
 		// 可选值： select, insert, update, delete, create, drop, truncate, alter
 		// 留空表示不限制（默认开放全部，建议生产环境按需收紧）。
 		SQLAllowedOps []string `yaml:"sqlAllowedOps"`
+	}
+
+	HTTPLimitConfig struct {
+		Enabled      bool     `yaml:"enabled"`
+		Requests     int      `yaml:"requests"`
+		Window       string   `yaml:"window"`
+		NoTokenPaths []string `yaml:"noTokenPaths"`
 	}
 )
 
@@ -84,6 +92,12 @@ func Default() Config {
 				SQLGrant:             "/sql/grant",
 				Admin:                "/admin",
 				Report:               "/reports",
+			},
+			Limit: HTTPLimitConfig{
+				Enabled:      false,
+				Requests:     60,
+				Window:       "1m",
+				NoTokenPaths: []string{"/auth/login", "/auth/register", "/auth/init-sdb-password", "/health"},
 			},
 			InitPassword: "",
 			TokenTTL:     "12h",
@@ -188,6 +202,15 @@ func (c *Config) ApplyDefaults() {
 	if strings.TrimSpace(c.Transport.HTTP.TokenTTL) == "" {
 		c.Transport.HTTP.TokenTTL = defaults.Transport.HTTP.TokenTTL
 	}
+	if c.Transport.HTTP.Limit.Requests <= 0 {
+		c.Transport.HTTP.Limit.Requests = defaults.Transport.HTTP.Limit.Requests
+	}
+	if strings.TrimSpace(c.Transport.HTTP.Limit.Window) == "" {
+		c.Transport.HTTP.Limit.Window = defaults.Transport.HTTP.Limit.Window
+	}
+	if len(c.Transport.HTTP.Limit.NoTokenPaths) == 0 {
+		c.Transport.HTTP.Limit.NoTokenPaths = append([]string(nil), defaults.Transport.HTTP.Limit.NoTokenPaths...)
+	}
 	if strings.TrimSpace(c.Transport.HTTP.Route.Admin) == "" {
 		c.Transport.HTTP.Route.Admin = defaults.Transport.HTTP.Route.Admin
 	}
@@ -215,7 +238,23 @@ func (c Config) Validate() error {
 	if _, err := c.ParseTokenTTL(); err != nil {
 		return fmt.Errorf("transport.http.tokenTTL is invalid: %w", err)
 	}
+	if c.Transport.HTTP.Limit.Enabled {
+		if c.Transport.HTTP.Limit.Requests <= 0 {
+			return fmt.Errorf("transport.http.limit.requests must be > 0")
+		}
+		if _, err := c.ParseLimitWindow(); err != nil {
+			return fmt.Errorf("transport.http.limit.window is invalid: %w", err)
+		}
+	}
 	return nil
+}
+
+func (c Config) ParseLimitWindow() (time.Duration, error) {
+	value := strings.TrimSpace(c.Transport.HTTP.Limit.Window)
+	if value == "" {
+		return time.Minute, nil
+	}
+	return time.ParseDuration(value)
 }
 
 type rawConfig struct {
@@ -239,6 +278,7 @@ type rawHTTPConfig struct {
 	InitPassword  string             `yaml:"initPassword"`
 	TokenTTL      string             `yaml:"tokenTTL"`
 	TokenSecret   string             `yaml:"tokenSecret"`
+	Limit         rawHTTPLimitConfig `yaml:"limit"`
 	EnableAdmin   *bool              `yaml:"enableAdminRoute"`
 	EnableReport  *bool              `yaml:"enableReportRoute"`
 	SQLAllowedOps []string           `yaml:"sqlAllowedOps"`
@@ -259,6 +299,16 @@ type rawHTTPConfig struct {
 	SQLGrantPath             string `yaml:"sqlGrantPath"`
 	AdminPath                string `yaml:"adminPath"`
 	ReportPath               string `yaml:"reportPath"`
+	LimitEnabled             *bool  `yaml:"limitEnabled"`
+	LimitRequests            int    `yaml:"limitRequests"`
+	LimitWindow              string `yaml:"limitWindow"`
+}
+
+type rawHTTPLimitConfig struct {
+	Enabled      *bool    `yaml:"enabled"`
+	Requests     int      `yaml:"requests"`
+	Window       string   `yaml:"window"`
+	NoTokenPaths []string `yaml:"noTokenPaths"`
 }
 
 type rawHTTPRouteConfig struct {
@@ -336,6 +386,27 @@ func applyRawConfig(config *Config, raw rawConfig) {
 	}
 	if strings.TrimSpace(raw.Transport.HTTP.TokenTTL) != "" {
 		config.Transport.HTTP.TokenTTL = strings.TrimSpace(raw.Transport.HTTP.TokenTTL)
+	}
+	if raw.Transport.HTTP.Limit.Enabled != nil {
+		config.Transport.HTTP.Limit.Enabled = *raw.Transport.HTTP.Limit.Enabled
+	}
+	if raw.Transport.HTTP.Limit.Requests > 0 {
+		config.Transport.HTTP.Limit.Requests = raw.Transport.HTTP.Limit.Requests
+	}
+	if strings.TrimSpace(raw.Transport.HTTP.Limit.Window) != "" {
+		config.Transport.HTTP.Limit.Window = strings.TrimSpace(raw.Transport.HTTP.Limit.Window)
+	}
+	if len(raw.Transport.HTTP.Limit.NoTokenPaths) > 0 {
+		config.Transport.HTTP.Limit.NoTokenPaths = append([]string(nil), raw.Transport.HTTP.Limit.NoTokenPaths...)
+	}
+	if raw.Transport.HTTP.LimitEnabled != nil {
+		config.Transport.HTTP.Limit.Enabled = *raw.Transport.HTTP.LimitEnabled
+	}
+	if raw.Transport.HTTP.LimitRequests > 0 {
+		config.Transport.HTTP.Limit.Requests = raw.Transport.HTTP.LimitRequests
+	}
+	if strings.TrimSpace(raw.Transport.HTTP.LimitWindow) != "" {
+		config.Transport.HTTP.Limit.Window = strings.TrimSpace(raw.Transport.HTTP.LimitWindow)
 	}
 	config.Transport.HTTP.TokenSecret = raw.Transport.HTTP.TokenSecret
 	if raw.Transport.HTTP.EnableAdmin != nil {

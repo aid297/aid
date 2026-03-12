@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"net/http"
 	"reflect"
@@ -62,6 +63,12 @@ type HTTPServer struct {
 	SQLExecutePath           string
 	SQLGrantPath             string
 	SQLAllowedOps            map[string]struct{} // nil = 不限制
+	LimitEnabled             bool
+	LimitRequests            int
+	LimitWindow              time.Duration
+	LimitNoTokenPaths        map[string]struct{}
+	limitMu                  sync.Mutex
+	limitBuckets             map[string]*limitBucket
 	InitPassword             string
 	initPasswordMu           sync.RWMutex
 	initPasswordRotator      func() (string, error)
@@ -70,6 +77,11 @@ type HTTPServer struct {
 	authenticator            Authenticator
 	engine                   *gin.Engine
 	tokenManager             *TokenManager
+}
+
+type limitBucket struct {
+	WindowStart time.Time
+	Count       int
 }
 
 type Option func(*HTTPServer)
@@ -166,6 +178,9 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 		InitSDBPasswordPath:      DefaultInitSDBPasswordPath,
 		SQLExecutePath:           DefaultSQLExecutePath,
 		SQLGrantPath:             DefaultSQLGrantPath,
+		LimitEnabled:             false,
+		LimitRequests:            60,
+		LimitWindow:              time.Minute,
 		TokenTTL:                 12 * time.Hour,
 		authenticator:            &driver.New,
 		engine:                   engine,
@@ -207,6 +222,15 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 	}
 	if server.SQLGrantPath == "" {
 		server.SQLGrantPath = DefaultSQLGrantPath
+	}
+	if server.LimitRequests <= 0 {
+		server.LimitRequests = 60
+	}
+	if server.LimitWindow <= 0 {
+		server.LimitWindow = time.Minute
+	}
+	if server.limitBuckets == nil {
+		server.limitBuckets = make(map[string]*limitBucket)
 	}
 	server.tokenManager = NewTokenManager(server.Database, server.TokenSecret, server.TokenTTL)
 	server.registerRoutes()
@@ -290,6 +314,27 @@ func WithSQLAllowedOps(ops []string) Option {
 			m[strings.ToLower(strings.TrimSpace(op))] = struct{}{}
 		}
 		server.SQLAllowedOps = m
+	}
+}
+
+func WithTokenRateLimit(enabled bool, requests int, window time.Duration, noTokenPaths []string) Option {
+	return func(server *HTTPServer) {
+		server.LimitEnabled = enabled
+		if requests > 0 {
+			server.LimitRequests = requests
+		}
+		if window > 0 {
+			server.LimitWindow = window
+		}
+		if len(noTokenPaths) == 0 {
+			server.LimitNoTokenPaths = nil
+			return
+		}
+		m := make(map[string]struct{}, len(noTokenPaths))
+		for _, path := range noTokenPaths {
+			m[normalizePath(path, path)] = struct{}{}
+		}
+		server.LimitNoTokenPaths = m
 	}
 }
 
@@ -409,6 +454,9 @@ func (s *HTTPServer) RequirePermissions(permissions ...string) gin.HandlerFunc {
 }
 
 func (s *HTTPServer) registerRoutes() {
+	if s.LimitEnabled {
+		s.engine.Use(s.tokenRateLimitMiddleware())
+	}
 	s.engine.NoMethod(func(ctx *gin.Context) {
 		writeJSON(ctx, http.StatusMethodNotAllowed, LoginResponse{
 			Success: false,
@@ -427,6 +475,96 @@ func (s *HTTPServer) registerRoutes() {
 	s.engine.POST(s.InitSDBPasswordPath, s.handleInitSDBPassword)
 	s.engine.POST(s.SQLExecutePath, s.AuthMiddleware(), s.handleSQLExecute)
 	s.engine.POST(s.SQLGrantPath, s.AuthMiddleware(), s.handleSQLGrant)
+}
+
+func (s *HTTPServer) tokenRateLimitMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		if !s.LimitEnabled || s.LimitRequests <= 0 || s.LimitWindow <= 0 {
+			ctx.Next()
+			return
+		}
+
+		key, limited := s.resolveLimitKey(ctx)
+		if !limited {
+			ctx.Next()
+			return
+		}
+
+		now := time.Now()
+		allowed, retryAfter := s.allowLimitKey(key, now)
+		if allowed {
+			ctx.Next()
+			return
+		}
+
+		seconds := int(math.Ceil(retryAfter.Seconds()))
+		if seconds < 1 {
+			seconds = 1
+		}
+		ctx.Header("Retry-After", strconv.Itoa(seconds))
+		ctx.JSON(http.StatusTooManyRequests, LoginResponse{Success: false, Error: &ErrorBody{Code: "too_many_requests", Message: "rate limit exceeded"}})
+		ctx.Abort()
+	}
+}
+
+func (s *HTTPServer) resolveLimitKey(ctx *gin.Context) (string, bool) {
+	path := strings.TrimSpace(ctx.FullPath())
+	if path == "" {
+		path = normalizePath(ctx.Request.URL.Path, ctx.Request.URL.Path)
+	}
+	if path == "" {
+		return "", false
+	}
+
+	if _, ok := s.LimitNoTokenPaths[path]; ok {
+		return "anon:" + path + ":" + strings.TrimSpace(ctx.ClientIP()), true
+	}
+
+	token := readBearerTokenRaw(ctx.GetHeader("Authorization"))
+	if token == "" {
+		return "", false
+	}
+	return "token:" + token, true
+}
+
+func readBearerTokenRaw(header string) string {
+	header = strings.TrimSpace(header)
+	if header == "" {
+		return ""
+	}
+	const prefix = "Bearer "
+	if !strings.HasPrefix(header, prefix) {
+		return ""
+	}
+	return strings.TrimSpace(strings.TrimPrefix(header, prefix))
+}
+
+func (s *HTTPServer) allowLimitKey(key string, now time.Time) (bool, time.Duration) {
+	s.limitMu.Lock()
+	defer s.limitMu.Unlock()
+
+	bucket, ok := s.limitBuckets[key]
+	if !ok {
+		s.limitBuckets[key] = &limitBucket{WindowStart: now, Count: 1}
+		return true, 0
+	}
+
+	if now.Sub(bucket.WindowStart) >= s.LimitWindow {
+		bucket.WindowStart = now
+		bucket.Count = 1
+		return true, 0
+	}
+
+	if bucket.Count >= s.LimitRequests {
+		retryAfter := s.LimitWindow - now.Sub(bucket.WindowStart)
+		if retryAfter < 0 {
+			retryAfter = 0
+		}
+		return false, retryAfter
+	}
+
+	bucket.Count++
+	return true, 0
 }
 
 func (s *HTTPServer) handleRegister(ctx *gin.Context) {

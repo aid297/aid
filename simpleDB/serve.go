@@ -59,6 +59,10 @@ func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*trans
 	if err != nil {
 		return nil, err
 	}
+	limitWindow, err := config.ParseLimitWindow()
+	if err != nil {
+		return nil, err
+	}
 	resolvedConfigPath := resolveConfigPath(configPath)
 	gin.SetMode(config.Transport.HTTP.GinMode)
 	server := transport.New.HTTP(
@@ -75,6 +79,12 @@ func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*trans
 		transport.WithSQLExecutePath(config.Transport.HTTP.Route.SQLExecute),
 		transport.WithSQLGrantPath(config.Transport.HTTP.Route.SQLGrant),
 		transport.WithSQLAllowedOps(config.Transport.HTTP.SQLAllowedOps),
+		transport.WithTokenRateLimit(
+			config.Transport.HTTP.Limit.Enabled,
+			config.Transport.HTTP.Limit.Requests,
+			limitWindow,
+			config.Transport.HTTP.Limit.NoTokenPaths,
+		),
 		transport.WithInitPassword(config.Transport.HTTP.InitPassword),
 		transport.WithInitPasswordRotator(func() (string, error) {
 			return rotateInitPasswordInConfig(resolvedConfigPath)
@@ -128,6 +138,11 @@ func printServeSummary(stdout *os.File, configPath string, config configpkg.Conf
 	_, _ = fmt.Fprintf(stdout, "- init sdb password: POST %s (requires init password)\n", config.Transport.HTTP.Route.InitSDBPassword)
 	_, _ = fmt.Fprintf(stdout, "- sql execute: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLExecute)
 	_, _ = fmt.Fprintf(stdout, "- sql grant: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLGrant)
+	if config.Transport.HTTP.Limit.Enabled {
+		_, _ = fmt.Fprintf(stdout, "- limit: enabled (%d requests / %s)\n", config.Transport.HTTP.Limit.Requests, config.Transport.HTTP.Limit.Window)
+	} else {
+		_, _ = fmt.Fprintln(stdout, "- limit: disabled")
+	}
 	_, _ = fmt.Fprintf(stdout, "- health: GET %s\n", config.Transport.HTTP.Route.Health)
 	_, _ = fmt.Fprintf(stdout, "- profile: GET %s\n", config.Transport.HTTP.Route.Profile)
 	if config.Transport.HTTP.EnableAdmin {
