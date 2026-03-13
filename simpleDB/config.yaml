@@ -8,7 +8,12 @@ engine:
     security:
         compressAlgorithm: gzip # options: gzip
         encryptAlgorithm: aes  # options: aes
-        encryptKey: ""        # required if encryptAlgorithm is set
+        encryptKey: tca7ioTzttwzoh6Ov6G9SBm7ypOWft3ruCvBm5uf8QQ=        # 如果设置了使用加密（encryptAlgorithm），则必须提供加密密钥加密方式如下：
+        # 1. 生成 32 字节的 AES 密钥，输出为 base64 格式
+        # go run ./simpleDB gen-key -algo aes -len 32 -format base64
+
+        # 2. 指定配置文件路径
+        # go run ./simpleDB gen-key -config path/to/my_config.yaml
 transport:
     http:
         enabled: true
