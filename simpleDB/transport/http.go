@@ -3,6 +3,7 @@ package transport
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -129,10 +130,10 @@ type InitSDBPasswordRequest struct {
 }
 
 type SQLExecuteRequest struct {
-	SQL       string         `json:"sql"`
-	ParamMap  map[string]any `json:"paramMap"`
-	ParamList []any          `json:"paramList"`
-	Params    map[string]any `json:"params,omitempty"`
+	SQL       string       `json:"sql"`
+	ParamMap  JSONAnyMap   `json:"paramMap"`
+	ParamList JSONAnySlice `json:"paramList"`
+	Params    JSONAnyMap   `json:"params,omitempty"`
 }
 
 func (r SQLExecuteRequest) mergedParamMap() map[string]any {
@@ -890,7 +891,7 @@ func (s *HTTPServer) handleSQLExecute(ctx *gin.Context) {
 		return
 	}
 
-	boundSQL, err := bindSQLParams(req.SQL, req.mergedParamMap(), req.ParamList)
+	boundSQL, err := bindSQLParams(req.SQL, req.mergedParamMap(), []any(req.ParamList))
 	if err != nil {
 		writeJSON(ctx, http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: err.Error()}})
 		return
@@ -1155,6 +1156,8 @@ func toSQLLiteral(value any) (string, error) {
 			return "true", nil
 		}
 		return "false", nil
+	case json.Number:
+		return v.String(), nil
 	case float64:
 		return strconv.FormatFloat(v, 'f', -1, 64), nil
 	case float32:

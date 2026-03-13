@@ -25,10 +25,10 @@ type wsRequest struct {
 	Route string `json:"route"`
 	Token string `json:"token,omitempty"` // For login
 	// Embed SQLExecuteRequest fields
-	SQL       string         `json:"sql"`
-	ParamMap  map[string]any `json:"paramMap"`
-	ParamList []any          `json:"paramList"`
-	Params    map[string]any `json:"params"` // legacy
+	SQL       string       `json:"sql"`
+	ParamMap  JSONAnyMap   `json:"paramMap"`
+	ParamList JSONAnySlice `json:"paramList"`
+	Params    JSONAnyMap   `json:"params"` // legacy
 }
 
 func (s *HTTPServer) handleWebSocket(ctx *gin.Context) {
@@ -191,7 +191,7 @@ func (s *HTTPServer) handleWebSocket(ctx *gin.Context) {
 					return
 				}
 
-				boundSQL, err := bindSQLParams(sqlReq.SQL, sqlReq.mergedParamMap(), sqlReq.ParamList)
+				boundSQL, err := bindSQLParams(sqlReq.SQL, sqlReq.mergedParamMap(), []any(sqlReq.ParamList))
 				if err != nil {
 					resultChan <- SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: err.Error()}}
 					return
