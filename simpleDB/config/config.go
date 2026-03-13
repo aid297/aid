@@ -42,7 +42,17 @@ type (
 	}
 
 	TransportConfig struct {
-		HTTP HTTPConfig `yaml:"http"`
+		HTTP      HTTPConfig      `yaml:"http"`
+		WebSocket WebSocketConfig `yaml:"websocket"`
+	}
+
+	WebSocketConfig struct {
+		Enabled           bool   `yaml:"enabled"`
+		Route             string `yaml:"route"`
+		HeartbeatInterval string `yaml:"heartbeatInterval"`
+		WriteTimeout      string `yaml:"writeTimeout"`
+		ReadTimeout       string `yaml:"readTimeout"`
+		ExecutionTimeout  string `yaml:"executionTimeout"`
 	}
 
 	HTTPRouteConfig struct {
@@ -137,6 +147,13 @@ func Default() Config {
 			TokenSecret:  "",
 			EnableAdmin:  true,
 			EnableReport: true,
+		}, WebSocket: WebSocketConfig{
+			Enabled:           true,
+			Route:             "/ws",
+			HeartbeatInterval: "10s",
+			WriteTimeout:      "10s",
+			ReadTimeout:       "60s",
+			ExecutionTimeout:  "30s",
 		}},
 	}
 }
@@ -262,12 +279,60 @@ func (c *Config) ApplyDefaults() {
 	if strings.TrimSpace(c.Transport.HTTP.Route.Report) == "" {
 		c.Transport.HTTP.Route.Report = defaults.Transport.HTTP.Route.Report
 	}
+
+	if c.Transport.WebSocket.Route == "" {
+		c.Transport.WebSocket.Route = defaults.Transport.WebSocket.Route
+	}
+	if c.Transport.WebSocket.HeartbeatInterval == "" {
+		c.Transport.WebSocket.HeartbeatInterval = defaults.Transport.WebSocket.HeartbeatInterval
+	}
+	if c.Transport.WebSocket.WriteTimeout == "" {
+		c.Transport.WebSocket.WriteTimeout = defaults.Transport.WebSocket.WriteTimeout
+	}
+	if c.Transport.WebSocket.ReadTimeout == "" {
+		c.Transport.WebSocket.ReadTimeout = defaults.Transport.WebSocket.ReadTimeout
+	}
+	if c.Transport.WebSocket.ExecutionTimeout == "" {
+		c.Transport.WebSocket.ExecutionTimeout = defaults.Transport.WebSocket.ExecutionTimeout
+	}
 }
 
 func (c Config) ParseTokenTTL() (time.Duration, error) {
 	value := strings.TrimSpace(c.Transport.HTTP.TokenTTL)
 	if value == "" {
 		return 12 * time.Hour, nil
+	}
+	return time.ParseDuration(value)
+}
+
+func (c Config) ParseWebSocketHeartbeat() (time.Duration, error) {
+	value := strings.TrimSpace(c.Transport.WebSocket.HeartbeatInterval)
+	if value == "" {
+		return 10 * time.Second, nil
+	}
+	return time.ParseDuration(value)
+}
+
+func (c Config) ParseWebSocketWriteTimeout() (time.Duration, error) {
+	value := strings.TrimSpace(c.Transport.WebSocket.WriteTimeout)
+	if value == "" {
+		return 10 * time.Second, nil
+	}
+	return time.ParseDuration(value)
+}
+
+func (c Config) ParseWebSocketReadTimeout() (time.Duration, error) {
+	value := strings.TrimSpace(c.Transport.WebSocket.ReadTimeout)
+	if value == "" {
+		return 60 * time.Second, nil
+	}
+	return time.ParseDuration(value)
+}
+
+func (c Config) ParseWebSocketExecutionTimeout() (time.Duration, error) {
+	value := strings.TrimSpace(c.Transport.WebSocket.ExecutionTimeout)
+	if value == "" {
+		return 30 * time.Second, nil
 	}
 	return time.ParseDuration(value)
 }
@@ -336,7 +401,17 @@ type rawEngineSecurityConfig struct {
 }
 
 type rawTransportConfig struct {
-	HTTP rawHTTPConfig `yaml:"http"`
+	HTTP      rawHTTPConfig      `yaml:"http"`
+	WebSocket rawWebSocketConfig `yaml:"websocket"`
+}
+
+type rawWebSocketConfig struct {
+	Enabled           *bool  `yaml:"enabled"`
+	Route             string `yaml:"route"`
+	HeartbeatInterval string `yaml:"heartbeatInterval"`
+	WriteTimeout      string `yaml:"writeTimeout"`
+	ReadTimeout       string `yaml:"readTimeout"`
+	ExecutionTimeout  string `yaml:"executionTimeout"`
 }
 
 type rawHTTPConfig struct {
@@ -515,6 +590,25 @@ func applyRawConfig(config *Config, raw rawConfig) {
 	}
 	if len(raw.Transport.HTTP.SQLAllowedOps) > 0 {
 		config.Transport.HTTP.SQLAllowedOps = raw.Transport.HTTP.SQLAllowedOps
+	}
+
+	if raw.Transport.WebSocket.Enabled != nil {
+		config.Transport.WebSocket.Enabled = *raw.Transport.WebSocket.Enabled
+	}
+	if raw.Transport.WebSocket.Route != "" {
+		config.Transport.WebSocket.Route = raw.Transport.WebSocket.Route
+	}
+	if raw.Transport.WebSocket.HeartbeatInterval != "" {
+		config.Transport.WebSocket.HeartbeatInterval = raw.Transport.WebSocket.HeartbeatInterval
+	}
+	if raw.Transport.WebSocket.WriteTimeout != "" {
+		config.Transport.WebSocket.WriteTimeout = raw.Transport.WebSocket.WriteTimeout
+	}
+	if raw.Transport.WebSocket.ReadTimeout != "" {
+		config.Transport.WebSocket.ReadTimeout = raw.Transport.WebSocket.ReadTimeout
+	}
+	if raw.Transport.WebSocket.ExecutionTimeout != "" {
+		config.Transport.WebSocket.ExecutionTimeout = raw.Transport.WebSocket.ExecutionTimeout
 	}
 }
 

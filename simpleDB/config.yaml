@@ -51,3 +51,10 @@ transport:
         tokenSecret: ""
         enableAdminRoute: true
         enableReportRoute: true
+    websocket:
+        enabled: true
+        route: /ws
+        heartbeatInterval: 10s
+        writeTimeout: 10s
+        readTimeout: 60s
+        executionTimeout: 30s

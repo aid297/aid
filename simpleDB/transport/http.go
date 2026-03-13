@@ -83,6 +83,12 @@ type HTTPServer struct {
 	tokenManager             *TokenManager
 	sqlEngine                *api.Engine
 	sqlEngineDBAttrs         []kernal.SchemaAttributer
+	WebSocketEnabled         bool
+	WebSocketRoute           string
+	WebSocketHeartbeat       time.Duration
+	WebSocketWriteTimeout    time.Duration
+	WebSocketReadTimeout     time.Duration
+	WebSocketExecutionTimeout time.Duration
 }
 
 type limitBucket struct {
@@ -189,6 +195,12 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 		LimitRequests:            60,
 		LimitWindow:              time.Minute,
 		TokenTTL:                 12 * time.Hour,
+		WebSocketEnabled:         false,
+		WebSocketRoute:           "/ws",
+		WebSocketHeartbeat:       10 * time.Second,
+		WebSocketWriteTimeout:    10 * time.Second,
+		WebSocketReadTimeout:     60 * time.Second,
+		WebSocketExecutionTimeout: 30 * time.Second,
 		authenticator:            &driver.New,
 		engine:                   engine,
 	}
@@ -402,6 +414,17 @@ func WithSQLEngineDBAttrs(attrs ...kernal.SchemaAttributer) Option {
 	}
 }
 
+func WithWebSocketConfig(enabled bool, route string, heartbeat, writeTimeout, readTimeout, execTimeout time.Duration) Option {
+	return func(s *HTTPServer) {
+		s.WebSocketEnabled = enabled
+		s.WebSocketRoute = normalizePath(route, "/ws")
+		s.WebSocketHeartbeat = heartbeat
+		s.WebSocketWriteTimeout = writeTimeout
+		s.WebSocketReadTimeout = readTimeout
+		s.WebSocketExecutionTimeout = execTimeout
+	}
+}
+
 func (s *HTTPServer) Handler() http.Handler {
 	return s.engine
 }
@@ -511,6 +534,10 @@ func (s *HTTPServer) registerRoutes() {
 	s.engine.POST(s.SQLExecutePath, s.AuthMiddleware(), s.handleSQLExecute)
 	s.engine.POST(s.SQLGrantPath, s.AuthMiddleware(), s.handleSQLGrant)
 	s.engine.POST(s.SQLRevokePath, s.AuthMiddleware(), s.handleSQLRevoke)
+
+	if s.WebSocketEnabled && s.WebSocketRoute != "" {
+		s.engine.GET(s.WebSocketRoute, s.handleWebSocket)
+	}
 }
 
 func (s *HTTPServer) tokenRateLimitMiddleware() gin.HandlerFunc {

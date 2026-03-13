@@ -102,6 +102,23 @@ func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*trans
 		return nil, err
 	}
 
+	wsHeartbeat, err := config.ParseWebSocketHeartbeat()
+	if err != nil {
+		return nil, err
+	}
+	wsWrite, err := config.ParseWebSocketWriteTimeout()
+	if err != nil {
+		return nil, err
+	}
+	wsRead, err := config.ParseWebSocketReadTimeout()
+	if err != nil {
+		return nil, err
+	}
+	wsExec, err := config.ParseWebSocketExecutionTimeout()
+	if err != nil {
+		return nil, err
+	}
+
 	dbAttrs := []kernal.SchemaAttributer{
 		kernal.Persistence(config.Engine.Persistence.WindowSeconds, windowBytes, thresholdBytes),
 		kernal.Security(config.Engine.Security.CompressAlgorithm, config.Engine.Security.EncryptAlgorithm, config.Engine.Security.EncryptKey),
@@ -137,6 +154,14 @@ func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*trans
 		transport.WithSQLEngineDBAttrs(dbAttrs...),
 		transport.WithTokenTTL(tokenTTL),
 		transport.WithTokenSecret(config.Transport.HTTP.TokenSecret),
+		transport.WithWebSocketConfig(
+			config.Transport.WebSocket.Enabled,
+			config.Transport.WebSocket.Route,
+			wsHeartbeat,
+			wsWrite,
+			wsRead,
+			wsExec,
+		),
 	)
 	return server, nil
 }
@@ -185,6 +210,9 @@ func printServeSummary(stdout *os.File, configPath string, config configpkg.Conf
 	_, _ = fmt.Fprintf(stdout, "- sql execute: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLExecute)
 	_, _ = fmt.Fprintf(stdout, "- sql grant: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLGrant)
 	_, _ = fmt.Fprintf(stdout, "- sql revoke: POST %s (requires auth)\n", config.Transport.HTTP.Route.SQLRevoke)
+	if config.Transport.WebSocket.Enabled {
+		_, _ = fmt.Fprintf(stdout, "- websocket: GET %s (requires auth header)\n", config.Transport.WebSocket.Route)
+	}
 	if config.Transport.HTTP.Limit.Enabled {
 		_, _ = fmt.Fprintf(stdout, "- limit: enabled (%d requests / %s)\n", config.Transport.HTTP.Limit.Requests, config.Transport.HTTP.Limit.Window)
 	} else {
