@@ -3,3 +3,4 @@
 2025-12-24 09:19:53.450	error	test-error	{"errors": [{"error": "err1"}, {"error": "err2"}, {"error": "err3"}]}
 2026-03-09 15:21:22.671	error	test-error	{"errors": [{"error": "err1"}, {"error": "err2"}, {"error": "err3"}]}
 2026-03-13 09:24:04.018	error	test-error	{"errors": [{"error": "err1"}, {"error": "err2"}, {"error": "err3"}]}
+2026-03-13 16:51:41.474	error	test-error	{"errors": [{"error": "err1"}, {"error": "err2"}, {"error": "err3"}]}
