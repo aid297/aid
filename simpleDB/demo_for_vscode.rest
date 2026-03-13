@@ -150,6 +150,30 @@ Content-Type: application/json
 }
 
 
+### 7.1) LIKE 模糊查询（查找用户名以 'a' 开头的用户）
+# @name selectLike
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM {{table}} WHERE username LIKE ?",
+  "paramList": ["a%"]
+}
+
+
+### 7.2) 内置分页查询（PAGE/SIZE 语法）
+# @name selectPageSize
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM {{table}} PAGE ? SIZE ?",
+  "paramList": [1, 2]
+}
+
+
 ### 8) 全表聚合（COUNT / AVG / MAX / MIN）
 # @name selectAgg
 POST {{baseUrl}}{{sqlPath}}

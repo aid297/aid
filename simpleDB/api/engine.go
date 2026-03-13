@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"sync"
@@ -337,6 +338,22 @@ func (e *Engine) execSelect(s SelectStmt) (ExecResult, error) {
 			return cmp < 0
 		})
 	}
+
+	var pagination *Pagination
+	if s.Page > 0 && s.PageSize > 0 {
+		totalItems := len(rows)
+		totalPages := int(math.Ceil(float64(totalItems) / float64(s.PageSize)))
+		pagination = &Pagination{
+			CurrentPage: s.Page,
+			PageSize:    s.PageSize,
+			TotalItems:  totalItems,
+			TotalPages:  totalPages,
+		}
+		// Override Limit/Offset for pagination
+		s.Offset = (s.Page - 1) * s.PageSize
+		s.Limit = s.PageSize
+	}
+
 	if s.Offset > 0 {
 		if s.Offset >= len(rows) {
 			rows = rows[:0]
@@ -347,7 +364,7 @@ func (e *Engine) execSelect(s SelectStmt) (ExecResult, error) {
 	if s.Limit > 0 && len(rows) > s.Limit {
 		rows = rows[:s.Limit]
 	}
-	return ExecResult{Statement: StmtSelect, Rows: rows, Affected: len(rows)}, nil
+	return ExecResult{Statement: StmtSelect, Rows: rows, Affected: len(rows), Pagination: pagination}, nil
 }
 
 // applyJoins 逐条执行 JOIN，支持 INNER JOIN 和 LEFT JOIN

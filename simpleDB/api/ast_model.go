@@ -114,6 +114,8 @@ type SelectStmt struct {
 	OrderDesc  bool
 	Limit      int
 	Offset     int
+	Page       int
+	PageSize   int
 }
 
 func (s SelectStmt) Type() StatementType { return StmtSelect }
@@ -129,6 +131,13 @@ type TruncateTableStmt struct{ Table string }
 func (s TruncateTableStmt) Type() StatementType { return StmtTruncate }
 func (s TruncateTableStmt) TableName() string   { return s.Table }
 
+type Pagination struct {
+	CurrentPage int `json:"currentPage"`
+	TotalPages  int `json:"totalPages"`
+	TotalItems  int `json:"totalItems"`
+	PageSize    int `json:"pageSize"`
+}
+
 type ExecResult struct {
 	Rows         []kernal.Row  `json:"rows,omitempty"`
 	Affected     int           `json:"affected"`
@@ -137,4 +146,5 @@ type ExecResult struct {
 	Updated      kernal.Row    `json:"updated,omitempty"`
 	UpdatedRows  []kernal.Row  `json:"updatedRows,omitempty"`
 	Statement    StatementType `json:"statement"`
+	Pagination   *Pagination   `json:"pagination,omitempty"`
 }

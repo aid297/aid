@@ -15,7 +15,7 @@ var (
 	reInsert   = regexp.MustCompile(`(?i)^INSERT\s+INTO\s+([a-zA-Z_][\w]*)\s*\((.*)\)\s*VALUES\s*(.+)$`)
 	reUpdate   = regexp.MustCompile(`(?i)^UPDATE\s+([a-zA-Z_][\w]*)\s+SET\s+(.+?)(?:\s+WHERE\s+(.+))?$`)
 	reDelete   = regexp.MustCompile(`(?i)^DELETE\s+FROM\s+([a-zA-Z_][\w]*)(?:\s+WHERE\s+(.+))?$`)
-	reSelect   = regexp.MustCompile(`(?i)^SELECT\s+(.+?)\s+FROM\s+([a-zA-Z_][\w]*)((?:\s+(?:INNER|LEFT)\s+JOIN\s+[a-zA-Z_][\w]*\s+ON\s+[^\s]+\s*=\s*[^\s]+)*)(?:\s+WHERE\s+(.+?))?(?:\s+GROUP\s+BY\s+(.+?))?(?:\s+ORDER\s+BY\s+([a-zA-Z_][\w.]*)(?:\s+(ASC|DESC))?)?(?:\s+LIMIT\s+(\d+))?(?:\s+OFFSET\s+(\d+))?$`)
+	reSelect   = regexp.MustCompile(`(?i)^SELECT\s+(.+?)\s+FROM\s+([a-zA-Z_][\w]*)((?:\s+(?:INNER|LEFT)\s+JOIN\s+[a-zA-Z_][\w]*\s+ON\s+[^\s]+\s*=\s*[^\s]+)*)(?:\s+WHERE\s+(.+?))?(?:\s+GROUP\s+BY\s+(.+?))?(?:\s+ORDER\s+BY\s+([a-zA-Z_][\w.]*)(?:\s+(ASC|DESC))?)?(?:\s+LIMIT\s+(\d+))?(?:\s+OFFSET\s+(\d+))?(?:\s+PAGE\s+(\d+)\s+SIZE\s+(\d+))?$`)
 	reDrop     = regexp.MustCompile(`(?i)^DROP\s+TABLE\s+([a-zA-Z_][\w]*)$`)
 	reTruncate = regexp.MustCompile(`(?i)^TRUNCATE\s+TABLE\s+([a-zA-Z_][\w]*)$`)
 )
@@ -89,8 +89,13 @@ func Parse(sql string) (Statement, error) {
 	if m := reDelete.FindStringSubmatch(sql); len(m) == 3 {
 		return parseDelete(m[1], m[2])
 	}
-	if m := reSelect.FindStringSubmatch(sql); len(m) == 10 {
-		return parseSelect(m[2], m[1], m[3], m[4], m[5], m[6], m[7], m[8], m[9])
+	if m := reSelect.FindStringSubmatch(sql); len(m) >= 10 {
+		page, size := "", ""
+		if len(m) >= 12 {
+			page = m[10]
+			size = m[11]
+		}
+		return parseSelect(m[2], m[1], m[3], m[4], m[5], m[6], m[7], m[8], m[9], page, size)
 	}
 	if m := reDrop.FindStringSubmatch(sql); len(m) == 2 {
 		return DropTableStmt{Table: m[1]}, nil
@@ -474,7 +479,7 @@ func parseDelete(table, whereRaw string) (Statement, error) {
 	return DeleteStmt{Table: table, Conditions: conditions}, nil
 }
 
-func parseSelect(table, fieldsRaw, joinRaw, whereRaw, groupByRaw, orderField, orderDir, limitRaw, offsetRaw string) (Statement, error) {
+func parseSelect(table, fieldsRaw, joinRaw, whereRaw, groupByRaw, orderField, orderDir, limitRaw, offsetRaw, pageRaw, sizeRaw string) (Statement, error) {
 	fields, err := parseSelectFields(fieldsRaw)
 	if err != nil {
 		return nil, err
@@ -494,7 +499,7 @@ func parseSelect(table, fieldsRaw, joinRaw, whereRaw, groupByRaw, orderField, or
 		}
 	}
 	desc := strings.EqualFold(strings.TrimSpace(orderDir), "desc")
-	var limit, offset int
+	var limit, offset, page, pageSize int
 	if s := strings.TrimSpace(limitRaw); s != "" {
 		n, e := strconv.Atoi(s)
 		if e != nil {
@@ -509,6 +514,21 @@ func parseSelect(table, fieldsRaw, joinRaw, whereRaw, groupByRaw, orderField, or
 		}
 		offset = n
 	}
+	if s := strings.TrimSpace(pageRaw); s != "" {
+		n, e := strconv.Atoi(s)
+		if e != nil {
+			return nil, fmt.Errorf("invalid PAGE value: %s", s)
+		}
+		page = n
+	}
+	if s := strings.TrimSpace(sizeRaw); s != "" {
+		n, e := strconv.Atoi(s)
+		if e != nil {
+			return nil, fmt.Errorf("invalid SIZE value: %s", s)
+		}
+		pageSize = n
+	}
+
 	return SelectStmt{
 		Table:      table,
 		Fields:     fields,
@@ -520,6 +540,8 @@ func parseSelect(table, fieldsRaw, joinRaw, whereRaw, groupByRaw, orderField, or
 		OrderDesc:  desc,
 		Limit:      limit,
 		Offset:     offset,
+		Page:       page,
+		PageSize:   pageSize,
 	}, nil
 }
 
@@ -599,7 +621,7 @@ func parseConditions(whereRaw string) ([]kernal.QueryCondition, []SubqueryCondit
 		}
 		if op == "__subquery_in__" || op == "__subquery_not_in__" {
 			subSQL, _ := value.(string)
-			subStmt, err := parseSelect("", "", "", subSQL, "", "", "", "", "")
+			subStmt, err := parseSelect("", "", "", subSQL, "", "", "", "", "", "", "")
 			if err != nil {
 				return nil, nil, fmt.Errorf("invalid subquery: %v", err)
 			}

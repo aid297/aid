@@ -109,6 +109,26 @@ Content-Type: application/json
   "paramList": ["alice", 2, 0]
 }
 
+### 6.1) LIKE 模糊查询
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM {{table}} WHERE username LIKE ?",
+  "paramList": ["a%"]
+}
+
+### 6.2) 内置分页查询（PAGE/SIZE 语法）
+POST {{baseUrl}}{{sqlPath}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sql": "SELECT * FROM {{table}} PAGE ? SIZE ?",
+  "paramList": [1, 2]
+}
+
 ### 7) JOIN 示例
 POST {{baseUrl}}{{sqlPath}}
 Authorization: Bearer {{accessToken}}
