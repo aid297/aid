@@ -5,6 +5,10 @@ engine:
         windowSeconds: 10
         windowBytes: 10mb
         threshold: 100mb
+    security:
+        compressAlgorithm: "" # options: gzip
+        encryptAlgorithm: ""  # options: aes
+        encryptKey: ""        # required if encryptAlgorithm is set
 transport:
     http:
         enabled: true

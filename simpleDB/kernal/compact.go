@@ -39,7 +39,7 @@ func (db *SimpleDB) Compact() error {
 			Value:     cloneBytes(current.Value),
 			CreatedAt: current.UpdatedAt,
 		}
-		if err = writeRecord(writer, record); err != nil {
+		if err = writeRecord(writer, record, db.compressor, db.encryptor); err != nil {
 			_ = tempFile.Close()
 			_ = os.Remove(tempPath)
 			return err

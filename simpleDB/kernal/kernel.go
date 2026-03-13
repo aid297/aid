@@ -14,6 +14,7 @@ import (
 
 	"github.com/aid297/aid/filesystem/filesystemV4"
 	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/simpleDB/plugin"
 )
 
 const (
@@ -86,6 +87,10 @@ type SimpleDB struct {
 	isPersisting  bool        // 是否正在执行落盘
 	memLog        []logRecord // 内存日志缓冲
 	memCleared    bool
+
+	// Security plugins
+	compressor plugin.Compressor
+	encryptor  plugin.Encryptor
 }
 
 func newSimpleDB(dbName, tableName string, attrs ...SchemaAttributer) (*SimpleDB, error) {
@@ -171,6 +176,8 @@ func newSimpleDB(dbName, tableName string, attrs ...SchemaAttributer) (*SimpleDB
 			},
 		},
 		lastPersistAt: time.Now(),
+		compressor:    &plugin.NoOpCompressor{},
+		encryptor:     &plugin.NoOpEncryptor{},
 	}
 
 	db.setAttrs(attrs...)

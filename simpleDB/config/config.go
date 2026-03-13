@@ -26,12 +26,19 @@ type (
 
 	EngineConfig struct {
 		Persistence EnginePersistenceConfig `yaml:"persistence"`
+		Security    EngineSecurityConfig    `yaml:"security"`
 	}
 
 	EnginePersistenceConfig struct {
 		WindowSeconds int    `yaml:"windowSeconds"`
 		WindowBytes   string `yaml:"windowBytes"`
 		Threshold     string `yaml:"threshold"`
+	}
+
+	EngineSecurityConfig struct {
+		CompressAlgorithm string `yaml:"compressAlgorithm"`
+		EncryptAlgorithm  string `yaml:"encryptAlgorithm"`
+		EncryptKey        string `yaml:"encryptKey"`
 	}
 
 	TransportConfig struct {
@@ -90,6 +97,11 @@ func Default() Config {
 				WindowSeconds: 10,
 				WindowBytes:   "10mb",
 				Threshold:     "100mb",
+			},
+			Security: EngineSecurityConfig{
+				CompressAlgorithm: "",
+				EncryptAlgorithm:  "",
+				EncryptKey:        "",
 			},
 		},
 		Transport: TransportConfig{HTTP: HTTPConfig{
@@ -308,12 +320,19 @@ type rawDatabaseConfig struct {
 
 type rawEngineConfig struct {
 	Persistence rawEnginePersistenceConfig `yaml:"persistence"`
+	Security    rawEngineSecurityConfig    `yaml:"security"`
 }
 
 type rawEnginePersistenceConfig struct {
 	WindowSeconds int    `yaml:"windowSeconds"`
 	WindowBytes   string `yaml:"windowBytes"`
 	Threshold     string `yaml:"threshold"`
+}
+
+type rawEngineSecurityConfig struct {
+	CompressAlgorithm string `yaml:"compressAlgorithm"`
+	EncryptAlgorithm  string `yaml:"encryptAlgorithm"`
+	EncryptKey        string `yaml:"encryptKey"`
 }
 
 type rawTransportConfig struct {
@@ -393,6 +412,15 @@ func applyRawConfig(config *Config, raw rawConfig) {
 	}
 	if strings.TrimSpace(raw.Engine.Persistence.Threshold) != "" {
 		config.Engine.Persistence.Threshold = strings.TrimSpace(raw.Engine.Persistence.Threshold)
+	}
+	if strings.TrimSpace(raw.Engine.Security.CompressAlgorithm) != "" {
+		config.Engine.Security.CompressAlgorithm = strings.TrimSpace(raw.Engine.Security.CompressAlgorithm)
+	}
+	if strings.TrimSpace(raw.Engine.Security.EncryptAlgorithm) != "" {
+		config.Engine.Security.EncryptAlgorithm = strings.TrimSpace(raw.Engine.Security.EncryptAlgorithm)
+	}
+	if strings.TrimSpace(raw.Engine.Security.EncryptKey) != "" {
+		config.Engine.Security.EncryptKey = strings.TrimSpace(raw.Engine.Security.EncryptKey)
 	}
 	if raw.Transport.HTTP.Enabled != nil {
 		config.Transport.HTTP.Enabled = *raw.Transport.HTTP.Enabled

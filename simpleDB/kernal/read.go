@@ -10,6 +10,8 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/aid297/aid/simpleDB/plugin"
 )
 
 func (db *SimpleDB) Get(key string) ([]byte, bool, error) {
@@ -100,7 +102,7 @@ func (db *SimpleDB) Keys() ([]string, error) {
 	return keys, nil
 }
 
-func readRecord(reader io.Reader) (logRecord, error) {
+func readRecord(reader io.Reader, compressor plugin.Compressor, encryptor plugin.Encryptor) (logRecord, error) {
 	var (
 		err                    error
 		header, checksum       [4]byte
@@ -139,6 +141,13 @@ func readRecord(reader io.Reader) (logRecord, error) {
 	actual = crc32.ChecksumIEEE(payload)
 	if expected != actual {
 		return logRecord{}, fmt.Errorf("%w: checksum mismatch", ErrCorruptedRecord)
+	}
+
+	if payload, err = encryptor.Decrypt(payload); err != nil {
+		return logRecord{}, fmt.Errorf("%w: decrypt failed: %v", ErrCorruptedRecord, err)
+	}
+	if payload, err = compressor.Decompress(payload); err != nil {
+		return logRecord{}, fmt.Errorf("%w: decompress failed: %v", ErrCorruptedRecord, err)
 	}
 
 	if err = json.NewDecoder(bytes.NewReader(payload)).Decode(&record); err != nil {

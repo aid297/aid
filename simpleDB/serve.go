@@ -104,6 +104,7 @@ func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*trans
 
 	dbAttrs := []kernal.SchemaAttributer{
 		kernal.Persistence(config.Engine.Persistence.WindowSeconds, windowBytes, thresholdBytes),
+		kernal.Security(config.Engine.Security.CompressAlgorithm, config.Engine.Security.EncryptAlgorithm, config.Engine.Security.EncryptKey),
 	}
 	resolvedConfigPath := resolveConfigPath(configPath)
 	gin.SetMode(config.Transport.HTTP.GinMode)

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/simpleDB/plugin"
 )
 
 func (db *SimpleDB) Put(key string, value []byte) (err error) {
@@ -119,7 +120,7 @@ func (db *SimpleDB) persistMemToDiskLocked(clearMemory bool) error {
 
 	// 批量写入记录
 	for _, record := range db.memLog {
-		if err := writeRecord(db.file, record); err != nil {
+		if err := writeRecord(db.file, record, db.compressor, db.encryptor); err != nil {
 			return err
 		}
 	}
@@ -228,7 +229,7 @@ func (db *SimpleDB) appendRecord(record logRecord) (err error) {
 		}
 	}
 
-	if err = writeRecord(db.file, record); err != nil {
+	if err = writeRecord(db.file, record, db.compressor, db.encryptor); err != nil {
 		return
 	}
 
@@ -285,7 +286,7 @@ func (db *SimpleDB) load() (err error) {
 
 	reader = bufio.NewReader(db.file)
 	for {
-		if record, err = readRecord(reader); errors.Is(err, io.EOF) {
+		if record, err = readRecord(reader, db.compressor, db.encryptor); errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
@@ -312,7 +313,7 @@ func (db *SimpleDB) load() (err error) {
 	}
 }
 
-func writeRecord(writer io.Writer, record logRecord) error {
+func writeRecord(writer io.Writer, record logRecord, compressor plugin.Compressor, encryptor plugin.Encryptor) error {
 	var (
 		err              error
 		payload          []byte
@@ -322,6 +323,14 @@ func writeRecord(writer io.Writer, record logRecord) error {
 	if payload, err = json.Marshal(record); err != nil {
 		return err
 	}
+
+	if payload, err = compressor.Compress(payload); err != nil {
+		return err
+	}
+	if payload, err = encryptor.Encrypt(payload); err != nil {
+		return err
+	}
+
 	if len(payload) > maxRecordSize {
 		return fmt.Errorf("simpleDB: record too large: %d", len(payload))
 	}

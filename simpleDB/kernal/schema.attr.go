@@ -1,5 +1,7 @@
 package kernal
 
+import "github.com/aid297/aid/simpleDB/plugin"
+
 type (
 	SchemaAttributer interface{ RegisterAttr(db *SimpleDB) }
 
@@ -16,6 +18,11 @@ type (
 		WindowSeconds int
 		WindowBytes   uint64
 		Threshold     uint64
+	}
+	AttrSecurity struct {
+		CompressAlgo string
+		EncryptAlgo  string
+		EncryptKey   string
 	}
 )
 
@@ -96,4 +103,13 @@ func (my AttrPersistence) RegisterAttr(db *SimpleDB) {
 	if my.Threshold > 0 {
 		db.config.Persistence.Threshold = my.Threshold
 	}
+}
+
+func Security(compressAlgo, encryptAlgo, encryptKey string) AttrSecurity {
+	return AttrSecurity{compressAlgo, encryptAlgo, encryptKey}
+}
+
+func (my AttrSecurity) RegisterAttr(db *SimpleDB) {
+	db.compressor = plugin.GetCompressor(my.CompressAlgo)
+	db.encryptor = plugin.GetEncryptor(my.EncryptAlgo, my.EncryptKey)
 }
