@@ -3,12 +3,12 @@ package secret
 import (
 	"crypto/md5"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"hash"
 
 	"github.com/aid297/aid/compression"
+	json "github.com/json-iterator/go"
 
 	"github.com/aid297/aid/common"
 	"github.com/aid297/aid/secret/symmetric"

@@ -3,7 +3,6 @@ package httpClientV2
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -15,6 +14,7 @@ import (
 	"os"
 	"time"
 
+	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 
 	"github.com/aid297/aid/debugLogger"

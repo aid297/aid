@@ -1,11 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 
 	"github.com/aid297/aid/debugLogger"
+	json "github.com/json-iterator/go"
 )
 
 func run(title string, fn func() error) {

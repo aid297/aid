@@ -2,7 +2,6 @@ package kernal
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/aid297/aid/array/anySlice"
 	"github.com/google/uuid"
+	json "github.com/json-iterator/go"
 )
 
 const (

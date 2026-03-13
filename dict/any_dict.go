@@ -1,13 +1,13 @@
 package dict
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 	"sync"
 
 	"github.com/aid297/aid/array"
+	json "github.com/json-iterator/go"
 )
 
 type (

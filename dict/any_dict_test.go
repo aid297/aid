@@ -1,12 +1,12 @@
 package dict
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/aid297/aid/debugLogger"
+	json "github.com/json-iterator/go"
 )
 
 func Test1(t *testing.T) {

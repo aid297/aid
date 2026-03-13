@@ -2,7 +2,6 @@ package transport
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/aid297/aid/simpleDB/driver"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	json "github.com/json-iterator/go"
 )
 
 var upgrader = websocket.Upgrader{

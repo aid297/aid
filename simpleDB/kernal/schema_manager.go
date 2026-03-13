@@ -1,9 +1,10 @@
 package kernal
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
+
+	json "github.com/json-iterator/go"
 )
 
 // ─── AlterTable Plan ─────────────────────────────────────────────────────────

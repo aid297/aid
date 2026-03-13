@@ -6,12 +6,12 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
 
 	"github.com/aid297/aid/compression"
+	json "github.com/json-iterator/go"
 	"github.com/aid297/aid/str"
 )
 

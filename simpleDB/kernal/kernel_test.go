@@ -1,7 +1,6 @@
 package kernal
 
 import (
-	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/aid297/aid/ptr"
 	"github.com/google/uuid"
+	json "github.com/json-iterator/go"
 )
 
 func TestSimpleDB_CRUDAndReload(t *testing.T) {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -14,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	jsonIter "github.com/json-iterator/go"
+	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 
 	"github.com/aid297/aid/operation/operationV2"
@@ -411,7 +410,7 @@ func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
 	}
 
 	if len(keys) > 0 {
-		jsonIter.Get(my.responseBody, keys...).ToVal(&target)
+		json.Get(my.responseBody, keys...).ToVal(&target)
 	} else {
 		my.err = json.Unmarshal(my.responseBody, &target)
 	}

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aid297/aid/simpleDB/driver"
+	json "github.com/json-iterator/go"
 )
 
 var (

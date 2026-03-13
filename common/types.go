@@ -3,13 +3,14 @@ package common
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"math"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	json "github.com/json-iterator/go"
 )
 
 var (

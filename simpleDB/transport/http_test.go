@@ -2,7 +2,6 @@ package transport
 
 import (
 	"bytes"
-	"encoding/json"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/aid297/aid/simpleDB/driver"
 	"github.com/gin-gonic/gin"
+	json "github.com/json-iterator/go"
 )
 
 func TestHTTPServer_LoginSuccess(t *testing.T) {

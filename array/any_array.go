@@ -1,7 +1,6 @@
 package array
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/aid297/aid/operation/operationV2"
+	json "github.com/json-iterator/go"
 )
 
 type AnyArray[T any] struct {

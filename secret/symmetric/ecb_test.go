@@ -2,11 +2,11 @@ package symmetric
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"testing"
 
 	"github.com/aid297/aid/compression"
 	"github.com/aid297/aid/debugLogger"
+	json "github.com/json-iterator/go"
 )
 
 func TestEcbDemo(t *testing.T) {

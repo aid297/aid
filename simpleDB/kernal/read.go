@@ -3,7 +3,6 @@ package kernal
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/crc32"
@@ -12,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/aid297/aid/simpleDB/plugin"
+	json "github.com/json-iterator/go"
 )
 
 func (db *SimpleDB) Get(key string) ([]byte, bool, error) {

@@ -1,10 +1,11 @@
 package kernal
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
+
+	json "github.com/json-iterator/go"
 )
 
 type CascadeQuery struct {

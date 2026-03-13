@@ -1,11 +1,11 @@
 package rabbit
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
+	json "github.com/json-iterator/go"
 
 	"github.com/aid297/aid/str"
 )

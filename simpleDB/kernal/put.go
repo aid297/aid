@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/crc32"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/simpleDB/plugin"
+	json "github.com/json-iterator/go"
 )
 
 func (db *SimpleDB) Put(key string, value []byte) (err error) {

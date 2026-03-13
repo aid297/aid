@@ -1,9 +1,10 @@
 package array
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
+
+	json "github.com/json-iterator/go"
 )
 
 type A struct {

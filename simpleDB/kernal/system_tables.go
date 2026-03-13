@@ -1,13 +1,13 @@
 package kernal
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/aid297/aid/digest"
+	json "github.com/json-iterator/go"
 )
 
 const (
