@@ -77,6 +77,18 @@ func (my *Check) Validate(exCheckFns ...any) Checker {
 func WithGin[T any](c *gin.Context, exCheckFns ...any) (form T, checker Checker) {
 	form = *new(T)
 
+	if c == nil || c.Request == nil {
+		checker = &Check{wrongs: []error{errors.New("gin request is nil")}}
+		return
+	}
+
+	if strings.TrimSpace(c.GetHeader("Content-Type")) == "" {
+		method := strings.ToUpper(strings.TrimSpace(c.Request.Method))
+		if method != "GET" && (c.Request.ContentLength > 0 || c.Request.ContentLength == -1) {
+			c.Request.Header.Set("Content-Type", "application/json")
+		}
+	}
+
 	if err := c.ShouldBind(&form); err != nil {
 		checker = &Check{wrongs: []error{err}}
 		return

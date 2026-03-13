@@ -3,6 +3,8 @@ package httpModule
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -70,13 +72,109 @@ func (my HTTPResponse) SetData(data any) HTTPResponse { return my.SetAttrs(Conte
 
 func (my HTTPResponse) Raw() (int, any) { return my.Code, my }
 
+type httpBodyFormat string
+
+const (
+	httpBodyFormatJSON httpBodyFormat = "json"
+	httpBodyFormatXML  httpBodyFormat = "xml"
+	httpBodyFormatYAML httpBodyFormat = "yaml"
+	httpBodyFormatTOML httpBodyFormat = "toml"
+)
+
+type acceptCandidate struct {
+	value string
+	q     float64
+	pos   int
+}
+
+func parseAcceptHeader(header string) []acceptCandidate {
+	header = strings.TrimSpace(header)
+	if header == "" {
+		return nil
+	}
+	parts := strings.Split(header, ",")
+	out := make([]acceptCandidate, 0, len(parts))
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		mediaRange := part
+		q := 1.0
+		if semi := strings.Index(part, ";"); semi >= 0 {
+			mediaRange = strings.TrimSpace(part[:semi])
+			params := strings.Split(part[semi+1:], ";")
+			for _, param := range params {
+				param = strings.TrimSpace(param)
+				if param == "" {
+					continue
+				}
+				kv := strings.SplitN(param, "=", 2)
+				if len(kv) != 2 {
+					continue
+				}
+				if strings.EqualFold(strings.TrimSpace(kv[0]), "q") {
+					if parsed, err := strconv.ParseFloat(strings.TrimSpace(kv[1]), 64); err == nil {
+						q = parsed
+					}
+				}
+			}
+		}
+		if mediaRange == "" {
+			continue
+		}
+		out = append(out, acceptCandidate{value: strings.ToLower(mediaRange), q: q, pos: i})
+	}
+	return out
+}
+
+func matchAcceptFormat(candidate string) (httpBodyFormat, bool) {
+	candidate = strings.TrimSpace(strings.ToLower(candidate))
+	if candidate == "" {
+		return "", false
+	}
+	if candidate == "*/*" || candidate == "application/*" {
+		return httpBodyFormatJSON, true
+	}
+	if strings.HasSuffix(candidate, "+json") || candidate == "application/json" || candidate == "text/json" {
+		return httpBodyFormatJSON, true
+	}
+	if strings.HasSuffix(candidate, "+xml") || candidate == "application/xml" || candidate == "text/xml" {
+		return httpBodyFormatXML, true
+	}
+	if candidate == "application/yaml" || candidate == "text/yaml" || candidate == "application/x-yaml" || candidate == "text/x-yaml" {
+		return httpBodyFormatYAML, true
+	}
+	if candidate == "application/toml" || candidate == "text/toml" {
+		return httpBodyFormatTOML, true
+	}
+	return "", false
+}
+
+func chooseResponseFormat(acceptHeader string) httpBodyFormat {
+	best := acceptCandidate{q: -1}
+	bestFormat := httpBodyFormatJSON
+	for _, candidate := range parseAcceptHeader(acceptHeader) {
+		format, ok := matchAcceptFormat(candidate.value)
+		if !ok {
+			continue
+		}
+		if candidate.q > best.q || (candidate.q == best.q && candidate.pos < best.pos) {
+			best = candidate
+			bestFormat = format
+		}
+	}
+	return bestFormat
+}
+
 func (my HTTPResponse) WithAccept(c *gin.Context) {
-	switch c.GetHeader("accept") {
-	case "application/xml":
+	c.Header("Vary", "Accept")
+	switch chooseResponseFormat(c.GetHeader("Accept")) {
+	case httpBodyFormatXML:
 		my.XML(c)
-	case "application/yaml":
+	case httpBodyFormatYAML:
 		my.YAML(c)
-	case "application/toml":
+	case httpBodyFormatTOML:
 		my.TOML(c)
 	default:
 		my.JSON(c)
@@ -84,12 +182,13 @@ func (my HTTPResponse) WithAccept(c *gin.Context) {
 }
 
 func (my HTTPResponse) WithAcceptWithoutCode(c *gin.Context) {
-	switch c.GetHeader("accept") {
-	case "application/xml":
+	c.Header("Vary", "Accept")
+	switch chooseResponseFormat(c.GetHeader("Accept")) {
+	case httpBodyFormatXML:
 		my.WithoutCodeXML(c)
-	case "application/yaml":
+	case httpBodyFormatYAML:
 		my.WithoutCodeYAML(c)
-	case "application/toml":
+	case httpBodyFormatTOML:
 		my.WithoutCodeTOML(c)
 	default:
 		my.WithoutCodeJSON(c)

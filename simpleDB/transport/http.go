@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"mime"
 	"net"
 	"net/http"
 	"reflect"
@@ -565,7 +566,7 @@ func (s *HTTPServer) tokenRateLimitMiddleware() gin.HandlerFunc {
 			seconds = 1
 		}
 		ctx.Header("Retry-After", strconv.Itoa(seconds))
-		ctx.JSON(http.StatusTooManyRequests, LoginResponse{Success: false, Error: &ErrorBody{Code: "too_many_requests", Message: "rate limit exceeded"}})
+		writeJSON(ctx, http.StatusTooManyRequests, LoginResponse{Success: false, Error: &ErrorBody{Code: "too_many_requests", Message: "rate limit exceeded"}})
 		ctx.Abort()
 	}
 }
@@ -637,7 +638,7 @@ func (s *HTTPServer) handleRegister(ctx *gin.Context) {
 	}
 
 	var req RegisterRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := bindRequestBody(ctx, &req); err != nil {
 		writeJSON(ctx, http.StatusBadRequest, LoginResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
 		return
 	}
@@ -662,7 +663,7 @@ func (s *HTTPServer) handleLogin(ctx *gin.Context) {
 	}
 
 	var req LoginRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := bindRequestBody(ctx, &req); err != nil {
 		writeJSON(ctx, http.StatusBadRequest, LoginResponse{
 			Success: false,
 			Error:   &ErrorBody{Code: "bad_request", Message: "invalid request body"},
@@ -750,7 +751,7 @@ func (s *HTTPServer) handleLogout(ctx *gin.Context) {
 
 func (s *HTTPServer) handleActivate(ctx *gin.Context) {
 	var req ActivateRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := bindRequestBody(ctx, &req); err != nil {
 		writeJSON(ctx, http.StatusBadRequest, LoginResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
 		return
 	}
@@ -772,7 +773,7 @@ func (s *HTTPServer) handleActivate(ctx *gin.Context) {
 
 func (s *HTTPServer) handleDeactivate(ctx *gin.Context) {
 	var req ActivateRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := bindRequestBody(ctx, &req); err != nil {
 		writeJSON(ctx, http.StatusBadRequest, LoginResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
 		return
 	}
@@ -794,7 +795,7 @@ func (s *HTTPServer) handleDeactivate(ctx *gin.Context) {
 
 func (s *HTTPServer) handleAssignRoles(ctx *gin.Context) {
 	var req AssignRolesRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := bindRequestBody(ctx, &req); err != nil {
 		writeJSON(ctx, http.StatusBadRequest, LoginResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
 		return
 	}
@@ -816,7 +817,7 @@ func (s *HTTPServer) handleAssignRoles(ctx *gin.Context) {
 
 func (s *HTTPServer) handleAssignRolePermissions(ctx *gin.Context) {
 	var req AssignRolePermissionsRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := bindRequestBody(ctx, &req); err != nil {
 		writeJSON(ctx, http.StatusBadRequest, LoginResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
 		return
 	}
@@ -848,7 +849,7 @@ func (s *HTTPServer) handleInitSDBPassword(ctx *gin.Context) {
 	}
 
 	var req InitSDBPasswordRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := bindRequestBody(ctx, &req); err != nil {
 		writeJSON(ctx, http.StatusBadRequest, LoginResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
 		return
 	}
@@ -875,29 +876,29 @@ func (s *HTTPServer) handleInitSDBPassword(ctx *gin.Context) {
 
 func (s *HTTPServer) handleSQLExecute(ctx *gin.Context) {
 	if s.Database == "" {
-		ctx.JSON(http.StatusInternalServerError, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "database_required", Message: "database is required"}})
+		writeJSON(ctx, http.StatusInternalServerError, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "database_required", Message: "database is required"}})
 		return
 	}
 
 	var req SQLExecuteRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
+	if err := bindRequestBody(ctx, &req); err != nil {
+		writeJSON(ctx, http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
 		return
 	}
 	if strings.TrimSpace(req.SQL) == "" {
-		ctx.JSON(http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "sql is required"}})
+		writeJSON(ctx, http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "sql is required"}})
 		return
 	}
 
 	boundSQL, err := bindSQLParams(req.SQL, req.mergedParamMap(), req.ParamList)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: err.Error()}})
+		writeJSON(ctx, http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: err.Error()}})
 		return
 	}
 
 	claims, ok := UserFromContext(ctx)
 	if !ok {
-		ctx.JSON(http.StatusUnauthorized, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "unauthorized", Message: "missing auth context"}})
+		writeJSON(ctx, http.StatusUnauthorized, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "unauthorized", Message: "missing auth context"}})
 		return
 	}
 
@@ -919,12 +920,12 @@ func (s *HTTPServer) handleSQLExecute(ctx *gin.Context) {
 	if len(s.SQLAllowedOps) > 0 {
 		stmt, parseErr := engine.Parse(boundSQL)
 		if parseErr != nil {
-			ctx.JSON(http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: parseErr.Error()}})
+			writeJSON(ctx, http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: parseErr.Error()}})
 			return
 		}
 		opKey := strings.ToLower(strings.TrimPrefix(string(stmt.Type()), ""))
 		if _, allowed := s.SQLAllowedOps[opKey]; !allowed {
-			ctx.JSON(http.StatusForbidden, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "forbidden", Message: "operation not allowed: " + opKey}})
+			writeJSON(ctx, http.StatusForbidden, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "forbidden", Message: "operation not allowed: " + opKey}})
 			return
 		}
 	}
@@ -932,7 +933,7 @@ func (s *HTTPServer) handleSQLExecute(ctx *gin.Context) {
 	result, err := engine.Execute(boundSQL)
 	if err != nil {
 		if errors.Is(err, api.ErrSystemTableAccessDenied) {
-			ctx.JSON(http.StatusForbidden, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "forbidden", Message: err.Error()}})
+			writeJSON(ctx, http.StatusForbidden, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "forbidden", Message: err.Error()}})
 			return
 		}
 
@@ -942,11 +943,11 @@ func (s *HTTPServer) handleSQLExecute(ctx *gin.Context) {
 			code = "bad_request"
 			message = err.Error()
 		}
-		ctx.JSON(status, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: code, Message: message}})
+		writeJSON(ctx, status, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: code, Message: message}})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, SQLExecuteResponse{Success: true, Result: &result})
+	writeJSON(ctx, http.StatusOK, SQLExecuteResponse{Success: true, Result: &result})
 }
 
 // SQLGrantRequest is the request body for POST /sql/grant.
@@ -966,13 +967,13 @@ type SQLGrantResponse struct {
 
 func (s *HTTPServer) handleSQLGrant(ctx *gin.Context) {
 	if s.Database == "" {
-		ctx.JSON(http.StatusInternalServerError, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "database_required", Message: "database is required"}})
+		writeJSON(ctx, http.StatusInternalServerError, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "database_required", Message: "database is required"}})
 		return
 	}
 
 	claims, ok := ctx.MustGet(ContextUserKey).(*TokenClaims)
 	if !ok || claims == nil {
-		ctx.JSON(http.StatusUnauthorized, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "unauthorized", Message: "not authenticated"}})
+		writeJSON(ctx, http.StatusUnauthorized, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "unauthorized", Message: "not authenticated"}})
 		return
 	}
 	approver := &driver.AuthenticatedUser{
@@ -984,8 +985,8 @@ func (s *HTTPServer) handleSQLGrant(ctx *gin.Context) {
 	}
 
 	var req SQLGrantRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
+	if err := bindRequestBody(ctx, &req); err != nil {
+		writeJSON(ctx, http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
 		return
 	}
 	targetDatabase := strings.TrimSpace(req.Database)
@@ -1000,28 +1001,28 @@ func (s *HTTPServer) handleSQLGrant(ctx *gin.Context) {
 		targetUsername = strings.TrimSpace(req.Grantee)
 	}
 	if targetUsername == "" {
-		ctx.JSON(http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "username is required"}})
+		writeJSON(ctx, http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "username is required"}})
 		return
 	}
 
 	err := s.authenticator.BindUserDatabase(targetDatabase, approver, targetUsername)
 	if err != nil {
 		status, code, message := mapDriverError(err, "database bind failed")
-		ctx.JSON(status, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: code, Message: message}})
+		writeJSON(ctx, status, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: code, Message: message}})
 		return
 	}
-	ctx.JSON(http.StatusOK, SQLGrantResponse{Success: true})
+	writeJSON(ctx, http.StatusOK, SQLGrantResponse{Success: true})
 }
 
 func (s *HTTPServer) handleSQLRevoke(ctx *gin.Context) {
 	if s.Database == "" {
-		ctx.JSON(http.StatusInternalServerError, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "database_required", Message: "database is required"}})
+		writeJSON(ctx, http.StatusInternalServerError, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "database_required", Message: "database is required"}})
 		return
 	}
 
 	claims, ok := ctx.MustGet(ContextUserKey).(*TokenClaims)
 	if !ok || claims == nil {
-		ctx.JSON(http.StatusUnauthorized, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "unauthorized", Message: "not authenticated"}})
+		writeJSON(ctx, http.StatusUnauthorized, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "unauthorized", Message: "not authenticated"}})
 		return
 	}
 	approver := &driver.AuthenticatedUser{
@@ -1033,8 +1034,8 @@ func (s *HTTPServer) handleSQLRevoke(ctx *gin.Context) {
 	}
 
 	var req SQLGrantRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
+	if err := bindRequestBody(ctx, &req); err != nil {
+		writeJSON(ctx, http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "invalid request body"}})
 		return
 	}
 	targetDatabase := strings.TrimSpace(req.Database)
@@ -1049,17 +1050,17 @@ func (s *HTTPServer) handleSQLRevoke(ctx *gin.Context) {
 		targetUsername = strings.TrimSpace(req.Grantee)
 	}
 	if targetUsername == "" {
-		ctx.JSON(http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "username is required"}})
+		writeJSON(ctx, http.StatusBadRequest, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: "username is required"}})
 		return
 	}
 
 	err := s.authenticator.RevokeUserDatabase(targetDatabase, approver, targetUsername)
 	if err != nil {
 		status, code, message := mapDriverError(err, "database revoke failed")
-		ctx.JSON(status, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: code, Message: message}})
+		writeJSON(ctx, status, SQLGrantResponse{Success: false, Error: &ErrorBody{Code: code, Message: message}})
 		return
 	}
-	ctx.JSON(http.StatusOK, SQLGrantResponse{Success: true})
+	writeJSON(ctx, http.StatusOK, SQLGrantResponse{Success: true})
 }
 
 func bindSQLParams(sql string, paramMap map[string]any, paramList []any) (string, error) {
@@ -1270,8 +1271,116 @@ func mapDriverError(err error, fallback string) (int, string, string) {
 	}
 }
 
-func writeJSON(ctx *gin.Context, status int, payload LoginResponse) {
-	ctx.JSON(status, payload)
+type httpBodyFormat string
+
+const (
+	httpBodyFormatJSON httpBodyFormat = "json"
+	httpBodyFormatXML  httpBodyFormat = "xml"
+	httpBodyFormatYAML httpBodyFormat = "yaml"
+	httpBodyFormatTOML httpBodyFormat = "toml"
+)
+
+type acceptCandidate struct {
+	value string
+	q     float64
+	pos   int
+}
+
+func parseAcceptHeader(header string) []acceptCandidate {
+	header = strings.TrimSpace(header)
+	if header == "" {
+		return nil
+	}
+	parts := strings.Split(header, ",")
+	out := make([]acceptCandidate, 0, len(parts))
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		mediaRange := part
+		q := 1.0
+		if semi := strings.Index(part, ";"); semi >= 0 {
+			mediaRange = strings.TrimSpace(part[:semi])
+			params := strings.Split(part[semi+1:], ";")
+			for _, param := range params {
+				param = strings.TrimSpace(param)
+				if param == "" {
+					continue
+				}
+				kv := strings.SplitN(param, "=", 2)
+				if len(kv) != 2 {
+					continue
+				}
+				if strings.EqualFold(strings.TrimSpace(kv[0]), "q") {
+					if parsed, err := strconv.ParseFloat(strings.TrimSpace(kv[1]), 64); err == nil {
+						q = parsed
+					}
+				}
+			}
+		}
+		if mediaRange == "" {
+			continue
+		}
+		out = append(out, acceptCandidate{value: strings.ToLower(mediaRange), q: q, pos: i})
+	}
+	return out
+}
+
+func matchAcceptFormat(candidate string) (httpBodyFormat, bool) {
+	candidate = strings.TrimSpace(strings.ToLower(candidate))
+	if candidate == "" {
+		return "", false
+	}
+	if candidate == "*/*" {
+		return httpBodyFormatJSON, true
+	}
+	if strings.HasSuffix(candidate, "+json") || candidate == "application/json" || candidate == "text/json" {
+		return httpBodyFormatJSON, true
+	}
+	if strings.HasSuffix(candidate, "+xml") || candidate == "application/xml" || candidate == "text/xml" {
+		return httpBodyFormatXML, true
+	}
+	if candidate == "application/yaml" || candidate == "text/yaml" || candidate == "application/x-yaml" || candidate == "text/x-yaml" {
+		return httpBodyFormatYAML, true
+	}
+	if candidate == "application/toml" || candidate == "text/toml" {
+		return httpBodyFormatTOML, true
+	}
+	if candidate == "application/*" {
+		return httpBodyFormatJSON, true
+	}
+	return "", false
+}
+
+func chooseResponseFormat(acceptHeader string) httpBodyFormat {
+	best := acceptCandidate{q: -1}
+	bestFormat := httpBodyFormatJSON
+	for _, candidate := range parseAcceptHeader(acceptHeader) {
+		format, ok := matchAcceptFormat(candidate.value)
+		if !ok {
+			continue
+		}
+		if candidate.q > best.q || (candidate.q == best.q && candidate.pos < best.pos) {
+			best = candidate
+			bestFormat = format
+		}
+	}
+	return bestFormat
+}
+
+func writeJSON(ctx *gin.Context, status int, payload any) {
+	ctx.Header("Vary", "Accept")
+	switch chooseResponseFormat(ctx.GetHeader("Accept")) {
+	case httpBodyFormatXML:
+		ctx.XML(status, payload)
+	case httpBodyFormatYAML:
+		ctx.YAML(status, payload)
+	case httpBodyFormatTOML:
+		ctx.TOML(status, payload)
+	default:
+		ctx.JSON(status, payload)
+	}
 }
 
 func writeUnauthorized(ctx *gin.Context, err error) {
@@ -1280,6 +1389,44 @@ func writeUnauthorized(ctx *gin.Context, err error) {
 		message = "invalid token"
 	}
 	writeJSON(ctx, http.StatusUnauthorized, LoginResponse{Success: false, Error: &ErrorBody{Code: "unauthorized", Message: message}})
+}
+
+func chooseRequestBodyFormat(contentType string) httpBodyFormat {
+	contentType = strings.TrimSpace(contentType)
+	if contentType == "" {
+		return httpBodyFormatJSON
+	}
+	mediaType := contentType
+	if parsed, _, err := mime.ParseMediaType(contentType); err == nil && strings.TrimSpace(parsed) != "" {
+		mediaType = parsed
+	}
+	mediaType = strings.ToLower(strings.TrimSpace(mediaType))
+	switch {
+	case strings.HasSuffix(mediaType, "+json"), mediaType == "application/json", mediaType == "text/json":
+		return httpBodyFormatJSON
+	case strings.HasSuffix(mediaType, "+xml"), mediaType == "application/xml", mediaType == "text/xml":
+		return httpBodyFormatXML
+	case mediaType == "application/yaml", mediaType == "text/yaml", mediaType == "application/x-yaml", mediaType == "text/x-yaml":
+		return httpBodyFormatYAML
+	case mediaType == "application/toml", mediaType == "text/toml":
+		return httpBodyFormatTOML
+	default:
+		return httpBodyFormatJSON
+	}
+}
+
+func bindRequestBody(ctx *gin.Context, out any) error {
+	format := chooseRequestBodyFormat(ctx.GetHeader("Content-Type"))
+	switch format {
+	case httpBodyFormatXML:
+		return ctx.ShouldBindXML(out)
+	case httpBodyFormatYAML:
+		return ctx.ShouldBindYAML(out)
+	case httpBodyFormatTOML:
+		return ctx.ShouldBindTOML(out)
+	default:
+		return ctx.ShouldBindJSON(out)
+	}
 }
 
 func UserFromContext(ctx *gin.Context) (*TokenClaims, bool) {
