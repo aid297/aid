@@ -239,7 +239,8 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 	if server.limitBuckets == nil {
 		server.limitBuckets = make(map[string]*limitBucket)
 	}
-	server.tokenManager = NewTokenManager(server.Database, server.TokenSecret, server.TokenTTL)
+	server.tokenManager = NewTokenManager(server.Database, server.TokenSecret, server.TokenTTL).
+		WithStore(NewDBTokenStore())
 	server.registerRoutes()
 	return server
 }

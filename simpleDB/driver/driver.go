@@ -77,6 +77,12 @@ func (db *DB) SetAttrs(attrs ...kernal.SchemaAttributer) *DB {
 
 func (db *DB) GetConfig() DatabaseConfig { return db.core.GetConfig() }
 
+func (db *DB) GetPath() string { return db.core.GetPath() }
+
+func (db *DB) SetPersistenceConfig(windowSecs int, windowBytes uint64, threshold uint64) {
+	db.core.SetPersistenceConfig(windowSecs, windowBytes, threshold)
+}
+
 func (db *DB) Compact() error { return wrapError(db.core.Compact()) }
 
 func (db *DB) Configure(schema TableSchema) error { return wrapError(db.core.Configure(schema)) }

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/aid297/aid/filesystem/filesystemV4"
 	"github.com/aid297/aid/operation/operationV2"
@@ -77,6 +78,14 @@ type SimpleDB struct {
 	indexIdx   map[string]map[string]map[string]struct{}
 	closed     bool
 	config     DatabaseConfig
+
+	// 内存引擎落盘相关
+	dirtyBytes    uint64      // 待落盘数据量
+	lastPersistAt time.Time   // 上次落盘时间
+	persistMu     sync.Mutex  // 落盘专用锁，用于阻塞并发操作
+	isPersisting  bool        // 是否正在执行落盘
+	memLog        []logRecord // 内存日志缓冲
+	memCleared    bool
 }
 
 func newSimpleDB(dbName, tableName string, attrs ...SchemaAttributer) (*SimpleDB, error) {
@@ -104,19 +113,30 @@ func newSimpleDB(dbName, tableName string, attrs ...SchemaAttributer) (*SimpleDB
 
 	dbPath = filesystemV4.NewFile(filesystemV4.Abs(dir.GetFullPath(), tableName+defaultDBFileEx)).GetFullPath()
 	lockPath = dbPath + lockFileEx
-	if lockFile, err = os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o644); err != nil {
-		return nil, err
-	}
 
-	if lockMethod, err = lockFileExclusive(lockFile); err != nil {
-		_ = lockFile.Close()
-		return nil, err
-	}
+	// 注意：这里的 newSimpleDB 目前无法直接知道 Engine 类型，
+	// 因为 Engine 类型存储在 schema 中，而 schema 只有在 load 之后才可用。
+	// 为了解决这个问题，我们需要在初始化时先尝试探测是否存在 .tbl 文件。
 
-	if file, err = os.OpenFile(dbPath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0o644); err != nil {
-		_ = unlockFile(lockFile, lockMethod)
-		_ = lockFile.Close()
-		return nil, err
+	file, err = os.OpenFile(dbPath, os.O_RDWR|os.O_APPEND, 0o644)
+	if err == nil {
+		// 磁盘文件存在，尝试锁定
+		if lockFile, err = os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o644); err != nil {
+			_ = file.Close()
+			return nil, err
+		}
+		if lockMethod, err = lockFileExclusive(lockFile); err != nil {
+			_ = file.Close()
+			_ = lockFile.Close()
+			return nil, err
+		}
+	} else if os.IsNotExist(err) {
+		// 文件不存在，说明是新表。我们需要等到 Configure 时决定是否创建文件。
+		err = nil // 重置错误，避免影响后续判断
+	} else {
+		// 记录错误但不直接返回，交给 load/ensureFileOpenLocked 处理
+		// fmt.Printf("debug: open file %s failed: %v\n", dbPath, err)
+		err = nil // 重置错误，避免影响后续判断
 	}
 
 	db = &SimpleDB{
@@ -132,6 +152,7 @@ func newSimpleDB(dbName, tableName string, attrs ...SchemaAttributer) (*SimpleDB
 		versions:   make(map[string][]versionedEntry),
 		uniqueIdx:  make(map[string]map[string]string),
 		indexIdx:   make(map[string]map[string]map[string]struct{}),
+		memLog:     make([]logRecord, 0),
 		config: DatabaseConfig{
 			DefaultUUIDVersion:     DefaultUUIDVersion,
 			DefaultCascadeMaxDepth: DefaultCascadeMaxDepth,
@@ -139,23 +160,42 @@ func newSimpleDB(dbName, tableName string, attrs ...SchemaAttributer) (*SimpleDB
 			DefaultUUIDUppercase:   boolPtr(DefaultUUIDUppercase),
 			MaxCPUCores:            detectSystemCPUCores(),
 			MaxMemoryBytes:         detectSystemMemoryBytes(),
+			Persistence: struct {
+				WindowSeconds int    `json:"windowSeconds,omitempty"`
+				WindowBytes   uint64 `json:"windowBytes,omitempty"`
+				Threshold     uint64 `json:"threshold,omitempty"`
+			}{
+				WindowSeconds: 10,
+				WindowBytes:   10 * 1024 * 1024,
+				Threshold:     100 * 1024 * 1024, // 默认 100MB 阈值
+			},
 		},
+		lastPersistAt: time.Now(),
 	}
 
 	db.setAttrs(attrs...)
 	db.applyRuntimeResourceLimitsLocked()
 
 	if err = db.load(); err != nil {
-		_ = file.Close()
-		_ = unlockFile(lockFile, lockMethod)
-		_ = lockFile.Close()
+		fmt.Printf("debug: %s table %s load failed: %v, file=%v\n", db.database, db.table, err, file != nil)
+		if file != nil {
+			_ = file.Close()
+		}
+		if lockFile != nil {
+			_ = unlockFile(lockFile, lockMethod)
+			_ = lockFile.Close()
+		}
 		return nil, err
 	}
 
 	if err = db.rebuildStructuredState(); err != nil {
-		_ = file.Close()
-		_ = unlockFile(lockFile, lockMethod)
-		_ = lockFile.Close()
+		if file != nil {
+			_ = file.Close()
+		}
+		if lockFile != nil {
+			_ = unlockFile(lockFile, lockMethod)
+			_ = lockFile.Close()
+		}
 		return nil, err
 	}
 
@@ -229,6 +269,8 @@ func (db *SimpleDB) GetConfig() DatabaseConfig {
 	return config
 }
 
+func (db *SimpleDB) GetPath() string { return db.dataPath }
+
 func (db *SimpleDB) getDefaultUUIDVersion() int {
 	if db.config.DefaultUUIDVersion >= 1 && db.config.DefaultUUIDVersion <= 8 {
 		return db.config.DefaultUUIDVersion
@@ -296,6 +338,43 @@ func (db *SimpleDB) applyRuntimeResourceLimitsLocked() {
 	}
 
 	debug.SetMemoryLimit(int64(memoryBytes))
+}
+
+func (db *SimpleDB) SetPersistenceConfig(windowSecs int, windowBytes uint64, threshold uint64) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	db.config.Persistence.WindowSeconds = windowSecs
+	db.config.Persistence.WindowBytes = windowBytes
+	db.config.Persistence.Threshold = threshold
+}
+
+func (db *SimpleDB) ensureFileOpenLocked() error {
+	if db.file != nil {
+		return nil
+	}
+
+	// 再次确认目录存在
+	if err := os.MkdirAll(db.dir, 0o755); err != nil {
+		return fmt.Errorf("failed to create db directory %s: %v", db.dir, err)
+	}
+
+	var err error
+	if db.lockFile, err = os.OpenFile(db.lockPath, os.O_CREATE|os.O_RDWR, 0o644); err != nil {
+		return err
+	}
+
+	if db.lockMethod, err = lockFileExclusive(db.lockFile); err != nil {
+		_ = db.lockFile.Close()
+		return err
+	}
+
+	if db.file, err = os.OpenFile(db.dataPath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0o644); err != nil {
+		_ = unlockFile(db.lockFile, db.lockMethod)
+		_ = db.lockFile.Close()
+		return err
+	}
+
+	return nil
 }
 
 func normalizeCPUCores(requested int) int {

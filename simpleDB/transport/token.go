@@ -21,10 +21,12 @@ var (
 )
 
 type TokenManager struct {
-	mu      sync.RWMutex
-	secret  []byte
-	ttl     time.Duration
-	revoked map[string]int64
+	mu       sync.RWMutex
+	database string
+	secret   []byte
+	ttl      time.Duration
+	revoked  map[string]int64
+	store    TokenStore
 }
 
 type TokenClaims struct {
@@ -50,11 +52,36 @@ func NewTokenManager(database, secret string, ttl time.Duration) *TokenManager {
 	if ttl <= 0 {
 		ttl = 12 * time.Hour
 	}
+	database = strings.TrimSpace(database)
 	secret = strings.TrimSpace(secret)
 	if secret == "" {
-		secret = "simpledb.transport." + strings.TrimSpace(database) + ".secret"
+		secret = "simpledb.transport." + database + ".secret"
 	}
-	return &TokenManager{secret: []byte(secret), ttl: ttl, revoked: make(map[string]int64)}
+	return &TokenManager{
+		database: database,
+		secret:   []byte(secret),
+		ttl:      ttl,
+		revoked:  make(map[string]int64),
+	}
+}
+
+func (m *TokenManager) WithStore(store TokenStore) *TokenManager {
+	m.store = store
+	if m.store != nil && m.database != "" {
+		now := time.Now().UTC().Unix()
+		// 启动时清理过期 Token
+		_ = m.store.ClearExpired(m.database, now)
+
+		// 加载已撤销 Token 列表
+		if loaded, err := m.store.LoadRevoked(m.database, now); err == nil {
+			m.mu.Lock()
+			for k, v := range loaded {
+				m.revoked[k] = v
+			}
+			m.mu.Unlock()
+		}
+	}
+	return m
 }
 
 func (m *TokenManager) Issue(user *driver.AuthenticatedUser) (*IssuedToken, error) {
@@ -66,6 +93,15 @@ func (m *TokenManager) Issue(user *driver.AuthenticatedUser) (*IssuedToken, erro
 		return nil, err
 	}
 	now := time.Now().UTC()
+	expiresAt := now.Add(m.ttl).Unix()
+
+	// 记录到可用 Token 列表
+	if m.store != nil && m.database != "" {
+		if err := m.store.SaveActive(m.database, tokenID, expiresAt); err != nil {
+			return nil, err
+		}
+	}
+
 	claims := TokenClaims{
 		TokenID:     tokenID,
 		Subject:     user.ID,
@@ -76,7 +112,7 @@ func (m *TokenManager) Issue(user *driver.AuthenticatedUser) (*IssuedToken, erro
 		Roles:       append([]string(nil), user.Roles...),
 		Permissions: append([]string(nil), user.Permissions...),
 		IssuedAt:    now.Unix(),
-		ExpiresAt:   now.Add(m.ttl).Unix(),
+		ExpiresAt:   expiresAt,
 	}
 	header := map[string]string{"alg": "HS256", "typ": "SDBT"}
 	token, err := m.encode(header, claims)
@@ -107,12 +143,34 @@ func (m *TokenManager) Parse(token string) (*TokenClaims, error) {
 	if claims.TokenID == "" || claims.Subject == "" || claims.Username == "" {
 		return nil, ErrInvalidToken
 	}
-	if time.Now().UTC().Unix() >= claims.ExpiresAt {
+
+	now := time.Now().UTC().Unix()
+
+	// 1. 以数据库可用列表为准进行有效期检查（Source of Truth）
+	if m.store != nil && m.database != "" {
+		dbExpiresAt, err := m.store.GetActiveExpiresAt(m.database, claims.TokenID)
+		if err != nil || dbExpiresAt <= now {
+			return nil, ErrInvalidToken // 不在可用列表中或已过期
+		}
+
+		// 2. 自动续期检查：如果数据库中的过期时间距离现在少于 2 小时 (7200 秒)
+		if dbExpiresAt-now <= 7200 {
+			newExpiresAt := now + int64(m.ttl.Seconds())
+			// 原地更新数据库中的过期时间，不生成新 Token 字符串
+			_ = m.store.SaveActive(m.database, claims.TokenID, newExpiresAt)
+		}
+	} else {
+		// 如果没有配置存储，则退化为检查 JWT 本身的过期时间
+		if now >= claims.ExpiresAt {
+			return nil, ErrExpiredToken
+		}
+	}
+
+	// 3. 检查是否在已撤销列表中
+	if m.isRevoked(claims.TokenID) {
 		return nil, ErrExpiredToken
 	}
-	if m.isRevoked(claims.TokenID) {
-		return nil, ErrInvalidToken
-	}
+
 	return &claims, nil
 }
 
@@ -121,10 +179,17 @@ func (m *TokenManager) Revoke(token string) error {
 	if err != nil {
 		return err
 	}
+	now := time.Now().UTC().Unix()
+
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	m.revoked[claims.TokenID] = claims.ExpiresAt
-	m.compactRevokedLocked(time.Now().UTC().Unix())
+	m.compactRevokedLocked(now)
+	m.mu.Unlock()
+
+	if m.store != nil && m.database != "" {
+		_ = m.store.SaveRevoked(m.database, claims.TokenID, claims.ExpiresAt)
+		_ = m.store.ClearExpired(m.database, now)
+	}
 	return nil
 }
 
@@ -133,6 +198,7 @@ func (m *TokenManager) Refresh(token string) (*IssuedToken, *TokenClaims, error)
 	if err != nil {
 		return nil, nil, err
 	}
+	// 刷新意味着撤销旧的，颁发新的
 	if err = m.Revoke(token); err != nil {
 		return nil, nil, err
 	}

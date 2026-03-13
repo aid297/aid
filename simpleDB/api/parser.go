@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	reCreate   = regexp.MustCompile(`(?i)^CREATE\s+TABLE\s+([a-zA-Z_][\w]*)\s*\((.*)\)$`)
+	reCreate   = regexp.MustCompile(`(?i)^CREATE\s+TABLE\s+([a-zA-Z_][\w]*)\s*\((.*)\)(?:\s+WITH\s*\(([^)]+)\))?$`)
 	reAlter    = regexp.MustCompile(`(?i)^ALTER\s+TABLE\s+([a-zA-Z_][\w]*)\s+(.+)$`)
 	reInsert   = regexp.MustCompile(`(?i)^INSERT\s+INTO\s+([a-zA-Z_][\w]*)\s*\((.*)\)\s*VALUES\s*(.+)$`)
 	reUpdate   = regexp.MustCompile(`(?i)^UPDATE\s+([a-zA-Z_][\w]*)\s+SET\s+(.+?)(?:\s+WHERE\s+(.+))?$`)
@@ -27,8 +27,55 @@ func Parse(sql string) (Statement, error) {
 	}
 	sql = normalizeBacktickIdentifiers(sql)
 
-	if m := reCreate.FindStringSubmatch(sql); len(m) == 3 {
-		return parseCreateTable(m[1], m[2])
+	if m := reCreate.FindStringSubmatch(sql); len(m) == 4 {
+		// m[1]: table, m[2]: body, m[3]: with
+		table := m[1]
+		body := m[2]
+		with := m[3]
+
+		// 手动解析 body 和 with 以处理嵌套括号
+		// 寻找匹配第一个 ( 的最后一个 )，如果后面还有 WITH
+		if strings.Contains(strings.ToUpper(sql), " WITH") {
+			firstParen := strings.Index(sql, "(")
+			if firstParen > 0 {
+				depth := 0
+				lastMatch := -1
+				for i := firstParen; i < len(sql); i++ {
+					if sql[i] == '(' {
+						depth++
+					} else if sql[i] == ')' {
+						depth--
+						if depth == 0 {
+							lastMatch = i
+							break
+						}
+					}
+				}
+				if lastMatch > firstParen {
+					body = sql[firstParen+1 : lastMatch]
+					// 寻找 WITH (...)
+					withPart := strings.TrimSpace(sql[lastMatch+1:])
+					if strings.HasPrefix(strings.ToUpper(withPart), "WITH") {
+						wStart := strings.Index(withPart, "(")
+						wEnd := strings.LastIndex(withPart, ")")
+						if wStart > 0 && wEnd > wStart {
+							with = withPart[wStart+1 : wEnd]
+						}
+					} else {
+						with = ""
+					}
+				}
+			}
+		} else {
+			// 没有 WITH，寻找第一个 ( 到最后一个 )
+			firstParen := strings.Index(sql, "(")
+			lastParen := strings.LastIndex(sql, ")")
+			if firstParen > 0 && lastParen > firstParen {
+				body = sql[firstParen+1 : lastParen]
+				with = ""
+			}
+		}
+		return parseCreateTable(table, body, with)
 	}
 	if m := reAlter.FindStringSubmatch(sql); len(m) == 3 {
 		return parseAlterTable(m[1], m[2])
@@ -108,13 +155,51 @@ func normalizeBacktickIdentifiers(sql string) string {
 	return b.String()
 }
 
-func parseCreateTable(table, body string) (Statement, error) {
+func parseCreateTable(table, body, with string) (Statement, error) {
+	// 去除可能包含在 body 结尾的 )
+	body = strings.TrimSpace(body)
+	if strings.HasSuffix(body, ")") && with == "" {
+		// 这里的正则可能误抓，如果是 CREATE TABLE ... (...) WITH (...)
+		// 正则 reCreate 已经分离了 body 和 with。
+		// 但如果 SQL 是 CREATE TABLE ... (col1 int, col2 string)
+		// reCreate 会抓到 body="col1 int, col2 string"
+	}
+
 	parts := splitCSV(body)
 	if len(parts) == 0 {
 		return nil, fmt.Errorf("create table has no columns")
 	}
 
-	schema := kernal.TableSchema{Columns: make([]kernal.Column, 0), ForeignKeys: make([]kernal.ForeignKey, 0)}
+	schema := kernal.TableSchema{
+		Columns:     make([]kernal.Column, 0),
+		ForeignKeys: make([]kernal.ForeignKey, 0),
+		Engine:      kernal.EngineMem, // 默认内存
+	}
+
+	if with != "" {
+		withParts := splitCSV(with)
+		for _, wp := range withParts {
+			kv := strings.Split(strings.TrimSpace(wp), "=")
+			if len(kv) == 2 {
+				key := strings.ToLower(strings.TrimSpace(kv[0]))
+				val := strings.ToLower(strings.TrimSpace(kv[1]))
+				switch key {
+				case "engine":
+					switch val {
+					case kernal.EngineMem:
+						schema.Engine = kernal.EngineMem
+					case kernal.EngineDisk:
+						schema.Engine = kernal.EngineDisk
+					default:
+						return nil, fmt.Errorf("unsupported engine type: %s", val)
+					}
+				case "disk":
+					schema.Disk = (val == "true")
+				}
+			}
+		}
+	}
+
 	for _, part := range parts {
 		p := strings.TrimSpace(part)
 		up := strings.ToUpper(p)
@@ -543,7 +628,7 @@ func parseColumnDef(def string) (kernal.Column, error) {
 	if len(parts) < 2 {
 		return kernal.Column{}, fmt.Errorf("invalid column def: %s", def)
 	}
-	col := kernal.Column{Name: parts[0], Type: parts[1]}
+	col := kernal.Column{Name: parts[0], Type: strings.ToLower(parts[1])}
 	for i := 2; i < len(parts); i++ {
 		tok := strings.ToUpper(parts[i])
 		switch tok {

@@ -24,13 +24,26 @@ type Engine struct {
 	Database string
 	Backend  Backend
 	Actor    *driver.AuthenticatedUser
+	cache    map[string]tableDB
 }
 
 func NewEngine(database string, backend Backend) *Engine {
 	if backend == "" {
 		backend = BackendDriver
 	}
-	return &Engine{Database: database, Backend: backend}
+	return &Engine{
+		Database: database,
+		Backend:  backend,
+		cache:    make(map[string]tableDB),
+	}
+}
+
+func (e *Engine) Close() error {
+	for _, db := range e.cache {
+		db.Close()
+	}
+	e.cache = make(map[string]tableDB)
+	return nil
 }
 
 func (e *Engine) WithActor(user *driver.AuthenticatedUser) *Engine {
@@ -81,6 +94,8 @@ type tableDB interface {
 	Find(conditions ...kernal.QueryCondition) ([]kernal.Row, error)
 	DropTable() error
 	TruncateTable() error
+	SetPersistenceConfig(windowSecs int, windowBytes uint64, threshold uint64)
+	GetPath() string
 }
 
 func (e *Engine) open(table string) (tableDB, error) {
@@ -91,10 +106,25 @@ func (e *Engine) openWithScope(table string, scope kernal.TableAccessScope) (tab
 	if err := e.authorizeTableOp(table, scope); err != nil {
 		return nil, err
 	}
-	if e.Backend == BackendKernal {
-		return kernal.New.DB(e.Database, table)
+
+	if db, ok := e.cache[table]; ok {
+		return db, nil
 	}
-	return driver.New.DB(e.Database, table)
+
+	var db tableDB
+	var err error
+	if e.Backend == BackendKernal {
+		db, err = kernal.New.DB(e.Database, table)
+	} else {
+		db, err = driver.New.DB(e.Database, table)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	e.cache[table] = db
+	return db, nil
 }
 
 func (e *Engine) authorizeTable(table string) error {
@@ -129,7 +159,6 @@ func (e *Engine) execCreate(s CreateTableStmt) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, err
 	}
-	defer db.Close()
 	if err = db.CreateTable(s.Schema); err != nil {
 		return ExecResult{}, err
 	}
@@ -147,7 +176,6 @@ func (e *Engine) execAlter(s AlterTableStmt) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, err
 	}
-	defer db.Close()
 	if err = db.AlterTable(s.Plan); err != nil {
 		return ExecResult{}, err
 	}
@@ -159,7 +187,6 @@ func (e *Engine) execInsert(s InsertStmt) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, err
 	}
-	defer db.Close()
 	rows := s.Rows
 	if len(rows) == 0 && len(s.Row) > 0 {
 		rows = []kernal.Row{s.Row}
@@ -189,7 +216,6 @@ func (e *Engine) execUpdate(s UpdateStmt) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, err
 	}
-	defer db.Close()
 
 	primaryKeys := append([]any(nil), s.PrimaryKeys...)
 	if len(primaryKeys) == 0 {
@@ -223,7 +249,6 @@ func (e *Engine) execDelete(s DeleteStmt) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, err
 	}
-	defer db.Close()
 	count, err := db.RemoveByCondition(s.Conditions...)
 	if err != nil {
 		return ExecResult{}, err
@@ -236,10 +261,8 @@ func (e *Engine) execSelect(s SelectStmt) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, err
 	}
-	defer db.Close()
 
-	// 展开子查询条件，将 IN/NOT IN (SELECT ...) 转为字面量值列表追加到 Conditions
-	conditions := s.Conditions
+	conditions := s.Conditions // 展开子查询条件，将 IN/NOT IN (SELECT ...) 转为字面量值列表追加到 Conditions
 	for _, sc := range s.SubConds {
 		subResult, subErr := e.execSelect(sc.SubStmt)
 		if subErr != nil {
@@ -618,10 +641,10 @@ func (e *Engine) execDrop(s DropTableStmt) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, err
 	}
-	defer db.Close()
 	if err = db.DropTable(); err != nil {
 		return ExecResult{}, err
 	}
+	delete(e.cache, s.Table)
 	return ExecResult{Statement: StmtDropTable, Affected: 1}, nil
 }
 
@@ -630,7 +653,6 @@ func (e *Engine) execTruncate(s TruncateTableStmt) (ExecResult, error) {
 	if err != nil {
 		return ExecResult{}, err
 	}
-	defer db.Close()
 	if err = db.TruncateTable(); err != nil {
 		return ExecResult{}, err
 	}

@@ -57,6 +57,15 @@ type DatabaseConfig struct {
 	DefaultCascadeMaxDepth int    `json:"defaultCascadeMaxDepth,omitempty"`
 	MaxCPUCores            int    `json:"maxCpuCores,omitempty"`
 	MaxMemoryBytes         uint64 `json:"maxMemoryBytes,omitempty"`
+	Engine                 struct {
+		Type string `json:"type,omitempty"` // mem | disk
+		Disk bool   `json:"disk,omitempty"` // whether mem engine should persist
+	} `json:"engine,omitempty"`
+	Persistence struct {
+		WindowSeconds int    `json:"windowSeconds,omitempty"` // 默认 10 秒
+		WindowBytes   uint64 `json:"windowBytes,omitempty"`   // 默认 10MB
+		Threshold     uint64 `json:"threshold,omitempty"`     // 超过此值清空内存并落盘
+	} `json:"persistence,omitempty"`
 }
 
 const (
@@ -129,19 +138,21 @@ type Column struct {
 	Indexed       bool          `json:"indexed,omitempty"`
 }
 
+const (
+	EngineDisk = "disk"
+	EngineMem  = "mem"
+)
+
 type TableSchema struct {
 	Columns       []Column     `json:"columns"`
 	ForeignKeys   []ForeignKey `json:"foreignKeys,omitempty"`
 	PrimaryKey    string       `json:"primaryKey"`
 	AutoIncrement bool         `json:"autoIncrement,omitempty"`
+	Engine        string       `json:"engine,omitempty"` // disk | mem
+	Disk          bool         `json:"disk,omitempty"`   // 是否开启落盘（仅对 mem 引擎有效）
 }
 
 func (db *SimpleDB) Configure(schema TableSchema) (err error) {
-	var (
-		normalized TableSchema
-		payload    []byte
-	)
-
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -149,7 +160,8 @@ func (db *SimpleDB) Configure(schema TableSchema) (err error) {
 		return err
 	}
 
-	if normalized, err = normalizeSchema(schema); err != nil {
+	normalized, err := normalizeSchema(schema)
+	if err != nil {
 		return err
 	}
 
@@ -160,25 +172,7 @@ func (db *SimpleDB) Configure(schema TableSchema) (err error) {
 		return ErrSchemaAlreadyExists
 	}
 
-	if payload, err = json.Marshal(normalized); err != nil {
-		return err
-	}
-
-	if err = db.putRawLocked(metaSchemaKey, payload); err != nil {
-		return err
-	}
-
-	if normalized.AutoIncrement && autoIncrementUsesSequence(normalized) {
-		if err = db.persistSequenceLocked(0); err != nil {
-			return err
-		}
-	}
-
-	db.schema = &normalized
-	db.autoSeq = 0
-	db.resetSecondaryIndexesLocked()
-
-	return nil
+	return db.createTableLocked(normalized)
 }
 
 func (db *SimpleDB) GetSchema() (*TableSchema, error) {
@@ -215,6 +209,10 @@ func (db *SimpleDB) InsertRow(values Row) (row Row, err error) {
 		return nil, ErrSchemaNotConfigured
 	}
 
+	if err = db.hydrateMemDiskLocked(); err != nil {
+		return nil, err
+	}
+
 	return db.insertRowLocked(values)
 }
 
@@ -233,6 +231,10 @@ func (db *SimpleDB) InsertRows(values []Row) ([]Row, error) {
 
 	if db.schema == nil {
 		return nil, ErrSchemaNotConfigured
+	}
+
+	if err = db.hydrateMemDiskLocked(); err != nil {
+		return nil, err
 	}
 
 	if len(values) == 0 {
@@ -304,6 +306,10 @@ func (db *SimpleDB) UpdateRow(primaryKey any, updates Row) (Row, error) {
 		return nil, ErrSchemaNotConfigured
 	}
 
+	if err = db.hydrateMemDiskLocked(); err != nil {
+		return nil, err
+	}
+
 	return db.updateRowLocked(primaryKey, updates)
 }
 
@@ -316,6 +322,9 @@ func (db *SimpleDB) UpdateRows(updates []RowUpdate) ([]Row, error) {
 	}
 	if db.schema == nil {
 		return nil, ErrSchemaNotConfigured
+	}
+	if err := db.hydrateMemDiskLocked(); err != nil {
+		return nil, err
 	}
 	if len(updates) == 0 {
 		return nil, ErrBatchEmpty
@@ -387,6 +396,9 @@ func (db *SimpleDB) DeleteRow(primaryKey any) error {
 	if db.schema == nil {
 		return ErrSchemaNotConfigured
 	}
+	if err := db.hydrateMemDiskLocked(); err != nil {
+		return err
+	}
 	return db.deleteRowLocked(primaryKey)
 }
 
@@ -399,6 +411,9 @@ func (db *SimpleDB) DeleteRows(primaryKeys []any) error {
 	}
 	if db.schema == nil {
 		return ErrSchemaNotConfigured
+	}
+	if err := db.hydrateMemDiskLocked(); err != nil {
+		return err
 	}
 	if len(primaryKeys) == 0 {
 		return ErrBatchEmpty
@@ -426,14 +441,18 @@ func (db *SimpleDB) deleteRowLocked(primaryKey any) error {
 }
 
 func (db *SimpleDB) FindRow(primaryKey any) (Row, bool, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
 
 	if err := db.ensureOpen(); err != nil {
 		return nil, false, err
 	}
 	if db.schema == nil {
 		return nil, false, ErrSchemaNotConfigured
+	}
+
+	if err := db.hydrateMemDiskLocked(); err != nil {
+		return nil, false, err
 	}
 
 	row, _, err := db.findRowLocked(primaryKey)
@@ -448,8 +467,8 @@ func (db *SimpleDB) FindRow(primaryKey any) (Row, bool, error) {
 }
 
 func (db *SimpleDB) FindByUnique(field string, value any) (Row, bool, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
 
 	if err := db.ensureOpen(); err != nil {
 		return nil, false, err
@@ -457,18 +476,24 @@ func (db *SimpleDB) FindByUnique(field string, value any) (Row, bool, error) {
 	if db.schema == nil {
 		return nil, false, ErrSchemaNotConfigured
 	}
+	if err := db.hydrateMemDiskLocked(); err != nil {
+		return nil, false, err
+	}
 	return db.findByUniqueLocked(field, value)
 }
 
 func (db *SimpleDB) FindByIndex(field string, value any) ([]Row, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
 
 	if err := db.ensureOpen(); err != nil {
 		return nil, err
 	}
 	if db.schema == nil {
 		return nil, ErrSchemaNotConfigured
+	}
+	if err := db.hydrateMemDiskLocked(); err != nil {
+		return nil, err
 	}
 	if !db.isIndexedField(field) {
 		return nil, fmt.Errorf("%w: %s", ErrFieldNotIndexed, field)
@@ -519,14 +544,18 @@ func (db *SimpleDB) FindByIndex(field string, value any) ([]Row, error) {
 }
 
 func (db *SimpleDB) FindByConditions(conditions []QueryCondition) ([]Row, error) {
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
 
 	if err := db.ensureOpen(); err != nil {
 		return nil, err
 	}
 	if db.schema == nil {
 		return nil, ErrSchemaNotConfigured
+	}
+
+	if err := db.hydrateMemDiskLocked(); err != nil {
+		return nil, err
 	}
 
 	normalizedConditions, err := db.normalizeQueryConditionsLocked(conditions)
@@ -593,6 +622,9 @@ func (db *SimpleDB) RemoveByCondition(conditions ...QueryCondition) (int, error)
 	}
 	if db.schema == nil {
 		return 0, ErrSchemaNotConfigured
+	}
+	if err := db.hydrateMemDiskLocked(); err != nil {
+		return 0, err
 	}
 
 	normalizedConditions, err := db.normalizeQueryConditionsLocked(conditions)
@@ -1277,6 +1309,11 @@ func normalizeSchema(schema TableSchema) (TableSchema, error) {
 		return TableSchema{}, fmt.Errorf("%w: exactly one primary key is required", ErrInvalidSchema)
 	}
 
+	normalized.Engine = strings.ToLower(strings.TrimSpace(schema.Engine))
+	if normalized.Engine == "" {
+		normalized.Engine = EngineMem
+	}
+	normalized.Disk = schema.Disk
 	normalized.ForeignKeys = make([]ForeignKey, 0, len(schema.ForeignKeys))
 	foreignKeyNames := make(map[string]struct{}, len(schema.ForeignKeys))
 	for _, foreignKey := range schema.ForeignKeys {

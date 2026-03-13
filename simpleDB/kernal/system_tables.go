@@ -12,6 +12,8 @@ import (
 
 const (
 	systemTableUsers             = "_sys_users"
+	systemTableRevokedTokens     = "_sys_revoked_tokens"
+	systemTableActiveTokens      = "_sys_active_tokens"
 	systemTableRoles             = "_sys_roles"
 	systemTablePermissions       = "_sys_permissions"
 	systemTableUserRoles         = "_sys_user_roles"
@@ -79,6 +81,8 @@ func systemDatabaseFor(database string) string {
 func systemTableDefinitions() []systemTableDefinition {
 	return []systemTableDefinition{
 		{name: systemTableUsers, schema: systemUsersSchema()},
+		{name: systemTableRevokedTokens, schema: systemRevokedTokensSchema()},
+		{name: systemTableActiveTokens, schema: systemActiveTokensSchema()},
 		{name: systemTableRoles, schema: systemRolesSchema()},
 		{name: systemTablePermissions, schema: systemPermissionsSchema()},
 		{name: systemTableUserRoles, schema: systemUserRolesSchema()},
@@ -90,87 +94,124 @@ func systemTableDefinitions() []systemTableDefinition {
 	}
 }
 
+func systemRevokedTokensSchema() TableSchema {
+	return TableSchema{
+		Engine: EngineDisk,
+		Columns: []Column{
+			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+			{Name: "tokenId", Type: "string", Required: true, Unique: true},
+			{Name: "expiresAt", Type: "int", Required: true},
+			{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+		}}
+}
+
+func systemActiveTokensSchema() TableSchema {
+	return TableSchema{
+		Engine: EngineDisk,
+		Columns: []Column{
+			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+			{Name: "tokenId", Type: "string", Required: true, Unique: true},
+			{Name: "expiresAt", Type: "int", Required: true},
+			{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+		}}
+}
+
 func systemDatabaseOwnersSchema() TableSchema {
-	return TableSchema{Columns: []Column{
-		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
-		{Name: "databaseName", Type: "string", Required: true, Unique: true},
-		{Name: "ownerUserId", Type: "uuid", Required: true},
-		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
-		{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
-	}}
+	return TableSchema{
+		Engine: EngineDisk,
+		Columns: []Column{
+			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+			{Name: "databaseName", Type: "string", Required: true, Unique: true},
+			{Name: "ownerUserId", Type: "uuid", Required: true},
+			{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+			{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
+		}}
 }
 
 func systemUserDBBindingsSchema() TableSchema {
-	return TableSchema{Columns: []Column{
-		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
-		{Name: "userId", Type: "uuid", Required: true},
-		{Name: "databaseName", Type: "string", Required: true},
-		{Name: "enabled", Type: "bool", Default: true},
-		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
-		{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
-	}}
+	return TableSchema{
+		Engine: EngineDisk,
+		Columns: []Column{
+			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+			{Name: "userId", Type: "uuid", Required: true},
+			{Name: "databaseName", Type: "string", Required: true},
+			{Name: "enabled", Type: "bool", Default: true},
+			{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+			{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
+		}}
 }
 
 func systemTableOwnersSchema() TableSchema {
-	return TableSchema{Columns: []Column{
-		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
-		{Name: "tableName", Type: "string", Required: true, Unique: true},
-		{Name: "ownerUserId", Type: "uuid", Required: true},
-		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
-	}}
+	return TableSchema{
+		Engine: EngineDisk,
+		Columns: []Column{
+			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+			{Name: "tableName", Type: "string", Required: true, Unique: true},
+			{Name: "ownerUserId", Type: "uuid", Required: true},
+			{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+		}}
 }
 
 func systemTableAccessGrantsSchema() TableSchema {
-	return TableSchema{Columns: []Column{
-		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
-		{Name: "tableName", Type: "string", Required: true},
-		{Name: "granteeUserId", Type: "uuid", Required: true},
-		{Name: "scope", Type: "string", Required: true},
-		{Name: "ownerApproved", Type: "bool", Default: false},
-		{Name: "adminApproved", Type: "bool", Default: false},
-		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
-		{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
-	}}
+	return TableSchema{
+		Engine: EngineDisk,
+		Columns: []Column{
+			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+			{Name: "tableName", Type: "string", Required: true},
+			{Name: "granteeUserId", Type: "uuid", Required: true},
+			{Name: "scope", Type: "string", Required: true},
+			{Name: "ownerApproved", Type: "bool", Default: false},
+			{Name: "adminApproved", Type: "bool", Default: false},
+			{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+			{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
+		}}
 }
 
 func systemUsersSchema() TableSchema {
-	return TableSchema{Columns: []Column{
-		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
-		{Name: "username", Type: "string", Required: true, Unique: true},
-		{Name: "passwordHash", Type: "string", Required: true},
-		{Name: "displayName", Type: "string", Default: ""},
-		{Name: "isAdmin", Type: "bool", Default: false},
-		{Name: "status", Type: "string", Default: defaultSystemStatus},
-		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
-		{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
-	}}
+	return TableSchema{
+		Engine: EngineDisk,
+		Columns: []Column{
+			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+			{Name: "username", Type: "string", Required: true, Unique: true},
+			{Name: "passwordHash", Type: "string", Required: true},
+			{Name: "displayName", Type: "string", Default: ""},
+			{Name: "isAdmin", Type: "bool", Default: false},
+			{Name: "status", Type: "string", Default: defaultSystemStatus},
+			{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+			{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
+		}}
 }
 
 func systemRolesSchema() TableSchema {
-	return TableSchema{Columns: []Column{
-		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
-		{Name: "code", Type: "string", Required: true, Unique: true},
-		{Name: "name", Type: "string", Required: true},
-		{Name: "description", Type: "string", Default: ""},
-		{Name: "isSystem", Type: "bool", Default: false},
-		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
-		{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
-	}}
+	return TableSchema{
+		Engine: EngineDisk,
+		Columns: []Column{
+			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+			{Name: "code", Type: "string", Required: true, Unique: true},
+			{Name: "name", Type: "string", Required: true},
+			{Name: "description", Type: "string", Default: ""},
+			{Name: "isSystem", Type: "bool", Default: false},
+			{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+			{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
+		}}
 }
 
 func systemPermissionsSchema() TableSchema {
-	return TableSchema{Columns: []Column{
-		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
-		{Name: "code", Type: "string", Required: true, Unique: true},
-		{Name: "name", Type: "string", Required: true},
-		{Name: "description", Type: "string", Default: ""},
-		{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
-		{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
-	}}
+	return TableSchema{
+		Engine: EngineDisk,
+		Columns: []Column{
+			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
+			{Name: "code", Type: "string", Required: true, Unique: true},
+			{Name: "name", Type: "string", Required: true},
+			{Name: "description", Type: "string", Default: ""},
+			{Name: "createdAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp},
+			{Name: "updatedAt", Type: "timestamp", DefaultExpr: ColumnExprCurrentTimestamp, OnUpdateExpr: ColumnExprCurrentTimestamp},
+		}}
 }
 
 func systemUserRolesSchema() TableSchema {
 	return TableSchema{
+		Engine: EngineDisk,
 		Columns: []Column{
 			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
 			{Name: "userId", Type: "uuid", Required: true},
@@ -186,6 +227,7 @@ func systemUserRolesSchema() TableSchema {
 
 func systemRolePermissionsSchema() TableSchema {
 	return TableSchema{
+		Engine: EngineDisk,
 		Columns: []Column{
 			{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
 			{Name: "roleId", Type: "uuid", Required: true},

@@ -32,6 +32,7 @@ require (
 	gorm.io/driver/sqlserver v1.5.4
 	gorm.io/gorm v1.25.12
 	gorm.io/plugin/dbresolver v1.5.3
+    gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -119,5 +120,4 @@ require (
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

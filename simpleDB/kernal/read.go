@@ -22,10 +22,14 @@ func (db *SimpleDB) Get(key string) ([]byte, bool, error) {
 		return nil, false, err
 	}
 
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
 
 	if err = db.ensureOpen(); err != nil {
+		return nil, false, err
+	}
+
+	if err = db.hydrateMemDiskLocked(); err != nil {
 		return nil, false, err
 	}
 
@@ -42,10 +46,14 @@ func (db *SimpleDB) Query(prefix string) (map[string][]byte, error) {
 		result map[string][]byte
 	)
 
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
 
 	if err = db.ensureOpen(); err != nil {
+		return nil, err
+	}
+
+	if err = db.hydrateMemDiskLocked(); err != nil {
 		return nil, err
 	}
 
@@ -69,10 +77,14 @@ func (db *SimpleDB) Keys() ([]string, error) {
 		keys []string
 	)
 
-	db.mu.RLock()
-	defer db.mu.RUnlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
 
 	if err = db.ensureOpen(); err != nil {
+		return nil, err
+	}
+
+	if err = db.hydrateMemDiskLocked(); err != nil {
 		return nil, err
 	}
 

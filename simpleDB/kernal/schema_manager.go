@@ -70,16 +70,10 @@ func (db *SimpleDB) HasSchema() bool {
 // 与 Configure 的区别：若表已存在 Schema，即使完全相同也返回 ErrSchemaAlreadyExists。
 // 适用于明确的 DDL 创建语义（CREATE TABLE IF NOT EXISTS 请先调用 HasSchema 判断）。
 func (db *SimpleDB) CreateTable(schema TableSchema) error {
-	var (
-		err        error
-		normalized TableSchema
-		payload    []byte
-	)
-
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	if err = db.ensureOpen(); err != nil {
+	if err := db.ensureOpen(); err != nil {
 		return err
 	}
 
@@ -87,29 +81,12 @@ func (db *SimpleDB) CreateTable(schema TableSchema) error {
 		return ErrSchemaAlreadyExists
 	}
 
-	if normalized, err = normalizeSchema(schema); err != nil {
+	normalized, err := normalizeSchema(schema)
+	if err != nil {
 		return err
 	}
 
-	if payload, err = json.Marshal(normalized); err != nil {
-		return err
-	}
-
-	if err = db.putRawLocked(metaSchemaKey, payload); err != nil {
-		return err
-	}
-
-	if normalized.AutoIncrement && autoIncrementUsesSequence(normalized) {
-		if err = db.persistSequenceLocked(0); err != nil {
-			return err
-		}
-	}
-
-	db.schema = &normalized
-	db.autoSeq = 0
-	db.resetSecondaryIndexesLocked()
-
-	return nil
+	return db.createTableLocked(normalized)
 }
 
 // ─── DDL: DropTable ───────────────────────────────────────────────────────────
@@ -449,6 +426,11 @@ func (db *SimpleDB) AutoMigrate(schema TableSchema) error {
 		return err
 	}
 
+	// 禁止修改引擎类型
+	if db.schema != nil && db.schema.Engine != normalized.Engine {
+		return fmt.Errorf("cannot change table engine from %s to %s", db.schema.Engine, normalized.Engine)
+	}
+
 	// 无 Schema → 建表
 	if db.schema == nil {
 		return db.createTableLocked(normalized)
@@ -512,15 +494,32 @@ func (db *SimpleDB) createTableLocked(normalized TableSchema) error {
 	if err != nil {
 		return err
 	}
+
+	// 提前设置 schema，以便 putRawLocked 能够识别引擎类型
+	db.schema = &normalized
+
+	if normalized.Engine == EngineDisk || (normalized.Engine == EngineMem && normalized.Disk) {
+		if err = db.ensureFileOpenLocked(); err != nil {
+			return err
+		}
+	}
+
 	if err = db.putRawLocked(metaSchemaKey, payload); err != nil {
 		return err
 	}
+
+	if normalized.Engine == EngineMem && normalized.Disk {
+		// 内存引擎开启落盘时，强制立即将 Schema 写入磁盘以防掉电丢失
+		if err = db.persistMemToDiskLocked(false); err != nil {
+			return err
+		}
+	}
+
 	if normalized.AutoIncrement && autoIncrementUsesSequence(normalized) {
 		if err = db.persistSequenceLocked(0); err != nil {
 			return err
 		}
 	}
-	db.schema = &normalized
 	db.autoSeq = 0
 	db.resetSecondaryIndexesLocked()
 	return nil
@@ -630,6 +629,12 @@ func (db *SimpleDB) alterTableLocked(plan AlterTablePlan) error {
 		}
 		if putErr := db.putRawLocked(key, encodedRow); putErr != nil {
 			return putErr
+		}
+	}
+
+	if normalized.Engine == EngineDisk {
+		if err = db.ensureFileOpenLocked(); err != nil {
+			return err
 		}
 	}
 
