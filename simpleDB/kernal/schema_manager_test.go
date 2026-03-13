@@ -22,6 +22,7 @@ func userSchema() TableSchema {
 	return TableSchema{
 		PrimaryKey:    "id",
 		AutoIncrement: true,
+		Engine:        EngineDisk,
 		Columns: []Column{
 			{Name: "id", Type: "int", PrimaryKey: true, AutoIncrement: true},
 			{Name: "name", Type: "string", Required: true},
@@ -492,6 +493,7 @@ func TestSchemaManager_FullLifecycle(t *testing.T) {
 	newSchema := TableSchema{
 		PrimaryKey:    "uid",
 		AutoIncrement: true,
+		Engine:        EngineDisk,
 		Columns: []Column{
 			{Name: "uid", Type: "int", PrimaryKey: true, AutoIncrement: true},
 			{Name: "title", Type: "string"},
@@ -715,6 +717,7 @@ func TestSchemaManager_AutoMigrate_AddOnly(t *testing.T) {
 	newSchema := TableSchema{
 		PrimaryKey:    "id",
 		AutoIncrement: true,
+		Engine:        EngineDisk,
 		Columns: []Column{
 			{Name: "id", Type: "int", PrimaryKey: true, AutoIncrement: true},
 			{Name: "name", Type: "string", Required: true},
@@ -783,6 +786,7 @@ func TestSchemaManager_SyncSchema_AddAndDrop(t *testing.T) {
 	newSchema := TableSchema{
 		PrimaryKey:    "id",
 		AutoIncrement: true,
+		Engine:        EngineDisk,
 		Columns: []Column{
 			{Name: "id", Type: "int", PrimaryKey: true, AutoIncrement: true},
 			{Name: "name", Type: "string", Required: true},

@@ -81,6 +81,7 @@ func (db *SimpleDB) CreateTable(schema TableSchema) error {
 		return ErrSchemaAlreadyExists
 	}
 
+	schema = db.applySchemaDefaultsLocked(schema)
 	normalized, err := normalizeSchema(schema)
 	if err != nil {
 		return err
@@ -421,6 +422,7 @@ func (db *SimpleDB) AutoMigrate(schema TableSchema) error {
 		return err
 	}
 
+	schema = db.applySchemaDefaultsLocked(schema)
 	normalized, err := normalizeSchema(schema)
 	if err != nil {
 		return err
@@ -462,6 +464,7 @@ func (db *SimpleDB) SyncSchema(schema TableSchema) error {
 		return err
 	}
 
+	schema = db.applySchemaDefaultsLocked(schema)
 	normalized, err := normalizeSchema(schema)
 	if err != nil {
 		return err

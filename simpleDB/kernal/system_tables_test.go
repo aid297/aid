@@ -85,7 +85,7 @@ func TestSystemTables_SchemaMismatchReturnsError(t *testing.T) {
 	if err = usersDB.CreateTable(TableSchema{Columns: []Column{
 		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
 		{Name: "username", Type: "string", Required: true, Unique: true},
-	}}); err != nil {
+	}, Engine: EngineDisk}); err != nil {
 		_ = usersDB.Close()
 		t.Fatalf("create malformed users schema: %v", err)
 	}

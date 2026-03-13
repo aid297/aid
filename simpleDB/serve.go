@@ -1,14 +1,21 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
 	configpkg "github.com/aid297/aid/simpleDB/config"
+	"github.com/aid297/aid/simpleDB/kernal"
 	"github.com/aid297/aid/simpleDB/transport"
 	"github.com/gin-gonic/gin"
 )
@@ -47,11 +54,34 @@ func runServe(args []string, stdout, stderr *os.File) int {
 	registerServiceRoutes(server, config)
 	printServeSummary(stdout, resolvedConfigPath, config)
 
-	if err = server.Run(config.Transport.HTTP.Address); err != nil {
+	httpServer := &http.Server{
+		Addr:    config.Transport.HTTP.Address,
+		Handler: server.Handler(),
+	}
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- httpServer.ListenAndServe()
+	}()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigCh)
+
+	select {
+	case err = <-errCh:
+		if err == nil || errors.Is(err, http.ErrServerClosed) {
+			return 0
+		}
 		_, _ = fmt.Fprintf(stderr, "HTTP service stopped: %v\n", err)
 		return 1
+	case <-sigCh:
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_ = httpServer.Shutdown(ctx)
+		_ = server.Close()
+		return 0
 	}
-	return 0
 }
 
 func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*transport.HTTPServer, error) {
@@ -63,10 +93,23 @@ func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*trans
 	if err != nil {
 		return nil, err
 	}
+	windowBytes, err := config.ParseEngineWindowBytes()
+	if err != nil {
+		return nil, err
+	}
+	thresholdBytes, err := config.ParseEngineThresholdBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	dbAttrs := []kernal.SchemaAttributer{
+		kernal.Persistence(config.Engine.Persistence.WindowSeconds, windowBytes, thresholdBytes),
+	}
 	resolvedConfigPath := resolveConfigPath(configPath)
 	gin.SetMode(config.Transport.HTTP.GinMode)
 	server := transport.New.HTTP(
 		config.Database.Path,
+		transport.WithLoginPath(config.Transport.HTTP.Route.Login),
 		transport.WithLoginPath(config.Transport.HTTP.Route.Login),
 		transport.WithRegisterPath(config.Transport.HTTP.Route.Register),
 		transport.WithRefreshPath(config.Transport.HTTP.Route.Refresh),
@@ -90,6 +133,7 @@ func newHTTPServerFromConfig(config configpkg.Config, configPath string) (*trans
 		transport.WithInitPasswordRotator(func() (string, error) {
 			return rotateInitPasswordInConfig(resolvedConfigPath)
 		}),
+		transport.WithSQLEngineDBAttrs(dbAttrs...),
 		transport.WithTokenTTL(tokenTTL),
 		transport.WithTokenSecret(config.Transport.HTTP.TokenSecret),
 	)

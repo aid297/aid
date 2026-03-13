@@ -1,5 +1,10 @@
 database:
     path: demo_transport
+engine:
+    persistence:
+        windowSeconds: 10
+        windowBytes: 10mb
+        threshold: 100mb
 transport:
     http:
         enabled: true

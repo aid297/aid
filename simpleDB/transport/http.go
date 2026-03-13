@@ -16,6 +16,7 @@ import (
 
 	"github.com/aid297/aid/simpleDB/api"
 	"github.com/aid297/aid/simpleDB/driver"
+	"github.com/aid297/aid/simpleDB/kernal"
 	"github.com/gin-gonic/gin"
 )
 
@@ -80,6 +81,8 @@ type HTTPServer struct {
 	authenticator            Authenticator
 	engine                   *gin.Engine
 	tokenManager             *TokenManager
+	sqlEngine                *api.Engine
+	sqlEngineDBAttrs         []kernal.SchemaAttributer
 }
 
 type limitBucket struct {
@@ -239,6 +242,7 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 	if server.limitBuckets == nil {
 		server.limitBuckets = make(map[string]*limitBucket)
 	}
+	server.sqlEngine = api.NewEngine(server.Database, api.BackendDriver).WithDBAttrs(server.sqlEngineDBAttrs...)
 	server.tokenManager = NewTokenManager(server.Database, server.TokenSecret, server.TokenTTL).
 		WithStore(NewDBTokenStore())
 	server.registerRoutes()
@@ -388,12 +392,29 @@ func WithTokenTTL(ttl time.Duration) Option {
 	}
 }
 
+func WithSQLEngineDBAttrs(attrs ...kernal.SchemaAttributer) Option {
+	return func(server *HTTPServer) {
+		if len(attrs) == 0 {
+			server.sqlEngineDBAttrs = nil
+			return
+		}
+		server.sqlEngineDBAttrs = append([]kernal.SchemaAttributer(nil), attrs...)
+	}
+}
+
 func (s *HTTPServer) Handler() http.Handler {
 	return s.engine
 }
 
 func (s *HTTPServer) Engine() *gin.Engine {
 	return s.engine
+}
+
+func (s *HTTPServer) Close() error {
+	if s.sqlEngine == nil {
+		return nil
+	}
+	return s.sqlEngine.Close()
 }
 
 func (s *HTTPServer) Run(addr string) error {
@@ -863,7 +884,9 @@ func (s *HTTPServer) handleSQLExecute(ctx *gin.Context) {
 		Permissions: append([]string(nil), claims.Permissions...),
 	}
 
-	engine := api.NewEngine(s.Database, api.BackendDriver).WithActor(actor)
+	engine := api.NewEngine(s.Database, api.BackendDriver).
+		WithSharedCacheFrom(s.sqlEngine).
+		WithActor(actor)
 
 	// 白名单校验：解析语句类型，若配置了 SQLAllowedOps 则拒绝不在列表内的操作
 	if len(s.SQLAllowedOps) > 0 {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/aid297/aid/simpleDB/driver"
 	"github.com/aid297/aid/simpleDB/kernal"
@@ -24,7 +25,8 @@ type Engine struct {
 	Database string
 	Backend  Backend
 	Actor    *driver.AuthenticatedUser
-	cache    map[string]tableDB
+	cache    *tableCache
+	attrs    []kernal.SchemaAttributer
 }
 
 func NewEngine(database string, backend Backend) *Engine {
@@ -34,20 +36,38 @@ func NewEngine(database string, backend Backend) *Engine {
 	return &Engine{
 		Database: database,
 		Backend:  backend,
-		cache:    make(map[string]tableDB),
+		cache:    newTableCache(),
 	}
 }
 
 func (e *Engine) Close() error {
-	for _, db := range e.cache {
-		db.Close()
+	if e.cache == nil {
+		return nil
 	}
-	e.cache = make(map[string]tableDB)
-	return nil
+	return e.cache.closeAll()
 }
 
 func (e *Engine) WithActor(user *driver.AuthenticatedUser) *Engine {
 	e.Actor = user
+	return e
+}
+
+func (e *Engine) WithDBAttrs(attrs ...kernal.SchemaAttributer) *Engine {
+	if len(attrs) == 0 {
+		return e
+	}
+	e.attrs = append([]kernal.SchemaAttributer(nil), attrs...)
+	return e
+}
+
+func (e *Engine) WithSharedCacheFrom(other *Engine) *Engine {
+	if other == nil || other.cache == nil {
+		return e
+	}
+	e.cache = other.cache
+	if len(other.attrs) > 0 {
+		e.attrs = append([]kernal.SchemaAttributer(nil), other.attrs...)
+	}
 	return e
 }
 
@@ -107,23 +127,30 @@ func (e *Engine) openWithScope(table string, scope kernal.TableAccessScope) (tab
 		return nil, err
 	}
 
-	if db, ok := e.cache[table]; ok {
+	if db, ok := e.cache.get(table); ok {
 		return db, nil
 	}
 
 	var db tableDB
 	var err error
 	if e.Backend == BackendKernal {
-		db, err = kernal.New.DB(e.Database, table)
+		kdb, kerr := kernal.New.DB(e.Database, table)
+		if kerr != nil {
+			return nil, kerr
+		}
+		if len(e.attrs) > 0 {
+			kdb.SetAttrs(e.attrs...)
+		}
+		db = kdb
 	} else {
-		db, err = driver.New.DB(e.Database, table)
+		db, err = driver.New.DB(e.Database, table, e.attrs...)
 	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	e.cache[table] = db
+	e.cache.set(table, db)
 	return db, nil
 }
 
@@ -644,8 +671,50 @@ func (e *Engine) execDrop(s DropTableStmt) (ExecResult, error) {
 	if err = db.DropTable(); err != nil {
 		return ExecResult{}, err
 	}
-	delete(e.cache, s.Table)
+	e.cache.delete(s.Table)
 	return ExecResult{Statement: StmtDropTable, Affected: 1}, nil
+}
+
+type tableCache struct {
+	mu sync.Mutex
+	m  map[string]tableDB
+}
+
+func newTableCache() *tableCache {
+	return &tableCache{m: make(map[string]tableDB)}
+}
+
+func (c *tableCache) get(table string) (tableDB, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	db, ok := c.m[table]
+	return db, ok
+}
+
+func (c *tableCache) set(table string, db tableDB) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.m[table] = db
+}
+
+func (c *tableCache) delete(table string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.m, table)
+}
+
+func (c *tableCache) closeAll() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	var firstErr error
+	for _, db := range c.m {
+		if err := db.Close(); err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+	c.m = make(map[string]tableDB)
+	return firstErr
 }
 
 func (e *Engine) execTruncate(s TruncateTableStmt) (ExecResult, error) {

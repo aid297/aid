@@ -66,6 +66,9 @@ func (db *SimpleDB) shouldPersistMemLocked() (bool, bool) {
 	// 阈值检查（内存上限）：清空内存模式
 	threshold := db.config.Persistence.Threshold
 	if threshold == 0 {
+		threshold = db.schema.Persistence.Threshold
+	}
+	if threshold == 0 {
 		threshold = 100 * 1024 * 1024 // 默认 100MB
 	}
 	if db.dirtyBytes >= threshold {
@@ -75,9 +78,15 @@ func (db *SimpleDB) shouldPersistMemLocked() (bool, bool) {
 	// 窗口期检查：落盘不代表清空内存
 	windowSecs := db.config.Persistence.WindowSeconds
 	if windowSecs == 0 {
+		windowSecs = db.schema.Persistence.WindowSeconds
+	}
+	if windowSecs == 0 {
 		windowSecs = 10
 	}
 	windowBytes := db.config.Persistence.WindowBytes
+	if windowBytes == 0 {
+		windowBytes = db.schema.Persistence.WindowBytes
+	}
 	if windowBytes == 0 {
 		windowBytes = 10 * 1024 * 1024
 	}

@@ -197,6 +197,11 @@ func TestSimpleDB_FileLock(t *testing.T) {
 		t.Fatalf("first newSimpleDB() error = %v", err)
 	}
 	defer db.Close()
+	if err = db.Configure(TableSchema{Columns: []Column{
+		{Name: "id", Type: "int", PrimaryKey: true, AutoIncrement: true},
+	}, Engine: EngineDisk}); err != nil {
+		t.Fatalf("Configure() error = %v", err)
+	}
 
 	second, err := newSimpleDB(database, table)
 	if second != nil {
@@ -225,7 +230,7 @@ func TestSimpleDB_TableConstraints(t *testing.T) {
 		{Name: "email", Type: "string", Unique: true},
 		{Name: "age", Type: "int", Indexed: true},
 		{Name: "name", Type: "string"},
-	}})
+	}, Engine: EngineDisk})
 	if err != nil {
 		t.Fatalf("Configure() error = %v", err)
 	}
@@ -643,7 +648,7 @@ func TestSimpleDB_ForeignKeyCascadeJSON(t *testing.T) {
 		{Name: "id", Type: "int", PrimaryKey: true, AutoIncrement: true},
 		{Name: "name", Type: "string"},
 		{Name: "age", Type: "int", Indexed: true},
-	}}); err != nil {
+	}, Engine: EngineDisk}); err != nil {
 		t.Fatalf("Configure(users_rel) error = %v", err)
 	}
 	if _, err = users.InsertRow(Row{"name": "alice", "age": 30}); err != nil {
@@ -668,6 +673,7 @@ func TestSimpleDB_ForeignKeyCascadeJSON(t *testing.T) {
 			{Name: "status", Type: "string"},
 		},
 		ForeignKeys: []ForeignKey{{Name: "fk_orders_user", Field: "user_id", RefTable: "users_rel", RefField: "id", Alias: "orders"}},
+		Engine:      EngineDisk,
 	}); err != nil {
 		t.Fatalf("Configure(orders_rel) error = %v", err)
 	}
@@ -696,6 +702,7 @@ func TestSimpleDB_ForeignKeyCascadeJSON(t *testing.T) {
 			{Name: "quantity", Type: "int"},
 		},
 		ForeignKeys: []ForeignKey{{Name: "fk_items_order", Field: "order_id", RefTable: "orders_rel", RefField: "id", Alias: "items"}},
+		Engine:      EngineDisk,
 	}); err != nil {
 		t.Fatalf("Configure(order_items_rel) error = %v", err)
 	}
@@ -905,7 +912,7 @@ func TestSimpleDB_DefaultNullableRequired(t *testing.T) {
 		{Name: "status", Type: "string", Default: "pending"},
 		{Name: "note", Type: "string", Nullable: ptr.New(true)},
 		{Name: "enabled", Type: "bool", Default: true, Nullable: ptr.New(false)},
-	}})
+	}, Engine: EngineDisk})
 	if err != nil {
 		t.Fatalf("Configure() error = %v", err)
 	}
@@ -979,7 +986,7 @@ func TestSimpleDB_AutoTimestamps(t *testing.T) {
 		{Name: "created_at", Type: "timestamp", DefaultExpr: "current_timestamp"},
 		{Name: "updated_at", Type: "timestamp", DefaultExpr: "current_timestamp", OnUpdateExpr: "current_timestamp"},
 		{Name: "login_time", Type: "time", DefaultExpr: "current_time"},
-	}})
+	}, Engine: EngineDisk})
 	if err != nil {
 		t.Fatalf("Configure() error = %v", err)
 	}

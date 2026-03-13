@@ -58,8 +58,6 @@ type DatabaseConfig struct {
 	MaxCPUCores            int    `json:"maxCpuCores,omitempty"`
 	MaxMemoryBytes         uint64 `json:"maxMemoryBytes,omitempty"`
 	Engine                 struct {
-		Type string `json:"type,omitempty"` // mem | disk
-		Disk bool   `json:"disk,omitempty"` // whether mem engine should persist
 	} `json:"engine,omitempty"`
 	Persistence struct {
 		WindowSeconds int    `json:"windowSeconds,omitempty"` // 默认 10 秒
@@ -150,6 +148,11 @@ type TableSchema struct {
 	AutoIncrement bool         `json:"autoIncrement,omitempty"`
 	Engine        string       `json:"engine,omitempty"` // disk | mem
 	Disk          bool         `json:"disk,omitempty"`   // 是否开启落盘（仅对 mem 引擎有效）
+	Persistence   struct {
+		WindowSeconds int    `json:"windowSeconds,omitempty"` // 默认 10 秒
+		WindowBytes   uint64 `json:"windowBytes,omitempty"`   // 默认 10MB
+		Threshold     uint64 `json:"threshold,omitempty"`     // 超过此值清空内存并落盘
+	} `json:"persistence,omitempty"`
 }
 
 func (db *SimpleDB) Configure(schema TableSchema) (err error) {
@@ -160,6 +163,7 @@ func (db *SimpleDB) Configure(schema TableSchema) (err error) {
 		return err
 	}
 
+	schema = db.applySchemaDefaultsLocked(schema)
 	normalized, err := normalizeSchema(schema)
 	if err != nil {
 		return err
@@ -173,6 +177,26 @@ func (db *SimpleDB) Configure(schema TableSchema) (err error) {
 	}
 
 	return db.createTableLocked(normalized)
+}
+
+func (db *SimpleDB) applySchemaDefaultsLocked(schema TableSchema) TableSchema {
+	engine := strings.ToLower(strings.TrimSpace(schema.Engine))
+	if engine == "" {
+		engine = EngineMem
+	}
+	if engine != EngineMem || !schema.Disk {
+		return schema
+	}
+	if schema.Persistence.WindowSeconds == 0 && db.config.Persistence.WindowSeconds > 0 {
+		schema.Persistence.WindowSeconds = db.config.Persistence.WindowSeconds
+	}
+	if schema.Persistence.WindowBytes == 0 && db.config.Persistence.WindowBytes > 0 {
+		schema.Persistence.WindowBytes = db.config.Persistence.WindowBytes
+	}
+	if schema.Persistence.Threshold == 0 && db.config.Persistence.Threshold > 0 {
+		schema.Persistence.Threshold = db.config.Persistence.Threshold
+	}
+	return schema
 }
 
 func (db *SimpleDB) GetSchema() (*TableSchema, error) {
@@ -1314,6 +1338,18 @@ func normalizeSchema(schema TableSchema) (TableSchema, error) {
 		normalized.Engine = EngineMem
 	}
 	normalized.Disk = schema.Disk
+	normalized.Persistence = schema.Persistence
+	if normalized.Engine == EngineMem && normalized.Disk {
+		if normalized.Persistence.WindowSeconds <= 0 {
+			normalized.Persistence.WindowSeconds = 10
+		}
+		if normalized.Persistence.WindowBytes == 0 {
+			normalized.Persistence.WindowBytes = 10 * 1024 * 1024
+		}
+		if normalized.Persistence.Threshold == 0 {
+			normalized.Persistence.Threshold = 100 * 1024 * 1024
+		}
+	}
 	normalized.ForeignKeys = make([]ForeignKey, 0, len(schema.ForeignKeys))
 	foreignKeyNames := make(map[string]struct{}, len(schema.ForeignKeys))
 	for _, foreignKey := range schema.ForeignKeys {
@@ -1364,6 +1400,9 @@ func cloneSchema(schema TableSchema) TableSchema {
 	cloned := TableSchema{
 		PrimaryKey:    schema.PrimaryKey,
 		AutoIncrement: schema.AutoIncrement,
+		Engine:        schema.Engine,
+		Disk:          schema.Disk,
+		Persistence:   schema.Persistence,
 		Columns:       make([]Column, len(schema.Columns)),
 		ForeignKeys:   make([]ForeignKey, len(schema.ForeignKeys)),
 	}

@@ -174,6 +174,7 @@ func parseCreateTable(table, body, with string) (Statement, error) {
 		Columns:     make([]kernal.Column, 0),
 		ForeignKeys: make([]kernal.ForeignKey, 0),
 		Engine:      kernal.EngineMem, // 默认内存
+		Disk:        true,             // 默认开启持久化
 	}
 
 	if with != "" {
@@ -182,19 +183,40 @@ func parseCreateTable(table, body, with string) (Statement, error) {
 			kv := strings.Split(strings.TrimSpace(wp), "=")
 			if len(kv) == 2 {
 				key := strings.ToLower(strings.TrimSpace(kv[0]))
-				val := strings.ToLower(strings.TrimSpace(kv[1]))
+				key = strings.ReplaceAll(key, "_", "")
+				key = strings.ReplaceAll(key, "-", "")
+				val := strings.TrimSpace(kv[1])
+				valLower := strings.ToLower(val)
 				switch key {
 				case "engine":
-					switch val {
+					switch valLower {
 					case kernal.EngineMem:
 						schema.Engine = kernal.EngineMem
 					case kernal.EngineDisk:
 						schema.Engine = kernal.EngineDisk
 					default:
-						return nil, fmt.Errorf("unsupported engine type: %s", val)
+						return nil, fmt.Errorf("unsupported engine type: %s", valLower)
 					}
 				case "disk":
-					schema.Disk = (val == "true")
+					schema.Disk = (valLower == "true")
+				case "windowseconds":
+					secs, err := strconv.Atoi(strings.TrimSpace(val))
+					if err != nil || secs < 0 {
+						return nil, fmt.Errorf("invalid windowSeconds: %s", val)
+					}
+					schema.Persistence.WindowSeconds = secs
+				case "windowbytes":
+					bytes, err := parseBytes(val)
+					if err != nil {
+						return nil, fmt.Errorf("invalid windowBytes: %s", val)
+					}
+					schema.Persistence.WindowBytes = bytes
+				case "threshold":
+					bytes, err := parseBytes(val)
+					if err != nil {
+						return nil, fmt.Errorf("invalid threshold: %s", val)
+					}
+					schema.Persistence.Threshold = bytes
 				}
 			}
 		}
@@ -220,6 +242,51 @@ func parseCreateTable(table, body, with string) (Statement, error) {
 	}
 
 	return CreateTableStmt{Table: table, Schema: schema}, nil
+}
+
+func parseBytes(raw string) (uint64, error) {
+	s := strings.TrimSpace(raw)
+	s = strings.Trim(s, `"'`)
+	if s == "" {
+		return 0, fmt.Errorf("empty")
+	}
+	low := strings.ToLower(s)
+	low = strings.ReplaceAll(low, "_", "")
+	low = strings.ReplaceAll(low, " ", "")
+
+	multiplier := uint64(1)
+	switch {
+	case strings.HasSuffix(low, "kb"):
+		multiplier = 1024
+		low = strings.TrimSuffix(low, "kb")
+	case strings.HasSuffix(low, "k"):
+		multiplier = 1024
+		low = strings.TrimSuffix(low, "k")
+	case strings.HasSuffix(low, "mb"):
+		multiplier = 1024 * 1024
+		low = strings.TrimSuffix(low, "mb")
+	case strings.HasSuffix(low, "m"):
+		multiplier = 1024 * 1024
+		low = strings.TrimSuffix(low, "m")
+	case strings.HasSuffix(low, "gb"):
+		multiplier = 1024 * 1024 * 1024
+		low = strings.TrimSuffix(low, "gb")
+	case strings.HasSuffix(low, "g"):
+		multiplier = 1024 * 1024 * 1024
+		low = strings.TrimSuffix(low, "g")
+	case strings.HasSuffix(low, "b"):
+		low = strings.TrimSuffix(low, "b")
+	}
+
+	low = strings.TrimSpace(low)
+	if low == "" {
+		return 0, fmt.Errorf("missing number")
+	}
+	n, err := strconv.ParseUint(low, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return n * multiplier, nil
 }
 
 func parseAlterTable(table, body string) (Statement, error) {

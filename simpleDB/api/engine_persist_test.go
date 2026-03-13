@@ -13,16 +13,15 @@ func TestEngine_MemoryPersist_Window(t *testing.T) {
 
 	// 1. 创建内存表，开启落盘
 	// 设置较短的窗口期以便测试
-	if _, err := eng.Execute("CREATE TABLE persist_table (id int PRIMARY KEY, name string) WITH (engine=mem, disk=true)"); err != nil {
+	if _, err := eng.Execute("CREATE TABLE persist_table (id int PRIMARY KEY, name string) WITH (engine=mem, disk=true, windowSeconds=1, windowBytes=10mb, threshold=100mb)"); err != nil {
 		t.Fatalf("failed to create table: %v", err)
 	}
 
-	// 2. 获取底层 SimpleDB 并修改配置（缩短窗口期）
+	// 2. 获取表路径
 	db, err := eng.open("persist_table")
 	if err != nil {
 		t.Fatalf("failed to open table: %v", err)
 	}
-	db.SetPersistenceConfig(1, 10*1024*1024, 100*1024*1024) // 1 秒窗口期
 	tblPath := db.GetPath()
 
 	if _, err := eng.Execute("INSERT INTO persist_table (id, name) VALUES (1, 'p1')"); err != nil {
@@ -71,16 +70,15 @@ func TestEngine_MemoryPersist_Threshold(t *testing.T) {
 	defer eng.Close()
 
 	// 1. 创建内存表，开启落盘
-	if _, err := eng.Execute("CREATE TABLE threshold_table (id int PRIMARY KEY, name string) WITH (engine=mem, disk=true)"); err != nil {
+	if _, err := eng.Execute("CREATE TABLE threshold_table (id int PRIMARY KEY, name string) WITH (engine=mem, disk=true, threshold=10, windowSeconds=100, windowBytes=100mb)"); err != nil {
 		t.Fatalf("failed to create table: %v", err)
 	}
 
-	// 2. 修改配置，设置极小的阈值（例如 10 字节）以便触发清空内存
+	// 2. 获取表路径
 	db, err := eng.open("threshold_table")
 	if err != nil {
 		t.Fatalf("failed to open table: %v", err)
 	}
-	db.SetPersistenceConfig(100, 100*1024*1024, 10) // 10 字节阈值
 	tblPath := db.GetPath()
 
 	// 3. 插入数据触发阈值

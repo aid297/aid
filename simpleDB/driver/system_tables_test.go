@@ -32,7 +32,7 @@ func TestDriver_SystemTableSchemaErrorWrapped(t *testing.T) {
 	if err = raw.CreateTable(kernal.TableSchema{Columns: []kernal.Column{
 		{Name: "id", Type: "uuid", PrimaryKey: true, AutoIncrement: true},
 		{Name: "username", Type: "string", Required: true, Unique: true},
-	}}); err != nil {
+	}, Engine: kernal.EngineDisk}); err != nil {
 		_ = raw.Close()
 		t.Fatalf("create malformed users table: %v", err)
 	}

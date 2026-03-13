@@ -165,9 +165,9 @@ func newSimpleDB(dbName, tableName string, attrs ...SchemaAttributer) (*SimpleDB
 				WindowBytes   uint64 `json:"windowBytes,omitempty"`
 				Threshold     uint64 `json:"threshold,omitempty"`
 			}{
-				WindowSeconds: 10,
-				WindowBytes:   10 * 1024 * 1024,
-				Threshold:     100 * 1024 * 1024, // 默认 100MB 阈值
+				WindowSeconds: 0,
+				WindowBytes:   0,
+				Threshold:     0,
 			},
 		},
 		lastPersistAt: time.Now(),
@@ -214,6 +214,24 @@ func (db *SimpleDB) Close() error {
 	if db.closed {
 		return nil
 	}
+
+	if db.schema != nil {
+		switch db.schema.Engine {
+		case EngineMem:
+			if db.schema.Disk {
+				if err = db.persistMemToDiskLocked(false); err != nil {
+					captureFirstError(&firstErr, err)
+				}
+			}
+		case EngineDisk:
+			if db.file != nil {
+				if err = db.file.Sync(); err != nil {
+					captureFirstError(&firstErr, err)
+				}
+			}
+		}
+	}
+
 	db.closed = true
 
 	if db.file != nil {

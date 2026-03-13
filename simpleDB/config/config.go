@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,11 +16,22 @@ const DefaultConfigPath = "simpleDB/config.yaml"
 type (
 	Config struct {
 		Database  DatabaseConfig  `yaml:"database"`
+		Engine    EngineConfig    `yaml:"engine"`
 		Transport TransportConfig `yaml:"transport"`
 	}
 
 	DatabaseConfig struct {
 		Path string `yaml:"path"`
+	}
+
+	EngineConfig struct {
+		Persistence EnginePersistenceConfig `yaml:"persistence"`
+	}
+
+	EnginePersistenceConfig struct {
+		WindowSeconds int    `yaml:"windowSeconds"`
+		WindowBytes   string `yaml:"windowBytes"`
+		Threshold     string `yaml:"threshold"`
 	}
 
 	TransportConfig struct {
@@ -73,6 +85,13 @@ type (
 func Default() Config {
 	return Config{
 		Database: DatabaseConfig{Path: "demo_transport"},
+		Engine: EngineConfig{
+			Persistence: EnginePersistenceConfig{
+				WindowSeconds: 10,
+				WindowBytes:   "10mb",
+				Threshold:     "100mb",
+			},
+		},
 		Transport: TransportConfig{HTTP: HTTPConfig{
 			Enabled: true,
 			Address: ":18080",
@@ -150,6 +169,15 @@ func (c *Config) ApplyDefaults() {
 	defaults := Default()
 	if strings.TrimSpace(c.Database.Path) == "" {
 		c.Database.Path = defaults.Database.Path
+	}
+	if c.Engine.Persistence.WindowSeconds <= 0 {
+		c.Engine.Persistence.WindowSeconds = defaults.Engine.Persistence.WindowSeconds
+	}
+	if strings.TrimSpace(c.Engine.Persistence.WindowBytes) == "" {
+		c.Engine.Persistence.WindowBytes = defaults.Engine.Persistence.WindowBytes
+	}
+	if strings.TrimSpace(c.Engine.Persistence.Threshold) == "" {
+		c.Engine.Persistence.Threshold = defaults.Engine.Persistence.Threshold
 	}
 	if strings.TrimSpace(c.Transport.HTTP.Address) == "" && !c.Transport.HTTP.Enabled && !c.Transport.HTTP.EnableAdmin && !c.Transport.HTTP.EnableReport && strings.TrimSpace(c.Transport.HTTP.TokenTTL) == "" {
 		c.Transport.HTTP.Enabled = defaults.Transport.HTTP.Enabled
@@ -237,6 +265,12 @@ func (c Config) Validate() error {
 	if strings.TrimSpace(c.Database.Path) == "" {
 		return fmt.Errorf("database.path is required")
 	}
+	if _, err := c.ParseEngineWindowBytes(); err != nil {
+		return fmt.Errorf("engine.persistence.windowBytes is invalid: %w", err)
+	}
+	if _, err := c.ParseEngineThresholdBytes(); err != nil {
+		return fmt.Errorf("engine.persistence.threshold is invalid: %w", err)
+	}
 	if !c.Transport.HTTP.Enabled {
 		return fmt.Errorf("transport.http.enabled must be true currently")
 	}
@@ -264,11 +298,22 @@ func (c Config) ParseLimitWindow() (time.Duration, error) {
 
 type rawConfig struct {
 	Database  rawDatabaseConfig  `yaml:"database"`
+	Engine    rawEngineConfig    `yaml:"engine"`
 	Transport rawTransportConfig `yaml:"transport"`
 }
 
 type rawDatabaseConfig struct {
 	Path string `yaml:"path"`
+}
+
+type rawEngineConfig struct {
+	Persistence rawEnginePersistenceConfig `yaml:"persistence"`
+}
+
+type rawEnginePersistenceConfig struct {
+	WindowSeconds int    `yaml:"windowSeconds"`
+	WindowBytes   string `yaml:"windowBytes"`
+	Threshold     string `yaml:"threshold"`
 }
 
 type rawTransportConfig struct {
@@ -339,6 +384,15 @@ type rawHTTPRouteConfig struct {
 func applyRawConfig(config *Config, raw rawConfig) {
 	if strings.TrimSpace(raw.Database.Path) != "" {
 		config.Database.Path = strings.TrimSpace(raw.Database.Path)
+	}
+	if raw.Engine.Persistence.WindowSeconds > 0 {
+		config.Engine.Persistence.WindowSeconds = raw.Engine.Persistence.WindowSeconds
+	}
+	if strings.TrimSpace(raw.Engine.Persistence.WindowBytes) != "" {
+		config.Engine.Persistence.WindowBytes = strings.TrimSpace(raw.Engine.Persistence.WindowBytes)
+	}
+	if strings.TrimSpace(raw.Engine.Persistence.Threshold) != "" {
+		config.Engine.Persistence.Threshold = strings.TrimSpace(raw.Engine.Persistence.Threshold)
 	}
 	if raw.Transport.HTTP.Enabled != nil {
 		config.Transport.HTTP.Enabled = *raw.Transport.HTTP.Enabled
@@ -435,6 +489,63 @@ func applyRawConfig(config *Config, raw rawConfig) {
 		config.Transport.HTTP.SQLAllowedOps = raw.Transport.HTTP.SQLAllowedOps
 	}
 }
+
+func (c Config) ParseEngineWindowBytes() (uint64, error) {
+	c.ApplyDefaults()
+	return parseBytes(c.Engine.Persistence.WindowBytes)
+}
+
+func (c Config) ParseEngineThresholdBytes() (uint64, error) {
+	c.ApplyDefaults()
+	return parseBytes(c.Engine.Persistence.Threshold)
+}
+
+func parseBytes(raw string) (uint64, error) {
+	s := strings.TrimSpace(raw)
+	s = strings.Trim(s, `"'`)
+	if s == "" {
+		return 0, fmt.Errorf("empty")
+	}
+	low := strings.ToLower(s)
+	low = strings.ReplaceAll(low, "_", "")
+	low = strings.ReplaceAll(low, " ", "")
+
+	multiplier := uint64(1)
+	switch {
+	case strings.HasSuffix(low, "kb"):
+		multiplier = 1024
+		low = strings.TrimSuffix(low, "kb")
+	case strings.HasSuffix(low, "k"):
+		multiplier = 1024
+		low = strings.TrimSuffix(low, "k")
+	case strings.HasSuffix(low, "mb"):
+		multiplier = 1024 * 1024
+		low = strings.TrimSuffix(low, "mb")
+	case strings.HasSuffix(low, "m"):
+		multiplier = 1024 * 1024
+		low = strings.TrimSuffix(low, "m")
+	case strings.HasSuffix(low, "gb"):
+		multiplier = 1024 * 1024 * 1024
+		low = strings.TrimSuffix(low, "gb")
+	case strings.HasSuffix(low, "g"):
+		multiplier = 1024 * 1024 * 1024
+		low = strings.TrimSuffix(low, "g")
+	case strings.HasSuffix(low, "b"):
+		low = strings.TrimSuffix(low, "b")
+	}
+
+	low = strings.TrimSpace(low)
+	if low == "" {
+		return 0, fmt.Errorf("missing number")
+	}
+	n, err := strconv.ParseUint(low, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return n * multiplier, nil
+}
+
+func boolPtr(v bool) *bool { return &v }
 
 func firstNonEmpty(values ...string) string {
 	for _, value := range values {

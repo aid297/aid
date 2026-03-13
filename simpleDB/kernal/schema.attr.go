@@ -12,6 +12,11 @@ type (
 	AttrUUIDWithHyphen  struct{ UUIDWithHyphen *bool }
 	AttrUUIDUpper       struct{ UUIDUpper *bool }
 	AttrCascadeMaxDepth struct{ CascadeMaxDepth int }
+	AttrPersistence     struct {
+		WindowSeconds int
+		WindowBytes   uint64
+		Threshold     uint64
+	}
 )
 
 func MaxMemoryBytes(volume uint64) AttrMaxMemoryBytes { return AttrMaxMemoryBytes{volume} }
@@ -71,5 +76,24 @@ func CascadeMaxDepth(depth int) AttrCascadeMaxDepth { return AttrCascadeMaxDepth
 func (my AttrCascadeMaxDepth) RegisterAttr(db *SimpleDB) {
 	if my.CascadeMaxDepth > 0 && my.CascadeMaxDepth <= HardCascadeMaxDepthLimit {
 		db.config.DefaultCascadeMaxDepth = my.CascadeMaxDepth
+	}
+}
+
+func Persistence(windowSeconds int, windowBytes uint64, threshold uint64) AttrPersistence {
+	return AttrPersistence{
+		WindowSeconds: windowSeconds,
+		WindowBytes:   windowBytes,
+		Threshold:     threshold,
+	}
+}
+func (my AttrPersistence) RegisterAttr(db *SimpleDB) {
+	if my.WindowSeconds > 0 {
+		db.config.Persistence.WindowSeconds = my.WindowSeconds
+	}
+	if my.WindowBytes > 0 {
+		db.config.Persistence.WindowBytes = my.WindowBytes
+	}
+	if my.Threshold > 0 {
+		db.config.Persistence.Threshold = my.Threshold
 	}
 }
