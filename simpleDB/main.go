@@ -22,6 +22,8 @@ func runCLI(args []string, stdout, stderr *os.File) int {
 		return runPrintConfig(args[1:], stdout, stderr)
 	case "init-config":
 		return runInitConfig(args[1:], stdout, stderr)
+	case "gen-key":
+		return runGenKey(args[1:], stdout, stderr)
 	case "help", "-h", "--help":
 		printUsage(stdout)
 		return 0
@@ -36,6 +38,7 @@ func printUsage(stdout *os.File) {
 	_, _ = fmt.Fprintln(stdout, "  serve        start HTTP service from config file")
 	_, _ = fmt.Fprintln(stdout, "  print-config print merged config")
 	_, _ = fmt.Fprintln(stdout, "  init-config  write default config file")
+	_, _ = fmt.Fprintln(stdout, "  gen-key      generate encryption key")
 	_, _ = fmt.Fprintln(stdout, "")
 	_, _ = fmt.Fprintf(stdout, "default config path: %s\n", defaultConfigPath())
 }

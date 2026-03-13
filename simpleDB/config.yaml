@@ -6,8 +6,8 @@ engine:
         windowBytes: 10mb
         threshold: 100mb
     security:
-        compressAlgorithm: "" # options: gzip
-        encryptAlgorithm: ""  # options: aes
+        compressAlgorithm: gzip # options: gzip
+        encryptAlgorithm: aes  # options: aes
         encryptKey: ""        # required if encryptAlgorithm is set
 transport:
     http:
