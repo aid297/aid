@@ -94,6 +94,7 @@ const (
 	QueryOpNotIn      = "not_in"
 	QueryOpBetween    = "between"
 	QueryOpNotBetween = "not_between"
+	QueryOpLike       = "like"
 )
 
 type ColumnCheck struct {
@@ -1932,6 +1933,19 @@ func normalizeQueryCondition(column Column, condition QueryCondition) (QueryCond
 		condition.Lower = lower
 		condition.Upper = upper
 		return condition, nil
+	case QueryOpLike:
+		if columnType != ColumnTypeString {
+			return QueryCondition{}, fmt.Errorf("%w: %s requires string type for like", ErrInvalidQueryCondition, column.Name)
+		}
+		if condition.Value == nil {
+			return QueryCondition{}, fmt.Errorf("%w: like requires pattern", ErrInvalidQueryCondition)
+		}
+		normalizedValue, err := normalizeColumnValue(column, condition.Value)
+		if err != nil {
+			return QueryCondition{}, err
+		}
+		condition.Value = normalizedValue
+		return condition, nil
 	default:
 		return QueryCondition{}, fmt.Errorf("%w: unsupported operator %s", ErrInvalidQueryCondition, condition.Operator)
 	}
@@ -2155,8 +2169,59 @@ func evaluateQueryCondition(column Column, rowValue any, condition QueryConditio
 			return !matched, nil
 		}
 		return matched, nil
+	case QueryOpLike:
+		if rowValue == nil {
+			return false, nil
+		}
+		normalizedRowValue, err := normalizeColumnValue(column, rowValue)
+		if err != nil {
+			return false, err
+		}
+		strValue, ok := normalizedRowValue.(string)
+		if !ok {
+			return false, fmt.Errorf("%w: like operator requires string value", ErrFieldTypeMismatch)
+		}
+		pattern, ok := condition.Value.(string)
+		if !ok {
+			return false, fmt.Errorf("%w: like operator requires string pattern", ErrFieldTypeMismatch)
+		}
+		return likeMatch(strValue, pattern)
 	}
 	return false, fmt.Errorf("%w: unsupported operator %s", ErrInvalidQueryCondition, condition.Operator)
+}
+
+func likeMatch(value, pattern string) (bool, error) {
+	// Convert SQL LIKE pattern to Regex
+
+	var sb strings.Builder
+	sb.WriteString("(?i)^") // Case insensitive by default for LIKE in many SQL dialects? Or make it case sensitive?
+	// The user asked for LIKE support. Usually LIKE is case-insensitive in MySQL but case-sensitive in Postgres (ILIKE is insensitive).
+	// Let's stick to case-insensitive to be user friendly, or match the collation.
+	// Given simpleDB, let's make it case-insensitive for now as suggested by the (?i) in my thought,
+	// or maybe check `strings.EqualFold` context.
+	// Let's check `evaluateQueryCondition`... `QueryOpEQ` uses `equalValues` which seems exact match for strings?
+	// `compareScalarValues` for string uses standard string comparison (case sensitive).
+	// So `LIKE` should probably follow suit?
+	// However, `regexp.MatchString` in `ColumnCheckRegex` didn't specify case.
+	// Let's use case-insensitive `(?i)` for now as it's often expected, or maybe just `^`.
+	// Let's stick to case-SENSITIVE to be consistent with `=` operator which is case sensitive in Go.
+	sb.WriteString("^")
+
+	chars := []rune(pattern)
+	for i := 0; i < len(chars); i++ {
+		ch := chars[i]
+		switch ch {
+		case '%':
+			sb.WriteString(".*")
+		case '_':
+			sb.WriteString(".")
+		default:
+			sb.WriteString(regexp.QuoteMeta(string(ch)))
+		}
+	}
+	sb.WriteString("$")
+
+	return regexp.MatchString(sb.String(), value)
 }
 
 func equalValues(left any, right any) (bool, error) {

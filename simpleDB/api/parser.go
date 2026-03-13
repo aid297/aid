@@ -670,6 +670,18 @@ func parseSingleCondition(part string) (string, string, any, error) {
 		return strings.TrimSpace(m[1]), kernal.QueryOpIn, values, nil
 	}
 
+	// LIKE: field LIKE 'pattern'
+	reLike := regexp.MustCompile(`(?i)^([a-zA-Z_][\w]*)\s+LIKE\s+(.+)$`)
+	if m := reLike.FindStringSubmatch(part); len(m) == 3 {
+		field := strings.TrimSpace(m[1])
+		valueRaw := strings.TrimSpace(m[2])
+		value, err := parseLiteral(valueRaw)
+		if err != nil {
+			return "", "", nil, err
+		}
+		return field, kernal.QueryOpLike, value, nil
+	}
+
 	ops := []struct {
 		token string
 		op    string
