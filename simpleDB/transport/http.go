@@ -55,41 +55,41 @@ type Authenticator interface {
 }
 
 type HTTPServer struct {
-	Database                 string
-	LoginPath                string
-	RegisterPath             string
-	RefreshPath              string
-	LogoutPath               string
-	ActivatePath             string
-	DeactivatePath           string
-	AssignRolePath           string
-	AssignRolePermissionPath string
-	InitSDBPasswordPath      string
-	SQLExecutePath           string
-	SQLGrantPath             string
-	SQLRevokePath            string
-	SQLAllowedOps            map[string]struct{} // nil = 不限制
-	LimitEnabled             bool
-	LimitRequests            int
-	LimitWindow              time.Duration
-	LimitNoTokenPaths        map[string]struct{}
-	limitMu                  sync.Mutex
-	limitBuckets             map[string]*limitBucket
-	InitPassword             string
-	initPasswordMu           sync.RWMutex
-	initPasswordRotator      func() (string, error)
-	TokenTTL                 time.Duration
-	TokenSecret              string
-	authenticator            Authenticator
-	engine                   *gin.Engine
-	tokenManager             *TokenManager
-	sqlEngine                *api.Engine
-	sqlEngineDBAttrs         []kernal.SchemaAttributer
-	WebSocketEnabled         bool
-	WebSocketRoute           string
-	WebSocketHeartbeat       time.Duration
-	WebSocketWriteTimeout    time.Duration
-	WebSocketReadTimeout     time.Duration
+	Database                  string
+	LoginPath                 string
+	RegisterPath              string
+	RefreshPath               string
+	LogoutPath                string
+	ActivatePath              string
+	DeactivatePath            string
+	AssignRolePath            string
+	AssignRolePermissionPath  string
+	InitSDBPasswordPath       string
+	SQLExecutePath            string
+	SQLGrantPath              string
+	SQLRevokePath             string
+	SQLAllowedOps             map[string]struct{} // nil = 不限制
+	LimitEnabled              bool
+	LimitRequests             int
+	LimitWindow               time.Duration
+	LimitNoTokenPaths         map[string]struct{}
+	limitMu                   sync.Mutex
+	limitBuckets              map[string]*limitBucket
+	InitPassword              string
+	initPasswordMu            sync.RWMutex
+	initPasswordRotator       func() (string, error)
+	TokenTTL                  time.Duration
+	TokenSecret               string
+	authenticator             Authenticator
+	engine                    *gin.Engine
+	tokenManager              *TokenManager
+	sqlEngine                 *api.Engine
+	sqlEngineDBAttrs          []kernal.SchemaAttributer
+	WebSocketEnabled          bool
+	WebSocketRoute            string
+	WebSocketHeartbeat        time.Duration
+	WebSocketWriteTimeout     time.Duration
+	WebSocketReadTimeout      time.Duration
 	WebSocketExecutionTimeout time.Duration
 }
 
@@ -133,22 +133,18 @@ type SQLExecuteRequest struct {
 	SQL       string       `json:"sql"`
 	ParamMap  JSONAnyMap   `json:"paramMap"`
 	ParamList JSONAnySlice `json:"paramList"`
-	Params    JSONAnyMap   `json:"params,omitempty"`
 }
 
-func (r SQLExecuteRequest) mergedParamMap() map[string]any {
-	if len(r.ParamMap) == 0 && len(r.Params) == 0 {
-		return nil
-	}
-	merged := make(map[string]any, len(r.Params)+len(r.ParamMap))
-	for key, value := range r.Params {
-		merged[key] = value
-	}
-	for key, value := range r.ParamMap {
-		merged[key] = value
-	}
-	return merged
-}
+// func (r SQLExecuteRequest) mergedParamMap() map[string]any {
+// 	if len(r.ParamMap) == 0 {
+// 		return nil
+// 	}
+// 	merged := make(map[string]any, len(r.ParamMap))
+// 	for key, value := range r.ParamMap {
+// 		merged[key] = value
+// 	}
+// 	return merged
+// }
 
 type SQLExecuteResponse struct {
 	Success bool            `json:"success"`
@@ -180,31 +176,31 @@ func (*app) HTTP(database string, opts ...Option) *HTTPServer {
 	engine.HandleMethodNotAllowed = true
 
 	server := &HTTPServer{
-		Database:                 strings.TrimSpace(database),
-		LoginPath:                DefaultLoginPath,
-		RegisterPath:             DefaultRegisterPath,
-		RefreshPath:              DefaultRefreshPath,
-		LogoutPath:               DefaultLogoutPath,
-		ActivatePath:             DefaultActivatePath,
-		DeactivatePath:           DefaultDeactivatePath,
-		AssignRolePath:           DefaultAssignRolesPath,
-		AssignRolePermissionPath: DefaultAssignRolePermissionsPath,
-		InitSDBPasswordPath:      DefaultInitSDBPasswordPath,
-		SQLExecutePath:           DefaultSQLExecutePath,
-		SQLGrantPath:             DefaultSQLGrantPath,
-		SQLRevokePath:            DefaultSQLRevokePath,
-		LimitEnabled:             false,
-		LimitRequests:            60,
-		LimitWindow:              time.Minute,
-		TokenTTL:                 12 * time.Hour,
-		WebSocketEnabled:         false,
-		WebSocketRoute:           "/ws",
-		WebSocketHeartbeat:       10 * time.Second,
-		WebSocketWriteTimeout:    10 * time.Second,
-		WebSocketReadTimeout:     60 * time.Second,
+		Database:                  strings.TrimSpace(database),
+		LoginPath:                 DefaultLoginPath,
+		RegisterPath:              DefaultRegisterPath,
+		RefreshPath:               DefaultRefreshPath,
+		LogoutPath:                DefaultLogoutPath,
+		ActivatePath:              DefaultActivatePath,
+		DeactivatePath:            DefaultDeactivatePath,
+		AssignRolePath:            DefaultAssignRolesPath,
+		AssignRolePermissionPath:  DefaultAssignRolePermissionsPath,
+		InitSDBPasswordPath:       DefaultInitSDBPasswordPath,
+		SQLExecutePath:            DefaultSQLExecutePath,
+		SQLGrantPath:              DefaultSQLGrantPath,
+		SQLRevokePath:             DefaultSQLRevokePath,
+		LimitEnabled:              false,
+		LimitRequests:             60,
+		LimitWindow:               time.Minute,
+		TokenTTL:                  12 * time.Hour,
+		WebSocketEnabled:          false,
+		WebSocketRoute:            "/ws",
+		WebSocketHeartbeat:        10 * time.Second,
+		WebSocketWriteTimeout:     10 * time.Second,
+		WebSocketReadTimeout:      60 * time.Second,
 		WebSocketExecutionTimeout: 30 * time.Second,
-		authenticator:            &driver.New,
-		engine:                   engine,
+		authenticator:             &driver.New,
+		engine:                    engine,
 	}
 	for _, opt := range opts {
 		if opt != nil {
@@ -891,7 +887,7 @@ func (s *HTTPServer) handleSQLExecute(ctx *gin.Context) {
 		return
 	}
 
-	boundSQL, err := bindSQLParams(req.SQL, req.mergedParamMap(), []any(req.ParamList))
+	boundSQL, err := bindSQLParams(req.SQL, req.ParamMap, []any(req.ParamList))
 	if err != nil {
 		writeJSON(ctx, http.StatusBadRequest, SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: err.Error()}})
 		return

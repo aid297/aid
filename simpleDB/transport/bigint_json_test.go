@@ -18,7 +18,7 @@ func TestSQLParams_BigIntDoesNotLosePrecision(t *testing.T) {
 		t.Fatalf("unmarshal: %v", err)
 	}
 
-	bound, err := bindSQLParams(req.SQL, req.mergedParamMap(), []any(req.ParamList))
+	bound, err := bindSQLParams(req.SQL, req.ParamMap, []any(req.ParamList))
 	if err != nil {
 		t.Fatalf("bindSQLParams: %v", err)
 	}
@@ -30,4 +30,3 @@ func TestSQLParams_BigIntDoesNotLosePrecision(t *testing.T) {
 		t.Fatalf("bound sql = %q, want not contains rounded value", bound)
 	}
 }
-

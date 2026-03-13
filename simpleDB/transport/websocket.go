@@ -28,7 +28,6 @@ type wsRequest struct {
 	SQL       string       `json:"sql"`
 	ParamMap  JSONAnyMap   `json:"paramMap"`
 	ParamList JSONAnySlice `json:"paramList"`
-	Params    JSONAnyMap   `json:"params"` // legacy
 }
 
 func (s *HTTPServer) handleWebSocket(ctx *gin.Context) {
@@ -182,7 +181,6 @@ func (s *HTTPServer) handleWebSocket(ctx *gin.Context) {
 					SQL:       req.SQL,
 					ParamMap:  req.ParamMap,
 					ParamList: req.ParamList,
-					Params:    req.Params,
 				}
 
 				// Logic copied from handleSQLExecute but adapted
@@ -191,7 +189,7 @@ func (s *HTTPServer) handleWebSocket(ctx *gin.Context) {
 					return
 				}
 
-				boundSQL, err := bindSQLParams(sqlReq.SQL, sqlReq.mergedParamMap(), []any(sqlReq.ParamList))
+				boundSQL, err := bindSQLParams(sqlReq.SQL, sqlReq.ParamMap, []any(sqlReq.ParamList))
 				if err != nil {
 					resultChan <- SQLExecuteResponse{Success: false, Error: &ErrorBody{Code: "bad_request", Message: err.Error()}}
 					return
