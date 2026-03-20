@@ -33,3 +33,6 @@ out-dir = "storage/runtime/rezip"
 [file-manager]
 port = "9901"
 dir = "storage/runtime/file-manager"
+
+[message-board]
+dir = "storage/runtime/message-board"

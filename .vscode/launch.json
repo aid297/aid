@@ -10,16 +10,19 @@
             "request": "launch",
             "mode": "auto",
             "program": "/Users/yujizhou/development/projects/go/aid",
-            "env":{
+            "env": {
                 "AID_DEBUG_LOG": "true"
             }
         },
         {
-            "name": "simpleDBDriver.demo",
+            "name": "aid-web-backend",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${file}"
+            "program": "/Users/yujizhou/development/projects/go/aid/web-site/backend/aid-web-backend/main.go",
+            "env": {
+                "AID_DEBUG_LOG": "true"
+            }
         }
     ]
 }

@@ -631,3 +631,18 @@ func (my *AnyArray[T]) ToString(formats ...string) string {
 
 	return fmt.Sprintf(format, my.data)
 }
+
+// ToAny 转换为[]any
+func (my *AnyArray[T]) ToAny() []any {
+	v := reflect.ValueOf(my.data)
+	if v.Kind() != reflect.Slice {
+		return nil
+	}
+
+	result := make([]any, v.Len())
+	for i := range v.Len() {
+		result[i] = v.Index(i).Interface()
+	}
+
+	return result
+}

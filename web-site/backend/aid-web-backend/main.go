@@ -69,7 +69,6 @@ func main() {
 	initialize.New.Zap().Boot()
 	initialize.New.Timezone().Boot()
 	initialize.New.FileManager().Boot()
-	initialize.New.DB().Boot()
 
 	launch(consoleArgs)
 }
