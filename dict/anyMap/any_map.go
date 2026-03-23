@@ -244,6 +244,12 @@ func (my *AnyMap[K, V]) GetKeysByValues(values ...V) anySlice.AnySlicer[K] {
 	return res
 }
 
+// GetIndexByKey 通过 Key 获取索引
+func (my *AnyMap[K, V]) GetIndexByKey(key K) int { return my.keys.GetIndexByValue(key) }
+
+// GetIndexByValue 通过 Value 获取索引
+func (my *AnyMap[K, V]) GetIndexByValue(value V) int { return my.values.GetIndexByValue(value) }
+
 func (my *AnyMap[K, V]) HasKey(key K) bool { return my.keys.In(key) }
 
 func (my *AnyMap[K, V]) HasKeys(keys ...K) bool { return my.keys.In(keys...) }
