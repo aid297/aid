@@ -2,9 +2,9 @@ system:
   debug: true
   version: v1.0.0
   daemon: true
-  timezone: Asia/Shanghai
+  timezone: 8
 web-service:
-  port: "9900"
+  port: "8080"
   cors: true
   static-dir:
     - url: /web

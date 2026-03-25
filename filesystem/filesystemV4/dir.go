@@ -109,7 +109,8 @@ func (my *Dir) Join(paths ...string) IFilesystem {
 func (my *Dir) Create(attrs ...OperationAttributer) IFilesystem {
 	var (
 		err       error
-		operation = NewOperation(attrs...)
+		operation             = new(Operation)
+		mode      os.FileMode = 0755
 	)
 
 	if my.FullPath == "" {
@@ -117,7 +118,14 @@ func (my *Dir) Create(attrs ...OperationAttributer) IFilesystem {
 		return my
 	}
 
-	if err = os.MkdirAll(my.FullPath, operationV2.NewTernary(operationV2.TrueFn(func() os.FileMode { return operation.Mode }), operationV2.FalseValue(os.FileMode(0777))).GetByValue(operation.Mode != 0)); err != nil {
+	for idx := range attrs {
+		attrs[idx].Register(operation)
+		if operation.Mode != 0 {
+			mode = operation.Mode
+		}
+	}
+
+	if err = os.MkdirAll(my.FullPath, mode); err != nil {
 		my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
 		return my
 	}

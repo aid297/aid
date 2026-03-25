@@ -2,7 +2,7 @@ system:
   debug: true
   version: v1.0.0
   daemon: false
-  timezone: Asia/Shanghai
+  timezone: 8
 web-service:
   port: "19900"
   cors: true

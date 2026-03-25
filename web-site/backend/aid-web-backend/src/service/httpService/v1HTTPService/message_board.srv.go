@@ -2,6 +2,8 @@ package v1HTTPService
 
 import (
 	"errors"
+	`fmt`
+	`os`
 
 	"github.com/gofrs/uuid/v5"
 	jsonIter "github.com/json-iterator/go"
@@ -15,14 +17,19 @@ import (
 // MessageBoardService 服务：留言板
 type MessageBoardService struct{}
 
-func (*MessageBoardService) getDirectionFile() (directionFile filesystemV4.IFilesystem, directionFileSlice anySlice.AnySlicer[string], err error) {
+func (*MessageBoardService) getDirectionFile() (
+	directionFile filesystemV4.IFilesystem,
+	directionFileSlice anySlice.AnySlicer[string],
+	err error,
+) {
 	var (
 		directionDir         = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.MessageBoard.Dir))
 		directionFileJSON    []byte
 		directionFileContent []string
 	)
+
 	if !directionDir.GetExist() {
-		if err = directionDir.Create(filesystemV4.Flag(0755)).GetError(); err != nil {
+		if err = directionDir.Create().GetError(); err != nil {
 			return
 		}
 	}
@@ -30,14 +37,17 @@ func (*MessageBoardService) getDirectionFile() (directionFile filesystemV4.IFile
 	directionFile = filesystemV4.NewFile(filesystemV4.Rel(global.CONFIG.MessageBoard.Dir, "direction.json"))
 
 	if !directionDir.GetExist() {
-		return nil, nil, errors.New("目录不存在")
+		return nil, nil, nil
 	}
 
 	if !directionFile.GetExist() {
-		return nil, nil, errors.New("目录文件不存在")
+		if err = directionFile.Write([]byte{'[', ']'}, filesystemV4.Mode(0755), filesystemV4.Flag(os.O_WRONLY|os.O_TRUNC|os.O_CREATE)).GetError(); err != nil {
+			return nil, nil, fmt.Errorf("创建目录文件失败：%w", err)
+		}
+		return directionFile, anySlice.New[string](), nil
 	}
 
-	if directionFileJSON, err = directionFile.Read(filesystemV4.Flag(0644)); err != nil {
+	if directionFileJSON, err = directionFile.Read(); err != nil {
 		return
 	}
 
@@ -63,10 +73,6 @@ func (*MessageBoardService) List() (messages []map[string]string, err error) {
 		return
 	}
 
-	if directionFileSlice.LengthNotEmpty() == 0 {
-		return nil, nil
-	}
-
 	messages = make([]map[string]string, directionFileSlice.LengthNotEmpty())
 	directionFileSlice.Each(func(idx int, item string) {
 		messageFile = filesystemV4.NewFile(filesystemV4.Rel(global.CONFIG.MessageBoard.Dir, item))
@@ -75,7 +81,7 @@ func (*MessageBoardService) List() (messages []map[string]string, err error) {
 		}
 
 		messageContent = make(map[string]string)
-		if messageFileContent, err = messageFile.Read(filesystemV4.Flag(0644)); err != nil {
+		if messageFileContent, err = messageFile.Read(); err != nil {
 			return
 		}
 
@@ -110,21 +116,17 @@ func (*MessageBoardService) Store(form *request.MessageBoardStoreRequest) (err e
 		return
 	}
 
-	if err = directionFile.Write(directionFileJSON).GetError(); err != nil {
+	if err = directionFile.Write(directionFileJSON, filesystemV4.Flag(os.O_CREATE|os.O_WRONLY), filesystemV4.Mode(0755)).GetError(); err != nil {
 		return
 	}
 
-	messageFile = filesystemV4.NewFile(filesystemV4.Rel(directionFile.GetBasePath(), newUUID.String()))
-
-	if err = messageFile.Create(filesystemV4.Flag(0644)).GetError(); err != nil {
-		return
-	}
+	messageFile = filesystemV4.NewFile(filesystemV4.Abs(directionFile.GetBasePath(), newUUID.String()))
 
 	if messageFileContent, err = jsonIter.Marshal(map[string]string{"uuid": newUUID.String(), "content": form.Content}); err != nil {
 		return
 	}
 
-	if err = messageFile.Write(messageFileContent).GetError(); err != nil {
+	if err = messageFile.Write(messageFileContent, filesystemV4.Flag(os.O_CREATE|os.O_WRONLY), filesystemV4.Mode(0755)).GetError(); err != nil {
 		return
 	}
 
@@ -154,11 +156,11 @@ func (*MessageBoardService) Destroy(form *request.MessageBoardDestroyRequest) (e
 		return
 	}
 
-	if err = directionFile.Write(directionFileJSON).GetError(); err != nil {
+	if err = directionFile.Write(directionFileJSON, filesystemV4.Flag(os.O_WRONLY|os.O_TRUNC|os.O_CREATE), filesystemV4.Mode(0755)).GetError(); err != nil {
 		return
 	}
 
-	messageFile := filesystemV4.NewFile(filesystemV4.Rel(directionFile.GetBasePath(), form.ID))
+	messageFile := filesystemV4.NewFile(filesystemV4.Abs(directionFile.GetBasePath(), form.ID))
 	if err = messageFile.Remove().GetError(); err != nil {
 		return
 	}

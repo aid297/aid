@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
+	`log`
 	"os"
 	"path"
 	"path/filepath"
@@ -13,7 +14,7 @@ import (
 )
 
 type File struct {
-	mu       sync.RWMutex `json:"-"`                              // 读写锁
+	mu       sync.RWMutex // 读写锁
 	Error    error        `json:"error" swaggertype:"string"`     // 错误信息
 	Name     string       `json:"name" swaggertype:"string"`      // 文件名
 	BasePath string       `json:"basePath" swaggertype:"string"`  // 基础路径
@@ -28,8 +29,8 @@ type File struct {
 }
 
 var (
-	DefaultCreateMode = os.O_APPEND | os.O_CREATE | os.O_WRONLY
-	DefaultReadMode   = os.O_RDWR
+	DefaultCreateFlag = os.O_APPEND | os.O_CREATE | os.O_WRONLY
+	DefaultReadFlag   = os.O_RDWR
 )
 
 func NewFile(attrs ...PathAttributer) IFilesystem {
@@ -114,25 +115,18 @@ func (my *File) Join(paths ...string) IFilesystem {
 }
 
 // Create 创建文件
-func (my *File) Create(attrs ...OperationAttributer) IFilesystem {
-	if dir := NewDir(Abs(my.BasePath)); !dir.GetExist() {
-		if err := dir.Create(attrs...).GetError(); err != nil {
-			my.Error = fmt.Errorf("%w:%w", ErrCreateDir, err)
-		}
-	}
-
-	my.Write(nil, attrs...)
-
-	return my
-}
+func (my *File) Create(attrs ...OperationAttributer) IFilesystem { return my.Write(nil, attrs...) }
 
 // 向文件内写入内容
 func (my *File) Write(content []byte, attrs ...OperationAttributer) IFilesystem {
 	var (
 		err       error
-		operation = NewOperation(attrs...)
+		operation = new(Operation)
 		file      *os.File
 		dir       IFilesystem
+		flag                  = DefaultCreateFlag
+		mode      os.FileMode = 0755
+		a         int
 	)
 
 	if dir = NewDir(Abs(my.BasePath)); !dir.GetExist() {
@@ -142,26 +136,28 @@ func (my *File) Write(content []byte, attrs ...OperationAttributer) IFilesystem 
 		}
 	}
 
-	if file, err = os.OpenFile(
-		my.FullPath,
-		operationV2.NewTernary(
-			operationV2.TrueValue(operation.Flag),
-			operationV2.FalseValue(DefaultCreateMode),
-		).GetByValue(operation.Flag != 0),
-		operationV2.NewTernary(
-			operationV2.TrueValue(operation.Mode),
-			operationV2.FalseValue(os.FileMode(0777)),
-		).GetByValue(operation.Mode != 0),
-	); err != nil {
+	for idx := range attrs {
+		attrs[idx].Register(operation)
+		if operation.Flag != 0 {
+			flag = operation.Flag
+		}
+		if operation.Mode != 0 {
+			mode = operation.Mode
+		}
+	}
+
+	if file, err = os.OpenFile(my.FullPath, flag, mode); err != nil {
 		my.Error = fmt.Errorf("%w:%w", ErrWriteFile, err)
 		return my
 	}
 	defer func() { _ = file.Close() }()
 
-	if _, err = file.Write(content); err != nil {
+	if a, err = file.Write(content); err != nil {
 		my.Error = fmt.Errorf("%w:%w", ErrWriteFile, err)
 		return my
 	}
+
+	log.Printf("%d", a)
 
 	return my.refresh()
 }
@@ -213,7 +209,7 @@ func (my *File) Read(attrs ...OperationAttributer) ([]byte, error) {
 		my.FullPath,
 		operationV2.NewTernary(
 			operationV2.TrueFn(func() int { return fileOperation.Flag }),
-			operationV2.FalseFn(func() int { return DefaultReadMode }),
+			operationV2.FalseFn(func() int { return DefaultReadFlag }),
 		).GetByValue(fileOperation.Flag != 0),
 		operationV2.NewTernary(
 			operationV2.TrueFn(func() os.FileMode { return fileOperation.Mode }),
