@@ -122,7 +122,7 @@ func (*MessageBoardService) Store(form *request.MessageBoardStoreRequest) (err e
 
 	messageFile = filesystemV4.NewFile(filesystemV4.Abs(directionFile.GetBasePath(), newUUID.String()))
 
-	if messageFileContent, err = jsonIter.Marshal(map[string]string{"uuid": newUUID.String(), "content": form.Content}); err != nil {
+	if messageFileContent, err = jsonIter.Marshal(map[string]string{"id": newUUID.String(), "content": form.Content}); err != nil {
 		return
 	}
 
