@@ -283,7 +283,7 @@ func (my *HTTPClient) OK() error {
 	}
 
 	if my.rawResponse.StatusCode > 399 {
-		return fmt.Errorf("错误：%d %s", my.GetStatusCode(), my.GetStatus())
+		return fmt.Errorf("错误：%s", my.GetStatus())
 	}
 
 	if my.err != nil {

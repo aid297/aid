@@ -141,7 +141,10 @@ const handleStoreFolder = async () => {
  */
 const handleDownload = async row => {
     if (row.kind === 'DIR') return;
-    window.open(`${API_URL}/fileManager/download?path=${encodeURIComponent(currentDir.value)}&name=${encodeURIComponent(row.name)}`, '_blank');
+
+    const url = `${API_URL}/fileManager/download?path=${encodeURIComponent(currentDir.value)}&name=${encodeURIComponent(row.name)}`;
+    // window.open(url, '_blank');
+    window.location.href = url;
 };
 
 /**
