@@ -278,6 +278,10 @@ func (my *HTTPClient) send() *HTTPClient {
 
 // OK 检查响应是否成功，返回布尔值和错误信息
 func (my *HTTPClient) OK() error {
+	if my.err != nil {
+		return my.err
+	}
+
 	if my.rawResponse == nil {
 		return errors.New("响应体为空")
 	}
