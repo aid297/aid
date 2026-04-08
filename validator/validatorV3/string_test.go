@@ -30,7 +30,7 @@ func Test1(t *testing.T) {
 
 	t.Logf("验证是否通过：%v\n", checker.OK())
 
-	for _, wrong := range checker.Wrongs() {
+	for _, wrong := range checker.Errors() {
 		t.Logf("%v\n", wrong)
 	}
 

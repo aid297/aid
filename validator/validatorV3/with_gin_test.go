@@ -22,7 +22,7 @@ func TestWithGin_DefaultsToJSONWhenMissingContentType(t *testing.T) {
 	r.POST("/bind", func(c *gin.Context) {
 		form, checker := WithGin[Req](c)
 		if !checker.OK() {
-			c.String(http.StatusBadRequest, checker.Wrong().Error())
+			c.String(http.StatusBadRequest, checker.Error().Error())
 			return
 		}
 		c.JSON(http.StatusOK, form)
@@ -39,4 +39,3 @@ func TestWithGin_DefaultsToJSONWhenMissingContentType(t *testing.T) {
 		t.Fatalf("body = %q", w.Body.String())
 	}
 }
-
