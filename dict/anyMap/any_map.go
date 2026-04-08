@@ -175,8 +175,9 @@ func (my *AnyMap[K, V]) ToOrderlyMap() anySlice.AnySlicer[AnyMapOrderlyItem[K, V
 		return res
 	}
 
-	my.keys.Each(func(idx int, item K) {
+	my.keys.Each(func(idx int, item K) (isBreak bool) {
 		res.Append(AnyMapOrderlyItem[K, V]{Key: item, Value: my.data[item]})
+		return
 	})
 
 	return res

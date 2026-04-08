@@ -68,7 +68,7 @@ type (
 		Unique() AnySlicer[T]
 		RemoveByIndex(indexes ...int) AnySlicer[T]
 		Every(fn func(item T) T) AnySlicer[T]
-		Each(fn func(idx int, item T)) AnySlicer[T]
+		Each(fn func(idx int, item T) (isBreak bool)) AnySlicer[T]
 		Sort(fn func(i, j int) bool) AnySlicer[T]
 		Clean() AnySlicer[T]
 		MarshalJSON() ([]byte, error)
@@ -594,9 +594,11 @@ func (my *AnyArray[T]) Every(fn func(item T) T) AnySlicer[T] {
 }
 
 // Each 遍历数组
-func (my *AnyArray[T]) Each(fn func(idx int, item T)) AnySlicer[T] {
+func (my *AnyArray[T]) Each(fn func(idx int, item T) (isBreak bool)) AnySlicer[T] {
 	for idx := range my.data {
-		fn(idx, my.data[idx])
+		if fn(idx, my.data[idx]) {
+			break
+		}
 	}
 
 	return my
