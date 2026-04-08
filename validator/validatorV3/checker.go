@@ -17,9 +17,13 @@ import (
 
 type (
 	Checker interface {
+		Errors() []error
 		Wrongs() []error
+		Invalid() bool
 		OK() bool
+		Error() error
 		Wrong() error
+		ErrorToString(limit string) (ret string)
 		WrongToString(limit string) (ret string)
 		Validate(exCheckFns ...any) Checker
 	}
@@ -34,16 +38,27 @@ type (
 
 func NewCheck(data any) Checker { return &Check{data: data, defaultLimit: "<br />"} }
 
-func (my *Check) Wrongs() []error { return my.wrongs }
+func (my *Check) Errors() []error { return my.wrongs }
 
+// fix: 推荐使用 Errors
+func (my *Check) Wrongs() []error { return my.Errors() }
+
+func (my *Check) Invalid() bool { return len(my.wrongs) > 0 }
+
+// fix: 推荐使用 Invalid
 func (my *Check) OK() bool { return len(my.wrongs) == 0 }
 
-func (my *Check) Wrong() error {
-	return operationV2.NewTernary(operationV2.TrueFn(func() error { return errors.New(my.WrongToString("")) })).
+func (my *Check) Error() error {
+	return operationV2.NewTernary(
+		operationV2.TrueFn(func() error { return errors.New(my.WrongToString("")) }),
+	).
 		GetByValue(len(my.wrongs) > 0)
 }
 
-func (my *Check) WrongToString(limit string) (ret string) {
+// fix: 推荐使用 Error
+func (my *Check) Wrong() error { return my.Error() }
+
+func (my *Check) ErrorToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
 		ret = anySlice.FillFunc(my.wrongs, func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) }).
 			JoinNotEmpty(operationV2.NewTernary(
@@ -54,6 +69,9 @@ func (my *Check) WrongToString(limit string) (ret string) {
 
 	return
 }
+
+// fix: 推荐使用 WrongToString
+func (my *Check) WrongToString(limit string) (ret string) { return my.ErrorToString(limit) }
 
 func (my *Check) Validate(exCheckFns ...any) Checker {
 	fieldInfos := getStructFieldInfos(my.data, "")
