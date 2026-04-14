@@ -5,8 +5,9 @@ import (
 	"os"
 	"sync"
 
-	"github.com/aid297/aid/str"
 	"github.com/spf13/cast"
+
+	"github.com/aid297/aid/str"
 )
 
 type DebugLogger struct {
@@ -15,7 +16,16 @@ type DebugLogger struct {
 	isDebug      bool
 	printLoggers map[bool]*log.Logger
 	errorLoggers map[bool]*log.Logger
+	color        string
 }
+
+const (
+	COLOR_RED    = "\033[31m"
+	COLOR_GREEN  = "\033[32m"
+	COLOR_YELLOW = "\033[33m"
+	COLOR_BLUE   = "\033[34m"
+	COLOR_RESET  = "\033[0m"
+)
 
 var (
 	debugLoggerOnce sync.Once
@@ -35,7 +45,11 @@ func (my *DebugLogger) Print(v ...any) {
 	}
 
 	format, values := my.processArgs(v...)
-	my.printLoggers[my.isDebug].Printf(format, values...)
+	if my.color != "" {
+		my.printLoggers[my.isDebug].Printf(my.color+format+COLOR_RESET, values...)
+	} else {
+		my.printLoggers[my.isDebug].Printf(format, values...)
+	}
 }
 
 // Error 输出错误日志
@@ -46,7 +60,7 @@ func (my *DebugLogger) Error(v ...any) {
 	}
 
 	format, values := my.processArgs(v...)
-	my.errorLoggers[my.isDebug].Printf(format, values...)
+	my.errorLoggers[my.isDebug].Printf(COLOR_RED+format+COLOR_RESET, values...)
 }
 
 // processArgs 处理日志参数，支持可选的格式字符串

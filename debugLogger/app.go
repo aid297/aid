@@ -12,7 +12,7 @@ var Once once
 type once struct{}
 
 // DebugLogger 单例：debug 日志
-func (*once) DebugLogger() *DebugLogger {
+func (*once) DebugLogger(attrs ...DebugLoggerAttr) *DebugLogger {
 	debugLoggerOnce.Do(func() {
 		debugLoggerIns = &DebugLogger{
 			mu:           sync.Mutex{},
@@ -28,6 +28,10 @@ func (*once) DebugLogger() *DebugLogger {
 		debugLoggerIns.errorLoggers[true] = log.New(os.Stderr, "[ERROR]", flag)
 		debugLoggerIns.errorLoggers[false] = silenceLogger
 	})
+
+	for idx := range attrs {
+		attrs[idx]()
+	}
 
 	return debugLoggerIns
 }
