@@ -53,6 +53,10 @@ func (my *DebugLogger) Print(v ...any) {
 	}
 }
 
+func (my *DebugLogger) Printf(format string, v ...any) {
+	my.printLoggers[my.isDebug].Printf(format, v...)
+}
+
 // Error 输出错误日志
 func (my *DebugLogger) Error(v ...any) {
 	if my.debugTrigger != os.Getenv(ENV_TAG) {
@@ -62,6 +66,10 @@ func (my *DebugLogger) Error(v ...any) {
 
 	format, values := my.processArgs(v...)
 	my.errorLoggers[my.isDebug].Printf(COLOR_RED+format+COLOR_RESET, values...)
+}
+
+func (my *DebugLogger) Errorf(format string, v ...any) {
+	my.errorLoggers[my.isDebug].Printf(COLOR_RED+format+COLOR_RESET, v...)
 }
 
 // processArgs 处理日志参数，支持可选的格式字符串
