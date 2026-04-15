@@ -16,8 +16,11 @@ func (*once) DebugLogger(attrs ...DebugLoggerAttr) *DebugLogger {
 	debugLoggerOnce.Do(func() {
 		debugLoggerIns = &DebugLogger{
 			mu:           sync.Mutex{},
+			mode:         ModeConsole,
 			printLoggers: make(map[bool]*log.Logger, 2),
 			errorLoggers: make(map[bool]*log.Logger, 2),
+			filePrint:    make(map[bool]*log.Logger, 2),
+			fileError:    make(map[bool]*log.Logger, 2),
 		}
 
 		flag := log.LstdFlags | log.Lshortfile
@@ -27,6 +30,10 @@ func (*once) DebugLogger(attrs ...DebugLoggerAttr) *DebugLogger {
 		debugLoggerIns.printLoggers[false] = silenceLogger
 		debugLoggerIns.errorLoggers[true] = log.New(os.Stderr, "[ERROR]", flag)
 		debugLoggerIns.errorLoggers[false] = silenceLogger
+		debugLoggerIns.filePrint[true] = silenceLogger
+		debugLoggerIns.filePrint[false] = silenceLogger
+		debugLoggerIns.fileError[true] = silenceLogger
+		debugLoggerIns.fileError[false] = silenceLogger
 	})
 
 	for idx := range attrs {
