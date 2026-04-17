@@ -68,6 +68,13 @@ func (my *Read) Read(
 		rowNum  int
 	)
 
+	defer func() {
+		my.originalCol = 0
+		my.finishedCol = 0
+		my.originalRow = 0
+		my.finishedRow = 0
+	}()
+
 	if my.setAttrs(attrs...); my.Error != nil {
 		return my
 	}
