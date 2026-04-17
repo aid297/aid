@@ -4,7 +4,6 @@ import (
 	`errors`
 	`fmt`
 	`os`
-	`sync`
 
 	`github.com/xuri/excelize/v2`
 )
@@ -13,12 +12,17 @@ type (
 	Reader interface {
 		GetRawExcel() *excelize.File
 		GetError() error
+		GetOriginalRow() int
+		GetFinishedRow() int
+		GetOriginalCol() int
+		GetFinishedCol() int
+		GetUnzipXMLSizeLimit() int64
+		GetUnzipSizeLimit() int64
 		Read(sheetName string, callback func(rowNum int, rows *excelize.Rows) (err error), attrs ...ReaderAttribute) Reader
 	}
 
 	Read struct {
 		Error                             error
-		mu                                sync.RWMutex
 		filename                          string
 		file                              *os.File
 		excel                             *excelize.File
@@ -30,7 +34,6 @@ type (
 
 func NewReader(attrs ...ReaderAttribute) Reader {
 	return (&Read{
-		mu:                sync.RWMutex{},
 		unzipXMLSizeLimit: 10 * 1024 * 1024,
 		unzipSizeLimit:    1 << 30,
 	}).setAttrs(attrs...)
@@ -53,6 +56,18 @@ func (my *Read) GetRawExcel() *excelize.File { return my.excel }
 
 // GetError 获取错误信息
 func (my *Read) GetError() error { return my.Error }
+
+func (my *Read) GetOriginalRow() int { return my.originalRow }
+
+func (my *Read) GetFinishedRow() int { return my.finishedRow }
+
+func (my *Read) GetOriginalCol() int { return my.originalCol }
+
+func (my *Read) GetFinishedCol() int { return my.finishedCol }
+
+func (my *Read) GetUnzipXMLSizeLimit() int64 { return my.unzipXMLSizeLimit }
+
+func (my *Read) GetUnzipSizeLimit() int64 { return my.unzipSizeLimit }
 
 // Read 读取数据，参数为可变参数 ReaderAttribute 接口类型，可以通过 OriginalRow 和 FinishedRow 来指定读取范围
 func (my *Read) Read(
@@ -91,7 +106,6 @@ func (my *Read) Read(
 
 	// 1. 初始化io.Reader（示例：本地文件流，可替换为HTTP流、bytes.Buffer等）
 	if my.file, err = os.Open(my.filename); err != nil {
-		my.mu.RUnlock()
 		my.Error = fmt.Errorf("%w-打开文件错误：%w", errOpen, err)
 		return my
 	}
@@ -101,7 +115,6 @@ func (my *Read) Read(
 		UnzipXMLSizeLimit: my.unzipXMLSizeLimit, // 超过10MB则将XML写入临时文件，降低内存
 		UnzipSizeLimit:    my.unzipSizeLimit,    // 解压缩大小限制1GB
 	}); err != nil {
-		my.mu.RUnlock()
 		my.Error = fmt.Errorf("%w-解析文件错误：%w", errOpen, err)
 		return my
 	}
