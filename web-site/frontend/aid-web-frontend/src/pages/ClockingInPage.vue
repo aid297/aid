@@ -65,7 +65,7 @@
 									<q-item clickable>
 										<q-item-section>
 											<span style="font-size: 20px" class="text-primary">2. 调休</span>
-											<span class="text-secondary">PS: 调休按照工作日计算</span>
+											<span class="text-secondary">PS: 放假也得正常上班</span>
 										</q-item-section>
 
 										<q-item-section avatar>

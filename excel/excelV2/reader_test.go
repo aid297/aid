@@ -30,3 +30,28 @@ func TestReader1(t *testing.T) {
 		)
 	_ = reader.GetRawExcel()
 }
+
+func TestReader2(t *testing.T) {
+	reader := NewReader().
+		SetFilename(Filename("2月.xlsx")).
+		SetOpenFile(UnzipXMLSizeLimit(10*1024*1024), UnzipSizeLimit(10<<30)).
+		Read(
+			"打卡时间",
+			func(rowNum int, rows *excelize.Rows) (err error) {
+				var cols []string
+				if cols, err = rows.Columns(); err != nil {
+					return
+				}
+
+				for colNum := range cols {
+					value := cols[colNum]
+					t.Logf("列：%v\t", value)
+				}
+
+				return
+			},
+			OriginalRow(4),
+		)
+
+	_ = reader.GetRawExcel()
+}

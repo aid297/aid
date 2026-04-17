@@ -1,25 +1,19 @@
-package excelV2
+package reader
 
 import (
-	"errors"
-	"fmt"
-	"os"
-	"sync"
+	`errors`
+	`fmt`
+	`os`
+	`sync`
 
-	"github.com/xuri/excelize/v2"
+	`github.com/xuri/excelize/v2`
 )
 
 type (
 	Reader interface {
 		GetRawExcel() *excelize.File
-		setFilename(filename string)
-		SetFilename(attr ExcelAttributer) Reader
-		setOriginalRow(row int)
-		setFinishedRow(row int)
-		setUnzipXMLSizeLimit(size int64)
-		setUnzipSizeLimit(size int64)
-		SetOpenFile(attrs ...OpenFileAttributer) Reader
-		Read(sheetName string, callback func(rowNum int, rows *excelize.Rows) (err error), attrs ...ReadRangeAttributer) Reader
+		GetError() error
+		Read(sheetName string, callback func(rowNum int, rows *excelize.Rows) (err error), attrs ...ReaderAttribute) Reader
 	}
 
 	Read struct {
@@ -28,79 +22,43 @@ type (
 		filename                          string
 		file                              *os.File
 		excel                             *excelize.File
-		originalRow                       int
-		finishedRow                       int
+		originalRow, finishedRow          int
+		originalCol, finishedCol          int
 		unzipXMLSizeLimit, unzipSizeLimit int64
 	}
 )
 
-func NewReader() Reader {
-	return &Read{
+func NewReader(attrs ...ReaderAttribute) Reader {
+	return (&Read{
 		mu:                sync.RWMutex{},
 		unzipXMLSizeLimit: 10 * 1024 * 1024,
 		unzipSizeLimit:    1 << 30,
+	}).setAttrs(attrs...)
+}
+
+func (my *Read) setAttrs(attrs ...ReaderAttribute) Reader {
+	if len(attrs) != 0 {
+		for i := range attrs {
+			if my.Error = attrs[i](my); my.Error != nil {
+				return my
+			}
+		}
 	}
+
+	return my
 }
 
 // GetRawExcel 获取原始 excelize.File 对象
 func (my *Read) GetRawExcel() *excelize.File { return my.excel }
 
-// setFilename 设置文件名
-func (my *Read) setFilename(filename string) {
-	my.mu.Lock()
-	defer my.mu.Unlock()
+// GetError 获取错误信息
+func (my *Read) GetError() error { return my.Error }
 
-	my.filename = filename
-}
-
-// SetFilename 设置文件名
-func (my *Read) SetFilename(attr ExcelAttributer) Reader { attr.RegisterForReader(my); return my }
-
-// 设置起始行
-func (my *Read) setOriginalRow(row int) {
-	my.mu.Lock()
-	defer my.mu.Unlock()
-
-	my.originalRow = row
-}
-
-// 设置终止行
-func (my *Read) setFinishedRow(row int) {
-	my.mu.Lock()
-	defer my.mu.Unlock()
-
-	my.finishedRow = row
-}
-
-// setUnzipXMLSizeLimit 设置解压缩XML大小限制，超过限制则写入临时文件，降低内存占用
-func (my *Read) setUnzipXMLSizeLimit(size int64) {
-	my.mu.Lock()
-	defer my.mu.Unlock()
-
-	my.unzipXMLSizeLimit = size
-}
-
-// setUnzipSizeLimit 设置解压缩大小限制，超过限制则写入临时文件，降低内存占用
-func (my *Read) setUnzipSizeLimit(size int64) {
-	my.mu.Lock()
-	defer my.mu.Unlock()
-
-	my.unzipSizeLimit = size
-}
-
-// SetOpenFile 设置打开文件的属性，例如解压缩大小限制等
-func (my *Read) SetOpenFile(attrs ...OpenFileAttributer) Reader {
-	for _, attr := range attrs {
-		attr.RegisterForReader(my)
-	}
-	return my
-}
-
-// Read 读取数据，参数为可变参数 ReadRangeAttributer 接口类型，可以通过 OriginalRow 和 FinishedRow 来指定读取范围
+// Read 读取数据，参数为可变参数 ReaderAttribute 接口类型，可以通过 OriginalRow 和 FinishedRow 来指定读取范围
 func (my *Read) Read(
 	sheetName string,
 	callback func(rowNum int, rows *excelize.Rows) (err error),
-	attrs ...ReadRangeAttributer,
+	attrs ...ReaderAttribute,
 ) Reader {
 	var (
 		errOpen = errors.New("打开文件失败")
@@ -109,6 +67,10 @@ func (my *Read) Read(
 		rows    *excelize.Rows
 		rowNum  int
 	)
+
+	if my.setAttrs(attrs...); my.Error != nil {
+		return my
+	}
 
 	if my.filename == "" {
 		my.Error = fmt.Errorf("%w：文件名不能为空", errOpen)
@@ -136,19 +98,15 @@ func (my *Read) Read(
 		my.Error = fmt.Errorf("%w-解析文件错误：%w", errOpen, err)
 		return my
 	}
-	defer my.file.Close()
-	defer my.excel.Close()
-
-	for _, attr := range attrs {
-		attr.RegisterForReader(my)
-	}
+	defer func() { _ = my.file.Close() }()
+	defer func() { _ = my.excel.Close() }()
 
 	// 3. 行迭代器流式读取数据
 	if rows, err = my.excel.Rows(sheetName); err != nil {
 		my.Error = fmt.Errorf("%w-未找到工作表：%w", errRead, err)
 		return my
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	// 4. 逐行遍历，仅加载当前行数据到内存
 	for rows.Next() {
