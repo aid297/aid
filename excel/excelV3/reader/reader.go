@@ -18,7 +18,8 @@ type (
 		GetFinishedCol() int
 		GetUnzipXMLSizeLimit() int64
 		GetUnzipSizeLimit() int64
-		Read(sheetName string, callback func(rowNum int, rows *excelize.Rows) (err error), attrs ...ReaderAttribute) Reader
+		Read(sheetName string, callback func(rowNum int, rows *excelize.Rows) (err error), attrs ...ReaderAttribute) *Read
+		Close() *Read
 	}
 
 	Read struct {
@@ -74,7 +75,7 @@ func (my *Read) Read(
 	sheetName string,
 	callback func(rowNum int, rows *excelize.Rows) (err error),
 	attrs ...ReaderAttribute,
-) Reader {
+) *Read {
 	var (
 		errOpen = errors.New("打开文件失败")
 		errRead = errors.New("读取文件失败")
@@ -144,3 +145,5 @@ func (my *Read) Read(
 
 	return my
 }
+
+func (my *Read) Close() *Read { _ = my.excel.Close(); return my }
