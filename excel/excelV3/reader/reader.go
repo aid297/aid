@@ -18,7 +18,7 @@ type (
 		GetFinishedCol() int
 		GetUnzipXMLSizeLimit() int64
 		GetUnzipSizeLimit() int64
-		Read(sheetName string, callback func(rowNum int, rows *excelize.Rows) (err error), attrs ...ReaderAttribute) *Read
+		Read(sheetName string, callback func(cols []string, rowNum int, rows *excelize.Rows) (err error), attrs ...ReaderAttribute) *Read
 		Close() *Read
 	}
 
@@ -73,7 +73,7 @@ func (my *Read) GetUnzipSizeLimit() int64 { return my.unzipSizeLimit }
 // Read 读取数据，参数为可变参数 ReaderAttribute 接口类型，可以通过 OriginalRow 和 FinishedRow 来指定读取范围
 func (my *Read) Read(
 	sheetName string,
-	callback func(rowNum int, rows *excelize.Rows) (err error),
+	callback func(cols []string, rowNum int, rows *excelize.Rows) (err error),
 	attrs ...ReaderAttribute,
 ) *Read {
 	var (
@@ -137,7 +137,14 @@ func (my *Read) Read(
 			continue
 		}
 
-		if err = callback(rowNum, rows); err != nil {
+		var cols []string
+
+		if cols, err = rows.Columns(); err != nil {
+			my.Error = fmt.Errorf("%w-读取数据失败：%w [行号：%d]", errRead, err, rowNum)
+			return my
+		}
+
+		if err = callback(cols[my.originalCol:max(my.finishedCol, len(cols))], rowNum, rows); err != nil {
 			my.Error = fmt.Errorf("%w-回调函数执行失败：%w [行号：%d]", errRead, err, rowNum)
 			return my
 		}
