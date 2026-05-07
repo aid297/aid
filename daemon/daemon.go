@@ -74,8 +74,6 @@ func (*Daemon) bootLogFile() (fp *os.File) {
 		}
 	}
 
-	fmt.Printf("%v\n", file.GetFullPath())
-
 	if file != nil {
 		if fp, err = os.OpenFile(file.GetFullPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
 			log.Fatalf("【启动失败】创建总日志失败：%s", err.Error())
