@@ -1,9 +1,9 @@
 package reader
 
 import (
-	`testing`
+	"testing"
 
-	`github.com/xuri/excelize/v2`
+	"github.com/xuri/excelize/v2"
 )
 
 func Test(t *testing.T) {
@@ -13,8 +13,7 @@ func Test(t *testing.T) {
 		Filename("./2月.xlsx"),
 		OriginalRow(4),
 		FinishedRow(4),
-	).Read("月度汇总", func(rowNum int, rows *excelize.Rows) (err error) {
-		var cols []string
+	).Read("月度汇总", func(cols []string, rowNum int, rows *excelize.Rows) (err error) {
 		if cols, err = rows.Columns(); err != nil {
 			return err
 		}
