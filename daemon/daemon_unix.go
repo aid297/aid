@@ -47,6 +47,8 @@ func (*Daemon) Launch() {
 		log.Fatalf("【启动失败】%s", err.Error())
 	}
 
+	log.Println("【启动成功】Daemon 模式")
+
 	os.Exit(0)
 }
 

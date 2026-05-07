@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"sync"
 	"time"
 
@@ -57,7 +58,14 @@ func (*Daemon) bootLogFile() (fp *os.File) {
 
 	if i.enable && i.dir != "" {
 		dir = filesystemV4.NewDir(filesystemV4.Rel(i.dir))
-		file = filesystemV4.NewFile(filesystemV4.Abs(operationV2.NewTernary(operationV2.TrueValue(i.filename), operationV2.FalseValue("daemon.log")).GetByValue(i.filename != "")))
+		file = filesystemV4.NewFile(
+			filesystemV4.Abs(
+				path.Join(
+					dir.GetFullPath(),
+					operationV2.NewTernary(operationV2.TrueValue(i.filename), operationV2.FalseValue("daemon.log")).GetByValue(i.filename != ""),
+				),
+			),
+		)
 	}
 
 	if dir != nil && !dir.GetExist() {
@@ -65,6 +73,8 @@ func (*Daemon) bootLogFile() (fp *os.File) {
 			log.Fatalf("【启动失败】创建日志目录失败：%s", err.Error())
 		}
 	}
+
+	fmt.Printf("%v\n", file.GetFullPath())
 
 	if file != nil {
 		if fp, err = os.OpenFile(file.GetFullPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
