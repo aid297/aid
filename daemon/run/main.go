@@ -14,7 +14,7 @@ func main() {
 	flag.Parse()
 	debugLogger.Print("启动参数：D %v", *d)
 
-	daemon.OnceDaemon().SetTitle("daemon-test").SetLogDir(".").SetLogEnable(true).LaunchWithCondition(*d, func() {
+	daemon.OnceDaemon().SetTitle("daemon-test").SetLogDir(".").SetLogEnable(false).LaunchWithCondition(*d, func() {
 		debugLogger.Print("启动成功")
 	})
 }
