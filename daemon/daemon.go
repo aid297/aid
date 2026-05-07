@@ -72,10 +72,6 @@ func (*Daemon) bootLogFile() (fp *os.File) {
 		}
 	}
 
-	if fp == nil {
-		log.Fatalln("【启动失败】获取日志对象失败")
-	}
-
 	return
 }
 
