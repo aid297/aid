@@ -10,10 +10,10 @@ import (
 )
 
 // Launch 启动守护进程
-func (my *Daemon) Launch() {
+func (*Daemon) Launch() {
 	var (
 		err error
-		fp  = my.bootLogFile()
+		fp  = i.bootLogFile()
 		cmd *exec.Cmd
 	)
 	defer func() {
@@ -43,9 +43,22 @@ func (my *Daemon) Launch() {
 		}
 	}
 
-	if err = my.afterLaunch(fp, cmd.Process.Pid); err != nil {
+	if err = i.afterLaunch(fp, cmd.Process.Pid); err != nil {
 		log.Fatalf("【启动失败】%s", err.Error())
 	}
 
 	os.Exit(0)
+}
+
+// LaunchWithCondition 通过条件决定是否启动守护进程
+func (*Daemon) LaunchWithCondition(condition bool, bootFn func()) {
+	if bootFn == nil {
+		return
+	}
+
+	if condition {
+		i.Launch()
+	} else {
+		bootFn()
+	}
 }

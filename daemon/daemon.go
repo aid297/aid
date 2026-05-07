@@ -48,16 +48,16 @@ func (*Daemon) SetLog(dir, filename string) *Daemon {
 func (*Daemon) SetLogEnable(enable bool) *Daemon { i.enable = enable; return i }
 
 // bootLogFile 启动日志
-func (my *Daemon) bootLogFile() (fp *os.File) {
+func (*Daemon) bootLogFile() (fp *os.File) {
 	var (
 		err  error
 		dir  filesystemV4.IFilesystem
 		file filesystemV4.IFilesystem
 	)
 
-	if my.enable && my.dir != "" {
-		dir = filesystemV4.NewDir(filesystemV4.Rel(my.dir))
-		file = filesystemV4.NewFile(filesystemV4.Abs(operationV2.NewTernary(operationV2.TrueValue(my.filename), operationV2.FalseValue("daemon.log")).GetByValue(my.filename != "")))
+	if i.enable && i.dir != "" {
+		dir = filesystemV4.NewDir(filesystemV4.Rel(i.dir))
+		file = filesystemV4.NewFile(filesystemV4.Abs(operationV2.NewTernary(operationV2.TrueValue(i.filename), operationV2.FalseValue("daemon.log")).GetByValue(i.filename != "")))
 	}
 
 	if dir != nil && !dir.GetExist() {
@@ -80,12 +80,12 @@ func (my *Daemon) bootLogFile() (fp *os.File) {
 }
 
 // afterLaunch 成功启动守护进程后
-func (my *Daemon) afterLaunch(fp *os.File, pid int) (err error) {
+func (*Daemon) afterLaunch(fp *os.File, pid int) (err error) {
 	if fp != nil {
 		if _, err = fmt.Fprintf(
 			fp,
 			"--------------------------------------------------\r\n%s 程序启动成功 [进程号->%d] 启动于：%s\r\n",
-			my.title,
+			i.title,
 			pid,
 			time.Now().Format(time.DateTime+".000"),
 		); err != nil {
