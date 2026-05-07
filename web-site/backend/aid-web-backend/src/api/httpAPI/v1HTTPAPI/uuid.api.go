@@ -26,8 +26,8 @@ func (*UUIDAPI) Generate(c *gin.Context) {
 	)
 
 	if form, checker = validatorV3.WithGin[request.UUIDGenerateRequest](c); !checker.OK() {
-		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Wrongs()))
-		httpModule.NewForbidden(httpModule.Content(checker.Wrongs()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Wrong())).WithAccept(c)
+		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
+		httpModule.NewForbidden(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 

@@ -1,14 +1,15 @@
 package v1HTTPAPI
 
 import (
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+
 	"github.com/aid297/aid/validator/validatorV3"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/response"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/service/httpService/v1HTTPService"
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 // MesasgeBoardAPI API：留言板
@@ -60,8 +61,8 @@ func (*MessageBoardAPI) Store(c *gin.Context) {
 	)
 
 	if form, checker = (&request.MessageBoardStoreRequest{}).Bind(c); !checker.OK() {
-		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Wrongs()))
-		httpModule.NewForbidden(httpModule.Content(checker.Wrongs()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Wrong())).WithAccept(c)
+		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Error()))
+		httpModule.NewForbidden(httpModule.Content(checker.Error()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 
@@ -94,8 +95,8 @@ func (*MessageBoardAPI) Destroy(c *gin.Context) {
 	)
 
 	if form, checker = (&request.MessageBoardDestroyRequest{}).Bind(c); !checker.OK() {
-		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Wrongs()))
-		httpModule.NewForbidden(httpModule.Content(checker.Wrongs()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Wrong())).WithAccept(c)
+		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Error()))
+		httpModule.NewForbidden(httpModule.Content(checker.Error()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 

@@ -62,6 +62,12 @@
 					</q-item-section>
 				</q-item>
 
+                <q-item dense clickable v-ripple @click="hrefTo(router, '/clockingIn2')" :class="{ 'bg-orange': isActive('/clockingIn2'), 'text-white': isActive('/clockingIn2') }">
+					<q-item-section avatar class="q-mt-md q-mb-md">
+						<i class="fa-solid fa-calendar-week" :style="{ fontSize: '18px' }">&nbsp;考勤统计（实验性）</i>
+					</q-item-section>
+				</q-item>
+
 				<q-item dense clickable v-ripple @click="hrefTo(router, '/timeCalculator')" :class="{ 'bg-orange': isActive('/timeCalculator'), 'text-white': isActive('/timeCalculator') }">
 					<q-item-section avatar class="q-mt-md q-mb-md">
 						<i class="fa-solid fa-clock" :style="{ fontSize: '18px' }">&nbsp;时间计算器</i>

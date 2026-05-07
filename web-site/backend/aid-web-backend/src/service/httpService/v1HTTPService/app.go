@@ -6,3 +6,4 @@ type app struct{}
 
 func (*app) UUID() *UUIDService                 { return &UUIDService{} }
 func (*app) MessageBoard() *MessageBoardService { return &MessageBoardService{} }
+func (*app) CheckingIn() *CheckingInService     { return &CheckingInService{} }

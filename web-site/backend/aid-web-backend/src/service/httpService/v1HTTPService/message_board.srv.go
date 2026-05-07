@@ -74,7 +74,7 @@ func (*MessageBoardService) List() (messages []map[string]string, err error) {
 	}
 
 	messages = make([]map[string]string, directionFileSlice.LengthNotEmpty())
-	directionFileSlice.Each(func(idx int, item string) {
+	directionFileSlice.Each(func(idx int, item string) (isBreak bool) {
 		messageFile = filesystemV4.NewFile(filesystemV4.Rel(global.CONFIG.MessageBoard.Dir, item))
 		if !messageFile.GetExist() {
 			return
@@ -90,6 +90,8 @@ func (*MessageBoardService) List() (messages []map[string]string, err error) {
 		}
 
 		messages[idx] = messageContent
+		
+		return
 	})
 
 	return messages, nil

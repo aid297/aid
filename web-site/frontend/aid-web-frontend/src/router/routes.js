@@ -10,6 +10,7 @@ const routes = [
             { path: 'fileManager', component: () => import('src/pages/FileManagerPage.vue') },
             { path: 'file', component: () => import('src/pages/FilePage.vue') },
             { path: 'clockingIn', component: () => import('src/pages/ClockingInPage.vue') },
+            { path: 'clockingIn2', component: () => import('src/pages/ClockingInPage2.vue') },
             { path: 'timeCalculator', component: () => import('src/pages/TimeCalculatorPage.vue') },
             { path: 'rezip', component: () => import('src/pages/RezipPage.vue') },
             { path: 'uuid', component: () => import('src/pages/UuidPage.vue') },

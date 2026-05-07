@@ -8,4 +8,5 @@ type Config struct {
 	Rezip        RezipCfg        `mapstructure:"rezip" json:"rezip" yaml:"rezip" toml:"rezip"`
 	FileManager  FileManagerCfg  `mapstructure:"file-manager" json:"file-manager" yaml:"file-manager" toml:"file-manager"`
 	MessageBoard MessageBoardCfg `mapstructure:"message-board" json:"message-board" yaml:"message-board" toml:"message-board"`
+	CheckingIn   CheckingInCfg   `mapstructure:"checking-in" json:"checking-in" yaml:"checking-in" toml:"checking-in"`
 }

@@ -19,8 +19,12 @@ type (
 		join string
 		args []any
 	}
-	AttrPreload struct{ preloads []string }
-	AttrSelect  struct {
+	AttrPreload struct {
+		preload string
+		args    []any
+	}
+	AttrPreloadMap struct{ preloadMap map[string][]any }
+	AttrSelect     struct {
 		query any
 		args  []any
 	}
@@ -54,11 +58,21 @@ func (my *AttrJoins) Register(model Modeler, db *gorm.DB) *gorm.DB {
 	return db.Joins(my.join, my.args...)
 }
 
-func Preload(preloads ...string) *AttrPreload { return &AttrPreload{preloads: preloads} }
+func Preload(preload string, args ...any) *AttrPreload {
+	return &AttrPreload{preload: preload, args: args}
+}
 
 func (my *AttrPreload) Register(model Modeler, db *gorm.DB) *gorm.DB {
-	for _, preload := range my.preloads {
-		db = db.Preload(preload)
+	return db.Preload(my.preload, my.args...)
+}
+
+func PreloadMap(preloadMap map[string][]any) *AttrPreloadMap {
+	return &AttrPreloadMap{preloadMap: preloadMap}
+}
+
+func (my *AttrPreloadMap) Register(model Modeler, db *gorm.DB) *gorm.DB {
+	for key := range my.preloadMap {
+		db = db.Preload(key, my.preloadMap[key]...)
 	}
 	return db
 }

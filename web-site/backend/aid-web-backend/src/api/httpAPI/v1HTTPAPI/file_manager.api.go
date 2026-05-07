@@ -106,8 +106,8 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	)
 
 	if form, checker = validatorV3.WithGin[request.FileListRequest](c); !checker.OK() {
-		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Wrongs()))
-		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Wrongs()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Wrong())).WithAccept(c)
+		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
+		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 
@@ -153,8 +153,8 @@ func (*FileManagerAPI) StoreFolder(c *gin.Context) {
 	)
 
 	if form, checker = validatorV3.WithGin[request.FileStoreFolderRequest](c); !checker.OK() {
-		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Wrongs()))
-		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Wrongs()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Wrong())).WithAccept(c)
+		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
+		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 
@@ -189,8 +189,8 @@ func (*FileManagerAPI) Destroy(c *gin.Context) {
 	)
 
 	if form, checker = validatorV3.WithGin[request.FileDestroyRequest](c); !checker.OK() {
-		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Wrongs()))
-		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Wrongs()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Wrong())).WithAccept(c)
+		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
+		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 
@@ -262,8 +262,8 @@ func (*FileManagerAPI) Zip(c *gin.Context) {
 	)
 
 	if form, checker = validatorV3.WithGin[request.FileZipRequest](c); !checker.OK() {
-		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Wrongs()))
-		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Wrongs()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Wrong())).WithAccept(c)
+		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
+		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 

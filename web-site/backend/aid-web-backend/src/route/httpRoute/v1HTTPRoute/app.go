@@ -8,3 +8,4 @@ func (*app) Rezip() *RezipRoute               { return &RezipRoute{} }
 func (*app) UUID() *UUIDRoute                 { return &UUIDRoute{} }
 func (*app) Upload() *FileManagerRoute        { return &FileManagerRoute{} }
 func (*app) MessageBoard() *MessageBoardRoute { return &MessageBoardRoute{} }
+func (*app) CheckingIn() *CheckingInRoute     { return &CheckingInRoute{} }

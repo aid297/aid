@@ -75,10 +75,11 @@ func (my HTTPResponse) Raw() (int, any) { return my.Code, my }
 type httpBodyFormat string
 
 const (
-	httpBodyFormatJSON httpBodyFormat = "json"
-	httpBodyFormatXML  httpBodyFormat = "xml"
-	httpBodyFormatYAML httpBodyFormat = "yaml"
-	httpBodyFormatTOML httpBodyFormat = "toml"
+	httpBodyFormatJSON    httpBodyFormat = "json"
+	httpBodyFormatXML     httpBodyFormat = "xml"
+	httpBodyFormatYAML    httpBodyFormat = "yaml"
+	httpBodyFormatTOML    httpBodyFormat = "toml"
+	httpBodyFormatMsgPack httpBodyFormat = "msgpack"
 )
 
 type acceptCandidate struct {

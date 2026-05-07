@@ -11,7 +11,7 @@
 							</q-card-section>
 
 							<q-card-section class="q-pt-none">
-								<q-uploader :url="`${API_BASE_URL}/rezip/upload`" color="purple" label="选择压缩包" field-name="f" flat bordered style="width: 100%" @uploaded="onUploaded" />
+								<q-uploader :url="`${API_BASE_URL}/v1/rezip/upload`" color="purple" label="选择压缩包" field-name="f" flat bordered style="width: 100%" @uploaded="onUploaded" />
 							</q-card-section>
 						</q-card>
 					</div>

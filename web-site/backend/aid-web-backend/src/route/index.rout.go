@@ -9,10 +9,11 @@ import (
 	v1HTTPMiddleware2 "github.com/aid297/aid/web-site/backend/aid-web-backend/src/middleware/httpMiddleware/v1HTTPMiddleware"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/route/httpRoute/v1HTTPRoute"
 
-	_ "github.com/aid297/aid/web-site/backend/aid-web-backend/docs" // 导入生成的 docs
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "github.com/aid297/aid/web-site/backend/aid-web-backend/docs" // 导入生成的 docs
 )
 
 type IndexRoute struct{}
@@ -44,6 +45,7 @@ func (*IndexRoute) Register(app *gin.Engine) {
 		v1HTTPRoute.New.UUID().Register(v1Rout)
 		v1HTTPRoute.New.Upload().Register(v1Rout)
 		v1HTTPRoute.New.MessageBoard().Register(v1Rout)
+		v1HTTPRoute.New.CheckingIn().Register(v1Rout)
 
 		for idx := range global.CONFIG.WebService.StaticDirs {
 			app.Static(global.CONFIG.WebService.StaticDirs[idx].URL, global.CONFIG.WebService.StaticDirs[idx].Dir) // 静态资源路由

@@ -1,10 +1,10 @@
 export let ROOT_URL = 'http://172.20.232.212:9900';
-export let API_BASE_URL = `api/v1`;
+export let API_BASE_URL = `api`;
 export let API_URL = '';
 const authorization = localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '';
 const DEFAULT_HEADERS = { 'Content-Type': 'application/json', Authorization: authorization };
 
-async function initConfig() {
+export const initConfig = async () => {
     try {
         const response = await fetch('/web/config.json');
         const config = await response.json();
@@ -29,7 +29,7 @@ const f = async (endpoint, method = 'GET', options = {}) => {
     const { headers, ...restOptions } = options;
 
     try {
-        await fetch(`${API_URL}${endpoint}`, { method, ...restOptions, headers: { ...DEFAULT_HEADERS, ...headers } });
+        await fetch(`${API_URL}/v1/${endpoint}`, { method, ...restOptions, headers: { ...DEFAULT_HEADERS, ...headers } });
     } catch (error) {
         console.error('Fetch error:', error);
         throw error;
