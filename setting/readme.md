@@ -16,7 +16,7 @@ import (
 func main() {
 	var config any
 
-	_, err := setting.NewSetting(
+	_, err := setting.APP.New(
 		setting.Filename("local.yaml"),   // 文件名
 		setting.EnvName("CONFIG"),        // 环境变量
 		setting.DefaultName("test.yaml"), // 默认名

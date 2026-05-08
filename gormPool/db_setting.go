@@ -87,7 +87,7 @@ type (
 
 // New 初始化：数据库配置
 func (*DBSetting) New(path string) (dbSetting *DBSetting, err error) {
-	if _, err = setting.NewSetting(setting.Filename(path), setting.Content(dbSetting)); err != nil {
+	if _, err = setting.APP.New(setting.Filename(path), setting.Content(dbSetting)); err != nil {
 		return nil, err
 	}
 	return dbSetting, nil

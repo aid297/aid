@@ -9,7 +9,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 
-	`github.com/aid297/aid/operation/operationV2`
+	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
 )
 
@@ -23,7 +23,7 @@ type Setting struct {
 	onChange       func(v *viper.Viper, e fsnotify.Event)
 }
 
-func NewSetting(attrs ...SettingAttributes) (v *viper.Viper, err error) {
+func newSetting(attrs ...SettingAttributes) (v *viper.Viper, err error) {
 	var (
 		configPath string
 		ins        = Setting{}.SetAttrs(attrs...)

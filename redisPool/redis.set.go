@@ -18,7 +18,7 @@ type RedisSetting struct {
 
 // New 初始化：数据库配置
 func (*RedisSetting) New(path string) (rs *RedisSetting, err error) {
-	_, err = setting.NewSetting(setting.Filename(path), setting.Content(rs))
+	_, err = setting.APP.New(setting.Filename(path), setting.Content(rs))
 	return
 }
 

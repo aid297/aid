@@ -14,7 +14,7 @@ import (
 type ConfigInitialize struct{}
 
 func (*ConfigInitialize) Boot(consolePath string) {
-	if _, err := setting.NewSetting(
+	if _, err := setting.APP.New(
 		setting.Filename(consolePath),
 		setting.EnvName(global.ENV_CONFIG),
 		setting.Content(&global.CONFIG),
