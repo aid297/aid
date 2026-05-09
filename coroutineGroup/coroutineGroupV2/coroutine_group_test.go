@@ -17,5 +17,7 @@ func Test(t *testing.T) {
 			func() Result[int] { return Result[int]{Value: 10} },
 		)
 
-	t.Logf("results: %+v", results)
+	for idx := range results {
+		t.Logf("results: %d %v\n", idx+1, results[idx])
+	}
 }
