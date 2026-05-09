@@ -13,8 +13,9 @@ type (
 	Func[T any] func() Result[T]
 
 	Result[T any] struct {
-		Value T
 		Error error
+		Skip  bool
+		Value T
 	}
 )
 
@@ -55,3 +56,7 @@ func (my *CoroutineGroup[T]) GO(funcs ...Func[T]) []Result[T] {
 
 	return results
 }
+
+func (my Result[T]) IsOK() bool { return my.Error == nil && !my.Skip }
+
+func (my Result[T]) IsSkip() bool { return my.Skip }
