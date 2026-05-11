@@ -8,13 +8,13 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 )
 
 type (
 	ServerPool struct {
-		connections             *dict.AnyDict[string, *Server]
-		addrToAuth              *dict.AnyDict[string, string]
+		connections             anyMap.AnyMapper[string, *Server]
+		addrToAuth              anyMap.AnyMapper[string, string]
 		onConnectionFail        serverConnectionFailFn
 		onConnectionSuccess     serverConnectionSuccessFn
 		onSendMessageSuccess    serverSendMessageSuccessFn
@@ -35,8 +35,8 @@ var (
 func (*ServerPool) Once(attrs ...ServerCallbackAttributer) *ServerPool {
 	serverPoolOnce.Do(func() {
 		serverPool = &ServerPool{
-			connections: dict.Make[string, *Server](),
-			addrToAuth:  dict.Make[string, string](),
+			connections: anyMap.New[string, *Server](),
+			addrToAuth:  anyMap.New[string, string](),
 		}
 	})
 
@@ -55,8 +55,8 @@ func (*ServerPool) Once(attrs ...ServerCallbackAttributer) *ServerPool {
 func OnceServer(serverCallbackConfig ServerCallbackConfig) *ServerPool {
 	serverPoolOnce.Do(func() {
 		serverPool = &ServerPool{
-			connections:             dict.Make[string, *Server](),
-			addrToAuth:              dict.Make[string, string](),
+			connections:             anyMap.New[string, *Server](),
+			addrToAuth:              anyMap.New[string, string](),
 			onConnectionFail:        serverCallbackConfig.OnConnectionFail,
 			onConnectionSuccess:     serverCallbackConfig.OnConnectionSuccess,
 			onSendMessageSuccess:    serverCallbackConfig.OnSendMessageSuccess,
@@ -73,8 +73,8 @@ func OnceServer(serverCallbackConfig ServerCallbackConfig) *ServerPool {
 // appendConn 增加连接
 func (*ServerPool) appendConn(authId *string, conn *websocket.Conn) (server *Server) {
 	server = ServerApp.New(conn)
-	serverPool.addrToAuth.Set(conn.RemoteAddr().String(), *authId)
-	serverPool.connections.Set(conn.RemoteAddr().String(), server)
+	serverPool.addrToAuth.SetDatum(conn.RemoteAddr().String(), *authId)
+	serverPool.connections.SetDatum(conn.RemoteAddr().String(), server)
 
 	return
 }
@@ -87,7 +87,7 @@ func (*ServerPool) removeConn(addr *string) {
 
 // SendMessageByAddr 发送消息：通过地址
 func (*ServerPool) SendMessageByAddr(addr *string, prototypeMessage []byte) {
-	if server, ok := serverPool.connections.Get(*addr); ok {
+	if server, ok := serverPool.connections.GetValueByKey(*addr); ok {
 		server.AsyncMessage(prototypeMessage, serverPool.onSendMessageSuccess, serverPool.onSendMessageFail)
 	} else {
 		if serverPool.onSendMessageFail != nil {
@@ -98,8 +98,9 @@ func (*ServerPool) SendMessageByAddr(addr *string, prototypeMessage []byte) {
 
 // SendMessageByAuthId 发送消息：通过认证ID
 func (*ServerPool) SendMessageByAuthId(authId *string, prototypeMessage []byte) {
-	serverPool.connections.GetValuesByKeys(serverPool.addrToAuth.GetKeysByValues(*authId).ToSlice()...).Each(func(idx int, server *Server) {
+	serverPool.connections.GetValuesByKeys(serverPool.addrToAuth.GetKeysByValues(*authId).ToSlice()...).Each(func(idx int, server *Server) (isBreak bool) {
 		server.AsyncMessage(prototypeMessage, serverPool.onSendMessageSuccess, serverPool.onSendMessageFail)
+		return
 	})
 }
 

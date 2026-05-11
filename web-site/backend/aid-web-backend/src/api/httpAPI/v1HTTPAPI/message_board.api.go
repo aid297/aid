@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/validator/validatorV3"
+	"github.com/aid297/aid/validator"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
@@ -57,7 +57,7 @@ func (*MessageBoardAPI) Store(c *gin.Context) {
 		title   = "保存留言板信息"
 		err     error
 		form    request.MessageBoardStoreRequest
-		checker validatorV3.Checker
+		checker validator.Checker
 	)
 
 	if form, checker = (&request.MessageBoardStoreRequest{}).Bind(c); !checker.OK() {
@@ -91,7 +91,7 @@ func (*MessageBoardAPI) Destroy(c *gin.Context) {
 		title   = "删除留言板信息"
 		err     error
 		form    request.MessageBoardDestroyRequest
-		checker validatorV3.Checker
+		checker validator.Checker
 	)
 
 	if form, checker = (&request.MessageBoardDestroyRequest{}).Bind(c); !checker.OK() {

@@ -3,11 +3,11 @@ package websockets
 import (
 	"sync"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 )
 
 type ClientInstancePool struct {
-	pool *dict.AnyDict[string, *ClientInstance]
+	pool anyMap.AnyMapper[string, *ClientInstance]
 }
 
 var (
@@ -22,7 +22,7 @@ func (*Client) Once() *ClientInstancePool { return OnceClientInstancePool() }
 //
 //go:fix 推荐使用：Once方法
 func OnceClientInstancePool() *ClientInstancePool {
-	clientInstancePoolOnce.Do(func() { clientInstancePool = &ClientInstancePool{pool: dict.Make[string, *ClientInstance]()} })
+	clientInstancePoolOnce.Do(func() { clientInstancePool = &ClientInstancePool{pool: anyMap.New[string, *ClientInstance]()} })
 
 	return clientInstancePool
 }
@@ -33,7 +33,7 @@ func (*ClientInstancePool) Append(clientInstance *ClientInstance) error {
 		return WebsocketClientExistErr.New(clientInstance.name)
 	}
 
-	clientInstancePool.pool.Set(clientInstance.name, clientInstance)
+	clientInstancePool.pool.SetDatum(clientInstance.name, clientInstance)
 
 	return nil
 }
@@ -51,7 +51,7 @@ func (*ClientInstancePool) Remove(name string) error {
 
 // Get 获取客户端
 func (*ClientInstancePool) Get(name string) (*ClientInstance, error) {
-	if clientInstance, exists := clientInstancePool.pool.Get(name); !exists {
+	if clientInstance, exists := clientInstancePool.pool.GetValueByKey(name); !exists {
 		return nil, WebsocketClientNotExistErr.New(name)
 	} else {
 		return clientInstance, nil

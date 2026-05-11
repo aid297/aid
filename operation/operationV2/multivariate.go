@@ -1,6 +1,6 @@
 package operationV2
 
-import "github.com/aid297/aid/array/anySlice"
+import "github.com/aid297/aid/anySlice"
 
 type (
 	Multivariater[T any] interface {

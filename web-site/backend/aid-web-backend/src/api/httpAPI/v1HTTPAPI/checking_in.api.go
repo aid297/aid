@@ -9,10 +9,10 @@ import (
 	`github.com/gofrs/uuid/v5`
 	`go.uber.org/zap`
 
-	`github.com/aid297/aid/array/anySlice`
+	`github.com/aid297/aid/anySlice`
 	`github.com/aid297/aid/excel/excelV3/reader`
-	`github.com/aid297/aid/filesystem/filesystemV4`
-	`github.com/aid297/aid/validator/validatorV3`
+	`github.com/aid297/aid/filesystem`
+	`github.com/aid297/aid/validator`
 	`github.com/aid297/aid/web-site/backend/aid-web-backend/src/global`
 	`github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule`
 	`github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request`
@@ -28,15 +28,15 @@ func (*CheckingInAPI) Cal(c *gin.Context) {
 		err          error
 		file         *multipart.FileHeader
 		newFilename  string
-		saveFile     filesystemV4.IFilesystem
-		checker      validatorV3.Checker
+		saveFile     filesystem.IFilesystem
+		checker      validator.Checker
 		form         request.CheckingInCalRequest
 		standardDate *v1HTTPService.StandardDateRet
 		everyday     map[string]map[string]v1HTTPService.EverydayRet
 		monthly      map[string]map[string]string
 	)
 
-	if form, checker = validatorV3.WithGin[request.CheckingInCalRequest](c, func(form *request.CheckingInCalRequest) (err error) {
+	if form, checker = validator.WithGin[request.CheckingInCalRequest](c, func(form *request.CheckingInCalRequest) (err error) {
 		if repeat := anySlice.NewList(form.ForceWorkdays).Intersection(anySlice.NewList(form.ForceAnnualLeaves)).Intersection(anySlice.NewList(form.Holidays2)).Intersection(anySlice.NewList(form.Holidays3)).RemoveEmpty().ToSlice(); len(repeat) > 0 {
 			return errors.New("调休、年薪日、双薪日、三薪日存在重复内容")
 		}
@@ -54,7 +54,7 @@ func (*CheckingInAPI) Cal(c *gin.Context) {
 	}
 
 	newFilename = fmt.Sprintf("%s.%s", uuid.Must(uuid.NewV6()).String(), file.Filename)
-	saveFile = filesystemV4.NewFile(filesystemV4.Rel(global.CONFIG.CheckingIn.TmpDir, newFilename))
+	saveFile = filesystem.NewFile(filesystem.Rel(global.CONFIG.CheckingIn.TmpDir, newFilename))
 	defer saveFile.Remove()
 
 	if err = c.SaveUploadedFile(file, saveFile.GetFullPath()); err != nil {

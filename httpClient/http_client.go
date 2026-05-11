@@ -4,562 +4,409 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"net/url"
-	"os"
 	"sync"
 	"time"
 
 	json "github.com/json-iterator/go"
+	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/debugLogger"
-	"github.com/aid297/aid/operation"
+	"github.com/aid297/aid/operation/operationV2"
 	"github.com/aid297/aid/str"
 )
 
 type (
-	// HttpClient http客户端
-	HttpClient struct {
-		Err                error
-		requestUrl         string
-		requestQueries     map[string]string
-		requestMethod      string
-		requestBody        []byte
-		requestHeaders     map[string][]string
-		request            *http.Request
-		response           *http.Response
-		responseBody       []byte
-		responseBodyBuffer *bytes.Buffer
-		isReady            bool
-		cert               []byte
-		transport          *http.Transport
-		timeoutSecond      int64
-		lock               sync.RWMutex
+	HTTPClient struct {
+		err          error
+		url          string
+		queries      map[string]any
+		method       string
+		headers      map[string][]any
+		requestBody  *bytes.Buffer
+		responseBody []byte
+		timeout      time.Duration
+		transport    *http.Transport
+		cert         []byte
+		rawRequest   *http.Request
+		rawResponse  *http.Response
+		client       *http.Client
+		autoCopy     bool
+		lock         sync.RWMutex
+		// OK           *bool
+	}
+
+	HTTPClientBuilder struct {
+		attrs []HTTPClientAttributer
 	}
 )
 
-var App HttpClient
+func (*HTTPClient) init(method string, attrs ...HTTPClientAttributer) *HTTPClient {
+	return (&HTTPClient{requestBody: bytes.NewBuffer([]byte{})}).SetAttrs(Method(method), AppendHeaderValues(map[string][]any{})).SetAttrs(attrs...)
+}
 
-func (*HttpClient) New(url string) *HttpClient       { return NewHttpClient(url) }
-func (*HttpClient) NewGet(url string) *HttpClient    { return NewGet(url) }
-func (*HttpClient) NewPost(url string) *HttpClient   { return NewPost(url) }
-func (*HttpClient) NewPut(url string) *HttpClient    { return NewPut(url) }
-func (*HttpClient) NewDelete(url string) *HttpClient { return NewDelete(url) }
+func (*HTTPClientBuilder) New(attrs ...HTTPClientAttributer) *HTTPClientBuilder {
+	return &HTTPClientBuilder{attrs: attrs}
+}
 
-// NewHttpClient 实例化：http客户端
-//
-//go:fix 推荐使用New方法
-func NewHttpClient(urls ...string) *HttpClient {
-	return &HttpClient{
-		requestUrl:         str.APP.Buffer.NewString(operation.TernaryFuncAll(func() bool { return len(urls) == 0 }, func() string { return "" }, func() string { return urls[0] })).S(urls[1:]...).String(),
-		requestQueries:     map[string]string{},
-		requestHeaders:     map[string][]string{"Accept": {}, "Content-Type": {}},
-		responseBody:       []byte{},
-		responseBodyBuffer: bytes.NewBuffer([]byte{}),
-		transport:          &http.Transport{
-			// DisableKeepAlives:   true,             // 禁用连接复用
-			// MaxIdleConns:        100,              // 最大空闲连接数
-			// IdleConnTimeout:     90 * time.Second, // 空闲连接超时时间
-			// TLSHandshakeTimeout: 10 * time.Second, // TLS握手超时时间
-		},
+func (my *HTTPClientBuilder) GetClient() *HTTPClient {
+	return new(HTTPClient).init(http.MethodGet, my.attrs...)
+}
+
+func (*HTTPClient) New(attrs ...HTTPClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodGet, attrs...)
+}
+
+func (*HTTPClient) GET(attrs ...HTTPClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodGet, attrs...)
+}
+
+func (*HTTPClient) POST(attrs ...HTTPClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodPost, attrs...)
+}
+
+func (*HTTPClient) PUT(attrs ...HTTPClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodPut, attrs...)
+}
+
+func (*HTTPClient) PATCH(attrs ...HTTPClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodPatch, attrs...)
+}
+
+func (*HTTPClient) DELETE(attrs ...HTTPClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodDelete, attrs...)
+}
+
+func (*HTTPClient) HEAD(attrs ...HTTPClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodHead, attrs...)
+}
+
+func (*HTTPClient) OPTIONS(attrs ...HTTPClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodOptions, attrs...)
+}
+
+func (*HTTPClient) TRACE(attrs ...HTTPClientAttributer) *HTTPClient {
+	return new(HTTPClient).init(http.MethodTrace, attrs...)
+}
+
+func (my *HTTPClient) set(attrs ...HTTPClientAttributer) {
+	if len(attrs) > 0 {
+		for _, option := range attrs {
+			option.Register(my)
+			if my.err != nil {
+				return
+			}
+		}
 	}
 }
 
-// NewGet 实例化：http客户端get请求
-//
-//go:fix 推荐使用NewGet方法
-func NewGet(urls ...string) *HttpClient {
-	return NewHttpClient(urls...).SetMethod(http.MethodGet)
-}
-
-// NewPost 实例化：http客户端post请求
-//
-//go:fix 推荐使用NewPost方法
-func NewPost(urls ...string) *HttpClient {
-	return NewHttpClient(urls...).SetMethod(http.MethodPost)
-}
-
-// NewPut 实例化：http客户端put请求
-//
-//go:fix 推荐使用NewPut方法
-func NewPut(urls ...string) *HttpClient {
-	return NewHttpClient(urls...).SetMethod(http.MethodPut)
-}
-
-// NewDelete 实例化：http客户端delete请求
-//
-//go:fix 推荐使用NewDelete方法
-func NewDelete(urls ...string) *HttpClient {
-	return NewHttpClient(urls...).SetMethod(http.MethodDelete)
-}
-
-// SetCert 设置SSL证书
-func (my *HttpClient) SetCert(filename string) *HttpClient {
+func (my *HTTPClient) SetAttrs(attrs ...HTTPClientAttributer) *HTTPClient {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
-	var e error
+	my.set(attrs...)
 
-	// 读取证书文件
-	if my.cert, e = os.ReadFile(filename); e != nil {
-		my.Err = e
+	return my
+}
+
+func (my *HTTPClient) GetURL() string {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getURL()
+}
+
+func (my *HTTPClient) getURL() string {
+	queries := url.Values{}
+	if len(my.queries) > 0 {
+		for k, v := range my.queries {
+			queries.Add(k, cast.ToString(v))
+		}
+	}
+
+	if len(queries) > 0 {
+		return str.APP.Buffer.NewString(my.url).S("?").S(queries.Encode()).String()
+	}
+
+	return my.url
+}
+
+func (my *HTTPClient) GetQueries() map[string]any {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getQueries()
+}
+
+func (my *HTTPClient) getQueries() map[string]any { return my.queries }
+
+func (my *HTTPClient) GetMethod() string {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getMethod()
+}
+
+func (my *HTTPClient) getMethod() string { return my.method }
+
+func (my *HTTPClient) GetHeaders() map[string][]any {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getHeaders()
+}
+
+func (my *HTTPClient) getHeaders() map[string][]any { return my.headers }
+
+func (my *HTTPClient) GetBody() []byte {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getBody()
+}
+
+func (my *HTTPClient) getBody() []byte { b, _ := io.ReadAll(my.requestBody); return b }
+
+func (my *HTTPClient) GetTimeout() time.Duration {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getTimeout()
+}
+
+func (my *HTTPClient) getTimeout() time.Duration { return my.timeout }
+
+func (my *HTTPClient) GetTransport() *http.Transport {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getTransport()
+}
+
+func (my *HTTPClient) getTransport() *http.Transport { return my.transport }
+
+func (my *HTTPClient) GetCert() []byte {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getCert()
+}
+
+func (my *HTTPClient) getCert() []byte { return my.cert }
+
+func (my *HTTPClient) GetRawRequest() *http.Request {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getRawRequest()
+}
+
+func (my *HTTPClient) getRawRequest() *http.Request { return my.rawRequest }
+
+func (my *HTTPClient) GetRawResponse() *http.Response {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getRawResponse()
+}
+
+func (my *HTTPClient) getRawResponse() *http.Response { return my.rawResponse }
+
+func (my *HTTPClient) GetClient() *http.Client {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+
+	return my.getClient()
+}
+
+func (my *HTTPClient) getClient() *http.Client { return my.client }
+
+func (my *HTTPClient) send() *HTTPClient {
+	if my.err != nil {
+		return my
+	}
+
+	if my.rawRequest, my.err = http.NewRequest(my.method, my.getURL(), my.requestBody); my.err != nil {
+		return my
+	}
+
+	for key, values := range my.headers {
+		v := make([]string, 0, len(values))
+		for idx := range values {
+			v = append(v, cast.ToString(values[idx]))
+		}
+		my.rawRequest.Header[key] = append(my.rawRequest.Header[key], v...)
+	}
+
+	if len(my.cert) > 0 {
+		certPool := x509.NewCertPool()
+		if !certPool.AppendCertsFromPEM(my.cert) {
+			my.err = errors.New("生成TLS证书失败")
+			return my
+		}
+
+		my.transport.TLSClientConfig = &tls.Config{RootCAs: certPool}
+	}
+
+	my.client = &http.Client{}
+
+	// 发送新的请求
+	if my.transport != nil {
+		my.client.Transport = my.transport
+	}
+
+	// 设置超时
+	if my.timeout > 0 {
+		my.client.Timeout = my.timeout
+	}
+
+	if my.rawResponse, my.err = my.client.Do(my.rawRequest); my.err != nil {
+		return my
+	}
+
+	if my.autoCopy {
+		my.parseBody()
+		my.rawResponse.Body = io.NopCloser(bytes.NewBuffer(my.responseBody)) // 还原响应体
 	}
 
 	return my
 }
 
-// SetUrl 设置请求地址
-func (my *HttpClient) SetUrl(urls ...string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.requestUrl = str.APP.Buffer.NewString(operation.TernaryFuncAll(func() bool { return len(urls) == 0 }, func() string { return "" }, func() string { return urls[0] })).S(urls[1:]...).String()
-	return my
-}
-
-// SetMethod 设置请求方法
-func (my *HttpClient) SetMethod(method string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.requestMethod = method
-	return my
-}
-
-// SetHeaders 设置请求头
-func (my *HttpClient) SetHeaders(headers map[string][]string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.requestHeaders = headers
-	return my
-}
-
-// AddHeaders 追加请求头
-func (my *HttpClient) AddHeaders(headers map[string][]string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	for k, v := range headers {
-		my.requestHeaders[k] = append(my.requestHeaders[k], v...)
+// OK 检查响应是否成功，返回布尔值和错误信息
+func (my *HTTPClient) OK() error {
+	if my.err != nil {
+		return my.err
 	}
 
-	return my
-}
-
-// SetQueries 设置请求参数
-func (my *HttpClient) SetQueries(queries map[string]string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.requestQueries = queries
-	return my
-}
-
-// SetAuthorization 设置认证
-func (my *HttpClient) SetAuthorization(username, password, title string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.requestHeaders["Authorization"] = []string{str.APP.Buffer.NewString(title).S(" ", base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))).String()}
-	return my
-}
-
-// SetBody 设置请求体
-func (my *HttpClient) SetBody(body []byte) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.requestBody = body
-	return my
-}
-
-// SetJsonBody 设置json请求体
-func (my *HttpClient) SetJsonBody(body any) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.setHeaderContentType(ContentTypeJson)
-	my.requestBody, my.Err = json.Marshal(body)
-	if my.Err != nil {
-		my.Err = SetJsonBodyErr.Wrap(my.Err)
+	if my.rawResponse == nil {
+		return errors.New("响应体为空")
 	}
 
-	return my
-}
-
-// SetXmlBody 设置xml请求体
-func (my *HttpClient) SetXmlBody(body any) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.setHeaderContentType(ContentTypeXml)
-	my.requestBody, my.Err = xml.Marshal(body)
-	if my.Err != nil {
-		my.Err = SetXmlBodyErr.Wrap(my.Err)
+	if my.rawResponse.StatusCode > 399 {
+		return fmt.Errorf("错误：%s", my.GetStatus())
 	}
 
-	return my
-}
-
-// SetFormBody 设置表单请求体
-func (my *HttpClient) SetFormBody(body map[string]string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.setHeaderContentType(ContentTypeForm)
-	params := url.Values{}
-	for k, v := range body {
-		params.Add(k, v)
+	if my.err != nil {
+		return my.err
 	}
-	my.requestBody = []byte(params.Encode())
 
-	return my
+	return nil
 }
 
-// SetFormDataBody 设置表单数据请求体
-func (my *HttpClient) SetFormDataBody(texts map[string]string, files map[string]string) *HttpClient {
+func (my *HTTPClient) isNeedRetry(condition func(statusCode int, err error) bool) (needRetry bool) {
+	if condition == nil {
+		needRetry = my.OK() != nil
+	} else {
+		condition = func(statusCode int, err error) bool { return statusCode > 399 || err != nil }
+		needRetry = condition(my.GetStatusCode(), my.err)
+	}
+
+	return
+}
+
+func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) (*HTTPClient, []error) {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
 	var (
-		e      error
-		buffer bytes.Buffer
+		wrongs = make([]error, 0, count)
+		err    error
 	)
 
-	my.setHeaderContentType("form-data")
-	writer := multipart.NewWriter(&buffer)
-	if len(texts) > 0 {
-		for k, v := range texts {
-			e = writer.WriteField(k, v)
-			if e != nil {
-				my.Err = SetFormBodyErr.Wrap(e)
-				return my
+	my.send()
+
+	if err = my.OK(); err != nil {
+		wrongs = append(wrongs, err) // 记录第一次错误
+	}
+
+	if my.isNeedRetry(condition) && count > 0 && interval > 0 {
+		for attempt := range count {
+			time.Sleep(interval)
+
+			if my.rawResponse != nil && my.rawResponse.Body != nil {
+				_ = my.rawResponse.Body.Close()
+				my.rawResponse = nil
+			}
+
+			my.send()
+
+			if !my.isNeedRetry(condition) {
+				break
+			}
+
+			wrongs = append(wrongs, my.OK()) // 记录每次错误
+
+			if attempt+1 == count {
+				my.err = errors.New("达到最大重试次数，仍然未成功")
+				break
 			}
 		}
 	}
 
-	if len(files) > 0 {
-		for k, v := range files {
-			fileWriter, _ := writer.CreateFormFile("fileField", k)
-			file, e := os.Open(v)
-			if e != nil {
-				my.Err = SetFormBodyErr.Wrap(e)
-				return my
-			}
-			_, e = io.Copy(fileWriter, file)
-			if e != nil {
-				my.Err = SetFormBodyErr.Wrap(e)
-				return my
-			}
-
-			_ = file.Close()
-		}
-	}
-
-	my.requestBody = []byte(writer.FormDataContentType())
-
-	return my
+	return my, wrongs
 }
 
-// SetPlainBody 设置纯文本请求体
-func (my *HttpClient) SetPlainBody(text string) *HttpClient {
+func (my *HTTPClient) Send() *HTTPClient {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
-	my.setHeaderContentType(ContentTypePlain)
-	my.requestBody = []byte(text)
-
-	return my
+	return my.send()
 }
 
-// SetHtmlBody 设置html请求体
-func (my *HttpClient) SetHtmlBody(text string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.setHeaderContentType(ContentTypeHtml)
-	my.requestBody = []byte(text)
-
-	return my
-}
-
-// SetCssBody 设置Css请求体
-func (my *HttpClient) SetCssBody(text string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.setHeaderContentType(ContentTypeCss)
-	my.requestBody = []byte(text)
-
-	return my
-}
-
-// SetJavascriptBody 设置Javascript请求体
-func (my *HttpClient) SetJavascriptBody(text string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.setHeaderContentType(ContentTypeJavascript)
-	my.requestBody = []byte(text)
-
-	return my
-}
-
-// SetSteamBodyByReader 设置字节码内容：通过readCloser接口
-func (my *HttpClient) SetSteamBodyByReader(reader io.ReadCloser) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.setHeaderContentType(ContentTypeSteam)
-
-	if reader == nil {
-		my.Err = SetSteamBodyErr.Panic()
-		return my
-	}
-
-	// 创建RequestBodyReader用于读取文件内容
-	if my.responseBodyBuffer.Len() > 1*1024*1024 { // 1MB
-		_, my.Err = io.Copy(my.responseBodyBuffer, reader)
-		if my.Err != nil {
-			my.Err = ReadResponseErr.Wrap(my.Err)
-			return my
-		}
-		my.requestBody = my.responseBodyBuffer.Bytes()
-	} else {
-		my.requestBody, my.Err = io.ReadAll(reader)
-		if my.Err != nil {
-			my.Err = ReadResponseErr.Wrap(my.Err)
-			return my
-		}
-	}
-
-	return my
-}
-
-// SetSteamBodyByFile 设置字节码内容：通过文件
-func (my *HttpClient) SetSteamBodyByFile(filename string) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
+func (my *HTTPClient) parseBody() {
 	var (
-		err  error
-		file *os.File
+		buffer  = bytes.NewBuffer([]byte{})
+		written int64
 	)
 
-	my.setHeaderContentType(ContentTypeSteam)
+	if my.err != nil {
+		return
+	}
 
-	file, err = os.Open(filename)
-	if err != nil {
-		my.Err = SetSteamBodyErr.Wrap(err)
+	my.responseBody = []byte{}
+
+	if my.rawResponse == nil {
+		return
+	}
+
+	// 读取新地响应的主体
+	if my.rawResponse.ContentLength > 1*1024*1024 { // 1MB
+		if written, my.err = io.Copy(buffer, my.rawResponse.Body); my.err != nil {
+			return
+		}
+		if written < 1 {
+			return
+		}
+		if buffer.Len() == 0 {
+			return
+		}
+		my.responseBody = buffer.Bytes()
+	} else {
+		if my.responseBody, my.err = io.ReadAll(my.rawResponse.Body); my.err != nil {
+			return
+		}
+	}
+}
+
+func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
+	my.lock.RLock()
+	defer my.lock.RUnlock()
+	defer func() {
+		if my.rawResponse != nil {
+			_ = my.rawResponse.Body.Close()
+		}
+	}()
+
+	if my.err != nil {
 		return my
 	}
-	defer func(file *os.File) {
-		if err := file.Close(); err != nil {
-			debugLogger.Error("Failed to close file:", err)
-		}
-	}(file)
 
-	// 获取文件大小
-	stat, _ := file.Stat()
-	size := stat.Size()
-
-	// 创建RequestBodyReader用于读取文件内容
-	if size > 1*1024*1024 {
-		_, my.Err = io.Copy(my.responseBodyBuffer, file)
-		if my.Err != nil {
-			my.Err = ReadResponseErr.Wrap(my.Err)
-			return my
-		}
-		my.requestBody = my.responseBodyBuffer.Bytes()
-	} else {
-		my.requestBody, err = io.ReadAll(file)
-		if err != nil {
-			my.Err = ReadResponseErr.Wrap(err)
-			return my
-		}
-	}
-
-	// my.request.Header.Set("Content-Length", fmt.Sprintf("%d", size))
-
-	return my
-}
-
-func (my *HttpClient) SetHeaderContentType(key ContentType) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.setHeaderContentType(key)
-	return my
-}
-
-// setHeaderContentType 设置请求头内容类型
-func (my *HttpClient) setHeaderContentType(key ContentType) {
-	if val, ok := ContentTypes[key]; ok {
-		my.requestHeaders["Content-Type"] = []string{val}
-	}
-}
-
-func (my *HttpClient) AppendHeaderContentType(keys ...ContentType) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.appendHeaderContentType(keys...)
-
-	return my
-}
-
-// appendHeaderContentType 追加请求头内容类型
-func (my *HttpClient) appendHeaderContentType(keys ...ContentType) {
-
-	values := make([]string, len(keys))
-	for k, v := range keys {
-		if val, ok := ContentTypes[v]; ok {
-			values[k] = val
-		}
-	}
-
-	if len(my.requestHeaders["Content-Type"]) == 0 {
-		my.requestHeaders["Content-Type"] = values
-	} else {
-		my.requestHeaders["Content-Type"] = append(my.requestHeaders["Content-Type"], values...)
-	}
-}
-
-func (my *HttpClient) SetHeaderAccept(key Accept) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.setHeaderAccept(key)
-
-	return my
-}
-
-// setHeaderAccept 设置请求头接受内容类型
-func (my *HttpClient) setHeaderAccept(key Accept) *HttpClient {
-	if val, ok := Accepts[key]; ok {
-		my.requestHeaders["Accept"] = []string{val}
-	}
-
-	return my
-}
-
-func (my *HttpClient) AppendHeaderAccept(keys ...Accept) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.appendHeaderAccept(keys...)
-
-	return my
-}
-
-// appendHeaderAccept 追加请求头接受内容类型
-func (my *HttpClient) appendHeaderAccept(keys ...Accept) {
-	values := make([]string, len(keys))
-	for k, v := range keys {
-		if val, ok := Accepts[v]; ok {
-			values[k] = val
-		}
-	}
-
-	if len(my.requestHeaders["Accept"]) == 0 {
-		my.requestHeaders["Accept"] = values
-	} else {
-		my.requestHeaders["Accept"] = append(my.requestHeaders["Accept"], values...)
-	}
-}
-
-// SetTimeoutSecond 设置超时：秒
-func (my *HttpClient) SetTimeoutSecond(timeoutSecond int64) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.timeoutSecond = timeoutSecond
-
-	return my
-}
-
-// SetTimeout 设置超时
-func (my *HttpClient) SetTimeout(t time.Duration) *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	if t < 0 {
-		my.timeoutSecond = 0
-	} else {
-		my.timeoutSecond = int64(t.Seconds())
-	}
-
-	return my
-}
-
-// GetTransport 获取自定义传输层
-func (my *HttpClient) GetTransport() *http.Transport {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-
-	return my.transport
-}
-
-// SetTransport 设置自定义传输层
-func (my *HttpClient) SetTransport(transport *http.Transport) *HttpClient {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-
-	my.transport = transport
-
-	return my
-}
-
-func (my *HttpClient) GetResponse() *http.Response {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-
-	return my.getResponse()
-}
-
-// getResponse 获取响应对象
-func (my *HttpClient) getResponse() *http.Response { return my.response }
-
-// ParseByContentType 根据响应头Content-Type自动解析响应体
-func (my *HttpClient) ParseByContentType(target any) *HttpClient {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-
-	switch ContentType(my.getResponse().Header.Get("Content-Type")) {
-	case ContentTypeJson:
-		my.getResponseJsonBody(target)
-	case ContentTypeXml:
-		my.getResponseXmlBody(target)
-	}
-
-	return my
-}
-
-// GetResponseRawBody 获取原始响应体
-func (my *HttpClient) GetResponseRawBody() []byte {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-
-	return my.responseBody
-}
-
-func (my *HttpClient) GetResponseJsonBody(target any, keys ...any) *HttpClient {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
-
-	return my.getResponseJsonBody(target, keys...)
-}
-
-// getResponseJsonBody 获取json格式响应体
-func (my *HttpClient) getResponseJsonBody(target any, keys ...any) *HttpClient {
 	if my.responseBody == nil {
-		return my
+		my.parseBody()
 	}
 
 	if len(my.responseBody) == 0 {
@@ -568,221 +415,91 @@ func (my *HttpClient) getResponseJsonBody(target any, keys ...any) *HttpClient {
 
 	if len(keys) > 0 {
 		json.Get(my.responseBody, keys...).ToVal(&target)
-		return my
 	} else {
-		if e := json.Unmarshal(my.responseBody, &target); e != nil {
-			my.Err = UnmarshalJsonErr.Wrap(e)
-		}
+		my.err = json.Unmarshal(my.responseBody, &target)
 	}
-
 	return my
 }
 
-func (my *HttpClient) GetResponseXmlBody(target any) *HttpClient {
+func (my *HTTPClient) ToXML(target any) *HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
+	defer func() {
+		if my.rawResponse != nil {
+			_ = my.rawResponse.Body.Close()
+		}
+	}()
 
-	return my.getResponseXmlBody(target)
-}
-
-// getResponseXmlBody 获取xml格式响应体
-func (my *HttpClient) getResponseXmlBody(target any) *HttpClient {
-	if len(my.responseBody) == 0 {
+	if my.err != nil {
 		return my
 	}
 
-	if e := xml.Unmarshal(my.responseBody, &target); e != nil {
-		my.Err = UnmarshalXmlErr.Wrap(e)
+	if my.responseBody == nil {
+		my.parseBody()
 	}
-
-	return my
-}
-
-// SaveResponseSteamFile 保存二进制到文件
-//
-//go:fix 建议使用Download方法
-func (my *HttpClient) SaveResponseSteamFile(filename string) *HttpClient {
-	my.lock.RLock()
-	defer my.lock.RUnlock()
 
 	if len(my.responseBody) == 0 {
 		return my
 	}
 
-	// 创建一个新的文件
-	file, err := os.Create(filename)
-	if err != nil {
-		my.Err = err
-		return my
-	}
-
-	// 将二进制数据写入文件
-	_, err = file.Write(my.responseBody)
-	if err != nil {
-		my.Err = err
-		return my
-	}
-
-	my.Err = file.Close()
+	my.err = xml.Unmarshal(my.responseBody, &target)
 
 	return my
 }
 
-// GetRequest 获取请求
-func (my *HttpClient) GetRequest() *http.Request {
+func (my *HTTPClient) ToBytes() []byte {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
+	defer func() {
+		if my.rawResponse != nil {
+			_ = my.rawResponse.Body.Close()
+		}
+	}()
 
-	return my.request
+	if my.err != nil {
+		return []byte{}
+	}
+
+	if my.responseBody == nil {
+		my.parseBody()
+	}
+
+	if len(my.responseBody) == 0 {
+		return nil
+	}
+
+	return my.responseBody
 }
 
-func (my *HttpClient) GenerateRequest() *HttpClient {
+func (my *HTTPClient) ToWriter(writer http.ResponseWriter) *HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
-
-	return my.generateRequest()
-}
-
-// generateRequest 生成请求对象
-func (my *HttpClient) generateRequest() *HttpClient {
-	var e error
-
-	// 设置url参数
-	my.setQueries()
-
-	my.request, e = http.NewRequest(my.requestMethod, my.requestUrl, bytes.NewReader(my.requestBody))
-	if e != nil {
-		my.Err = GenerateRequestErr.Wrap(e)
-		return my
-	}
-
-	// 设置请求头
-	my.addHeaders()
-
-	// 检查请求对象
-	if my.Err = my.check(); my.Err != nil {
-		return my
-	}
-
-	// 创建一个新的证书池，并将证书添加到池中
-	if len(my.cert) > 0 {
-		certPool := x509.NewCertPool()
-		if !certPool.AppendCertsFromPEM(my.cert) {
-			my.Err = GenerateCertErr.Panic()
-			return my
+	defer func() {
+		if my.rawResponse != nil {
+			_ = my.rawResponse.Body.Close()
 		}
+	}()
 
-		// 创建一个新的Transport
-		my.transport.TLSClientConfig = &tls.Config{RootCAs: certPool}
+	if my.err != nil {
+		return my
 	}
 
-	my.isReady = true
-
+	_, my.err = io.Copy(writer, my.rawResponse.Body)
 	return my
 }
 
-// beforeSend 发送请求前置动作
-func (my *HttpClient) beforeSend() *http.Client {
-	if !my.isReady {
-		if my.generateRequest(); my.Err != nil {
-			return nil
-		}
-	}
+func (my *HTTPClient) Error() error {
+	var err error
+	defer func() { my.err = nil }()
 
-	client := &http.Client{}
-
-	// 发送新的请求
-	client.Transport = my.transport
-
-	// 设置超时
-	if my.timeoutSecond > 0 {
-		client.Timeout = time.Duration(my.timeoutSecond) * time.Second
-	}
-
-	return client
+	err = my.err
+	return err
 }
 
-// Download 使用下载器下载文件
-func (my *HttpClient) Download(filename string) *HttpClientDownload {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	return HttpClientDownloadApp.New(my, filename)
+func (my *HTTPClient) GetStatusCode() int {
+	return operationV2.NewTernary(operationV2.TrueFn(func() int { return my.GetRawResponse().StatusCode })).GetByValue(my.GetRawResponse() != nil)
 }
 
-// Send 发送请求
-func (my *HttpClient) Send() *HttpClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
-
-	my.responseBodyBuffer.Reset() // 重置响应体缓存
-	my.responseBody = []byte{}    // 重置响应体
-
-	client := my.beforeSend()
-	if my.Err != nil {
-		return my
-	}
-
-	my.request.Header.Set("Content-Length", fmt.Sprintf("%d", len(my.requestBody)))
-
-	my.response, my.Err = client.Do(my.request)
-	if my.Err != nil {
-		return my
-	}
-	defer my.response.Body.Close()
-
-	// 读取新的响应的主体
-	if my.response.ContentLength > 1*1024*1024 { // 1MB
-		if _, my.Err = io.Copy(my.responseBodyBuffer, my.response.Body); my.Err != nil {
-			my.Err = ReadResponseErr.Wrap(my.Err)
-			return my
-		}
-		my.responseBody = my.responseBodyBuffer.Bytes()
-	} else {
-		my.responseBody, my.Err = io.ReadAll(my.response.Body)
-		if my.Err != nil {
-			my.Err = ReadResponseErr.Wrap(my.Err)
-			return my
-		}
-	}
-
-	my.response.Body = io.NopCloser(bytes.NewBuffer(my.responseBody)) // 还原响应体
-
-	my.isReady = false
-
-	return my
-}
-
-// 检查条件是否满足
-func (my *HttpClient) check() error {
-	if my.requestUrl == "" {
-		return UrlEmptyErr.Panic()
-	}
-
-	if my.requestMethod == "" {
-		my.requestMethod = http.MethodGet
-	}
-
-	return nil
-}
-
-// 设置url参数
-func (my *HttpClient) setQueries() {
-	if len(my.requestQueries) > 0 {
-		queries := url.Values{}
-		for k, v := range my.requestQueries {
-			queries.Add(k, v)
-		}
-
-		if len(queries) > 0 {
-			my.requestUrl = my.requestUrl + "?" + queries.Encode()
-		}
-	}
-}
-
-// 设置请求头
-func (my *HttpClient) addHeaders() {
-	for k, v := range my.requestHeaders {
-		my.request.Header[k] = append(my.request.Header[k], v...)
-	}
+func (my *HTTPClient) GetStatus() string {
+	return operationV2.NewTernary(operationV2.TrueFn(func() string { return my.GetRawResponse().Status })).GetByValue(my.GetRawResponse() != nil)
 }

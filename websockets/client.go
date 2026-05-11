@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 
 	"github.com/gorilla/websocket"
 )
@@ -19,7 +19,7 @@ type (
 		status                          WebsocketConnStatus
 		closeChan                       chan struct{}
 		receiveMessageChan              chan []byte
-		asyncReceiveCallbackDict        *dict.AnyDict[string, clientCallbackFn]
+		asyncReceiveCallbackDict        anyMap.AnyMapper[string, clientCallbackFn]
 		syncMessageTimeout              time.Duration
 		heart                           *time.Ticker
 		heartCallback                   clientHeartFn
@@ -51,7 +51,7 @@ func NewClient(
 		status:                          Offline,
 		closeChan:                       make(chan struct{}, 1),
 		receiveMessageChan:              make(chan []byte, 1),
-		asyncReceiveCallbackDict:        dict.Make[string, clientCallbackFn](),
+		asyncReceiveCallbackDict:        anyMap.New[string, clientCallbackFn](),
 		syncMessageTimeout:              5 * time.Second,
 		onConnSuccessCallback:           clientCallbackConfig.OnConnSuccessCallback,
 		onConnFailCallback:              clientCallbackConfig.OnConnFailCallback,
@@ -154,7 +154,7 @@ func (my *Client) Boot() *Client {
 				message := ParseMessage(receiveMessage)
 				client.onReceiveMessageSuccessCallback(client.groupName, client.name, message.GetMessage())
 				if message.GetAsync() { // 异步消息
-					if callback, ok := client.asyncReceiveCallbackDict.Get(message.GetMessageId()); ok {
+					if callback, ok := client.asyncReceiveCallbackDict.GetValueByKey(message.GetMessageId()); ok {
 						callback(client.groupName, client.name, message.GetMessage())       // 执行异步回调
 						client.asyncReceiveCallbackDict.RemoveByKey(message.GetMessageId()) // 删除异步回调
 					}
@@ -205,8 +205,8 @@ func (my *Client) AsyncMessage(message []byte, fn clientCallbackFn, timeout time
 		}
 	}
 
-	my.asyncReceiveCallbackDict.Set(msg.GetMessageId(), fn) // 配置异步回调
-	timer := time.After(timeout)                            // 设置超时
+	my.asyncReceiveCallbackDict.SetDatum(msg.GetMessageId(), fn) // 配置异步回调
+	timer := time.After(timeout)                                 // 设置超时
 
 	go func(messageId string) {
 		<-timer // 超时删除异步回调方法

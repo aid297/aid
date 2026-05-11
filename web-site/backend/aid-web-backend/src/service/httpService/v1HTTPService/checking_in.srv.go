@@ -1,17 +1,17 @@
 package v1HTTPService
 
 import (
-	`errors`
-	`fmt`
-	`strings`
+	"errors"
+	"fmt"
+	"strings"
 
-	`github.com/dromara/carbon/v2`
-	`github.com/xuri/excelize/v2`
+	"github.com/dromara/carbon/v2"
+	"github.com/xuri/excelize/v2"
 
-	`github.com/aid297/aid/array/anySlice`
-	`github.com/aid297/aid/excel/excelV3/reader`
-	`github.com/aid297/aid/operation/operationV2`
-	`github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request`
+	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/excel/excelV3/reader"
+	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 )
 
 type (
@@ -54,7 +54,7 @@ func (my *CheckingInService) Cal(r reader.Reader, form *request.CheckingInCalReq
 	standardDate *StandardDateRet,
 	everyday map[string]map[string]EverydayRet,
 	monthly map[string]map[string]string,
-	err error, ) {
+	err error) {
 	if standardDate, err = my.getDateHeader(r, form); err != nil {
 		return
 	}

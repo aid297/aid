@@ -9,9 +9,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/filesystem/filesystemV4"
+	"github.com/aid297/aid/filesystem"
 	"github.com/aid297/aid/str"
-	"github.com/aid297/aid/validator/validatorV3"
+	"github.com/aid297/aid/validator"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
@@ -97,21 +97,21 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	var (
 		title        = "获取文件列表"
 		err          error
-		dir          filesystemV4.IFilesystem
+		dir          filesystem.IFilesystem
 		form         request.FileListRequest
-		checker      validatorV3.Checker
-		iFilesystems []filesystemV4.IFilesystem
-		rootPath     filesystemV4.IFilesystem
+		checker      validator.Checker
+		iFilesystems []filesystem.IFilesystem
+		rootPath     filesystem.IFilesystem
 		currentPath  string
 	)
 
-	if form, checker = validatorV3.WithGin[request.FileListRequest](c); !checker.OK() {
+	if form, checker = validator.WithGin[request.FileListRequest](c); !checker.OK() {
 		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
 		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 
-	dir = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path))
+	dir = filesystem.NewDir(filesystem.Rel(global.CONFIG.FileManager.Dir, form.Path))
 	if form.Name == ".." && form.Path != "" {
 		dir.Up()
 	} else if form.Name != ".." && form.Name != "" {
@@ -119,10 +119,10 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	}
 	dir.LS()
 
-	iFilesystems = make([]filesystemV4.IFilesystem, 0, len(dir.GetDirs())+len(dir.GetFiles()))
+	iFilesystems = make([]filesystem.IFilesystem, 0, len(dir.GetDirs())+len(dir.GetFiles()))
 	iFilesystems = append(append(iFilesystems, dir.GetDirs()...), dir.GetFiles()...)
 
-	if rootPath, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir)); err != nil {
+	if rootPath, err = filesystem.New(filesystem.Rel(global.CONFIG.FileManager.Dir)); err != nil {
 		global.LOG.Error(title, zap.Errors("获取根路径错误", []error{err}))
 		httpModule.NewInternalServerError(httpModule.Errorf("获取根路径错误：%w", err)).WithAccept(c)
 		return
@@ -147,19 +147,19 @@ func (*FileManagerAPI) StoreFolder(c *gin.Context) {
 	var (
 		title       = "创建文件夹"
 		err         error
-		iFilesystem filesystemV4.IFilesystem
+		iFilesystem filesystem.IFilesystem
 		form        request.FileStoreFolderRequest
-		checker     validatorV3.Checker
+		checker     validator.Checker
 	)
 
-	if form, checker = validatorV3.WithGin[request.FileStoreFolderRequest](c); !checker.OK() {
+	if form, checker = validator.WithGin[request.FileStoreFolderRequest](c); !checker.OK() {
 		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
 		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 
-	iFilesystem = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name))
-	if err = iFilesystem.Create(filesystemV4.Flag(0644)).GetError(); err != nil {
+	iFilesystem = filesystem.NewDir(filesystem.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name))
+	if err = iFilesystem.Create(filesystem.Flag(0644)).GetError(); err != nil {
 		global.LOG.Error(title, zap.Errors("创建文件夹失败", []error{err}))
 		httpModule.NewForbidden(httpModule.Errorf("创建文件夹失败：%w", err)).WithAccept(c)
 		return
@@ -183,18 +183,18 @@ func (*FileManagerAPI) Destroy(c *gin.Context) {
 	var (
 		title       = "删除文件或目录"
 		err         error
-		iFilesystem filesystemV4.IFilesystem
+		iFilesystem filesystem.IFilesystem
 		form        request.FileDestroyRequest
-		checker     validatorV3.Checker
+		checker     validator.Checker
 	)
 
-	if form, checker = validatorV3.WithGin[request.FileDestroyRequest](c); !checker.OK() {
+	if form, checker = validator.WithGin[request.FileDestroyRequest](c); !checker.OK() {
 		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
 		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 
-	if iFilesystem, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name)); err != nil {
+	if iFilesystem, err = filesystem.New(filesystem.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name)); err != nil {
 		global.LOG.Error(title, zap.Errors("获取路径错误", []error{err}))
 		httpModule.NewNotFound(httpModule.Errorf("获取路径错误：%w", err)).WithAccept(c)
 		return
@@ -223,12 +223,12 @@ func (*FileManagerAPI) Destroy(c *gin.Context) {
 // @Failure 403 {object} httpModule.HTTPResponse "下载失败"
 func (*FileManagerAPI) Download(c *gin.Context) {
 	var (
-		dir  filesystemV4.IFilesystem
+		dir  filesystem.IFilesystem
 		path = c.Query("path")
 		name = c.Query("name")
 	)
 
-	if dir = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir, path, name)); !dir.GetExist() {
+	if dir = filesystem.NewDir(filesystem.Rel(global.CONFIG.FileManager.Dir, path, name)); !dir.GetExist() {
 		c.String(404, str.APP.HTML.New(
 			str.HtmlH(1, str.HtmlNormal("错误：文件不存在")),
 			str.HtmlH(2, str.HtmlNormal(dir.GetFullPath())),
@@ -256,18 +256,18 @@ func (*FileManagerAPI) Zip(c *gin.Context) {
 	var (
 		title               = "压缩文件或目录"
 		err                 error
-		iFilesystem, zipped filesystemV4.IFilesystem
+		iFilesystem, zipped filesystem.IFilesystem
 		form                request.FileZipRequest
-		checker             validatorV3.Checker
+		checker             validator.Checker
 	)
 
-	if form, checker = validatorV3.WithGin[request.FileZipRequest](c); !checker.OK() {
+	if form, checker = validator.WithGin[request.FileZipRequest](c); !checker.OK() {
 		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
 		httpModule.NewUnprocessableEntity(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return
 	}
 
-	if iFilesystem, err = filesystemV4.New(filesystemV4.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name)); err != nil {
+	if iFilesystem, err = filesystem.New(filesystem.Rel(global.CONFIG.FileManager.Dir, form.Path, form.Name)); err != nil {
 		global.LOG.Error(title, zap.Errors("获取路径错误", []error{err}))
 		httpModule.NewNotFound(httpModule.Errorf("获取路径错误：%v", err)).WithAccept(c)
 		return

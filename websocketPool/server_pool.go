@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/aid297/aid/array"
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
+	"github.com/aid297/aid/anySlice"
 
 	"github.com/gorilla/websocket"
 )
@@ -23,12 +23,12 @@ type (
 		onCloseConnWrong  func(*websocket.Conn, error)
 		onSendMsgWrong    func(*websocket.Conn, error)
 		onPing            func(*websocket.Conn)
-		serverInsList     *dict.AnyDict[string, *ServerIns]
-		router            *dict.AnyDict[string, func(ws *websocket.Conn)]
+		serverInsList     anyMap.AnyMapper[string, *ServerIns]
+		router            anyMap.AnyMapper[string, func(ws *websocket.Conn)]
 	}
 
 	// ServerIns websocket服务端实例
-	ServerIns struct{ Connections *array.AnyArray[*Server] }
+	ServerIns struct{ Connections anySlice.AnySlicer[*Server] }
 
 	// Server websocket服务端链接
 	Server struct {
@@ -47,8 +47,8 @@ var (
 func (*ServerPool) Once() *ServerPool {
 	serverPoolOnce.Do(func() {
 		serverPoolIns = &ServerPool{}
-		serverPoolIns.serverInsList = dict.Make[string, *ServerIns]()
-		serverPoolIns.router = dict.Make[string, func(*websocket.Conn)]()
+		serverPoolIns.serverInsList = anyMap.New[string, *ServerIns]()
+		serverPoolIns.router = anyMap.New[string, func(*websocket.Conn)]()
 	})
 
 	return serverPoolIns
@@ -56,7 +56,7 @@ func (*ServerPool) Once() *ServerPool {
 
 // New 实例化：链接切片
 func (*ServerIns) New() *ServerIns {
-	return &ServerIns{Connections: array.Make[*Server](0)}
+	return &ServerIns{Connections: anySlice.New[*Server]()}
 }
 
 // SetOnConnect 设置回调：链接成功后
@@ -142,13 +142,13 @@ func (*ServerPool) Handle(
 
 	accountOpenId, cond = condition()
 	if cond {
-		if serverPoolIns.serverInsList.GetIndexByKey(accountOpenId) > -1 {
-			serverInstance = serverPoolIns.serverInsList.GetValueByKey(accountOpenId)
+		if serverPoolIns.serverInsList.HasKey(accountOpenId) {
+			serverInstance, _ = serverPoolIns.serverInsList.GetValueByKey(accountOpenId)
 			serverInstance.(*ServerIns).Connections.Append(&Server{Conn: ws})
 		} else {
 			wsc = APP.ServerIns.New()
 			wsc.Connections.Append(&Server{Conn: ws})
-			serverPoolIns.serverInsList.Set(accountOpenId, wsc)
+			serverPoolIns.serverInsList.SetDatum(accountOpenId, wsc)
 		}
 
 		if serverPoolIns.onConnect != nil {
@@ -167,8 +167,8 @@ func (*ServerPool) Handle(
 		case websocket.TextMessage:
 			routerKey := serverPoolIns.onReceiveMsg(ws, message)
 			if routerKey != "" {
-				if serverPoolIns.router.GetIndexByKey(routerKey) > -1 {
-					rout = serverPoolIns.router.GetValueByKey(routerKey)
+				if serverPoolIns.router.HasKey(routerKey) {
+					rout, _ = serverPoolIns.router.GetValueByKey(routerKey)
 					rout.(func(*websocket.Conn))(ws)
 				} else {
 					if serverPoolIns.onRouterWrong != nil {
@@ -210,8 +210,8 @@ func (*ServerPool) SendMsgByWsConn(ws *websocket.Conn, message []byte) error {
 }
 
 // SendMsgByWsManyConn 通过链接切片发送消息
-func (*ServerPool) SendMsgByWsManyConn(servers *array.AnyArray[*Server], message []byte) {
-	if servers.Len() > 0 {
+func (*ServerPool) SendMsgByWsManyConn(servers anySlice.AnySlicer[*Server], message []byte) {
+	if servers.Length() > 0 {
 		for _, server := range servers.ToSlice() {
 			if server != nil {
 				err := serverPoolIns.SendMsgByWsConn(server.Conn, message)
@@ -227,8 +227,8 @@ func (*ServerPool) SendMsgByWsManyConn(servers *array.AnyArray[*Server], message
 
 // SendMsgByAccountOpenId 根据用户openId发送消息
 func (*ServerPool) SendMsgByAccountOpenId(accountOpenId string, message []byte) error {
-	if serverPoolIns.serverInsList.GetIndexByKey(accountOpenId) > -1 {
-		client := serverPoolIns.serverInsList.GetValueByKey(accountOpenId)
+	if serverPoolIns.serverInsList.HasKey(accountOpenId) {
+		client, _ := serverPoolIns.serverInsList.GetValueByKey(accountOpenId)
 		serverPoolIns.SendMsgByWsManyConn(client.Connections, message)
 	}
 
@@ -237,10 +237,10 @@ func (*ServerPool) SendMsgByAccountOpenId(accountOpenId string, message []byte) 
 
 // RegisterRouter 注册路由
 func (*ServerPool) RegisterRouter(routerKey string, fn func(ws *websocket.Conn)) *ServerPool {
-	if serverPoolIns.router.GetIndexByKey(routerKey) > -1 {
+	if serverPoolIns.router.HasKey(routerKey) {
 		serverPoolIns.router.RemoveByKey(routerKey)
 	}
-	serverPoolIns.router.Set(routerKey, fn)
+	serverPoolIns.router.SetDatum(routerKey, fn)
 
 	return serverPoolIns
 }
@@ -250,7 +250,7 @@ func (*ServerPool) Close() {
 	var err error
 
 	serverPoolIns.serverInsList.Each(func(key string, value *ServerIns) {
-		value.Connections.Each(func(idx int, item *Server) {
+		value.Connections.Each(func(idx int, item *Server) (isBreak bool) {
 			if err = item.Conn.Close(); err != nil {
 				if serverPoolIns.onCloseConnWrong != nil {
 					serverPoolIns.onCloseConnWrong(item.Conn, err)
@@ -258,6 +258,8 @@ func (*ServerPool) Close() {
 				return
 			}
 			item.done <- struct{}{}
+
+			return
 		})
 		value.Connections.Clean()
 	})

@@ -4,7 +4,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/aid297/aid/array"
+	"github.com/aid297/aid/anySlice"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -196,7 +196,7 @@ func Test6FindMany(t *testing.T) {
 		if mc.SetCollection("classes").
 			Where(Map{
 				"_id": Map{
-					"$in": array.Cast(array.New(students), func(value *Student) OID { return value.ClassId }),
+					"$in": anySlice.FillFunc(students, func(_ int, student *Student) OID { return student.ClassId }),
 				},
 			}).
 			FindMany(&classes2, nil).Err != nil {

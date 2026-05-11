@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aid297/aid/filesystem/filesystemV4"
+	"github.com/aid297/aid/filesystem"
 	"github.com/aid297/aid/operation/operationV2"
 )
 
@@ -52,14 +52,14 @@ func (*Daemon) SetLogEnable(enable bool) *Daemon { i.enable = enable; return i }
 func (*Daemon) bootLogFile() (fp *os.File) {
 	var (
 		err  error
-		dir  filesystemV4.IFilesystem
-		file filesystemV4.IFilesystem
+		dir  filesystem.IFilesystem
+		file filesystem.IFilesystem
 	)
 
 	if i.enable && i.dir != "" {
-		dir = filesystemV4.NewDir(filesystemV4.Rel(i.dir))
-		file = filesystemV4.NewFile(
-			filesystemV4.Abs(
+		dir = filesystem.NewDir(filesystem.Rel(i.dir))
+		file = filesystem.NewFile(
+			filesystem.Abs(
 				path.Join(
 					dir.GetFullPath(),
 					operationV2.NewTernary(operationV2.TrueValue(i.filename), operationV2.FalseValue("daemon.log")).GetByValue(i.filename != ""),
@@ -69,7 +69,7 @@ func (*Daemon) bootLogFile() (fp *os.File) {
 	}
 
 	if dir != nil && !dir.GetExist() {
-		if err = dir.Create(filesystemV4.Mode(os.ModePerm)).GetError(); err != nil {
+		if err = dir.Create(filesystem.Mode(os.ModePerm)).GetError(); err != nil {
 			log.Fatalf("【启动失败】创建日志目录失败：%s", err.Error())
 		}
 	}

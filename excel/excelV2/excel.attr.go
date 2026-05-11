@@ -1,7 +1,7 @@
 package excelV2
 
 import (
-	"github.com/aid297/aid/filesystem/filesystemV4"
+	"github.com/aid297/aid/filesystem"
 )
 
 type (
@@ -25,7 +25,7 @@ type (
 )
 
 func Filename(filename string) FilenameAttributer { return &AttrFilename{filename: filename} }
-func File(file filesystemV4.IFilesystem) FilenameAttributer {
+func File(file filesystem.IFilesystem) FilenameAttributer {
 	return &AttrFilename{filename: file.GetFullPath()}
 }
 func (my *AttrFilename) RegisterForWriter(writer Writer) { writer.setFilename(my.filename) }

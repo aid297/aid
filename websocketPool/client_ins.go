@@ -6,23 +6,23 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 )
 
 // ClientIns websocket 客户端链接实例
 type ClientIns struct {
 	Name    string
-	Clients *dict.AnyDict[string, *Client]
+	Clients anyMap.AnyMapper[string, *Client]
 }
 
 // New 实例化：websocket客户端实例
 func (*ClientIns) New(insName string) *ClientIns {
-	return &ClientIns{Name: insName, Clients: dict.Make[string, *Client]()}
+	return &ClientIns{Name: insName, Clients: anyMap.New[string, *Client]()}
 }
 
 // GetClient 获取websocket客户端链接
 func (my *ClientIns) GetClient(clientName string) (*Client, bool) {
-	websocketClient, exist := my.Clients.Get(clientName)
+	websocketClient, exist := my.Clients.GetValueByKey(clientName)
 	if !exist {
 		return nil, exist
 	}
@@ -44,7 +44,7 @@ func (my *ClientIns) SetClient(
 		prototypeMsg []byte
 	)
 
-	client, exist = my.Clients.Get(clientName)
+	client, exist = my.Clients.GetValueByKey(clientName)
 	if exist {
 		if err = client.Conn.Close(); err != nil {
 			return nil, err
@@ -55,7 +55,7 @@ func (my *ClientIns) SetClient(
 	if client, err = NewClient(my.Name, clientName, host, path, receiveMessageFn); err != nil {
 		return nil, err
 	}
-	my.Clients.Set(clientName, client)
+	my.Clients.SetDatum(clientName, client)
 
 	if clientPoolIns.onConnect != nil {
 		clientPoolIns.onConnect(my.Name, clientName)
@@ -101,22 +101,6 @@ func (my *ClientIns) SetClient(
 				}
 
 				client.syncChan <- prototypeMsg
-
-				// if _, prototypeMsg, err = client.Conn.ReadMessage(); err != nil {
-				// 	if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) && clientPoolIns.onReceiveMsgWrong != nil {
-				// 		clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
-				// 	}
-				// 	// if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				// 	// 	client.closeChan <- struct{}{} // 链接被意外关闭
-				// 	// } else {
-				// 	// 	if clientPoolIns.onReceiveMsgWrong != nil {
-				// 	// 		clientPoolIns.onReceiveMsgWrong(my.Name, clientName, prototypeMsg, err)
-				// 	// 	}
-				// 	// }
-				// 	continue
-				// } else {
-				// 	client.syncChan <- prototypeMsg
-				// }
 			}
 		}
 	}()
@@ -131,7 +115,7 @@ func (my *ClientIns) SendMsgByName(clientName string, msgType int, msg []byte) (
 		client *Client
 	)
 
-	client, exist = my.Clients.Get(clientName)
+	client, exist = my.Clients.GetValueByKey(clientName)
 	if !exist {
 		if clientPoolIns.onSendMsgWrong != nil {
 			clientPoolIns.onSendMsgWrong(my.Name, clientName, errors.New("没有找到客户端链接"))

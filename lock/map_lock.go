@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 )
 
 type (
@@ -24,7 +24,7 @@ type (
 	// MapLock 字典锁：一个锁的集合
 	MapLock struct {
 		lock  sync.RWMutex
-		locks *dict.AnyDict[string, *itemLock]
+		locks anyMap.AnyMapper[string, *itemLock]
 	}
 
 	// 锁项：一个集合锁中的每一项，包含：锁状态、锁值、超时时间、定时器
@@ -43,20 +43,20 @@ var (
 
 func (*MapLock) implMapLocker() {}
 
-func (*MapLock) New() MapLocker { return &MapLock{locks: dict.Make[string, *itemLock]()} }
+func (*MapLock) New() MapLocker { return &MapLock{locks: anyMap.New[string, *itemLock]()} }
 
 func (*MapLock) Once() MapLocker {
-	onceMapLock.Do(func() { mapLockIns = &MapLock{locks: dict.Make[string, *itemLock]()} })
+	onceMapLock.Do(func() { mapLockIns = &MapLock{locks: anyMap.New[string, *itemLock]()} })
 
 	return mapLockIns
 }
 
 func (*MapLock) set(key string, val any) (err error) {
-	_, exists := mapLockIns.locks.Get(key)
+	_, exists := mapLockIns.locks.GetValueByKey(key)
 	if exists {
 		return fmt.Errorf("锁[%s]已存在", key)
 	} else {
-		mapLockIns.locks.Set(key, &itemLock{val: val})
+		mapLockIns.locks.SetDatum(key, &itemLock{val: val})
 	}
 
 	return
@@ -95,7 +95,7 @@ func (r *itemLock) Release() {
 }
 
 func (*MapLock) destroy(key string) {
-	if il, ok := mapLockIns.locks.Get(key); ok {
+	if il, ok := mapLockIns.locks.GetValueByKey(key); ok {
 		il.Release()
 		mapLockIns.locks.RemoveByKey(key) // 删除键值对，以便垃圾回收
 	}
@@ -124,7 +124,7 @@ func (*MapLock) Lock(key string, timeout time.Duration) (*itemLock, error) {
 	mapLockIns.lock.RLock()
 	defer mapLockIns.lock.RUnlock()
 
-	if item, exists := mapLockIns.locks.Get(key); !exists {
+	if item, exists := mapLockIns.locks.GetValueByKey(key); !exists {
 		return nil, fmt.Errorf("锁[%s]不存在", key)
 	} else {
 		if item.inUse {
@@ -138,7 +138,7 @@ func (*MapLock) Lock(key string, timeout time.Duration) (*itemLock, error) {
 		if timeout > 0 {
 			item.timeout = timeout
 			item.timer = time.AfterFunc(timeout, func() {
-				if il, ok := mapLockIns.locks.Get(key); ok {
+				if il, ok := mapLockIns.locks.GetValueByKey(key); ok {
 					if il.timer != nil {
 						il.Release()
 					}
@@ -155,7 +155,7 @@ func (*MapLock) Try(key string) error {
 	mapLockIns.lock.RLock()
 	defer mapLockIns.lock.RUnlock()
 
-	if item, exist := mapLockIns.locks.Get(key); !exist {
+	if item, exist := mapLockIns.locks.GetValueByKey(key); !exist {
 		return fmt.Errorf("锁[%s]不存在", key)
 	} else {
 		if item.inUse {

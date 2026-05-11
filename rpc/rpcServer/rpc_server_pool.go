@@ -3,11 +3,11 @@ package rpcServer
 import (
 	"sync"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 )
 
 type Pool struct {
-	pool *dict.AnyDict[string, *Server]
+	pool anyMap.AnyMapper[string, *Server]
 	lock sync.RWMutex
 	err  error
 }
@@ -18,7 +18,7 @@ var (
 )
 
 func (*Pool) Once() *Pool {
-	poolOnce.Do(func() { poolIns = &Pool{pool: dict.Make[string, *Server]()} })
+	poolOnce.Do(func() { poolIns = &Pool{pool: anyMap.New[string, *Server]()} })
 	return poolIns
 }
 
@@ -32,7 +32,7 @@ func (*Pool) Set(name string, port string) (*Server, error) {
 	if rpcServer, poolIns.err = new(Server).New(port); poolIns.err != nil {
 		return nil, poolIns.err
 	}
-	poolIns.pool.Set(name, rpcServer)
+	poolIns.pool.SetDatum(name, rpcServer)
 
 	return rpcServer, nil
 }
@@ -41,7 +41,7 @@ func (*Pool) Get(key string) *Server {
 	poolIns.lock.RLock()
 	defer poolIns.lock.RUnlock()
 
-	if val, ok := poolIns.pool.Get(key); ok {
+	if val, ok := poolIns.pool.GetValueByKey(key); ok {
 		return val
 	}
 	return nil

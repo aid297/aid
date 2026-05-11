@@ -1,19 +1,19 @@
 package reader
 
 import (
-	`errors`
+	"errors"
 
-	`github.com/xuri/excelize/v2`
+	"github.com/xuri/excelize/v2"
 
-	`github.com/aid297/aid/filesystem/filesystemV4`
+	"github.com/aid297/aid/filesystem"
 )
 
 type ReaderAttribute func(reader *Read) (err error)
 
 func Filename(filename string) ReaderAttribute {
 	return func(reader *Read) (err error) {
-		var fs filesystemV4.IFilesystem
-		if fs = filesystemV4.NewFile(filesystemV4.Abs(filename)); !fs.GetExist() {
+		var fs filesystem.IFilesystem
+		if fs = filesystem.NewFile(filesystem.Abs(filename)); !fs.GetExist() {
 			return errors.New("文件不存在")
 		}
 
@@ -23,7 +23,7 @@ func Filename(filename string) ReaderAttribute {
 	}
 }
 
-func Filesystem(fs filesystemV4.IFilesystem) ReaderAttribute {
+func Filesystem(fs filesystem.IFilesystem) ReaderAttribute {
 	return func(reader *Read) (err error) {
 		if !fs.GetExist() {
 			return errors.New("文件不存在")

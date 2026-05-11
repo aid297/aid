@@ -7,7 +7,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/aid297/aid/array"
+	"github.com/aid297/aid/anySlice"
 	"github.com/aid297/aid/operation"
 	"github.com/aid297/aid/str"
 )
@@ -329,9 +329,9 @@ func compareTagAndTarget(
 	}
 
 	if tagField != "" {
-		return array.New(strings.Split(tagValue, ";")).
+		return anySlice.New(anySlice.List(strings.Split(tagValue, ";"))).
 			Every(func(s string) string {
-				t := array.New(strings.Split(s, ":"))
+				t := anySlice.New(anySlice.List(strings.Split(s, ":")))
 				return operation.Ternary(t.First() == tagField, t.Last(), "")
 			}).
 			In(target)
@@ -418,7 +418,7 @@ func (my *Reflection) Iter(fn func(k, v any)) (isIter bool) {
 
 // Serialize 序列化
 func (my *Reflection) Serialize() []string {
-	var ret = array.Make[string](0)
+	var ret = anySlice.New[string]()
 
 	if !my.Iter(func(k, v any) {
 		ret.Append(fmt.Sprintf(str.APP.Buffer.JoinString("%v", "=>", my.serializeFormat), k, v))

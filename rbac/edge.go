@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 	"github.com/aid297/aid/str"
 )
 
@@ -62,7 +62,7 @@ func (*Edge) Bind(roleUUID string, intersections map[string][]string) error {
 	}
 
 	return edgeIns.db.Transaction(func(tx *gorm.DB) error {
-		intersectionsDict := dict.New(intersections)
+		intersectionsDict := anyMap.New(anyMap.Map(intersections))
 		if err := tx.Model(new(Edge)).
 			Where("group_uuid = ?", roleUUID).
 			Where("intersection1 IN ?", intersectionsDict.GetKeys().ToSlice()).

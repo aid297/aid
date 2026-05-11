@@ -9,13 +9,13 @@ import (
 
 	rds "github.com/redis/go-redis/v9"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 	"github.com/aid297/aid/str"
 )
 
 type (
 	RedisPool struct {
-		connections *dict.AnyDict[string, *redisConn]
+		connections anyMap.AnyMapper[string, *redisConn]
 	}
 
 	redisConn struct {
@@ -32,11 +32,11 @@ var (
 func (*RedisPool) Once(redisSetting *RedisSetting) *RedisPool {
 	redisPoolOnce.Do(func() {
 		redisPoolIns = &RedisPool{}
-		redisPoolIns.connections = dict.Make[string, *redisConn]()
+		redisPoolIns.connections = anyMap.New[string, *redisConn]()
 
 		if len(redisSetting.Pool) > 0 {
 			for idx := range redisSetting.Pool {
-				redisPoolIns.connections.Set(redisSetting.Pool[idx].Key, &redisConn{
+				redisPoolIns.connections.SetDatum(redisSetting.Pool[idx].Key, &redisConn{
 					prefix: str.APP.Buffer.NewString(redisSetting.Prefix).S(":", redisSetting.Pool[idx].Prefix).String(),
 					conn: rds.NewClient(&rds.Options{
 						Addr:     str.APP.Buffer.NewAny(redisSetting.Host).Any(":", redisSetting.Port).String(),
@@ -53,7 +53,7 @@ func (*RedisPool) Once(redisSetting *RedisSetting) *RedisPool {
 
 // GetClient 获取链接和链接前缀
 func (*RedisPool) GetClient(key string) (string, *rds.Client) {
-	if client, exist := redisPoolIns.connections.Get(key); exist {
+	if client, exist := redisPoolIns.connections.GetValueByKey(key); exist {
 		return client.prefix, client.conn
 	}
 
@@ -102,7 +102,7 @@ func (*RedisPool) Set(clientName, key string, val any, exp time.Duration) (strin
 
 // Close 关闭链接
 func (my *RedisPool) Close(key string) error {
-	if client, exist := redisPoolIns.connections.Get(key); exist {
+	if client, exist := redisPoolIns.connections.GetValueByKey(key); exist {
 		return client.conn.Close()
 	}
 

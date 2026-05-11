@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 )
 
 type (
@@ -15,7 +15,7 @@ type (
 		onSendMsgWrong    func(insName, clientName string, err error)
 		onCloseWrong      func(insName, clientName string, err error)
 		onReceiveMsgWrong func(insName, clientName string, prototypeMsg []byte, err error)
-		clientInsList     *dict.AnyDict[string, *ClientIns]
+		clientInsList     anyMap.AnyMapper[string, *ClientIns]
 		Error             error
 	}
 )
@@ -23,7 +23,7 @@ type (
 func (*ClientPool) Once() *ClientPool {
 	clientPoolOnce.Do(func() {
 		clientPoolIns = &ClientPool{}
-		clientPoolIns.clientInsList = dict.Make[string, *ClientIns]()
+		clientPoolIns.clientInsList = anyMap.New[string, *ClientIns]()
 	})
 
 	return clientPoolIns
@@ -66,7 +66,7 @@ func (*ClientPool) SetOnReceiveMsgWrong(fn func(insName, clientName string, prop
 
 // GetClientIns 获取链接实例
 func (*ClientPool) GetClientIns(insName string) (*ClientIns, bool) {
-	return clientPoolIns.clientInsList.Get(insName)
+	return clientPoolIns.clientInsList.GetValueByKey(insName)
 }
 
 // SetClientIns 设置实例链接
@@ -76,13 +76,13 @@ func (*ClientPool) SetClientIns(insName string) (*ClientIns, error) {
 		exist     bool
 	)
 
-	_, exist = clientPoolIns.clientInsList.Get(insName)
+	_, exist = clientPoolIns.clientInsList.GetValueByKey(insName)
 	if exist {
 		return nil, fmt.Errorf("创建实例失败：%s已经存在", insName)
 	}
 
 	clientIns = APP.ClientIns.New(insName)
-	clientPoolIns.clientInsList.Set(insName, clientIns)
+	clientPoolIns.clientInsList.SetDatum(insName, clientIns)
 
 	return clientIns, nil
 }
@@ -95,7 +95,7 @@ func (*ClientPool) GetClient(insName, clientName string) *Client {
 		exist     bool
 	)
 
-	clientIns, exist = clientPoolIns.clientInsList.Get(insName)
+	clientIns, exist = clientPoolIns.clientInsList.GetValueByKey(insName)
 	if !exist {
 		clientPoolIns.Error = fmt.Errorf("实例不存在：%s", insName)
 		return nil
@@ -125,10 +125,10 @@ func (*ClientPool) SetClient(
 		clientIns *ClientIns
 	)
 
-	clientIns, exist = clientPoolIns.clientInsList.Get(insName)
+	clientIns, exist = clientPoolIns.clientInsList.GetValueByKey(insName)
 	if !exist {
 		clientIns = APP.ClientIns.New(insName)
-		clientPoolIns.clientInsList.Set(insName, clientIns)
+		clientPoolIns.clientInsList.SetDatum(insName, clientIns)
 	}
 
 	return clientIns.SetClient(clientName, host, path, receiveMessageFn, heart, timeout)
@@ -140,7 +140,7 @@ func (*ClientPool) SendMsgByName(insName, clientName string, msgType int, msg []
 		exist     bool
 		clientIns *ClientIns
 	)
-	clientIns, exist = clientPoolIns.clientInsList.Get(insName)
+	clientIns, exist = clientPoolIns.clientInsList.GetValueByKey(insName)
 	if !exist {
 		if clientPoolIns.onSendMsgWrong != nil {
 			clientPoolIns.onSendMsgWrong(insName, clientName, errors.New("没有找到客户端实例"))
@@ -166,13 +166,13 @@ func (*ClientPool) CloseClient(insName, clientName string) error {
 		clientIns *ClientIns
 		client    *Client
 	)
-	clientIns, exist = clientPoolIns.clientInsList.Get(insName)
+	clientIns, exist = clientPoolIns.clientInsList.GetValueByKey(insName)
 	if !exist {
 		clientPoolIns.onCloseWrong(insName, clientName, errors.New("没有找到客户端实例"))
 		return errors.New("没有找到客户端实例")
 	}
 
-	client, exist = clientIns.Clients.Get(clientName)
+	client, exist = clientIns.Clients.GetValueByKey(clientName)
 	if !exist {
 		clientPoolIns.onCloseWrong(insName, clientName, errors.New("没有找到客户端链接"))
 		return errors.New("没有找到客户端链接")

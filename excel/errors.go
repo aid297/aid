@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/aid297/aid/array"
+	"github.com/aid297/aid/anySlice"
 	"github.com/aid297/aid/myError"
 	"github.com/aid297/aid/operation"
 )
@@ -22,11 +22,11 @@ var (
 )
 
 func (*ReadError) New(msg string) myError.IMyError {
-	return &ReadError{myError.MyError{Msg: array.NewDestruction("读取数据错误", msg).JoinWithoutEmpty("：")}}
+	return &ReadError{myError.MyError{Msg: anySlice.New(anySlice.Items("读取数据错误", msg)).JoinNotEmpty("：")}}
 }
 
 func (*ReadError) Wrap(err error) myError.IMyError {
-	return &ReadError{myError.MyError{Msg: fmt.Errorf("读取数据错误"+operation.Ternary(err != nil, "：%w", "%w"), err).Error()}}
+	return &ReadError{myError.MyError{Msg: anySlice.New(anySlice.Items("读取数据错误", err.Error())).JoinNotEmpty("：")}}
 }
 
 func (*ReadError) Panic() myError.IMyError {
@@ -38,7 +38,7 @@ func (my *ReadError) Error() string { return my.Msg }
 func (my *ReadError) Is(target error) bool { return reflect.DeepEqual(target, &ReadErr) }
 
 func (*SetCellError) New(msg string) myError.IMyError {
-	return &SetCellError{myError.MyError{Msg: array.NewDestruction("设置单元格错误", msg).JoinWithoutEmpty("：")}}
+	return &SetCellError{myError.MyError{Msg: anySlice.New(anySlice.Items("设置单元格错误", msg)).JoinNotEmpty("：")}}
 }
 
 func (*SetCellError) Wrap(err error) myError.IMyError {
@@ -54,11 +54,11 @@ func (my *SetCellError) Error() string { return my.Msg }
 func (my *SetCellError) Is(target error) bool { return reflect.DeepEqual(target, &SetCellErr) }
 
 func (*WriteError) New(msg string) myError.IMyError {
-	return &WriteError{myError.MyError{Msg: array.NewDestruction("写入数据错误", msg).JoinWithoutEmpty("：")}}
+	return &WriteError{myError.MyError{Msg: anySlice.New(anySlice.Items("写入数据错误", msg)).JoinNotEmpty("：")}}
 }
 
 func (*WriteError) Wrap(err error) myError.IMyError {
-	return &WriteError{myError.MyError{Msg: fmt.Errorf("写入数据错误"+operation.Ternary(err != nil, "：%w", "%w"), err).Error()}}
+	return &WriteError{myError.MyError{Msg: anySlice.New(anySlice.Items("写入数据错误", err.Error())).JoinNotEmpty("：")}}
 }
 
 func (*WriteError) Panic() myError.IMyError {

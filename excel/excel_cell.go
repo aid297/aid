@@ -3,7 +3,7 @@ package excel
 import (
 	"time"
 
-	"github.com/aid297/aid/array"
+	"github.com/aid297/aid/anySlice"
 )
 
 type (
@@ -92,8 +92,8 @@ func NewCellFormula(content string) *Cell {
 }
 
 // GetBorder 获取边框
-func (my *Cell) GetBorder() *array.AnyArray[border] {
-	borders := array.Make[border](0)
+func (my *Cell) GetBorder() anySlice.AnySlicer[border] {
+	borders := anySlice.New[border]()
 
 	if my.borderTopRgb != "" {
 		borders.Append(border{Type: "top", Rgb: my.borderTopRgb, Style: my.borderTopStyle})

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/aid297/aid/debugLogger"
-	"github.com/aid297/aid/filesystem/filesystemV2"
+	"github.com/aid297/aid/filesystem"
 )
 
 type (
@@ -15,7 +15,7 @@ type (
 )
 
 func Test1(t *testing.T) {
-	dbSetting, err := APP.DBSetting.New(filesystemV2.APP.File.NewByRel("./db.yaml").GetFullPath())
+	dbSetting, err := APP.DBSetting.New(filesystem.NewFile(filesystem.Rel("./db.yaml")).GetFullPath())
 	if err != nil {
 		t.Fatalf("读取配置文件失败：%v", err)
 	}

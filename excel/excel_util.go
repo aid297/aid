@@ -3,10 +3,9 @@ package excel
 import (
 	"time"
 
-	"github.com/aid297/aid/dict"
-
 	"github.com/xuri/excelize/v2"
 
+	"github.com/aid297/aid/anyMap"
 	"github.com/aid297/aid/str"
 )
 
@@ -130,10 +129,10 @@ func ReadDemo(filename string) {
 		str.NewTerminalLog("err: %v").Error(err)
 	}
 
-	excelData.Each(func(key uint64, value *dict.AnyDict[string, string]) {
-		username := value.GetValueByKey("username")
-		nickname := value.GetValueByKey("nickname")
-		score := value.GetValueByKey("score")
+	excelData.Each(func(key uint64, value anyMap.AnyMapper[string, string]) {
+		username, _ := value.GetValueByKey("username")
+		nickname, _ := value.GetValueByKey("nickname")
+		score, _ := value.GetValueByKey("score")
 
 		str.NewTerminalLog("%d行: 姓名[%s]，昵称[%s]，分数[%s]").Success(key, username, nickname, score)
 	})

@@ -3,7 +3,7 @@ package excel
 import (
 	"fmt"
 
-	"github.com/aid297/aid/array"
+	"github.com/aid297/aid/anySlice"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -11,7 +11,7 @@ import (
 // Row Excel行
 type Row struct {
 	Err       error
-	cells     *array.AnyArray[*Cell]
+	cells     anySlice.AnySlicer[*Cell]
 	rowNumber uint64
 }
 
@@ -25,7 +25,7 @@ func (*Row) New() *Row { return NewRow() }
 func NewRow() *Row { return &Row{} }
 
 // GetCells 获取单元格组
-func (my *Row) GetCells() *array.AnyArray[*Cell] { return my.cells }
+func (my *Row) GetCells() anySlice.AnySlicer[*Cell] { return my.cells }
 
 // SetCells 设置单元格组
 func (my *Row) SetCells(cells []*Cell) *Row {
@@ -42,7 +42,7 @@ func (my *Row) SetCells(cells []*Cell) *Row {
 			cell.SetCoordinate(fmt.Sprintf("%s%d", colText, my.GetRowNumber()))
 		}
 	}
-	my.cells = array.New(cells)
+	my.cells = anySlice.New(anySlice.List(cells))
 
 	return my
 }

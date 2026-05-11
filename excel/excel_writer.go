@@ -111,7 +111,7 @@ func (my *Writer) setStyleFont(cell *Cell) {
 	}
 
 	var borders = make([]excelize.Border, 0)
-	if cell.GetBorder().Len() > 0 {
+	if cell.GetBorder().Length() > 0 {
 		for _, border := range cell.GetBorder().ToSlice() {
 			borders = append(borders, excelize.Border{
 				Type:  border.Type,

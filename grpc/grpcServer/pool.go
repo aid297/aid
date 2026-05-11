@@ -3,11 +3,11 @@ package grpcServer
 import (
 	"sync"
 
-	"github.com/aid297/aid/array/anyArrayV2"
+	"github.com/aid297/aid/anySlice"
 )
 
 type Pool struct {
-	pool anyArrayV2.AnyArray[Server]
+	pool anySlice.AnySlicer[Server]
 	mu   *sync.RWMutex
 }
 
@@ -18,7 +18,7 @@ var (
 
 func (Pool) Once(servers ...Server) Pool {
 	poolOnce.Do(func() {
-		poolIns = Pool{mu: &sync.RWMutex{}, pool: anyArrayV2.New(anyArrayV2.List(servers))}
+		poolIns = Pool{mu: &sync.RWMutex{}, pool: anySlice.New(anySlice.List(servers))}
 	})
 	return poolIns
 }
@@ -28,7 +28,7 @@ func (my Pool) SetServers(servers ...Server) Pool {
 	defer poolIns.mu.Unlock()
 
 	if len(servers) > 0 {
-		poolIns.pool = anyArrayV2.New(anyArrayV2.List(servers))
+		poolIns.pool = anySlice.New(anySlice.List(servers))
 	}
 	return poolIns
 }

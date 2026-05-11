@@ -4,11 +4,11 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 )
 
 type MongoClientPool struct {
-	clients *dict.AnyDict[string, *MongoClient]
+	clients anyMap.AnyMapper[string, *MongoClient]
 }
 
 var (
@@ -18,7 +18,7 @@ var (
 
 // Once 单例化：mongodb连接池
 func (*MongoClientPool) Once() *MongoClientPool {
-	mongoPoolOnce.Do(func() { mongoClientPool = &MongoClientPool{clients: dict.Make[string, *MongoClient]()} })
+	mongoPoolOnce.Do(func() { mongoClientPool = &MongoClientPool{clients: anyMap.New[string, *MongoClient]()} })
 	return mongoClientPool
 }
 
@@ -28,7 +28,7 @@ func (*MongoClientPool) AppendClient(key string, mongoClient *MongoClient) (*Mon
 		return mongoClientPool, errors.New("客户端已存在")
 	}
 
-	mongoClientPool.clients.Set(key, mongoClient)
+	mongoClientPool.clients.SetDatum(key, mongoClient)
 
 	return mongoClientPool, nil
 }
@@ -38,7 +38,7 @@ func (*MongoClientPool) HasClient(key string) bool { return mongoClientPool.clie
 
 // GetClient 获取客户端
 func (*MongoClientPool) GetClient(key string) *MongoClient {
-	if mongoClient, exist := mongoClientPool.clients.Get(key); exist {
+	if mongoClient, exist := mongoClientPool.clients.GetValueByKey(key); exist {
 		return mongoClient
 	}
 
@@ -47,7 +47,7 @@ func (*MongoClientPool) GetClient(key string) *MongoClient {
 
 // 清除客户端
 func (*MongoClientPool) Remove(key string) (*MongoClientPool, error) {
-	if mongoClient, exist := mongoClientPool.clients.Get(key); !exist {
+	if mongoClient, exist := mongoClientPool.clients.GetValueByKey(key); !exist {
 		return mongoClientPool, errors.New("客户端不存在")
 	} else {
 		if err := mongoClient.Close(); err != nil {

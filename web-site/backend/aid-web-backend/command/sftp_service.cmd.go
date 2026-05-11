@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/aid297/aid/debugLogger"
-	"github.com/aid297/aid/filesystem/filesystemV4"
+	"github.com/aid297/aid/filesystem"
 	"github.com/aid297/aid/str"
 	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
 )
@@ -27,7 +27,7 @@ func (*SFTPServiceCommand) Launch() {
 	var (
 		port       = flag.String("port", "8080", "监听端口，如8080、9000") // 定义命令行参数：端口（默认8080）、共享目录（默认当前目录）
 		outputTemp *str.Template[output]
-		dir        filesystemV4.IFilesystem
+		dir        filesystem.IFilesystem
 	)
 	flag.Parse()
 
@@ -35,7 +35,7 @@ func (*SFTPServiceCommand) Launch() {
 		port = &global.CONFIG.FileManager.Port
 	}
 
-	if dir = filesystemV4.NewDir(filesystemV4.Rel(global.CONFIG.FileManager.Dir)); !dir.GetExist() {
+	if dir = filesystem.NewDir(filesystem.Rel(global.CONFIG.FileManager.Dir)); !dir.GetExist() {
 		dir.Create()
 	}
 

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/xuri/excelize/v2"
 
-	"github.com/aid297/aid/array/anySlice"
+	"github.com/aid297/aid/anySlice"
 )
 
 type (

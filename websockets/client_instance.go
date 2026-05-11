@@ -1,12 +1,12 @@
 package websockets
 
 import (
-	"github.com/aid297/aid/dict"
+	"github.com/aid297/aid/anyMap"
 )
 
 type ClientInstance struct {
 	name        string
-	connections *dict.AnyDict[string, *Client]
+	connections anyMap.AnyMapper[string, *Client]
 }
 
 var ClientInstanceApp ClientInstance
@@ -18,7 +18,7 @@ func (*ClientInstance) New(name string) *ClientInstance { return NewClientInstan
 //
 //go:fix 推荐使用：New方法
 func NewClientInstance(name string) *ClientInstance {
-	return &ClientInstance{name: name, connections: dict.Make[string, *Client]()}
+	return &ClientInstance{name: name, connections: anyMap.New[string, *Client]()}
 }
 
 // Append 增加客户端
@@ -27,7 +27,7 @@ func (my *ClientInstance) Append(client *Client) error {
 		return WebsocketClientExistErr.New(client.name)
 	}
 
-	my.connections.Set(client.name, client)
+	my.connections.SetDatum(client.name, client)
 
 	return nil
 }
@@ -49,7 +49,7 @@ func (my *ClientInstance) Get(name string) (*Client, error) {
 		return nil, WebsocketClientNotExistErr.New(name)
 	}
 
-	client, _ := my.connections.Get(name)
+	client, _ := my.connections.GetValueByKey(name)
 
 	return client, nil
 }

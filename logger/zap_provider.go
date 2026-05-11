@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/aid297/aid/filesystem"
-	"github.com/aid297/aid/operation"
 	"github.com/aid297/aid/operation/operationV2"
 )
 
@@ -52,7 +51,7 @@ func (*ZapProvider) New(config *zapConfig) (*zap.Logger, error) { return NewZapP
 func NewZapProvider(config *zapConfig) (*zap.Logger, error) {
 	var (
 		err             error
-		fs              *filesystem.FileSystem
+		fs              filesystem.IFilesystem
 		zapLogger       *zap.Logger
 		zapCores        = make([]zapcore.Core, 0, 7)
 		zapLoggerConfig = zapcore.EncoderConfig{
@@ -76,9 +75,12 @@ func NewZapProvider(config *zapConfig) (*zap.Logger, error) {
 		}
 	)
 
-	fs = operation.TernaryFuncAll(func() bool { return config.PathAbs }, func() *filesystem.FileSystem { return filesystem.FileSystemApp.NewByAbs(config.Path) }, func() *filesystem.FileSystem { return filesystem.FileSystemApp.NewByRel(config.Path) })
-	if !fs.IsExist {
-		if err = fs.MkDir(); err != nil {
+	fs = operationV2.NewTernary(
+		operationV2.TrueValue(filesystem.NewFile(filesystem.Abs(config.Path))),
+		operationV2.FalseValue(filesystem.NewFile(filesystem.Rel(config.Path))),
+	).GetByValue(config.PathAbs)
+	if !fs.GetExist() {
+		if err = fs.Create().GetError(); err != nil {
 			return nil, fmt.Errorf("创建日志目录失败：%w", err)
 		}
 	}
@@ -92,7 +94,7 @@ func NewZapProvider(config *zapConfig) (*zap.Logger, error) {
 	}
 
 	for logLevel := config.Level; logLevel <= zapcore.FatalLevel; logLevel++ {
-		writer := getWriteSync(config, fs.Copy().Join(logLevel.String()+config.Extension).GetDir())
+		writer := getWriteSync(config, fs.Copy().Join(logLevel.String()+config.Extension).GetBasePath())
 		zapCores = append(zapCores, zapcore.NewCore(encoderTypes[config.EncoderType](zapLoggerConfig), writer, logLevel))
 	}
 

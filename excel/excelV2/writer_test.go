@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/filesystem/filesystemV4"
+	"github.com/aid297/aid/filesystem"
 )
 
 func TestWriter1(t *testing.T) {
 	excelByFile := NewWriter().
-		SetFilename(File(filesystemV4.NewFile(filesystemV4.Rel("./test-by-file.xlsx")))).
+		SetFilename(File(filesystem.NewFile(filesystem.Rel("./test-by-file.xlsx")))).
 		SetSheet(SheetName("Sheet 1")) // 通过名称选择一个工作表
 
 	if err := excelByFile.Save(); err != nil {
