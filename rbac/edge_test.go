@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/aid297/aid/gormPool"
+	"github.com/aid297/aid/v2/gormPool"
 )
 
 func init() {

@@ -7,9 +7,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/aid297/aid/anySlice"
-	"github.com/aid297/aid/operation"
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/operation"
+	"github.com/aid297/aid/v2/str"
 )
 
 type (

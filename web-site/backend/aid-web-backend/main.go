@@ -7,15 +7,15 @@ import (
 
 	"os"
 
-	"github.com/aid297/aid/debugLogger"
-	"github.com/aid297/aid/operation/operationV2"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/command"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/initialize"
+	"github.com/aid297/aid/v2/debugLogger"
+	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/command"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/initialize"
 
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/daemon"
+	"github.com/aid297/aid/v2/daemon"
 )
 
 type ConsoleArgs struct {

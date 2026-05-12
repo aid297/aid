@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/str"
 )
 
 type DebugLogger struct {

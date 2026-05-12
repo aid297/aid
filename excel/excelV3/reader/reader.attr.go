@@ -5,7 +5,7 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"github.com/aid297/aid/filesystem"
+	"github.com/aid297/aid/v2/filesystem"
 )
 
 type ReaderAttribute func(reader *Read) (err error)

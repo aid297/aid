@@ -3,7 +3,7 @@ package excelV2
 import (
 	"sync"
 
-	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/v2/operation/operationV2"
 )
 
 type (

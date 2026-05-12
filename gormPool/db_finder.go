@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/operation/operationV2"
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/str"
 )
 
 type (

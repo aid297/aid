@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/str"
 )
 
 func ClientDemo() {

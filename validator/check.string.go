@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/aid297/aid/anyMap"
-	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anySlice"
 )
 
 var (

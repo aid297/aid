@@ -17,10 +17,10 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/anyMap"
-	"github.com/aid297/aid/debugLogger"
-	"github.com/aid297/aid/operation/operationV2"
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/debugLogger"
+	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/str"
 )
 
 type (

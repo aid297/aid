@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/v2/anySlice"
 
 	jsonIter "github.com/json-iterator/go"
 )

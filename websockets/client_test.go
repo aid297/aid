@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/debugLogger"
+	"github.com/aid297/aid/v2/debugLogger"
 	"github.com/gorilla/websocket"
 )
 

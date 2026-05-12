@@ -10,9 +10,9 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"github.com/aid297/aid/anySlice"
-	"github.com/aid297/aid/operation/operationV2"
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/str"
 )
 
 type (

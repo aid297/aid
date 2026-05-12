@@ -9,8 +9,8 @@ import (
 
 	rds "github.com/redis/go-redis/v9"
 
-	"github.com/aid297/aid/anyMap"
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/str"
 )
 
 type (

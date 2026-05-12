@@ -9,8 +9,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/aid297/aid/filesystem"
-	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/v2/filesystem"
+	"github.com/aid297/aid/v2/operation/operationV2"
 )
 
 // ZapProvider Zap日志服务提供者

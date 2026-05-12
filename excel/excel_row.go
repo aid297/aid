@@ -3,7 +3,7 @@ package excel
 import (
 	"fmt"
 
-	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/v2/anySlice"
 
 	"github.com/xuri/excelize/v2"
 )

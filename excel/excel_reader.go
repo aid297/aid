@@ -7,8 +7,8 @@ import (
 	"github.com/go-gota/gota/series"
 	"github.com/xuri/excelize/v2"
 
-	"github.com/aid297/aid/anyMap"
-	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anySlice"
 )
 
 // Reader Excel读取器

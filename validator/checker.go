@@ -10,8 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/aid297/aid/anySlice"
-	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/operation/operationV2"
 )
 
 type (

@@ -4,7 +4,7 @@ import (
 	"container/heap"
 	"sync"
 
-	"github.com/aid297/aid/debugLogger"
+	"github.com/aid297/aid/v2/debugLogger"
 )
 
 type (

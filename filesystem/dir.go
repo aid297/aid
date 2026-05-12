@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/v2/operation/operationV2"
 )
 
 type Dir struct {

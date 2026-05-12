@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/aid297/aid/debugLogger"
+	"github.com/aid297/aid/v2/debugLogger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"

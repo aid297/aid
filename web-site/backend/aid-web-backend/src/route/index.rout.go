@@ -3,17 +3,17 @@ package route
 import (
 	"net/http"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/api/httpAPI"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/middleware/httpMiddleware"
-	v1HTTPMiddleware2 "github.com/aid297/aid/web-site/backend/aid-web-backend/src/middleware/httpMiddleware/v1HTTPMiddleware"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/route/httpRoute/v1HTTPRoute"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/api/httpAPI"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/middleware/httpMiddleware"
+	v1HTTPMiddleware2 "github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/middleware/httpMiddleware/v1HTTPMiddleware"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/route/httpRoute/v1HTTPRoute"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	_ "github.com/aid297/aid/web-site/backend/aid-web-backend/docs" // 导入生成的 docs
+	_ "github.com/aid297/aid/v2/web-site/backend/aid-web-backend/docs" // 导入生成的 docs
 )
 
 type IndexRoute struct{}

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/aid297/aid/anySlice"
-	"github.com/aid297/aid/myError"
-	"github.com/aid297/aid/operation"
+	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/myError"
+	"github.com/aid297/aid/v2/operation"
 )
 
 type (

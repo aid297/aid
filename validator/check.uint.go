@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/v2/anySlice"
 	"github.com/spf13/cast"
 )
 

@@ -3,7 +3,7 @@ package gormPool
 import (
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/str"
 )
 
 type (

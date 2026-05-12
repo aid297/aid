@@ -1,7 +1,7 @@
 package anyMap
 
 import (
-	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/v2/anySlice"
 )
 
 type AnyMapperAttr[K comparable, V any] func(am AnyMapper[K, V])

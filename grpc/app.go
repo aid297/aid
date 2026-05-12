@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	"github.com/aid297/aid/grpc/grpcClient"
-	"github.com/aid297/aid/grpc/grpcServer"
+	"github.com/aid297/aid/v2/grpc/grpcClient"
+	"github.com/aid297/aid/v2/grpc/grpcServer"
 )
 
 var APP struct {

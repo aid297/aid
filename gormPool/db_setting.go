@@ -1,7 +1,7 @@
 package gormPool
 
 import (
-	"github.com/aid297/aid/setting"
+	"github.com/aid297/aid/v2/setting"
 )
 
 type (

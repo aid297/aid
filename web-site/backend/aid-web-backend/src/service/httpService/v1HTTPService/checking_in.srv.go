@@ -8,10 +8,10 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/xuri/excelize/v2"
 
-	"github.com/aid297/aid/anySlice"
-	"github.com/aid297/aid/excel/excelV3/reader"
-	"github.com/aid297/aid/operation/operationV2"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
+	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/excel/excelV3/reader"
+	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 )
 
 type (

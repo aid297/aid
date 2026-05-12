@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/anyMap"
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/str"
 )
 
 type Edge struct {

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/filesystem"
+	"github.com/aid297/aid/v2/filesystem"
 )
 
 func TestWriter1(t *testing.T) {

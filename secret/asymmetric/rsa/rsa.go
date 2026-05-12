@@ -12,7 +12,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aid297/aid/secret"
+	"github.com/aid297/aid/v2/secret"
 )
 
 var _ secret.Asymmetricer = (*RSAImpl)(nil)

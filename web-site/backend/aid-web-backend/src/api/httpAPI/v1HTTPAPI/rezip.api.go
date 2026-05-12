@@ -7,13 +7,13 @@ import (
 	"mime/multipart"
 	"os"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/filesystem"
+	"github.com/aid297/aid/v2/filesystem"
 )
 
 type RezipAPI struct{}

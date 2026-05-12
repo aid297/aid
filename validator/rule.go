@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/anySlice"
-	"github.com/aid297/aid/ptr"
+	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/ptr"
 )
 
 // func (my FieldInfo) getRuleType(rules anyArrayV2.AnyArray[string]) (targetType string) {

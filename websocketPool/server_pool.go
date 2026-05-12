@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/aid297/aid/anyMap"
-	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anySlice"
 
 	"github.com/gorilla/websocket"
 )

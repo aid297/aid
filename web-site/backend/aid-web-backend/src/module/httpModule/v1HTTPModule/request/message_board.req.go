@@ -1,7 +1,7 @@
 package request
 
 import (
-	"github.com/aid297/aid/validator"
+	"github.com/aid297/aid/v2/validator"
 	"github.com/gin-gonic/gin"
 )
 

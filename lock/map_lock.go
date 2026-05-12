@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aid297/aid/anyMap"
+	"github.com/aid297/aid/v2/anyMap"
 )
 
 type (

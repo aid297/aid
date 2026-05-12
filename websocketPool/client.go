@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aid297/aid/debugLogger"
+	"github.com/aid297/aid/v2/debugLogger"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )

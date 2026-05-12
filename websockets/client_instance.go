@@ -1,7 +1,7 @@
 package websockets
 
 import (
-	"github.com/aid297/aid/anyMap"
+	"github.com/aid297/aid/v2/anyMap"
 )
 
 type ClientInstance struct {

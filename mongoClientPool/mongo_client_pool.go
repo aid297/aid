@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/aid297/aid/anyMap"
+	"github.com/aid297/aid/v2/anyMap"
 )
 
 type MongoClientPool struct {

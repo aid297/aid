@@ -3,7 +3,7 @@ package excel
 import (
 	"time"
 
-	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/v2/anySlice"
 )
 
 type (

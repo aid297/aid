@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/aid297/aid/secret"
+	"github.com/aid297/aid/v2/secret"
 	"github.com/tjfoc/gmsm/sm4"
 )
 

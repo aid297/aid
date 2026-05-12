@@ -16,8 +16,8 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/operation/operationV2"
-	"github.com/aid297/aid/str"
+	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/str"
 )
 
 type (

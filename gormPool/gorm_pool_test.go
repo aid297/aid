@@ -3,8 +3,8 @@ package gormPool
 import (
 	"testing"
 
-	"github.com/aid297/aid/debugLogger"
-	"github.com/aid297/aid/filesystem"
+	"github.com/aid297/aid/v2/debugLogger"
+	"github.com/aid297/aid/v2/filesystem"
 )
 
 type (

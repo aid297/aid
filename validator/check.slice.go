@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/v2/operation/operationV2"
 )
 
 // checkSlice 检查数组、切片，支持：required、min>、min>=、max<、max<=、size=、size!=、ex:

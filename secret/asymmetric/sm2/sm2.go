@@ -10,7 +10,7 @@ import (
 	"github.com/tjfoc/gmsm/sm2"
 	"github.com/tjfoc/gmsm/x509"
 
-	"github.com/aid297/aid/secret"
+	"github.com/aid297/aid/v2/secret"
 )
 
 var _ secret.Asymmetricer = (*SM2Impl)(nil)

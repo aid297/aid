@@ -3,7 +3,7 @@ package initialize
 import (
 	"time"
 
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
 )
 
 type TimezoneInitialize struct{}

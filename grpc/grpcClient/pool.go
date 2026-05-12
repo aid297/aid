@@ -3,7 +3,7 @@ package grpcClient
 import (
 	"sync"
 
-	"github.com/aid297/aid/anySlice"
+	"github.com/aid297/aid/v2/anySlice"
 )
 
 type (

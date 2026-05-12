@@ -1,8 +1,8 @@
 package rpc
 
 import (
-	"github.com/aid297/aid/rpc/rpcClient"
-	"github.com/aid297/aid/rpc/rpcServer"
+	"github.com/aid297/aid/v2/rpc/rpcClient"
+	"github.com/aid297/aid/v2/rpc/rpcServer"
 )
 
 var APP struct {

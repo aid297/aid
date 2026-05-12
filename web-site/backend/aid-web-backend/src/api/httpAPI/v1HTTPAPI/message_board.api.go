@@ -4,12 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/validator"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/response"
-	"github.com/aid297/aid/web-site/backend/aid-web-backend/src/service/httpService/v1HTTPService"
+	"github.com/aid297/aid/v2/validator"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/response"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/service/httpService/v1HTTPService"
 )
 
 // MesasgeBoardAPI API：留言板

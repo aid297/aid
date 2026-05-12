@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 
-	"github.com/aid297/aid/operation/operationV2"
+	"github.com/aid297/aid/v2/operation/operationV2"
 )
 
 type MySQLPool struct {

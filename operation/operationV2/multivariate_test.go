@@ -3,7 +3,7 @@ package operationV2
 import (
 	"testing"
 
-	"github.com/aid297/aid/debugLogger"
+	"github.com/aid297/aid/v2/debugLogger"
 )
 
 func Test1(t *testing.T) {

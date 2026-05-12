@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
-	"github.com/aid297/aid/daemon"
-	"github.com/aid297/aid/debugLogger"
+	"github.com/aid297/aid/v2/daemon"
+	"github.com/aid297/aid/v2/debugLogger"
 )
 
 // 主程序

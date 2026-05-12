@@ -3,7 +3,7 @@ package sm4
 import (
 	"crypto/rand"
 
-	"github.com/aid297/aid/secret"
+	"github.com/aid297/aid/v2/secret"
 )
 
 type SM4Attr func(sm4Helper secret.Symmetricer) (err error)

@@ -1,7 +1,7 @@
 package redisPool
 
 import (
-	"github.com/aid297/aid/setting"
+	"github.com/aid297/aid/v2/setting"
 )
 
 type RedisSetting struct {

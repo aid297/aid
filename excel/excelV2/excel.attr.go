@@ -1,7 +1,7 @@
 package excelV2
 
 import (
-	"github.com/aid297/aid/filesystem"
+	"github.com/aid297/aid/v2/filesystem"
 )
 
 type (
