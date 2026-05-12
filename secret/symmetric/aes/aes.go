@@ -15,11 +15,20 @@ import (
 
 var _ secret.Symmetricer = (*AESImpl)(nil)
 
-type AESImpl struct{ key, iv []byte }
+const (
+	KeyBits128 = 128
+	KeyBits192 = 192
+	KeyBits256 = 256
+)
+
+type AESImpl struct {
+	key, iv []byte
+	keyBits int
+}
 
 // New 实例化 AESHelper
 func New(attrs ...secret.SymmetricAttr) (my secret.Symmetricer, err error) {
-	my = &AESImpl{}
+	my = &AESImpl{keyBits: KeyBits128}
 	err = my.SetAttrs(attrs...)
 	return
 }
@@ -36,6 +45,11 @@ func (my *AESImpl) SetAttrs(attrs ...secret.SymmetricAttr) (err error) {
 
 // blockSize AES 块大小固定为 16 字节
 const blockSize = 16
+
+const (
+	fileHeaderMagic   byte = 0xA5
+	fileHeaderVersion byte = 0x01
+)
 
 // padPKCS7 PKCS7 填充
 func padPKCS7(src []byte, size int) []byte {
@@ -65,12 +79,18 @@ func unPadPKCS7(src []byte, size int) ([]byte, error) {
 	return src[:length-unPadding], nil
 }
 
-// validateKey 校验密钥长度（当前对齐 SM4，仅支持 AES-128 的 16 字节）
-func validateKey(key []byte) error {
-	if len(key) != blockSize {
-		return fmt.Errorf("aes: invalid key size %d, must be 16 bytes", len(key))
+func validateKeySize(keySize int) error {
+	switch keySize {
+	case 16, 24, 32:
+		return nil
+	default:
+		return fmt.Errorf("aes: invalid key size %d, must be 16/24/32 bytes", keySize)
 	}
-	return nil
+}
+
+// validateKey 校验密钥长度（支持 AES-128/192/256）
+func validateKey(key []byte) error {
+	return validateKeySize(len(key))
 }
 
 // validateIV 校验 IV 长度
@@ -357,12 +377,19 @@ func (my *AESImpl) EncryptCBCFile(plainFile, outFile string, asymm secret.Asymme
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
 
+	if err = validateKey(my.key); err != nil {
+		return err
+	}
+
 	keyLen = len(encryptedKeyBytes)
-	out = make([]byte, 2+keyLen+len(fileCipher))
-	out[0] = byte(keyLen >> 8)
-	out[1] = byte(keyLen)
-	copy(out[2:], encryptedKeyBytes)
-	copy(out[2+keyLen:], fileCipher)
+	out = make([]byte, 5+keyLen+len(fileCipher))
+	out[0] = fileHeaderMagic
+	out[1] = fileHeaderVersion
+	out[2] = byte(len(my.key))
+	out[3] = byte(keyLen >> 8)
+	out[4] = byte(keyLen)
+	copy(out[5:], encryptedKeyBytes)
+	copy(out[5+keyLen:], fileCipher)
 
 	return os.WriteFile(outFile, out, 0644)
 }
@@ -386,21 +413,35 @@ func (my *AESImpl) DecryptCBCFile(cipherFile, outFile string, asymm secret.Asymm
 		return os.ErrInvalid
 	}
 
-	keyLen = int(data[0])<<8 | int(data[1])
-	if len(data) < 2+keyLen {
+	keySize := 16 // 兼容旧格式默认 AES-128
+	offset := 2
+	if len(data) >= 5 && data[0] == fileHeaderMagic {
+		if data[1] != fileHeaderVersion {
+			return os.ErrInvalid
+		}
+		keySize = int(data[2])
+		if err = validateKeySize(keySize); err != nil {
+			return err
+		}
+		keyLen = int(data[3])<<8 | int(data[4])
+		offset = 5
+	} else {
+		keyLen = int(data[0])<<8 | int(data[1])
+	}
+	if len(data) < offset+keyLen {
 		return os.ErrInvalid
 	}
-	encryptedKeyBase64 = string(data[2 : 2+keyLen])
-	fileCipher = data[2+keyLen:]
+	encryptedKeyBase64 = string(data[offset : offset+keyLen])
+	fileCipher = data[offset+keyLen:]
 
 	if aesKeyAndIV, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
-	if len(aesKeyAndIV) != 32 {
+	if len(aesKeyAndIV) != keySize+blockSize {
 		return os.ErrInvalid
 	}
-	my.key = aesKeyAndIV[:16]
-	my.iv = aesKeyAndIV[16:]
+	my.key = aesKeyAndIV[:keySize]
+	my.iv = aesKeyAndIV[keySize:]
 
 	if plainData, err = my.DecryptCBC(fileCipher); err != nil {
 		return err
@@ -434,11 +475,14 @@ func (my *AESImpl) EncryptCBCLargeFile(plainFile, outFile string, asymm secret.A
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
+	if err = validateKey(my.key); err != nil {
+		return err
+	}
 	if len(encryptedKeyBytes) > 0xFFFF {
 		return errors.New("encrypted key too long")
 	}
 
-	if _, err = outF.Write([]byte{byte(len(encryptedKeyBytes) >> 8), byte(len(encryptedKeyBytes))}); err != nil {
+	if _, err = outF.Write([]byte{fileHeaderMagic, fileHeaderVersion, byte(len(my.key)), byte(len(encryptedKeyBytes) >> 8), byte(len(encryptedKeyBytes))}); err != nil {
 		return err
 	}
 	if _, err = outF.Write(encryptedKeyBytes); err != nil {
@@ -470,10 +514,33 @@ func (my *AESImpl) DecryptCBCLargeFile(cipherFile, outFile string, asymm secret.
 	}
 	defer outF.Close()
 
-	if _, err = io.ReadFull(inF, keyLenBuf); err != nil {
+	head := make([]byte, 1)
+	if _, err = io.ReadFull(inF, head); err != nil {
 		return err
 	}
-	keyLen = int(keyLenBuf[0])<<8 | int(keyLenBuf[1])
+
+	keySize := 16 // 兼容旧格式默认 AES-128
+	if head[0] == fileHeaderMagic {
+		newHeader := make([]byte, 4)
+		if _, err = io.ReadFull(inF, newHeader); err != nil {
+			return err
+		}
+		if newHeader[0] != fileHeaderVersion {
+			return os.ErrInvalid
+		}
+		keySize = int(newHeader[1])
+		if err = validateKeySize(keySize); err != nil {
+			return err
+		}
+		keyLen = int(newHeader[2])<<8 | int(newHeader[3])
+	} else {
+		keyLenBuf[0] = head[0]
+		if _, err = io.ReadFull(inF, keyLenBuf[1:2]); err != nil {
+			return err
+		}
+		keyLen = int(keyLenBuf[0])<<8 | int(keyLenBuf[1])
+	}
+
 	if keyLen <= 0 {
 		return os.ErrInvalid
 	}
@@ -487,11 +554,11 @@ func (my *AESImpl) DecryptCBCLargeFile(cipherFile, outFile string, asymm secret.
 	if aesKeyAndIV, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
-	if len(aesKeyAndIV) != 32 {
+	if len(aesKeyAndIV) != keySize+blockSize {
 		return os.ErrInvalid
 	}
-	my.key = aesKeyAndIV[:16]
-	my.iv = aesKeyAndIV[16:]
+	my.key = aesKeyAndIV[:keySize]
+	my.iv = aesKeyAndIV[keySize:]
 
 	return my.DecryptCBCStream(inF, outF)
 }

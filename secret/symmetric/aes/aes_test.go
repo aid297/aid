@@ -7,99 +7,11 @@ import (
 
 var (
 	testKey   = []byte("1234567890abcdef")
+	testKey24 = []byte("1234567890abcdefghijklmn")
+	testKey32 = []byte("1234567890abcdefghijklmnopqrstuv")
 	testIV    = []byte("abcdef1234567890")
 	testPlain = []byte("hello, AES encrypt test!")
 )
-
-/*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}	}		t.Fatal("expected error for invalid key length")	if err == nil {	_, err = aesHelper.EncryptECB(testPlain)	}		t.Fatalf("创建对象失败：%v", err)	if err != nil {	aesHelper, err := New(KeyString("shortkey"))func TestInvalidKey(t *testing.T) {}	}		t.Fatalf("CBC base64 mismatch: got %s, want %s", plain, testPlain)	if !bytes.Equal(plain, testPlain) {	}		t.Fatalf("DecryptCBCBase64 failed: %v", err)	if err != nil {	plain, err := aesHelper.DecryptCBCBase64(b64)	}		t.Fatalf("EncryptCBCBase64 failed: %v", err)	if err != nil {	b64, err := aesHelper.EncryptCBCBase64(testPlain)	}		t.Fatalf("创建 CBC 对象失败：%v", err)	if err != nil {	aesHelper, err := New(KeyBytes(testKey), IVBytes(testIV))func TestCBCBase64(t *testing.T) {}	}		t.Fatalf("CBC mismatch: got %s, want %s", plain, testPlain)	if !bytes.Equal(plain, testPlain) {	}		t.Fatalf("DecryptCBC failed: %v", err)	if err != nil {	plain, err := aesHelper.DecryptCBC(cipherText)	}		t.Fatalf("EncryptCBC failed: %v", err)	if err != nil {	cipherText, err := aesHelper.EncryptCBC(testPlain)	}		t.Fatalf("创建 CBC 对象失败：%v", err)	if err != nil {	aesHelper, err := New(KeyBytes(testKey), IVBytes(testIV))func TestCBC(t *testing.T) {}	}		t.Fatalf("ECB base64 mismatch: got %s, want %s", plain, testPlain)	if !bytes.Equal(plain, testPlain) {	}		t.Fatalf("DecryptECBBase64 failed: %v", err)	if err != nil {	plain, err := aesHelper.DecryptECBBase64(b64)	}		t.Fatalf("EncryptECBBase64 failed: %v", err)	if err != nil {	b64, err := aesHelper.EncryptECBBase64(testPlain)	}		t.Fatalf("创建 ECB 对象失败：%v", err)	if err != nil {	aesHelper, err := New(KeyBytes(testKey))func TestECBBase64(t *testing.T) {}	t.Logf("ECB OK: %s", plain)	}		t.Fatalf("ECB mismatch: got %s, want %s", plain, testPlain)	if !bytes.Equal(plain, testPlain) {	}		t.Fatalf("DecryptECB failed: %v", err)	if err != nil {	plain, err := aesHelper.DecryptECB(cipherText)	}		t.Fatalf("EncryptECB failed: %v", err)	if err != nil {	cipherText, err := aesHelper.EncryptECB(testPlain)	}		t.Fatalf("创建 ECB 对象失败：%v", err)	if err != nil {	aesHelper, err := New(KeyBytes(testKey))func TestECB(t *testing.T) {)	testPlain = []byte("hello, AES encrypt test!")
-*/
 
 func TestECB(t *testing.T) {
 	aesHelper, err := New(KeyBytes(testKey))
@@ -181,5 +93,70 @@ func TestInvalidKey(t *testing.T) {
 	_, err = aesHelper.EncryptECB(testPlain)
 	if err == nil {
 		t.Fatal("expected error for invalid key length")
+	}
+}
+
+func TestCBC192And256(t *testing.T) {
+	tests := []struct {
+		name string
+		key  []byte
+	}{
+		{name: "AES-192", key: testKey24},
+		{name: "AES-256", key: testKey32},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			aesHelper, err := New(KeyBytes(tt.key), IVBytes(testIV))
+			if err != nil {
+				t.Fatalf("创建 CBC 对象失败：%v", err)
+			}
+			cipherText, err := aesHelper.EncryptCBC(testPlain)
+			if err != nil {
+				t.Fatalf("EncryptCBC failed: %v", err)
+			}
+			plain, err := aesHelper.DecryptCBC(cipherText)
+			if err != nil {
+				t.Fatalf("DecryptCBC failed: %v", err)
+			}
+			if !bytes.Equal(plain, testPlain) {
+				t.Fatalf("CBC mismatch: got %s, want %s", plain, testPlain)
+			}
+		})
+	}
+}
+
+func TestRandKeyWithBits(t *testing.T) {
+	var key []byte
+	aesHelper, err := New(RandKeyWithBits(KeyBits256, &key), RandIV())
+	if err != nil {
+		t.Fatalf("创建对象失败：%v", err)
+	}
+	if len(key) != 32 {
+		t.Fatalf("随机 key 长度错误: got %d, want 32", len(key))
+	}
+	if _, err = aesHelper.EncryptCBC(testPlain); err != nil {
+		t.Fatalf("EncryptCBC failed: %v", err)
+	}
+}
+
+func TestRandKeyWithKeySize(t *testing.T) {
+	var key []byte
+	aesHelper, err := New(KeySize(KeyBits192), RandKey(&key), RandIV())
+	if err != nil {
+		t.Fatalf("创建对象失败：%v", err)
+	}
+	if len(key) != 24 {
+		t.Fatalf("KeySize+RandKey 长度错误: got %d, want 24", len(key))
+	}
+	if _, err = aesHelper.EncryptCBC(testPlain); err != nil {
+		t.Fatalf("EncryptCBC failed: %v", err)
+	}
+}
+
+func TestRandKeyWithBitsInvalid(t *testing.T) {
+	_, err := New(RandKeyWithBits(111), RandIV())
+	if err == nil {
+		t.Fatal("expected error for invalid key bits")
 	}
 }
