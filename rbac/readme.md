@@ -6,8 +6,8 @@
    
    import (
    	`log`
-   	`github.com/aid297/aid/gormPool`
-   	`github.com/aid297/aid/rbac`
+   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/rbac`
    )
    
    func init() {
@@ -42,8 +42,8 @@
    
    import (
    	`log`
-   	`github.com/aid297/aid/gormPool`
-   	`github.com/aid297/aid/rbac`
+   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/rbac`
    )
    
    func init() {
@@ -74,8 +74,8 @@
    
    import (
    	`log`
-   	`github.com/aid297/aid/gormPool`
-   	`github.com/aid297/aid/rbac`
+   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/rbac`
    )
    
    func init() {
@@ -116,8 +116,8 @@
    
    import (
    	`log`
-   	`github.com/aid297/aid/gormPool`
-   	`github.com/aid297/aid/rbac`
+   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/rbac`
    	`github.com/gofrs/uuid/v5`
    )
    
@@ -166,8 +166,8 @@
    import (
    	`log`
    
-   	`github.com/aid297/aid/gormPool`
-   	`github.com/aid297/aid/rbac`
+   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/rbac`
    	`github.com/google/uuid`
    )
    

@@ -6,7 +6,7 @@ package main
 import (
 	`errors`
 
-	`github.com/aid297/aid/logger`
+	`github.com/aid297/aid/v2/logger`
 	`go.uber.org/zap`
 	`go.uber.org/zap/zapcore`
 )

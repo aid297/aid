@@ -4,7 +4,7 @@
 package main
 
 import (
-	"github.com/aid297/aid/daemon"
+	"github.com/aid297/aid/v2/daemon"
 )
 
 func main() {

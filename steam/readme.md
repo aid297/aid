@@ -7,7 +7,7 @@ import (
 	`context`
 	`fmt`
 
-	`github.com/aid297/aid/steam`
+	`github.com/aid297/aid/v2/steam`
 )
 
 func main() {

@@ -6,7 +6,7 @@
    
    import (
    	. `fmt`
-   	`github.com/aid297/aid/operation/operationV2`
+   	`github.com/aid297/aid/v2/operation/operationV2`
    )
    
    func main() {
@@ -25,7 +25,7 @@
    
    import (
    	. `fmt`
-   	`github.com/aid297/aid/operation/operationV2`
+   	`github.com/aid297/aid/v2/operation/operationV2`
    )
    
    type Condition struct {
@@ -66,7 +66,7 @@
    import (
    	. `fmt`
    
-   	`github.com/aid297/aid/operation/operationV2`
+   	`github.com/aid297/aid/v2/operation/operationV2`
    )
    
    func main() {

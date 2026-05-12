@@ -8,8 +8,8 @@ import (
 	`fmt`
 	`log`
 
-	`github.com/aid297/aid/redisPool`
-	`github.com/aid297/aid/time`
+	`github.com/aid297/aid/v2/redisPool`
+	`github.com/aid297/aid/v2/time`
 )
 
 func main() {

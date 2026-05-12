@@ -6,9 +6,9 @@ package main
 import (
 	`log`
 
-	`github.com/aid297/aid/setting`
-	`github.com/aid297/aid/str`
-	`github.com/aid297/aid/web-site/backend/aid-web-backend/src/global`
+	`github.com/aid297/aid/v2/setting`
+	`github.com/aid297/aid/v2/str`
+	`github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global`
 	`github.com/fsnotify/fsnotify`
 	`github.com/spf13/viper`
 )

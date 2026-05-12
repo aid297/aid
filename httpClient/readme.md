@@ -7,7 +7,7 @@
    import (
    	`fmt`
    
-   	`github.com/aid297/aid/httpClient`
+   	`github.com/aid297/aid/v2/httpClient`
    )
    
    func main() {
@@ -34,8 +34,8 @@
    	`log`
    	`net/http`
    
-   	`github.com/aid297/aid/httpClient`
-   	`github.com/aid297/aid/time`
+   	`github.com/aid297/aid/v2/httpClient`
+   	`github.com/aid297/aid/v2/time`
    )
    
    func main() {

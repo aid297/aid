@@ -7,7 +7,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/dict/anyMap"
+   	"github.com/aid297/aid/v2/anyMap"
    )
    
    func main() {
@@ -31,7 +31,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/dict/anyMap"
+   	"github.com/aid297/aid/v2/anyMap"
    )
    
    func main() {
@@ -48,7 +48,7 @@
     import (
         . "fmt"
    
-        "github.com/aid297/aid/dict/anyMap"
+        "github.com/aid297/aid/v2/anyMap"
     )
    
     func main() {
@@ -65,7 +65,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/dict/anyMap"
+   	"github.com/aid297/aid/v2/anyMap"
    )
    
    func main() {
@@ -82,7 +82,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/dict/anyMap"
+   	"github.com/aid297/aid/v2/anyMap"
    )
    
    func main() {
@@ -104,7 +104,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/dict/anyMap"
+   	"github.com/aid297/aid/v2/anyMap"
    )
    
    func main() {
@@ -125,7 +125,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/dict/anyMap"
+   	"github.com/aid297/aid/v2/anyMap"
    )
    
    func main() {
@@ -146,7 +146,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/dict/anyMap"
+   	"github.com/aid297/aid/v2/anyMap"
    )
    
    func main() {
@@ -164,7 +164,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/dict/anyMap"
+   	"github.com/aid297/aid/v2/anyMap"
    )
    
    func main() {
@@ -181,7 +181,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/dict/anyMap"
+    	"github.com/aid297/aid/v2/anyMap"
     )
     
     func main() {
@@ -220,7 +220,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/dict/anyMap"
+    	"github.com/aid297/aid/v2/anyMap"
     	"github.com/spf13/cast"
     )
     
@@ -240,7 +240,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/dict/anyMap"
+    	"github.com/aid297/aid/v2/anyMap"
     )
     
     func main() {
@@ -260,7 +260,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/dict/anyMap"
+    	"github.com/aid297/aid/v2/anyMap"
     )
     
     type User struct {

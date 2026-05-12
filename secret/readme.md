@@ -474,9 +474,9 @@
       	"log"
       	"os"
       
-      	"github.com/aid297/aid/secret"
-      	"github.com/aid297/aid/secret/asymmetric/sm2"
-      	"github.com/aid297/aid/secret/symmetric/sm4"
+      	"github.com/aid297/aid/v2/secret"
+      	"github.com/aid297/aid/v2/secret/asymmetric/sm2"
+      	"github.com/aid297/aid/v2/secret/symmetric/sm4"
       )
       
       // 1. 文件加密/解密演示
@@ -665,9 +665,9 @@
       	"log"
       	"os"
       
-      	"github.com/aid297/aid/secret"
-      	"github.com/aid297/aid/secret/asymmetric/rsa"
-      	"github.com/aid297/aid/secret/symmetric/aes"
+      	"github.com/aid297/aid/v2/secret"
+      	"github.com/aid297/aid/v2/secret/asymmetric/rsa"
+      	"github.com/aid297/aid/v2/secret/symmetric/aes"
       )
       
       // 1. 文件加密/解密演示（RSA + AES）

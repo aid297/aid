@@ -7,7 +7,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/filesystem/filesystem"
+   	"github.com/aid297/aid/v2/filesystem/filesystem"
    )
    
    func main() {
@@ -32,7 +32,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/filesystem/filesystem"
+   	"github.com/aid297/aid/v2/filesystem/filesystem"
    )
    
    func main() {
@@ -57,7 +57,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/filesystem/filesystem"
+   	"github.com/aid297/aid/v2/filesystem/filesystem"
    )
    
    func main() {
@@ -94,7 +94,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/filesystem/filesystemV4"
+   	"github.com/aid297/aid/v2/filesystem/filesystemV4"
    )
    
    func main() {
@@ -118,7 +118,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/filesystem/filesystemV4"
+   	"github.com/aid297/aid/v2/filesystem/filesystemV4"
    )
    
    func main() {
@@ -145,7 +145,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/filesystem/filesystemV4"
+   	"github.com/aid297/aid/v2/filesystem/filesystemV4"
    )
    
    func main() {
@@ -195,7 +195,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/filesystem/filesystemV4"
+   	"github.com/aid297/aid/v2/filesystem/filesystemV4"
    )
    
    func main() {

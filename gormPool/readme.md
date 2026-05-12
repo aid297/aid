@@ -4,7 +4,7 @@
    ```go
    package main
    
-   import `github.com/aid297/aid/gormPool`
+   import `github.com/aid297/aid/v2/gormPool`
    
    func main() {
    	dbSetting, err := gormPool.APP.DBSetting.New("db.yaml") // 读取配置文件
@@ -99,7 +99,7 @@
    package main
    
    import (
-   	`github.com/aid297/aid/gormPool`
+   	`github.com/aid297/aid/v2/gormPool`
    	`gorm.io/gorm`
    )
    
@@ -160,7 +160,7 @@
    package main
    
    import (
-   	`github.com/aid297/aid/gormPool`
+   	`github.com/aid297/aid/v2/gormPool`
    	`gorm.io/gorm`
    )
    

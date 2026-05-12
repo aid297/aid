@@ -6,8 +6,8 @@
 	import (
 		. "fmt"
 
-		"github.com/aid297/aid/array/anySlice"
-		"github.com/aid297/aid/coroutineGroup"
+		"github.com/aid297/aid/v2/anySlice"
+		"github.com/aid297/aid/v2/coroutineGroup"
 	)
 
 	type (

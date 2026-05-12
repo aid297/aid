@@ -7,7 +7,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/compression"
+   	"github.com/aid297/aid/v2/compression"
    )
    
    func main() {
