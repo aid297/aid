@@ -7,16 +7,18 @@ import (
 	"github.com/aid297/aid/v2/daemon"
 )
 
+// 主程序
+// 通过 go main.go -D=true|false启动
 func main() {
-	consoleArg := false
-	configArg := true
+	d := flag.Bool("D", false, "daemon")
+	flag.Parse()
+	debugLogger.Print("启动参数：D %v", *d)
 
-	if consoleArg || configArg {
-		daemon.OnceDaemon().
-			SetTitle("启动程序").             // 程序标题
-			SetLog("logs", "deamon.log"). // 日志文件路径和文件名
-			SetLogEnable(true).           // 是否记录日志
-			Launch()                      // 通过守护进程启动
+	if *d {
+		daemon.OnceDaemon().SetLogEnable(true).SetLogDir(".").Launch()
+		debugLogger.Print("daemon 启动")
+	} else {
+		debugLogger.Printf("daemon 启动")
 	}
 }
 ```

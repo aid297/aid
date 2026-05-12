@@ -20,8 +20,4 @@ func main() {
 	} else {
 		debugLogger.Printf("daemon 启动")
 	}
-
-	// daemon.OnceDaemon().SetTitle("daemon-test").SetLogDir(".").SetLogEnable(false).LaunchWithCondition(*d, func() {
-	// 	debugLogger.Print("启动成功")
-	// })
 }
