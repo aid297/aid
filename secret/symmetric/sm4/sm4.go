@@ -21,10 +21,12 @@ const (
 	ModeCBC             // CBC 模式
 )
 
+var _ secret.Symmetricer = (*SM4Impl)(nil)
+
 type SM4Impl struct{ key, iv []byte }
 
 // New 实例化 SM4Helper
-func New(attrs ...secret.SymmetricAttr) (my secret.Symmetricor, err error) {
+func New(attrs ...secret.SymmetricAttr) (my secret.Symmetricer, err error) {
 	my = &SM4Impl{}
 	err = my.SetAttrs(attrs...)
 	return
@@ -338,7 +340,7 @@ func (my *SM4Impl) DecryptCBCStream(in io.Reader, out io.Writer) error {
 }
 
 // EncryptCBCFile 加密文件
-func (my *SM4Impl) EncryptCBCFile(plainFile, outFile string, asymm secret.Asymmetricor) error {
+func (my *SM4Impl) EncryptCBCFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
 	var (
 		err               error
 		plainData         []byte
@@ -379,7 +381,7 @@ func (my *SM4Impl) EncryptCBCFile(plainFile, outFile string, asymm secret.Asymme
 }
 
 // DecryptCBCFile 解密文件
-func (my *SM4Impl) DecryptCBCFile(cipherFile, outFile string, asymm secret.Asymmetricor) error {
+func (my *SM4Impl) DecryptCBCFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
 	var (
 		err                error
 		data               []byte
@@ -426,7 +428,7 @@ func (my *SM4Impl) DecryptCBCFile(cipherFile, outFile string, asymm secret.Asymm
 }
 
 // EncryptCBCLargeFile 用 非对称+对称 流式加密大文件（TB级）
-func (my *SM4Impl) EncryptCBCLargeFile(plainFile, outFile string, asymm secret.Asymmetricor) error {
+func (my *SM4Impl) EncryptCBCLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -465,7 +467,7 @@ func (my *SM4Impl) EncryptCBCLargeFile(plainFile, outFile string, asymm secret.A
 }
 
 // DecryptCBCLargeFile 用 非对称+对称 流式解密大文件（TB级）
-func (my *SM4Impl) DecryptCBCLargeFile(cipherFile, outFile string, asymm secret.Asymmetricor) error {
+func (my *SM4Impl) DecryptCBCLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
 	var (
 		err                error
 		inF, outF          *os.File

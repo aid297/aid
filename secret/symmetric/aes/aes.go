@@ -13,12 +13,12 @@ import (
 	"github.com/aid297/aid/secret"
 )
 
-var _ secret.Symmetricor = (*AESImpl)(nil)
+var _ secret.Symmetricer = (*AESImpl)(nil)
 
 type AESImpl struct{ key, iv []byte }
 
 // New 实例化 AESHelper
-func New(attrs ...secret.SymmetricAttr) (my secret.Symmetricor, err error) {
+func New(attrs ...secret.SymmetricAttr) (my secret.Symmetricer, err error) {
 	my = &AESImpl{}
 	err = my.SetAttrs(attrs...)
 	return
@@ -331,7 +331,7 @@ func (my *AESImpl) DecryptCBCStream(in io.Reader, out io.Writer) error {
 }
 
 // EncryptCBCFile 加密文件
-func (my *AESImpl) EncryptCBCFile(plainFile, outFile string, asymm secret.Asymmetricor) error {
+func (my *AESImpl) EncryptCBCFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
 	var (
 		err               error
 		plainData         []byte
@@ -368,7 +368,7 @@ func (my *AESImpl) EncryptCBCFile(plainFile, outFile string, asymm secret.Asymme
 }
 
 // DecryptCBCFile 解密文件
-func (my *AESImpl) DecryptCBCFile(cipherFile, outFile string, asymm secret.Asymmetricor) error {
+func (my *AESImpl) DecryptCBCFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
 	var (
 		err                error
 		data               []byte
@@ -410,7 +410,7 @@ func (my *AESImpl) DecryptCBCFile(cipherFile, outFile string, asymm secret.Asymm
 }
 
 // EncryptCBCLargeFile 用 SM2+AES 流式加密大文件（TB级）
-func (my *AESImpl) EncryptCBCLargeFile(plainFile, outFile string, asymm secret.Asymmetricor) error {
+func (my *AESImpl) EncryptCBCLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -449,7 +449,7 @@ func (my *AESImpl) EncryptCBCLargeFile(plainFile, outFile string, asymm secret.A
 }
 
 // DecryptCBCLargeFile 用 SM2+AES 流式解密大文件（TB级）
-func (my *AESImpl) DecryptCBCLargeFile(cipherFile, outFile string, asymm secret.Asymmetricor) error {
+func (my *AESImpl) DecryptCBCLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
 	var (
 		err                error
 		inF, outF          *os.File

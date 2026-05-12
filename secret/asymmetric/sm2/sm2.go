@@ -13,10 +13,12 @@ import (
 	"github.com/aid297/aid/secret"
 )
 
+var _ secret.Asymmetricer = (*SM2Impl)(nil)
+
 type SM2Impl struct{ sem secret.Semener }
 
 // New 实例化
-func New(sem secret.Semener) secret.Asymmetricor { return &SM2Impl{sem: sem} }
+func New(sem secret.Semener) secret.Asymmetricer { return &SM2Impl{sem: sem} }
 
 // Encrypt 加密
 func (my *SM2Impl) Encrypt(plainText []byte) (string, error) {

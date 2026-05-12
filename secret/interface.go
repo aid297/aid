@@ -6,13 +6,8 @@ import (
 	"github.com/tjfoc/gmsm/sm2"
 )
 
-var (
-	_ = (*Asymmetricor)(nil)
-	_ = (*Symmetricor)(nil)
-)
-
 type (
-	Asymmetricor interface {
+	Asymmetricer interface {
 		Encrypt(plainText []byte) (string, error)
 		Decrypt(cipherBase64 string) ([]byte, error)
 		Sign(data []byte) (string, error)
@@ -35,9 +30,9 @@ type (
 		SetPriKeyBase64(priKeyBase64 string) (err error)
 	}
 
-	SymmetricAttr func(symm Symmetricor) (err error)
+	SymmetricAttr func(symm Symmetricer) (err error)
 
-	Symmetricor interface {
+	Symmetricer interface {
 		SetAttrs(attrs ...SymmetricAttr) (err error)                              // 设置属性
 		GetKeyString() string                                                     // 获取 key：string
 		GetKeyBytes() []byte                                                      // 获取 key：bytes
@@ -57,9 +52,9 @@ type (
 		DecryptCBC(cipherText []byte) ([]byte, error)                             // CBC 模式解密
 		EncryptCBCStream(in io.Reader, out io.Writer) error                       // CBC 流式加密（适用于大文件）
 		DecryptCBCStream(in io.Reader, out io.Writer) error                       // CBC 流式解密（适用于大文件）
-		EncryptCBCFile(plainFile, outFile string, asymm Asymmetricor) error       // CBC 加密文件
-		DecryptCBCFile(cipherFile, outFile string, asymm Asymmetricor) error      // CBC 解密文件
-		EncryptCBCLargeFile(plainFile, outFile string, asymm Asymmetricor) error  // CBC 加密大文件
-		DecryptCBCLargeFile(cipherFile, outFile string, asymm Asymmetricor) error // CBC 解密大文件
+		EncryptCBCFile(plainFile, outFile string, asymm Asymmetricer) error       // CBC 加密文件
+		DecryptCBCFile(cipherFile, outFile string, asymm Asymmetricer) error      // CBC 解密文件
+		EncryptCBCLargeFile(plainFile, outFile string, asymm Asymmetricer) error  // CBC 加密大文件
+		DecryptCBCLargeFile(cipherFile, outFile string, asymm Asymmetricer) error // CBC 解密大文件
 	}
 )

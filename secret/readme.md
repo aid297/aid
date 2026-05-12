@@ -261,7 +261,7 @@
       }
       ```
 
-   2. 加解密文件（组合*SM2+SM4-CBC*）
+   2. 加解密文件（组合*Asymmetricer+CBC*）
       ```go
       // 文件加密/解密演示
       func TestCBCEncryptDecryptFile() {
@@ -269,6 +269,7 @@
       	var (
       		err           error
       		sem           secret.Semener
+      		sm2Helper     secret.Asymmetricor
       		plainFile     = "/tmp/sm2_test_plain.txt"
       		encryptedFile = "/tmp/sm2_test_encrypted.bin"
       		decryptedFile = "/tmp/sm2_test_decrypted.txt"
@@ -281,6 +282,8 @@
       		log.Fatalf("生成种子失败：%v", err)
       	}
       
+      	sm2Helper = sm2.New(sem)
+      
       	// 准备测试文件
       	if err = os.WriteFile(plainFile, []byte("这是需要加密的文件内容，可以是任意大小的数据。"), 0644); err != nil {
       		log.Fatalf("写入测试文件失败：%v", err)
@@ -290,13 +293,13 @@
       	if sm4Helper, err = sm4.New(sm4.RandKey(&sm4Key), sm4.RandIV(&sm4IV)); err != nil {
       		log.Fatalf("生成 SM4 失败：%v", err)
       	}
-      	if err = sm4Helper.EncryptCBCFile(plainFile, encryptedFile, sem); err != nil {
+      	if err = sm4Helper.EncryptCBCFile(plainFile, encryptedFile, sm2Helper); err != nil {
       		log.Fatalf("加密失败：%v", err)
       	}
       	log.Printf("加密成功：%s", encryptedFile)
       
       	// 解密
-      	if err = sm4Helper.DecryptCBCFile(encryptedFile, decryptedFile, sem); err != nil {
+      	if err = sm4Helper.DecryptCBCFile(encryptedFile, decryptedFile, sm2Helper); err != nil {
       		log.Fatalf("解密文件失败：%v", err)
       	}
       	log.Printf("解密成功：%s", decryptedFile)

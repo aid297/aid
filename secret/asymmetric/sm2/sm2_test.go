@@ -47,7 +47,7 @@ func TestEncryptDecrypt(t *testing.T) {
 	var (
 		err                error
 		semA, semB         secret.Semener
-		sm2A, sm2B         secret.Asymmetricor
+		sm2A, sm2B         secret.Asymmetricer
 		sm2SemAPriKeyBytes []byte
 		plainText          = []byte("hello, SM2 非对称加密测试!")
 		cipherBase64       string
@@ -92,7 +92,7 @@ func TestSignVerify(t *testing.T) {
 	var (
 		err    error
 		semA   secret.Semener
-		sm2    secret.Asymmetricor
+		sm2    secret.Asymmetricer
 		data   = []byte("hello, SM2 数字签名测试!")
 		sigHex string
 		ok     bool
@@ -123,7 +123,7 @@ func TestVerifyWithWrongData(t *testing.T) {
 	var (
 		err        error
 		semA, semB secret.Semener
-		sm2A, sm2B secret.Asymmetricor
+		sm2A, sm2B secret.Asymmetricer
 		data       = []byte("original data")
 		sigHex     string
 		ok         bool

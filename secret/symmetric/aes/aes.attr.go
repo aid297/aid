@@ -7,23 +7,23 @@ import (
 )
 
 func KeyString(key string) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricor) (err error) { sm4Helper.SetKeyString(key); return }
+	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetKeyString(key); return }
 }
 
 func KeyBytes(key []byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricor) (err error) { sm4Helper.SetKeyBytes(key); return }
+	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetKeyBytes(key); return }
 }
 
 func IVString(iv string) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricor) (err error) { sm4Helper.SetIVString(iv); return }
+	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetIVString(iv); return }
 }
 
 func IVBytes(iv []byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricor) (err error) { sm4Helper.SetIVBytes(iv); return }
+	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetIVBytes(iv); return }
 }
 
 func RandKey(outList ...*[]byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricor) (err error) {
+	return func(sm4Helper secret.Symmetricer) (err error) {
 		key := make([]byte, 16)
 
 		if _, err = rand.Read(key); err != nil {
@@ -42,7 +42,7 @@ func RandKey(outList ...*[]byte) secret.SymmetricAttr {
 }
 
 func RandIV(outList ...*[]byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricor) (err error) {
+	return func(sm4Helper secret.Symmetricer) (err error) {
 		iv := make([]byte, 16)
 
 		if _, err = rand.Read(iv); err != nil {

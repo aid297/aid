@@ -74,11 +74,11 @@ func TestCBCEncryptDecryptFile() {
 	var (
 		err           error
 		sem           secret.Semener
-		sm2Helper     secret.Asymmetricor
+		sm2Helper     secret.Asymmetricer
 		plainFile     = "/tmp/sm2_test_plain.txt"
 		encryptedFile = "/tmp/sm2_test_encrypted.bin"
 		decryptedFile = "/tmp/sm2_test_decrypted.txt"
-		sm4Helper     secret.Symmetricor
+		sm4Helper     secret.Symmetricer
 		sm4Key        []byte
 		sm4IV         []byte
 	)
@@ -124,12 +124,12 @@ func TestCBCLargeFileEncryptDecrypt() {
 	var (
 		err           error
 		sem           secret.Semener
-		sm2Helper     secret.Asymmetricor
+		sm2Helper     secret.Asymmetricer
 		plainFile           = "/tmp/sm2_test_large_plain.bin"
 		encryptedFile       = "/tmp/sm2_test_large_encrypted.bin"
 		decryptedFile       = "/tmp/sm2_test_large_decrypted.bin"
 		fileSize      int64 = 64 * 1024 * 1024 // 64MB 演示
-		sm4Helper     secret.Symmetricor
+		sm4Helper     secret.Symmetricer
 	)
 
 	if sem, err = sm2.NewSem(); err != nil {
