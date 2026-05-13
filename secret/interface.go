@@ -21,15 +21,18 @@ type (
 	Semener interface {
 		SetAttrs(attrs ...SemenerAttr) error             // 设置属性
 		GeneratePriKey() (err error)                     // 生成私钥
-		GetPriKey() SemenerPriKey                        // 获取私钥：crypto.PrivateKey(secret.SemenerPriKey)
-		GetPriKeyBytes() ([]byte, error)                 // 获取私钥：bytes
-		GetPriKeyBase64() (string, error)                // 获取私钥：base64
-		GetPubKey() SemenerPubKey                        // 获取公钥：crypto.PublicKey(secret.SemenerPubKey)
+		SetPubKey(pubKey SemenerPubKey) (err error)      // 设置公钥：crypto.PublicKey(secret.SemenerPubKey)
+		SetPubKeyBytes(pubKeyBytes []byte) (err error)   // 设置公钥：bytes
+		SetPubKeyBase64(pubKeyBase64 string) (err error) // 设置公钥：base64
+		GetPubKey() SemenerPubKey                        // 获取公钥：crypto.PublicKey(secret.SemenerPubKey) 如果公钥存在则返回公钥，如果公钥不存在则使用私钥返回公钥
 		GetPubKeyBytes() ([]byte, error)                 // 获取公钥：bytes
 		GetPubKeyBase64() (string, error)                // 获取公钥：base64
 		SetPriKey(priKey SemenerPriKey) (err error)      // 获取私钥：crypto.PrivateKey(secret.SemenerPriKey)
 		SetPriKeyBytes(priKeyBytes []byte) (err error)   // 设置私钥：bytes
 		SetPriKeyBase64(priKeyBase64 string) (err error) // 设置私钥：base64
+		GetPriKey() SemenerPriKey                        // 获取私钥：crypto.PrivateKey(secret.SemenerPriKey)
+		GetPriKeyBytes() ([]byte, error)                 // 获取私钥：bytes
+		GetPriKeyBase64() (string, error)                // 获取私钥：base64
 	}
 
 	SymmetricAttr func(symm Symmetricer) (err error) // 对称加密属性
