@@ -12,7 +12,7 @@
       		pubKeyBytes, priKeyBytes   []byte
       	)
       
-      	if sem, err = NewSem(); err != nil {
+      	if sem, err = sm2.NewSem(); err != nil {
       		t.Fatalf("生成种子失败：%v", err)
       	}
       
@@ -49,18 +49,18 @@
       	var (
       		err                error
       		semA, semB         secret.Semener
-      		sm2A, sm2B         secret.Asymmetricor
+      		sm2A, sm2B         secret.Asymmetricer
       		sm2SemAPriKeyBytes []byte
       		plainText          = []byte("hello, SM2 非对称加密测试!")
       		cipherBase64       string
       		decrypted          []byte
       	)
       
-      	if semA, err = NewSem(); err != nil {
+      	if semA, err = sm2.NewSem(); err != nil {
       		t.Fatalf("生成加密种子失败：%v", err)
       	}
       
-      	sm2A = New(semA)
+      	sm2A = sm2.New(semA)
       
       	if cipherBase64, err = sm2A.Encrypt(plainText); err != nil {
       		t.Fatalf("加密错误：%v", err)
@@ -71,14 +71,14 @@
       		t.Fatalf("获取私钥失败：%v", err)
       	}
       
-      	if semB, err = NewSem(PriKeyBytes(sm2SemAPriKeyBytes)); err != nil {
+      	if semB, err = sm2.NewSem(sm2.PriKeyBytes(sm2SemAPriKeyBytes)); err != nil {
       		t.Fatalf("生成解密种子失败：%v", err)
       	}
       	a, _ := semB.GetPriKeyBase64()
       	b, _ := semB.GetPubKeyBase64()
       	t.Logf("解密种子私钥：%s, 公钥：%s", a, b)
       
-      	sm2B = New(semB)
+      	sm2B = sm2.New(semB)
       
       	if decrypted, err = sm2B.Decrypt(cipherBase64); err != nil {
       		t.Fatalf("解密错误：%v", err)
@@ -97,26 +97,26 @@
       ```go
       func TestSignVerify(t *testing.T) {
       	var (
-      		err    error
-      		semA   secret.Semener
-      		sm2    secret.Asymmetricor
-      		data   = []byte("hello, SM2 数字签名测试!")
-      		sigHex string
-      		ok     bool
+      		err       error
+      		semA      secret.Semener
+      		sm2Helper secret.Asymmetricer
+      		data      = []byte("hello, SM2 数字签名测试!")
+      		sigHex    string
+      		ok        bool
       	)
       
-      	if semA, err = NewSem(); err != nil {
+      	if semA, err = sm2.NewSem(); err != nil {
       		t.Fatalf("生成种子失败：%v", err)
       	}
       
-      	sm2 = New(semA)
+      	sm2Helper = sm2.New(semA)
       
-      	if sigHex, err = sm2.Sign(data); err != nil {
+      	if sigHex, err = sm2Helper.Sign(data); err != nil {
       		t.Fatalf("签名失败：%v", err)
       	}
       	t.Logf("签名内容(hex): %s", sigHex)
       
-      	if ok, err = sm2.Verify(data, sigHex); err != nil {
+      	if ok, err = sm2Helper.Verify(data, sigHex); err != nil {
       		t.Fatalf("验证失败：%v", err)
       	}
       	if !ok {
@@ -125,6 +125,45 @@
       
       	t.Logf("验证成功")
       }
+      
+      func TestVerifyWithWrongData(t *testing.T) {
+      	var (
+      		err        error
+      		semA, semB secret.Semener
+      		sm2A, sm2B secret.Asymmetricer
+      		data       = []byte("original data")
+      		sigHex     string
+      		ok         bool
+      	)
+      	if semA, err = sm2.NewSem(); err != nil {
+      		t.Fatalf("生成种子失败：%v", err)
+      	}
+      
+      	if err = sm2.MustGeneratePriKey(semA); err != nil {
+      		t.Fatalf("%v", err)
+      	}
+      
+      	sm2A = sm2.New(semA)
+      
+      	if sigHex, err = sm2A.Sign(data); err != nil {
+      		t.Fatalf("签名失败：%v", err)
+      	}
+      
+      	semB, err = sm2.NewSem(sm2.PriKey(semA.GetPriKey()))
+      	if err != nil {
+      		t.Fatalf("生成解密种子失败：%v", err)
+      	}
+      
+      	sm2B = sm2.New(semB)
+      
+      	if ok, err = sm2B.Verify([]byte("tampered data"), sigHex); err != nil {
+      		t.Fatalf("验证失败：%v", err)
+      	}
+      	if ok {
+      		t.Fatal("篡改数据的验证应失败")
+      	}
+      	t.Logf("篡改数据正确被拒绝")
+      }
       ```
 
 2. 非对称加密（*RSA*）
@@ -132,12 +171,12 @@
    1. 基本用法
       ```go
       func TestEncryptDecrypt(t *testing.T) {
-      	pub, pri, err := GenerateKeyPairBase64(2048)
+      	pub, pri, err := rsa.GenerateKeyPairBase64(2048)
       	if err != nil {
       		t.Fatalf("generate key failed: %v", err)
       	}
       
-      	helper, err := NewByBase64(pub, pri)
+      	helper, err := rsa.NewByBase64(pub, pri)
       	if err != nil {
       		t.Fatalf("new helper failed: %v", err)
       	}
@@ -161,12 +200,12 @@
    2. 签名&验证
       ```go
       func TestSignVerify(t *testing.T) {
-      	pub, pri, err := GenerateKeyPairBase64(2048)
+      	pub, pri, err := rsa.GenerateKeyPairBase64(2048)
       	if err != nil {
       		t.Fatalf("generate key failed: %v", err)
       	}
       
-      	helper, err := NewByBase64(pub, pri)
+      	helper, err := rsa.NewByBase64(pub, pri)
       	if err != nil {
       		t.Fatalf("new helper failed: %v", err)
       	}
@@ -195,14 +234,12 @@
       }
       ```
 
-      
-
 3. 对称加密（*SM4-ECB*）
 
    1. 基本用法
       ```go
       func TestECB(t *testing.T) {
-      	sm4Helper, err := New(KeyBytes(testKey))
+      	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey))
       	if err != nil {
       		t.Fatalf("创建 ECB 对象失败：%v", err)
       	}
@@ -220,24 +257,24 @@
       	t.Logf("ECB OK: %s", plain)
       }
       
-      
-      func TestECB(t *testing.T) {
-      	sm4Helper, err := New(KeyBytes(testKey))
+      func TestECBBase64(t *testing.T) {
+      	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey))
       	if err != nil {
       		t.Fatalf("创建 ECB 对象失败：%v", err)
       	}
-      	cipherText, err := sm4Helper.EncryptECB(testPlain)
+      	b64, err := sm4Helper.EncryptECBBase64(testPlain)
       	if err != nil {
-      		t.Fatalf("EncryptECB failed: %v", err)
+      		t.Fatalf("EncryptECBBase64 failed: %v", err)
       	}
-      	plain, err := sm4Helper.DecryptECB(cipherText)
+      	t.Logf("ECB base64: %s", b64)
+      	plain, err := sm4Helper.DecryptECBBase64(b64)
       	if err != nil {
-      		t.Fatalf("DecryptECB failed: %v", err)
+      		t.Fatalf("DecryptECBBase64 failed: %v", err)
       	}
       	if !bytes.Equal(plain, testPlain) {
-      		t.Fatalf("ECB mismatch: got %s, want %s", plain, testPlain)
+      		t.Fatalf("ECB base64 mismatch: got %s, want %s", plain, testPlain)
       	}
-      	t.Logf("ECB OK: %s", plain)
+      	t.Logf("ECB base64 OK: %s", plain)
       }
       ```
 
@@ -246,7 +283,7 @@
    1. 基本用法
       ```go
       func TestCBC(t *testing.T) {
-      	sm4Helper, err := New(KeyBytes(testKey), IVBytes(testIV))
+      	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
       	if err != nil {
       		t.Fatalf("创建 CBC 对象失败：%v", err)
       	}
@@ -265,7 +302,7 @@
       }
       
       func TestCBCBase64(t *testing.T) {
-      	sm4Helper, err := New(KeyBytes(testKey), IVBytes(testIV))
+      	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
       	if err != nil {
       		t.Fatalf("创建 CBC 对象失败：%v", err)
       	}
@@ -285,7 +322,7 @@
       }
       
       func TestInvalidKey(t *testing.T) {
-      	sm4Helper, err := New(KeyString("shortkey"))
+      	sm4Helper, err := sm4.New(sm4.KeyString("shortkey"))
       	if err != nil {
       		t.Fatalf("创建对象失败：%v", err)
       	}
@@ -308,7 +345,7 @@
       		testPlain = []byte("hello, AES encrypt test!")
       	)
       
-      	aesHelper, err := New(KeyBytes(testKey))
+      	aesHelper, err := aes.New(aes.KeyBytes(testKey))
       	if err != nil {
       		t.Fatalf("创建 ECB 对象失败：%v", err)
       	}
@@ -334,7 +371,7 @@
       		testPlain = []byte("hello, AES encrypt test!")
       	)
       
-      	aesHelper, err := New(KeyBytes(testKey))
+      	aesHelper, err := aes.New(aes.KeyBytes(testKey))
       	if err != nil {
       		t.Fatalf("创建 ECB 对象失败：%v", err)
       	}
@@ -366,7 +403,7 @@
       		testPlain = []byte("hello, AES encrypt test!")
       	)
       
-      	aesHelper, err := New(KeyBytes(testKey), IVBytes(testIV))
+      	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testIV))
       	if err != nil {
       		t.Fatalf("创建 CBC 对象失败：%v", err)
       	}
@@ -393,7 +430,7 @@
       		testPlain = []byte("hello, AES encrypt test!")
       	)
       
-      	aesHelper, err := New(KeyBytes(testKey), IVBytes(testIV))
+      	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testIV))
       	if err != nil {
       		t.Fatalf("创建 CBC 对象失败：%v", err)
       	}
@@ -416,7 +453,7 @@
       func TestInvalidKey(t *testing.T) {
       	var testPlain = []byte("hello, AES encrypt test!")
       
-      	aesHelper, err := New(KeyString("shortkey"))
+      	aesHelper, err := aes.New(aes.KeyString("shortkey"))
       	if err != nil {
       		t.Fatalf("创建对象失败：%v", err)
       	}
@@ -448,7 +485,7 @@
       
       	for _, tt := range tests {
       		t.Run(tt.name, func(t *testing.T) {
-      			aesHelper, err := New(KeyBytes(tt.key), IVBytes(testIV))
+      			aesHelper, err := aes.New(aes.KeyBytes(tt.key), aes.IVBytes(testIV))
       			if err != nil {
       				t.Fatalf("创建 CBC 对象失败：%v", err)
       			}
@@ -473,7 +510,7 @@
       		testPlain = []byte("hello, AES encrypt test!")
       	)
       
-      	aesHelper, err := New(RandKeyWithBits(KeyBits256, &key), RandIV())
+      	aesHelper, err := aes.New(aes.RandKeyWithBits(aes.KeyBits256, &key), aes.RandIV())
       	if err != nil {
       		t.Fatalf("创建对象失败：%v", err)
       	}
@@ -493,7 +530,7 @@
       		testPlain = []byte("hello, AES encrypt test!")
       	)
       
-      	aesHelper, err := New(KeySize(KeyBits192), RandKey(&key), RandIV())
+      	aesHelper, err := aes.New(aes.KeySize(aes.KeyBits192), aes.RandKey(&key), aes.RandIV())
       	if err != nil {
       		t.Fatalf("创建对象失败：%v", err)
       	}
@@ -508,7 +545,7 @@
       }
       
       func TestRandKeyWithBitsInvalid(t *testing.T) {
-      	_, err := New(RandKeyWithBits(111), RandIV())
+      	_, err := aes.New(aes.RandKeyWithBits(111), aes.RandIV())
       	if err == nil {
       		t.Fatal("expected error for invalid key bits")
       	}
@@ -752,7 +789,7 @@
       		log.Fatalf("写入测试文件失败：%v", err)
       	}
       
-      	if aesHelper, err = aes.New(aes.RandKey(&aesKey), aes.RandIV(&aesIV)); err != nil {
+      	if aesHelper, err = aes.New(aes.RandKeyWithBits(192, &aesKey), aes.RandIV(&aesIV)); err != nil {
       		log.Fatalf("生成 AES 失败：%v", err)
       	}
       	if err = aesHelper.EncryptCBCFile(plainFile, encryptedFile, rsaHelper); err != nil {
@@ -824,7 +861,7 @@
       		log.Fatalf("生成大文件失败：%v", err)
       	}
       
-      	if aesHelper, err = aes.New(aes.RandKey(), aes.RandIV()); err != nil {
+      	if aesHelper, err = aes.New(aes.RandKeyWithBits(aes.KeyBits256), aes.RandIV()); err != nil {
       		log.Fatalf("生成 AES 失败：%v", err)
       	}
       
@@ -896,5 +933,3 @@
       
       func main() { TestCBCLargeFileEncryptDecrypt() }
       ```
-
-   3. 

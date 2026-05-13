@@ -1,8 +1,10 @@
-package aes
+package main
 
 import (
 	"bytes"
 	"testing"
+
+	"github.com/aid297/aid/v2/secret/symmetric/aes"
 )
 
 func TestECB(t *testing.T) {
@@ -11,7 +13,7 @@ func TestECB(t *testing.T) {
 		testPlain = []byte("hello, AES encrypt test!")
 	)
 
-	aesHelper, err := New(KeyBytes(testKey))
+	aesHelper, err := aes.New(aes.KeyBytes(testKey))
 	if err != nil {
 		t.Fatalf("创建 ECB 对象失败：%v", err)
 	}
@@ -37,7 +39,7 @@ func TestECBBase64(t *testing.T) {
 		testPlain = []byte("hello, AES encrypt test!")
 	)
 
-	aesHelper, err := New(KeyBytes(testKey))
+	aesHelper, err := aes.New(aes.KeyBytes(testKey))
 	if err != nil {
 		t.Fatalf("创建 ECB 对象失败：%v", err)
 	}
@@ -64,7 +66,7 @@ func TestCBC(t *testing.T) {
 		testPlain = []byte("hello, AES encrypt test!")
 	)
 
-	aesHelper, err := New(KeyBytes(testKey), IVBytes(testIV))
+	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testIV))
 	if err != nil {
 		t.Fatalf("创建 CBC 对象失败：%v", err)
 	}
@@ -91,7 +93,7 @@ func TestCBCBase64(t *testing.T) {
 		testPlain = []byte("hello, AES encrypt test!")
 	)
 
-	aesHelper, err := New(KeyBytes(testKey), IVBytes(testIV))
+	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testIV))
 	if err != nil {
 		t.Fatalf("创建 CBC 对象失败：%v", err)
 	}
@@ -114,7 +116,7 @@ func TestCBCBase64(t *testing.T) {
 func TestInvalidKey(t *testing.T) {
 	var testPlain = []byte("hello, AES encrypt test!")
 
-	aesHelper, err := New(KeyString("shortkey"))
+	aesHelper, err := aes.New(aes.KeyString("shortkey"))
 	if err != nil {
 		t.Fatalf("创建对象失败：%v", err)
 	}
@@ -142,7 +144,7 @@ func TestCBC192And256(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			aesHelper, err := New(KeyBytes(tt.key), IVBytes(testIV))
+			aesHelper, err := aes.New(aes.KeyBytes(tt.key), aes.IVBytes(testIV))
 			if err != nil {
 				t.Fatalf("创建 CBC 对象失败：%v", err)
 			}
@@ -167,7 +169,7 @@ func TestRandKeyWithBits(t *testing.T) {
 		testPlain = []byte("hello, AES encrypt test!")
 	)
 
-	aesHelper, err := New(RandKeyWithBits(KeyBits256, &key), RandIV())
+	aesHelper, err := aes.New(aes.RandKeyWithBits(aes.KeyBits256, &key), aes.RandIV())
 	if err != nil {
 		t.Fatalf("创建对象失败：%v", err)
 	}
@@ -187,7 +189,7 @@ func TestRandKeyWithKeySize(t *testing.T) {
 		testPlain = []byte("hello, AES encrypt test!")
 	)
 
-	aesHelper, err := New(KeySize(KeyBits192), RandKey(&key), RandIV())
+	aesHelper, err := aes.New(aes.KeySize(aes.KeyBits192), aes.RandKey(&key), aes.RandIV())
 	if err != nil {
 		t.Fatalf("创建对象失败：%v", err)
 	}
@@ -202,7 +204,7 @@ func TestRandKeyWithKeySize(t *testing.T) {
 }
 
 func TestRandKeyWithBitsInvalid(t *testing.T) {
-	_, err := New(RandKeyWithBits(111), RandIV())
+	_, err := aes.New(aes.RandKeyWithBits(111), aes.RandIV())
 	if err == nil {
 		t.Fatal("expected error for invalid key bits")
 	}

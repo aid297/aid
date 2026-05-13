@@ -111,7 +111,7 @@ func TestCBCLargeFileEncryptDecrypt() {
 		log.Fatalf("生成大文件失败：%v", err)
 	}
 
-	if aesHelper, err = aes.New(aes.RandKeyWithBits(256), aes.RandIV()); err != nil {
+	if aesHelper, err = aes.New(aes.RandKeyWithBits(aes.KeyBits256), aes.RandIV()); err != nil {
 		log.Fatalf("生成 AES 失败：%v", err)
 	}
 

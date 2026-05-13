@@ -1,10 +1,11 @@
-package sm2
+package main
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/aid297/aid/v2/secret"
+	"github.com/aid297/aid/v2/secret/asymmetric/sm2"
 )
 
 func TestGenerateKeyPair(t *testing.T) {
@@ -15,7 +16,7 @@ func TestGenerateKeyPair(t *testing.T) {
 		pubKeyBytes, priKeyBytes   []byte
 	)
 
-	if sem, err = NewSem(); err != nil {
+	if sem, err = sm2.NewSem(); err != nil {
 		t.Fatalf("生成种子失败：%v", err)
 	}
 
@@ -54,11 +55,11 @@ func TestEncryptDecrypt(t *testing.T) {
 		decrypted          []byte
 	)
 
-	if semA, err = NewSem(); err != nil {
+	if semA, err = sm2.NewSem(); err != nil {
 		t.Fatalf("生成加密种子失败：%v", err)
 	}
 
-	sm2A = New(semA)
+	sm2A = sm2.New(semA)
 
 	if cipherBase64, err = sm2A.Encrypt(plainText); err != nil {
 		t.Fatalf("加密错误：%v", err)
@@ -69,14 +70,14 @@ func TestEncryptDecrypt(t *testing.T) {
 		t.Fatalf("获取私钥失败：%v", err)
 	}
 
-	if semB, err = NewSem(PriKeyBytes(sm2SemAPriKeyBytes)); err != nil {
+	if semB, err = sm2.NewSem(sm2.PriKeyBytes(sm2SemAPriKeyBytes)); err != nil {
 		t.Fatalf("生成解密种子失败：%v", err)
 	}
 	a, _ := semB.GetPriKeyBase64()
 	b, _ := semB.GetPubKeyBase64()
 	t.Logf("解密种子私钥：%s, 公钥：%s", a, b)
 
-	sm2B = New(semB)
+	sm2B = sm2.New(semB)
 
 	if decrypted, err = sm2B.Decrypt(cipherBase64); err != nil {
 		t.Fatalf("解密错误：%v", err)
@@ -90,26 +91,26 @@ func TestEncryptDecrypt(t *testing.T) {
 
 func TestSignVerify(t *testing.T) {
 	var (
-		err    error
-		semA   secret.Semener
-		sm2    secret.Asymmetricer
-		data   = []byte("hello, SM2 数字签名测试!")
-		sigHex string
-		ok     bool
+		err       error
+		semA      secret.Semener
+		sm2Helper secret.Asymmetricer
+		data      = []byte("hello, SM2 数字签名测试!")
+		sigHex    string
+		ok        bool
 	)
 
-	if semA, err = NewSem(); err != nil {
+	if semA, err = sm2.NewSem(); err != nil {
 		t.Fatalf("生成种子失败：%v", err)
 	}
 
-	sm2 = New(semA)
+	sm2Helper = sm2.New(semA)
 
-	if sigHex, err = sm2.Sign(data); err != nil {
+	if sigHex, err = sm2Helper.Sign(data); err != nil {
 		t.Fatalf("签名失败：%v", err)
 	}
 	t.Logf("签名内容(hex): %s", sigHex)
 
-	if ok, err = sm2.Verify(data, sigHex); err != nil {
+	if ok, err = sm2Helper.Verify(data, sigHex); err != nil {
 		t.Fatalf("验证失败：%v", err)
 	}
 	if !ok {
@@ -128,26 +129,26 @@ func TestVerifyWithWrongData(t *testing.T) {
 		sigHex     string
 		ok         bool
 	)
-	if semA, err = NewSem(); err != nil {
+	if semA, err = sm2.NewSem(); err != nil {
 		t.Fatalf("生成种子失败：%v", err)
 	}
 
-	if err = MustGeneratePriKey(semA); err != nil {
+	if err = sm2.MustGeneratePriKey(semA); err != nil {
 		t.Fatalf("%v", err)
 	}
 
-	sm2A = New(semA)
+	sm2A = sm2.New(semA)
 
 	if sigHex, err = sm2A.Sign(data); err != nil {
 		t.Fatalf("签名失败：%v", err)
 	}
 
-	semB, err = NewSem(PriKey(semA.GetPriKey()))
+	semB, err = sm2.NewSem(sm2.PriKey(semA.GetPriKey()))
 	if err != nil {
 		t.Fatalf("生成解密种子失败：%v", err)
 	}
 
-	sm2B = New(semB)
+	sm2B = sm2.New(semB)
 
 	if ok, err = sm2B.Verify([]byte("tampered data"), sigHex); err != nil {
 		t.Fatalf("验证失败：%v", err)

@@ -1,17 +1,19 @@
-package rsa
+package main
 
 import (
 	"bytes"
 	"testing"
+
+	"github.com/aid297/aid/v2/secret/asymmetric/rsa"
 )
 
 func TestEncryptDecrypt(t *testing.T) {
-	pub, pri, err := GenerateKeyPairBase64(2048)
+	pub, pri, err := rsa.GenerateKeyPairBase64(2048)
 	if err != nil {
 		t.Fatalf("generate key failed: %v", err)
 	}
 
-	helper, err := NewByBase64(pub, pri)
+	helper, err := rsa.NewByBase64(pub, pri)
 	if err != nil {
 		t.Fatalf("new helper failed: %v", err)
 	}
@@ -32,12 +34,12 @@ func TestEncryptDecrypt(t *testing.T) {
 }
 
 func TestSignVerify(t *testing.T) {
-	pub, pri, err := GenerateKeyPairBase64(2048)
+	pub, pri, err := rsa.GenerateKeyPairBase64(2048)
 	if err != nil {
 		t.Fatalf("generate key failed: %v", err)
 	}
 
-	helper, err := NewByBase64(pub, pri)
+	helper, err := rsa.NewByBase64(pub, pri)
 	if err != nil {
 		t.Fatalf("new helper failed: %v", err)
 	}

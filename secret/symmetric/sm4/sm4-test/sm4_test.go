@@ -1,8 +1,10 @@
-package sm4
+package main
 
 import (
 	"bytes"
 	"testing"
+
+	"github.com/aid297/aid/v2/secret/symmetric/sm4"
 )
 
 var (
@@ -12,7 +14,7 @@ var (
 )
 
 func TestECB(t *testing.T) {
-	sm4Helper, err := New(KeyBytes(testKey))
+	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey))
 	if err != nil {
 		t.Fatalf("创建 ECB 对象失败：%v", err)
 	}
@@ -31,7 +33,7 @@ func TestECB(t *testing.T) {
 }
 
 func TestECBBase64(t *testing.T) {
-	sm4Helper, err := New(KeyBytes(testKey))
+	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey))
 	if err != nil {
 		t.Fatalf("创建 ECB 对象失败：%v", err)
 	}
@@ -51,7 +53,7 @@ func TestECBBase64(t *testing.T) {
 }
 
 func TestCBC(t *testing.T) {
-	sm4Helper, err := New(KeyBytes(testKey), IVBytes(testIV))
+	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
 	if err != nil {
 		t.Fatalf("创建 CBC 对象失败：%v", err)
 	}
@@ -70,7 +72,7 @@ func TestCBC(t *testing.T) {
 }
 
 func TestCBCBase64(t *testing.T) {
-	sm4Helper, err := New(KeyBytes(testKey), IVBytes(testIV))
+	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
 	if err != nil {
 		t.Fatalf("创建 CBC 对象失败：%v", err)
 	}
@@ -90,7 +92,7 @@ func TestCBCBase64(t *testing.T) {
 }
 
 func TestInvalidKey(t *testing.T) {
-	sm4Helper, err := New(KeyString("shortkey"))
+	sm4Helper, err := sm4.New(sm4.KeyString("shortkey"))
 	if err != nil {
 		t.Fatalf("创建对象失败：%v", err)
 	}
