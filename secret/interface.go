@@ -7,32 +7,32 @@ import (
 
 type (
 	Asymmetricer interface {
-		Encrypt(plainText []byte) (string, error)
-		Decrypt(cipherBase64 string) ([]byte, error)
-		Sign(data []byte) (string, error)
-		Verify(data []byte, sigHex string) (bool, error)
+		Encrypt(plainText []byte) (string, error)        // 非对称加密
+		Decrypt(cipherBase64 string) ([]byte, error)     // 非对称解密
+		Sign(data []byte) (string, error)                // 非对称签名
+		Verify(data []byte, sigHex string) (bool, error) // 非对称验签
 	}
 
-	SemenerPriKey interface{ Public() crypto.PublicKey }
-	SemenerPubKey crypto.PublicKey
+	SemenerPriKey interface{ Public() crypto.PublicKey } // 非对称加密种子私钥
+	SemenerPubKey crypto.PublicKey                       // 非对称加密种子公钥
 
-	SemenerAttr func(sm2Sem Semener) error
+	SemenerAttr func(sm2Sem Semener) error // 非对称加密种子属性
 
 	Semener interface {
-		SetAttrs(attrs ...SemenerAttr) error
-		GeneratePriKey() (err error)
-		GetPriKey() SemenerPriKey
-		GetPriKeyBytes() ([]byte, error)
-		GetPriKeyBase64() (string, error)
-		GetPubKey() SemenerPubKey
-		GetPubKeyBytes() ([]byte, error)
-		GetPubKeyBase64() (string, error)
-		SetPriKey(priKey SemenerPriKey) (err error)
-		SetPriKeyBytes(priKeyBytes []byte) (err error)
-		SetPriKeyBase64(priKeyBase64 string) (err error)
+		SetAttrs(attrs ...SemenerAttr) error             // 设置属性
+		GeneratePriKey() (err error)                     // 生成私钥
+		GetPriKey() SemenerPriKey                        // 获取私钥：crypto.PrivateKey(secret.SemenerPriKey)
+		GetPriKeyBytes() ([]byte, error)                 // 获取私钥：bytes
+		GetPriKeyBase64() (string, error)                // 获取私钥：base64
+		GetPubKey() SemenerPubKey                        // 获取公钥：crypto.PublicKey(secret.SemenerPubKey)
+		GetPubKeyBytes() ([]byte, error)                 // 获取公钥：bytes
+		GetPubKeyBase64() (string, error)                // 获取公钥：base64
+		SetPriKey(priKey SemenerPriKey) (err error)      // 获取私钥：crypto.PrivateKey(secret.SemenerPriKey)
+		SetPriKeyBytes(priKeyBytes []byte) (err error)   // 设置私钥：bytes
+		SetPriKeyBase64(priKeyBase64 string) (err error) // 设置私钥：base64
 	}
 
-	SymmetricAttr func(symm Symmetricer) (err error)
+	SymmetricAttr func(symm Symmetricer) (err error) // 对称加密属性
 
 	Symmetricer interface {
 		SetAttrs(attrs ...SymmetricAttr) (err error)                              // 设置属性
