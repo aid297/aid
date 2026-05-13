@@ -47,40 +47,40 @@
       ```go
       func TestEncryptDecrypt(t *testing.T) {
       	var (
-      		err                error
-      		semA, semB         secret.Semener
-      		sm2A, sm2B         secret.Asymmetricer
-      		sm2SemAPriKeyBytes []byte
-      		plainText          = []byte("hello, SM2 非对称加密测试!")
-      		cipherBase64       string
-      		decrypted          []byte
+      		err                        error
+      		semEncrypter, semDecrypter secret.Semener
+      		sm2Encrypter, sm2Decrypter secret.Asymmetricer
+      		sm2SemAPriKeyBytes         []byte
+      		plainText                  = []byte("hello, SM2 非对称加密测试!")
+      		cipherBase64               string
+      		decrypted                  []byte
       	)
       
-      	if semA, err = sm2.NewSem(); err != nil {
+      	if semEncrypter, err = sm2.NewSem(); err != nil {
       		t.Fatalf("生成加密种子失败：%v", err)
       	}
       
-      	sm2A = sm2.New(semA)
+      	sm2Encrypter = sm2.New(semEncrypter)
       
-      	if cipherBase64, err = sm2A.Encrypt(plainText); err != nil {
+      	if cipherBase64, err = sm2Encrypter.Encrypt(plainText); err != nil {
       		t.Fatalf("加密错误：%v", err)
       	}
       	t.Logf("加密结果：%s\n", cipherBase64)
       
-      	if sm2SemAPriKeyBytes, err = semA.GetPriKeyBytes(); err != nil {
+      	if sm2SemAPriKeyBytes, err = semEncrypter.GetPriKeyBytes(); err != nil {
       		t.Fatalf("获取私钥失败：%v", err)
       	}
       
-      	if semB, err = sm2.NewSem(sm2.PriKeyBytes(sm2SemAPriKeyBytes)); err != nil {
+      	if semDecrypter, err = sm2.NewSem(sm2.PriKeyBytes(sm2SemAPriKeyBytes)); err != nil {
       		t.Fatalf("生成解密种子失败：%v", err)
       	}
-      	a, _ := semB.GetPriKeyBase64()
-      	b, _ := semB.GetPubKeyBase64()
+      	a, _ := semDecrypter.GetPriKeyBase64()
+      	b, _ := semDecrypter.GetPubKeyBase64()
       	t.Logf("解密种子私钥：%s, 公钥：%s", a, b)
       
-      	sm2B = sm2.New(semB)
+      	sm2Decrypter = sm2.New(semDecrypter)
       
-      	if decrypted, err = sm2B.Decrypt(cipherBase64); err != nil {
+      	if decrypted, err = sm2Decrypter.Decrypt(cipherBase64); err != nil {
       		t.Fatalf("解密错误：%v", err)
       	}
       	t.Logf("解密结果：%s", decrypted)
@@ -97,26 +97,30 @@
       ```go
       func TestSignVerify(t *testing.T) {
       	var (
-      		err       error
-      		semA      secret.Semener
-      		sm2Helper secret.Asymmetricer
-      		data      = []byte("hello, SM2 数字签名测试!")
-      		sigHex    string
-      		ok        bool
+      		err                error
+      		semSign, semVerify secret.Semener
+      		sm2Sign, sm2Verify secret.Asymmetricer
+      		data               = []byte("hello, SM2 数字签名测试!")
+      		sigHex             string
+      		ok                 bool
       	)
       
-      	if semA, err = sm2.NewSem(); err != nil {
-      		t.Fatalf("生成种子失败：%v", err)
+      	if semSign, err = sm2.NewSem(); err != nil {
+      		t.Fatalf("生成签名种子失败：%v", err)
       	}
+      	sm2Sign = sm2.New(semSign)
       
-      	sm2Helper = sm2.New(semA)
-      
-      	if sigHex, err = sm2Helper.Sign(data); err != nil {
+      	if sigHex, err = sm2Sign.Sign(data); err != nil {
       		t.Fatalf("签名失败：%v", err)
       	}
       	t.Logf("签名内容(hex): %s", sigHex)
       
-      	if ok, err = sm2Helper.Verify(data, sigHex); err != nil {
+      	if semVerify, err = sm2.NewSem(sm2.PriKey(semSign.GetPriKey())); err != nil {
+      		t.Fatalf("生成验证种子失败：%v", err)
+      	}
+      	sm2Verify = sm2.New(semVerify)
+      
+      	if ok, err = sm2Verify.Verify(data, sigHex); err != nil {
       		t.Fatalf("验证失败：%v", err)
       	}
       	if !ok {
@@ -128,35 +132,29 @@
       
       func TestVerifyWithWrongData(t *testing.T) {
       	var (
-      		err        error
-      		semA, semB secret.Semener
-      		sm2A, sm2B secret.Asymmetricer
-      		data       = []byte("original data")
-      		sigHex     string
-      		ok         bool
+      		err                error
+      		semSign, semVerify secret.Semener
+      		sm2Sign, sm2Verify secret.Asymmetricer
+      		data               = []byte("original data")
+      		sigHex             string
+      		ok                 bool
       	)
-      	if semA, err = sm2.NewSem(); err != nil {
+      
+      	if semSign, err = sm2.NewSem(); err != nil {
       		t.Fatalf("生成种子失败：%v", err)
       	}
+      	sm2Sign = sm2.New(semSign)
       
-      	if err = sm2.MustGeneratePriKey(semA); err != nil {
-      		t.Fatalf("%v", err)
-      	}
-      
-      	sm2A = sm2.New(semA)
-      
-      	if sigHex, err = sm2A.Sign(data); err != nil {
+      	if sigHex, err = sm2Sign.Sign(data); err != nil {
       		t.Fatalf("签名失败：%v", err)
       	}
       
-      	semB, err = sm2.NewSem(sm2.PriKey(semA.GetPriKey()))
-      	if err != nil {
+      	if semVerify, err = sm2.NewSem(sm2.PriKey(semSign.GetPriKey())); err != nil {
       		t.Fatalf("生成解密种子失败：%v", err)
       	}
+      	sm2Verify = sm2.New(semVerify)
       
-      	sm2B = sm2.New(semB)
-      
-      	if ok, err = sm2B.Verify([]byte("tampered data"), sigHex); err != nil {
+      	if ok, err = sm2Verify.Verify([]byte("tampered data"), sigHex); err != nil {
       		t.Fatalf("验证失败：%v", err)
       	}
       	if ok {
@@ -165,7 +163,7 @@
       	t.Logf("篡改数据正确被拒绝")
       }
       ```
-
+   
 2. 非对称加密（*RSA*）
 
    1. 生成种子
@@ -211,13 +209,12 @@
       ```go
       func TestEncryptDecrypt(t *testing.T) {
       	var (
-      		err                error
-      		semA, semB         secret.Semener
-      		rsaA, rsaB         secret.Asymmetricer
-      		rsaSemAPriKeyBytes []byte
-      		plainText          = []byte("hello, RSA 非对称加密测试!")
-      		cipherBase64       string
-      		decrypted          []byte
+      		err          error
+      		semA, semB   secret.Semener
+      		rsaA, rsaB   secret.Asymmetricer
+      		plainText    = []byte("hello, RSA 非对称加密测试!")
+      		cipherBase64 string
+      		decrypted    []byte
       	)
       
       	if semA, err = rsa.NewSem(); err != nil {
@@ -230,11 +227,7 @@
       	}
       	t.Logf("加密结果：%s\n", cipherBase64)
       
-      	if rsaSemAPriKeyBytes, err = semA.GetPriKeyBytes(); err != nil {
-      		t.Fatalf("获取私钥失败：%v", err)
-      	}
-      
-      	if semB, err = rsa.NewSem(rsa.PriKeyBytes(rsaSemAPriKeyBytes)); err != nil {
+      	if semB, err = rsa.NewSem(rsa.PriKey(semA.GetPriKey())); err != nil {
       		t.Fatalf("生成解密种子失败：%v", err)
       	}
       	a, _ := semB.GetPriKeyBase64()
@@ -258,26 +251,30 @@
       ```go
       func TestSignVerify(t *testing.T) {
       	var (
-      		err       error
-      		semA      secret.Semener
-      		rsaHelper secret.Asymmetricer
-      		data      = []byte("hello, RSA 数字签名测试!")
-      		sigHex    string
-      		ok        bool
+      		err                error
+      		semSign, semVerify secret.Semener
+      		rsaSign, rsaVerify secret.Asymmetricer
+      		data               = []byte("hello, RSA 数字签名测试!")
+      		sigHex             string
+      		ok                 bool
       	)
       
-      	if semA, err = rsa.NewSem(); err != nil {
-      		t.Fatalf("生成种子失败：%v", err)
+      	if semSign, err = rsa.NewSem(); err != nil {
+      		t.Fatalf("生成签名种子失败：%v", err)
       	}
+      	rsaSign = rsa.New(semSign)
       
-      	rsaHelper = rsa.New(semA)
-      
-      	if sigHex, err = rsaHelper.Sign(data); err != nil {
+      	if sigHex, err = rsaSign.Sign(data); err != nil {
       		t.Fatalf("签名失败：%v", err)
       	}
       	t.Logf("签名内容(hex): %s", sigHex)
       
-      	if ok, err = rsaHelper.Verify(data, sigHex); err != nil {
+      	if semVerify, err = rsa.NewSem(rsa.PriKey(semSign.GetPriKey())); err != nil {
+      		t.Fatalf("生成验证种子失败：%v", err)
+      	}
+      	rsaVerify = rsa.New(semVerify)
+      
+      	if ok, err = rsaVerify.Verify(data, sigHex); err != nil {
       		t.Fatalf("验证失败：%v", err)
       	}
       	if !ok {
@@ -289,33 +286,32 @@
       
       func TestVerifyWithWrongData(t *testing.T) {
       	var (
-      		err        error
-      		semA, semB secret.Semener
-      		rsaA, rsaB secret.Asymmetricer
-      		data       = []byte("original data")
-      		sigHex     string
-      		ok         bool
+      		err                error
+      		semSign, semVerify secret.Semener
+      		rsaSign, rsaVerify secret.Asymmetricer
+      		data               = []byte("original data")
+      		sigHex             string
+      		ok                 bool
       	)
-      	if semA, err = rsa.NewSem(); err != nil {
-      		t.Fatalf("生成种子失败：%v", err)
+      	if semSign, err = rsa.NewSem(); err != nil {
+      		t.Fatalf("生成签名种子失败：%v", err)
       	}
       
-      	if err = rsa.MustGeneratePriKey(semA); err != nil {
+      	if err = rsa.MustGeneratePriKey(semSign); err != nil {
       		t.Fatalf("%v", err)
       	}
       
-      	rsaA = rsa.New(semA)
-      	if sigHex, err = rsaA.Sign(data); err != nil {
+      	rsaSign = rsa.New(semSign)
+      	if sigHex, err = rsaSign.Sign(data); err != nil {
       		t.Fatalf("签名失败：%v", err)
       	}
       
-      	semB, err = rsa.NewSem(rsa.PriKey(semA.GetPriKey()))
-      	if err != nil {
-      		t.Fatalf("生成解密种子失败：%v", err)
+      	if semVerify, err = rsa.NewSem(rsa.PriKey(semSign.GetPriKey())); err != nil {
+      		t.Fatalf("生成验证种子失败：%v", err)
       	}
+      	rsaVerify = rsa.New(semVerify)
       
-      	rsaB = rsa.New(semB)
-      	if ok, err = rsaB.Verify([]byte("tampered data"), sigHex); err != nil {
+      	if ok, err = rsaVerify.Verify([]byte("tampered data"), sigHex); err != nil {
       		t.Fatalf("验证失败：%v", err)
       	}
       	if ok {
@@ -324,7 +320,7 @@
       	t.Logf("篡改数据正确被拒绝")
       }
       ```
-
+   
 3. 对称加密（*SM4-ECB*）
 
    1. 基本用法
