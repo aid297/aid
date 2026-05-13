@@ -9,17 +9,15 @@ import (
 	"io"
 	"os"
 
-	"github.com/aid297/aid/v2/secret"
 	"github.com/tjfoc/gmsm/sm4"
+
+	"github.com/aid297/aid/v2/secret"
 )
 
 // Mode 加密模式
 type Mode int
 
-const (
-	ModeECB Mode = iota // ECB 模式
-	ModeCBC             // CBC 模式
-)
+const blockSize = 16 // blockSize SM4 块大小固定为 16 字节
 
 var _ secret.Symmetricer = (*SM4Impl)(nil)
 
@@ -41,9 +39,6 @@ func (my *SM4Impl) SetAttrs(attrs ...secret.SymmetricAttr) (err error) {
 	}
 	return
 }
-
-// blockSize SM4 块大小固定为 16 字节
-const blockSize = 16
 
 // padPKCS7 PKCS7 填充
 func padPKCS7(src []byte, size int) []byte {
@@ -440,12 +435,12 @@ func (my *SM4Impl) EncryptCBCLargeFile(plainFile, outFile string, asymm secret.A
 	if inF, err = os.Open(plainFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	sm4KeyAndIV = append(my.key, my.iv...)
 	if encryptedKeyStr, err = asymm.Encrypt(sm4KeyAndIV); err != nil {
@@ -481,18 +476,17 @@ func (my *SM4Impl) DecryptCBCLargeFile(cipherFile, outFile string, asymm secret.
 	if inF, err = os.Open(cipherFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	if _, err = io.ReadFull(inF, keyLenBuf); err != nil {
 		return err
 	}
-	keyLen = int(keyLenBuf[0])<<8 | int(keyLenBuf[1])
-	if keyLen <= 0 {
+	if keyLen = int(keyLenBuf[0])<<8 | int(keyLenBuf[1]); keyLen <= 0 {
 		return os.ErrInvalid
 	}
 

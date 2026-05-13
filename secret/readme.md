@@ -571,26 +571,27 @@
       	"github.com/aid297/aid/v2/secret/symmetric/sm4"
       )
       
-      // 1. 文件加密/解密演示
-      func TestCBCEncryptDecryptFile() {
+      // TestCBCFileEncryptDecrypt 1. 文件加密/解密演示
+      func TestCBCFileEncryptDecrypt() {
       	// 生成密钥对
       	var (
-      		err           error
-      		sem           secret.Semener
-      		sm2Helper     secret.Asymmetricer
-      		plainFile     = "/tmp/sm2_test_plain.txt"
-      		encryptedFile = "/tmp/sm2_test_encrypted.bin"
-      		decryptedFile = "/tmp/sm2_test_decrypted.txt"
-      		sm4Helper     secret.Symmetricer
-      		sm4Key        []byte
-      		sm4IV         []byte
+      		err                        error
+      		semEncrypter, semDecrypter secret.Semener
+      		sm2Encrypter, sm2Decrypter secret.Asymmetricer
+      		semPriKeyEncrypter         []byte
+      		plainFile                  = "/tmp/sm2_test_plain.txt"
+      		encryptedFile              = "/tmp/sm2_test_encrypted.bin"
+      		decryptedFile              = "/tmp/sm2_test_decrypted.txt"
+      		sm4Encrypter, sm4Decrypter secret.Symmetricer
+      		key                        []byte
+      		iv                         []byte
       	)
       
-      	if sem, err = sm2.NewSem(); err != nil {
-      		log.Fatalf("生成种子失败：%v", err)
+      	// 生成加密种子
+      	if semEncrypter, err = sm2.NewSem(); err != nil {
+      		log.Fatalf("生成加密种(SM2)子失败：%v", err)
       	}
-      
-      	sm2Helper = sm2.New(sem)
+      	sm2Encrypter = sm2.New(semEncrypter) // 生成加密器(SM2)
       
       	// 准备测试文件
       	if err = os.WriteFile(plainFile, []byte("这是需要加密的文件内容，可以是任意大小的数据。"), 0644); err != nil {
@@ -598,16 +599,27 @@
       	}
       
       	// 加密
-      	if sm4Helper, err = sm4.New(sm4.RandKey(&sm4Key), sm4.RandIV(&sm4IV)); err != nil {
-      		log.Fatalf("生成 SM4 失败：%v", err)
+      	if sm4Encrypter, err = sm4.New(sm4.RandKey(&key), sm4.RandIV(&iv)); err != nil {
+      		log.Fatalf("生成加密器(SM4)失败：%v", err)
       	}
-      	if err = sm4Helper.EncryptCBCFile(plainFile, encryptedFile, sm2Helper); err != nil {
+      	if err = sm4Encrypter.EncryptCBCFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
       		log.Fatalf("加密失败：%v", err)
       	}
       	log.Printf("加密成功：%s", encryptedFile)
       
       	// 解密
-      	if err = sm4Helper.DecryptCBCFile(encryptedFile, decryptedFile, sm2Helper); err != nil {
+      	if semPriKeyEncrypter, err = semEncrypter.GetPriKeyBytes(); err != nil {
+      		log.Fatalf("获取加密种子(SM2)失败：%v", err)
+      	}
+      	// 通过加密种子(SM2)制作解密种子
+      	if semDecrypter, err = sm2.NewSem(sm2.PriKeyBytes(semPriKeyEncrypter)); err != nil {
+      		log.Fatalf("生成解密种子(SM2)失败：%v", err)
+      	}
+      	sm2Decrypter = sm2.New(semDecrypter)
+      	if sm4Decrypter, err = sm4.New(sm4.KeyBytes(key), sm4.IVBytes(iv)); err != nil {
+      		log.Fatalf("生成解密器(SM4)失败：%v", err)
+      	}
+      	if err = sm4Decrypter.DecryptCBCFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
       		log.Fatalf("解密文件失败：%v", err)
       	}
       	log.Printf("解密成功：%s", decryptedFile)
@@ -624,22 +636,25 @@
       	cleanupTestFiles(plainFile, encryptedFile, decryptedFile)
       }
       
-      // 2. 大文件加密/解密演示（流式）
+      // TestCBCLargeFileEncryptDecrypt 2. 大文件加密/解密演示（流式）
       func TestCBCLargeFileEncryptDecrypt() {
       	var (
-      		err           error
-      		sem           secret.Semener
-      		sm2Helper     secret.Asymmetricer
-      		plainFile           = "/tmp/sm2_test_large_plain.bin"
-      		encryptedFile       = "/tmp/sm2_test_large_encrypted.bin"
-      		decryptedFile       = "/tmp/sm2_test_large_decrypted.bin"
-      		fileSize      int64 = 64 * 1024 * 1024 // 64MB 演示
-      		sm4Helper     secret.Symmetricer
+      		err                        error
+      		semEncrypter, semDecrypter secret.Semener
+      		sm2Encrypter, sm2Decrypter secret.Asymmetricer
+      		sm4Encrypter, sm4Decrypter secret.Symmetricer
+      		semEncrypterPriKeyBytes    []byte
+      		plainFile                        = "/tmp/sm2_test_large_plain.bin"
+      		encryptedFile                    = "/tmp/sm2_test_large_encrypted.bin"
+      		decryptedFile                    = "/tmp/sm2_test_large_decrypted.bin"
+      		fileSize                   int64 = 64 * 1024 * 1024 // 64MB 演示
+      		key, iv                    []byte
       	)
       
-      	if sem, err = sm2.NewSem(); err != nil {
+      	if semEncrypter, err = sm2.NewSem(); err != nil {
       		log.Fatalf("生成种子失败：%v", err)
       	}
+      	sm2Encrypter = sm2.New(semEncrypter)
       
       	// 1) 生成大文件（随机数据）
       	func() {
@@ -651,7 +666,7 @@
       		if f, err = os.Create(plainFile); err != nil {
       			return
       		}
-      		defer f.Close()
+      		defer func() { _ = f.Close() }()
       
       		for wr < fileSize {
       			need := min(fileSize-wr, int64(len(buf)))
@@ -668,19 +683,33 @@
       		log.Fatalf("生成大文件失败：%v", err)
       	}
       
-      	if sm4Helper, err = sm4.New(sm4.RandKey(), sm4.RandIV()); err != nil {
-      		log.Fatalf("生成 SM4 失败：%v", err)
-      	}
-      
       	// 2) 流式加密
-      	sm2Helper = sm2.New(sem)
-      	if err = sm4Helper.EncryptCBCLargeFile(plainFile, encryptedFile, sm2Helper); err != nil {
+      	if sm4Encrypter, err = sm4.New(sm4.RandKey(&key), sm4.RandIV(&iv)); err != nil {
+      		log.Fatalf("生成加密器(SM4)失败：%v", err)
+      	}
+      	if err = sm4Encrypter.EncryptCBCLargeFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
       		log.Fatalf("大文件加密失败：%v", err)
       	}
       	log.Printf("大文件加密成功：%s", encryptedFile)
       
       	// 3) 流式解密
-      	if err = sm4Helper.DecryptCBCLargeFile(encryptedFile, decryptedFile, sm2Helper); err != nil {
+      	if sm4Decrypter, err = sm4.New(sm4.KeyBytes(key), sm4.IVBytes(iv)); err != nil {
+      		log.Fatalf("生成解密器(SM4)失败：%v", err)
+      	}
+      
+      	// 通过加密种子获取解密种子所需的私钥字节（此时两个种子应该一致）
+      	if semEncrypterPriKeyBytes, err = semEncrypter.GetPriKeyBytes(); err != nil {
+      		log.Fatalf("获取加密种子密钥失败：%v", err)
+      	}
+      	if semDecrypter, err = sm2.NewSem(sm2.PriKeyBytes(semEncrypterPriKeyBytes)); err != nil {
+      		log.Fatalf("生成解密种子失败：%v", err)
+      		return
+      	}
+      	sm2Decrypter = sm2.New(semDecrypter) // 生成解密种子
+      	if sm4Decrypter, err = sm4.New(sm4.KeyBytes(key), sm4.IVBytes(iv)); err != nil {
+      		log.Fatalf("生成解密器(SM4)失败：%v", err)
+      	}
+      	if err = sm4Decrypter.DecryptCBCLargeFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
       		log.Fatalf("大文件解密失败：%v", err)
       	}
       	log.Printf("大文件解密成功：%s", decryptedFile)
@@ -696,12 +725,12 @@
       		if f1, err = os.Open(plainFile); err != nil {
       			return
       		}
-      		defer f1.Close()
+      		defer func() { _ = f1.Close() }()
       
       		if f2, err = os.Open(decryptedFile); err != nil {
       			return
       		}
-      		defer f2.Close()
+      		defer func() { _ = f2.Close() }()
       
       		for {
       			n1, e1 := io.ReadFull(f1, b1)
@@ -742,11 +771,11 @@
       	}
       }
       
-      func main() { TestCBCLargeFileEncryptDecrypt() }
+      func main() { TestCBCFileEncryptDecrypt(); TestCBCLargeFileEncryptDecrypt() }
       ```
-
+   
    2. *RSA+AES128-CBC*
-
+   
       ```go
       package main
       
@@ -770,7 +799,7 @@
       		plainFile     = "/tmp/rsa_test_plain.txt"
       		encryptedFile = "/tmp/rsa_test_encrypted.bin"
       		decryptedFile = "/tmp/rsa_test_decrypted.txt"
-      		aesHelper     secret.Symmetricer
+      		aesHelper     secret.Symmetric
       		aesKey        []byte
       		aesIV         []byte
       	)
@@ -822,7 +851,7 @@
       		encryptedFile       = "/tmp/rsa_test_large_encrypted.bin"
       		decryptedFile       = "/tmp/rsa_test_large_decrypted.bin"
       		fileSize      int64 = 64 * 1024 * 1024 // 64MB 演示
-      		aesHelper     secret.Symmetricer
+      		aesHelper     secret.Symmetric
       	)
       
       	pubBase64, priBase64, err := rsa.GenerateKeyPairBase64(2048)
