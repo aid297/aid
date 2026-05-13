@@ -201,6 +201,7 @@ func (my *RSAImpl) Verify(data []byte, sigBase64 string) (bool, error) {
 	if err = cryptorsa.VerifyPKCS1v15(pubKey, crypto.SHA256, h[:], sig); err != nil {
 		return false, nil
 	}
+
 	return true, nil
 }
 

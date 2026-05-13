@@ -62,18 +62,18 @@ func padPKCS7(src []byte, size int) []byte {
 func unPadPKCS7(src []byte, size int) ([]byte, error) {
 	length := len(src)
 	if size <= 0 {
-		return nil, fmt.Errorf("invalid blockSize: %d", size)
+		return nil, fmt.Errorf("错误的填充块长度: %d", size)
 	}
 	if length == 0 || length%size != 0 {
-		return nil, errors.New("invalid data length")
+		return nil, errors.New("错误的填充内容长度")
 	}
 	unPadding := int(src[length-1])
 	if unPadding == 0 || unPadding > size {
-		return nil, errors.New("invalid padding size")
+		return nil, errors.New("错误的padding长度")
 	}
 	for _, b := range src[length-unPadding:] {
 		if int(b) != unPadding {
-			return nil, errors.New("invalid PKCS7 padding")
+			return nil, errors.New("错误的PKCS7 padding长度")
 		}
 	}
 	return src[:length-unPadding], nil
@@ -84,7 +84,7 @@ func validateKeySize(keySize int) error {
 	case 16, 24, 32:
 		return nil
 	default:
-		return fmt.Errorf("aes: invalid key size %d, must be 16/24/32 bytes", keySize)
+		return fmt.Errorf("错误的key长度 %d，必须16/24/32字节", keySize)
 	}
 }
 
@@ -96,7 +96,7 @@ func validateKey(key []byte) error {
 // validateIV 校验 IV 长度
 func validateIV(iv []byte) error {
 	if len(iv) != blockSize {
-		return fmt.Errorf("aes: invalid iv size %d, must be 16 bytes", len(iv))
+		return fmt.Errorf("错误的iv长度 %d，必须16字节", len(iv))
 	}
 	return nil
 }
@@ -148,7 +148,7 @@ func (my *AESImpl) DecryptECB(cipherText []byte) ([]byte, error) {
 		return nil, err
 	}
 	if len(cipherText) == 0 || len(cipherText)%blockSize != 0 {
-		return nil, errors.New("aes: invalid cipherText length")
+		return nil, errors.New("错误的密文长度")
 	}
 	block, err := stdaes.NewCipher(my.key)
 	if err != nil {
@@ -174,7 +174,7 @@ func (my *AESImpl) EncryptECBBase64(plainText []byte) (string, error) {
 func (my *AESImpl) DecryptECBBase64(cipherBase64 string) ([]byte, error) {
 	cipherText, err := base64.StdEncoding.DecodeString(cipherBase64)
 	if err != nil {
-		return nil, fmt.Errorf("aes: base64 decode error: %w", err)
+		return nil, fmt.Errorf("base64解码错误：%w", err)
 	}
 	return my.DecryptECB(cipherText)
 }
@@ -206,7 +206,7 @@ func (my *AESImpl) DecryptCBC(cipherText []byte) ([]byte, error) {
 		return nil, err
 	}
 	if len(cipherText) == 0 || len(cipherText)%blockSize != 0 {
-		return nil, errors.New("aes: invalid cipherText length")
+		return nil, errors.New("错误的密文长度")
 	}
 	block, err := stdaes.NewCipher(my.key)
 	if err != nil {
@@ -230,7 +230,7 @@ func (my *AESImpl) EncryptCBCBase64(plainText []byte) (string, error) {
 func (my *AESImpl) DecryptCBCBase64(cipherBase64 string) ([]byte, error) {
 	cipherText, err := base64.StdEncoding.DecodeString(cipherBase64)
 	if err != nil {
-		return nil, fmt.Errorf("aes: base64 decode error: %w", err)
+		return nil, fmt.Errorf("base64解码错误：%w", err)
 	}
 	return my.DecryptCBC(cipherText)
 }
