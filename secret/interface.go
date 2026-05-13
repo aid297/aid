@@ -1,9 +1,8 @@
 package secret
 
 import (
+	"crypto"
 	"io"
-
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 type (
@@ -14,18 +13,21 @@ type (
 		Verify(data []byte, sigHex string) (bool, error)
 	}
 
+	SemenerPriKey interface{ Public() crypto.PublicKey }
+	SemenerPubKey crypto.PublicKey
+
 	SemenerAttr func(sm2Sem Semener) error
 
 	Semener interface {
 		SetAttrs(attrs ...SemenerAttr) error
 		GeneratePriKey() (err error)
-		GetPriKey() *sm2.PrivateKey
+		GetPriKey() SemenerPriKey
 		GetPriKeyBytes() ([]byte, error)
 		GetPriKeyBase64() (string, error)
-		GetPubKey() *sm2.PublicKey
+		GetPubKey() SemenerPubKey
 		GetPubKeyBytes() ([]byte, error)
 		GetPubKeyBase64() (string, error)
-		SetPriKey(priKey *sm2.PrivateKey) (err error)
+		SetPriKey(priKey SemenerPriKey) (err error)
 		SetPriKeyBytes(priKeyBytes []byte) (err error)
 		SetPriKeyBase64(priKeyBase64 string) (err error)
 	}

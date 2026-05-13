@@ -169,7 +169,7 @@ func TestRandKeyWithBits(t *testing.T) {
 		testPlain = []byte("hello, AES encrypt test!")
 	)
 
-	aesHelper, err := aes.New(aes.RandKeyWithBits(aes.KeyBits256, &key), aes.RandIV())
+	aesHelper, err := aes.New(aes.RandKeyWithBits(aes.AESKey256, &key), aes.RandIV())
 	if err != nil {
 		t.Fatalf("创建对象失败：%v", err)
 	}
@@ -189,7 +189,7 @@ func TestRandKeyWithKeySize(t *testing.T) {
 		testPlain = []byte("hello, AES encrypt test!")
 	)
 
-	aesHelper, err := aes.New(aes.KeySize(aes.KeyBits192), aes.RandKey(&key), aes.RandIV())
+	aesHelper, err := aes.New(aes.KeySize(aes.AESKey192), aes.RandKey(&key), aes.RandIV())
 	if err != nil {
 		t.Fatalf("创建对象失败：%v", err)
 	}

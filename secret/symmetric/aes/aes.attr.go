@@ -10,7 +10,7 @@ import (
 
 func validateKeyBits(bits int) error {
 	switch bits {
-	case KeyBits128, KeyBits192, KeyBits256:
+	case AESKey128, AESKey192, AESKey256:
 		return nil
 	default:
 		return fmt.Errorf("aes: invalid key bits %d, must be 128/192/256", bits)
@@ -61,7 +61,7 @@ func RandKey(outList ...*[]byte) secret.SymmetricAttr {
 		}
 		bits := helper.keyBits
 		if bits == 0 {
-			bits = KeyBits128
+			bits = AESKey128
 		}
 		return RandKeyWithBits(bits, outList...)(symm)
 	}

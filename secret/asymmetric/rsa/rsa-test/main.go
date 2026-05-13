@@ -13,41 +13,48 @@ import (
 )
 
 // 1. 文件加密/解密演示（RSA + AES）
-func TestCBCEncryptDecryptFile() {
+func TestFileEncrypt() {
 	var (
-		err           error
-		rsaHelper     secret.Asymmetricer
-		plainFile     = "/tmp/rsa_test_plain.txt"
-		encryptedFile = "/tmp/rsa_test_encrypted.bin"
-		decryptedFile = "/tmp/rsa_test_decrypted.txt"
-		aesHelper     secret.Symmetricer
-		aesKey        []byte
-		aesIV         []byte
+		err                        error
+		semEncrypter, semDecrypter secret.Semener
+		rsaEncrypter, rsaDecrypter secret.Asymmetricer
+		aesEncrypter, aesDecrypter secret.Symmetricer
+		aesKey, aesIV, priKeyBytes []byte
+		plainFile                  = "/tmp/rsa_test_plain.txt"
+		encryptedFile              = "/tmp/rsa_test_encrypted.bin"
+		decryptedFile              = "/tmp/rsa_test_decrypted.txt"
 	)
 
-	pubBase64, priBase64, err := rsa.GenerateKeyPairBase64(2048)
-	if err != nil {
-		log.Fatalf("生成 RSA 密钥对失败：%v", err)
+	if semEncrypter, err = rsa.NewSem(); err != nil {
+		log.Fatalf("生成加密种子(RSA)失败：%v", err)
 	}
-
-	rsaHelper, err = rsa.NewByBase64(pubBase64, priBase64)
-	if err != nil {
-		log.Fatalf("创建 RSA 实例失败：%v", err)
-	}
+	rsaEncrypter = rsa.New(semEncrypter)
 
 	if err = os.WriteFile(plainFile, []byte("这是需要加密的文件内容（RSA + AES），可以是任意大小的数据。"), 0644); err != nil {
 		log.Fatalf("写入测试文件失败：%v", err)
 	}
 
-	if aesHelper, err = aes.New(aes.RandKeyWithBits(192, &aesKey), aes.RandIV(&aesIV)); err != nil {
-		log.Fatalf("生成 AES 失败：%v", err)
+	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AESKey192, &aesKey), aes.RandIV(&aesIV)); err != nil {
+		log.Fatalf("创建加密器(AES)失败：%v", err)
 	}
-	if err = aesHelper.EncryptCBCFile(plainFile, encryptedFile, rsaHelper); err != nil {
+	if err = aesEncrypter.EncryptCBCFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
 		log.Fatalf("加密失败：%v", err)
 	}
 	log.Printf("加密成功：%s", encryptedFile)
 
-	if err = aesHelper.DecryptCBCFile(encryptedFile, decryptedFile, rsaHelper); err != nil {
+	if priKeyBytes, err = semEncrypter.GetPriKeyBytes(); err != nil {
+		log.Fatalf("获取加密种子私钥失败：%v", err)
+	}
+
+	if semDecrypter, err = rsa.NewSem(rsa.PriKeyBytes(priKeyBytes)); err != nil {
+		log.Fatalf("生成解密种子(RSA)失败：%v", err)
+	}
+	rsaDecrypter = rsa.New(semDecrypter)
+
+	if aesDecrypter, err = aes.New(aes.KeyBytes(aesKey), aes.IVBytes(aesIV)); err != nil {
+		log.Fatalf("生成解密器(AES)失败：%v", err)
+	}
+	if err = aesDecrypter.DecryptCBCFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
 		log.Fatalf("解密文件失败：%v", err)
 	}
 	log.Printf("解密成功：%s", decryptedFile)
@@ -64,26 +71,23 @@ func TestCBCEncryptDecryptFile() {
 }
 
 // 2. 大文件加密/解密演示（流式，RSA + AES）
-func TestCBCLargeFileEncryptDecrypt() {
+func TestLargeFileEncrypt() {
 	var (
-		err           error
-		rsaHelper     secret.Asymmetricer
-		plainFile           = "/tmp/rsa_test_large_plain.bin"
-		encryptedFile       = "/tmp/rsa_test_large_encrypted.bin"
-		decryptedFile       = "/tmp/rsa_test_large_decrypted.bin"
-		fileSize      int64 = 64 * 1024 * 1024 // 64MB 演示
-		aesHelper     secret.Symmetricer
+		err                        error
+		semEncrypter, semDecrypter secret.Semener
+		rsaEncrypter, rsaDecrypter secret.Asymmetricer
+		aesEncrypter, aesDecrypter secret.Symmetricer
+		aesKey, aesIV, priKeyBytes []byte
+		plainFile                        = "/tmp/rsa_test_large_plain.bin"
+		encryptedFile                    = "/tmp/rsa_test_large_encrypted.bin"
+		decryptedFile                    = "/tmp/rsa_test_large_decrypted.bin"
+		fileSize                   int64 = 64 * 1024 * 1024 // 64MB 演示
 	)
 
-	pubBase64, priBase64, err := rsa.GenerateKeyPairBase64(2048)
-	if err != nil {
-		log.Fatalf("生成 RSA 密钥对失败：%v", err)
+	if semEncrypter, err = rsa.NewSem(); err != nil {
+		log.Fatalf("生成加密种子(RSA)失败：%v", err)
 	}
-
-	rsaHelper, err = rsa.NewByBase64(pubBase64, priBase64)
-	if err != nil {
-		log.Fatalf("创建 RSA 实例失败：%v", err)
-	}
+	rsaEncrypter = rsa.New(semEncrypter)
 
 	func() {
 		var (
@@ -111,16 +115,28 @@ func TestCBCLargeFileEncryptDecrypt() {
 		log.Fatalf("生成大文件失败：%v", err)
 	}
 
-	if aesHelper, err = aes.New(aes.RandKeyWithBits(aes.KeyBits256), aes.RandIV()); err != nil {
+	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AESKey256), aes.RandIV()); err != nil {
 		log.Fatalf("生成 AES 失败：%v", err)
 	}
-
-	if err = aesHelper.EncryptCBCLargeFile(plainFile, encryptedFile, rsaHelper); err != nil {
+	if err = aesEncrypter.EncryptCBCLargeFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
 		log.Fatalf("大文件加密失败：%v", err)
 	}
 	log.Printf("大文件加密成功：%s", encryptedFile)
 
-	if err = aesHelper.DecryptCBCLargeFile(encryptedFile, decryptedFile, rsaHelper); err != nil {
+	if priKeyBytes, err = semEncrypter.GetPriKeyBytes(); err != nil {
+		log.Fatalf("获取加密种子私钥失败：%v", err)
+	}
+
+	if semDecrypter, err = rsa.NewSem(rsa.PriKeyBytes(priKeyBytes)); err != nil {
+		log.Fatalf("生成解密种子(RSA)失败：%v", err)
+	}
+	rsaDecrypter = rsa.New(semDecrypter)
+
+	if aesDecrypter, err = aes.New(aes.KeyBytes(aesKey), aes.IVBytes(aesIV)); err != nil {
+		log.Fatalf("生成解密器(AES)失败：%v", err)
+	}
+
+	if err = aesDecrypter.DecryptCBCLargeFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
 		log.Fatalf("大文件解密失败：%v", err)
 	}
 	log.Printf("大文件解密成功：%s", decryptedFile)
@@ -181,4 +197,4 @@ func cleanupTestFiles(files ...string) {
 	}
 }
 
-func main() { TestCBCLargeFileEncryptDecrypt() }
+func main() { TestFileEncrypt(); TestLargeFileEncrypt() }

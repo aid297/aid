@@ -17,7 +17,7 @@ func TestGenerateKeyPair(t *testing.T) {
 	)
 
 	if sem, err = sm2.NewSem(); err != nil {
-		t.Fatalf("生成种子失败：%v", err)
+		t.Fatalf("生成种子(SM2)失败：%v", err)
 	}
 
 	if err = sem.GeneratePriKey(); err != nil {

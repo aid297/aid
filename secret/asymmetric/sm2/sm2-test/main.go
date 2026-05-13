@@ -12,8 +12,8 @@ import (
 	"github.com/aid297/aid/v2/secret/symmetric/sm4"
 )
 
-// TestCBCFileEncryptDecrypt 1. 文件加密/解密演示
-func TestCBCFileEncryptDecrypt() {
+// TestFileEncrypt 1. 文件加密/解密演示
+func TestFileEncrypt() {
 	// 生成密钥对
 	var (
 		err                        error
@@ -77,8 +77,8 @@ func TestCBCFileEncryptDecrypt() {
 	cleanupTestFiles(plainFile, encryptedFile, decryptedFile)
 }
 
-// TestCBCLargeFileEncryptDecrypt 2. 大文件加密/解密演示（流式）
-func TestCBCLargeFileEncryptDecrypt() {
+// TestLargeFileEncrypt 2. 大文件加密/解密演示（流式）
+func TestLargeFileEncrypt() {
 	var (
 		err                        error
 		semEncrypter, semDecrypter secret.Semener
@@ -212,4 +212,4 @@ func cleanupTestFiles(files ...string) {
 	}
 }
 
-func main() { TestCBCFileEncryptDecrypt(); TestCBCLargeFileEncryptDecrypt() }
+func main() { TestFileEncrypt(); TestLargeFileEncrypt() }

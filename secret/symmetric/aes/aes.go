@@ -16,9 +16,9 @@ import (
 var _ secret.Symmetricer = (*AESImpl)(nil)
 
 const (
-	KeyBits128 = 128
-	KeyBits192 = 192
-	KeyBits256 = 256
+	AESKey128 = 128
+	AESKey192 = 192
+	AESKey256 = 256
 )
 
 type AESImpl struct {
@@ -28,7 +28,7 @@ type AESImpl struct {
 
 // New 实例化 AESHelper
 func New(attrs ...secret.SymmetricAttr) (my secret.Symmetricer, err error) {
-	my = &AESImpl{keyBits: KeyBits128}
+	my = &AESImpl{keyBits: AESKey128}
 	err = my.SetAttrs(attrs...)
 	return
 }

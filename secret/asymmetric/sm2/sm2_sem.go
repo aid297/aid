@@ -10,9 +10,7 @@ import (
 	"github.com/tjfoc/gmsm/x509"
 )
 
-type (
-	SM2SemImpl struct{ priKey *sm2.PrivateKey }
-)
+type SM2SemImpl struct{ priKey secret.SemenerPriKey }
 
 // NewSem 实例化：种子
 func NewSem(attrs ...secret.SemenerAttr) (secret.Semener, error) {
@@ -52,7 +50,7 @@ func (my *SM2SemImpl) GeneratePriKey() (err error) {
 }
 
 // GetPriKey 获取私钥
-func (my *SM2SemImpl) GetPriKey() *sm2.PrivateKey { return my.priKey }
+func (my *SM2SemImpl) GetPriKey() secret.SemenerPriKey { return my.priKey }
 
 // GetPriKeyBytes 获取私钥：bytes
 func (my *SM2SemImpl) GetPriKeyBytes() ([]byte, error) {
@@ -60,7 +58,7 @@ func (my *SM2SemImpl) GetPriKeyBytes() ([]byte, error) {
 		return nil, errors.New("私钥不能为空")
 	}
 
-	return x509.MarshalSm2UnecryptedPrivateKey(my.priKey)
+	return x509.MarshalSm2UnecryptedPrivateKey(my.priKey.(*sm2.PrivateKey))
 }
 
 // GetPriKeyBase64 获取私钥：base64
@@ -77,7 +75,7 @@ func (my *SM2SemImpl) GetPriKeyBase64() (string, error) {
 }
 
 // GetPubKey 获取公钥
-func (my *SM2SemImpl) GetPubKey() *sm2.PublicKey { return &my.priKey.PublicKey }
+func (my *SM2SemImpl) GetPubKey() secret.SemenerPubKey { return &my.priKey.(*sm2.PrivateKey).PublicKey }
 
 // GetPubKeyBytes 获取公钥：bytes
 func (my *SM2SemImpl) GetPubKeyBytes() ([]byte, error) {
@@ -90,7 +88,7 @@ func (my *SM2SemImpl) GetPubKeyBytes() ([]byte, error) {
 		return nil, errors.New("私钥不能为空")
 	}
 
-	if pubKeyBytes, err = x509.MarshalSm2PublicKey(&my.priKey.PublicKey); err != nil {
+	if pubKeyBytes, err = x509.MarshalSm2PublicKey(&my.priKey.(*sm2.PrivateKey).PublicKey); err != nil {
 		return nil, err
 	}
 
@@ -112,7 +110,7 @@ func (my *SM2SemImpl) GetPubKeyBase64() (string, error) {
 }
 
 // SetPriKey
-func (my *SM2SemImpl) SetPriKey(priKey *sm2.PrivateKey) (err error) { my.priKey = priKey; return }
+func (my *SM2SemImpl) SetPriKey(priKey secret.SemenerPriKey) (err error) { my.priKey = priKey; return }
 
 // SetPriKeyBytes 设置私钥：bytes（PKCS8 DER 格式，与 GetPriKeyBytes 对应）
 func (my *SM2SemImpl) SetPriKeyBytes(priKeyBytes []byte) (err error) {
@@ -135,16 +133,16 @@ func (my *SM2SemImpl) SetPriKeyBase64(priKeyBase64 string) (err error) {
 	return
 }
 
-func PriKey(priKey *sm2.PrivateKey) secret.SemenerAttr {
-	return func(sm2Sem secret.Semener) error { return sm2Sem.SetPriKey(priKey) }
+func PriKey(priKey secret.SemenerPriKey) secret.SemenerAttr {
+	return func(sem secret.Semener) error { return sem.SetPriKey(priKey) }
 }
 
 func PriKeyBytes(priKeyBytes []byte) secret.SemenerAttr {
-	return func(sm2Sem secret.Semener) error { return sm2Sem.SetPriKeyBytes(priKeyBytes) }
+	return func(sem secret.Semener) error { return sem.SetPriKeyBytes(priKeyBytes) }
 }
 
 func PriKeyBase64(priKeyBase64 string) secret.SemenerAttr {
-	return func(sm2Sem secret.Semener) error { return sm2Sem.SetPriKeyBase64(priKeyBase64) }
+	return func(sem secret.Semener) error { return sem.SetPriKeyBase64(priKeyBase64) }
 }
 
 func MustGeneratePriKey(sem secret.Semener) (err error) {
