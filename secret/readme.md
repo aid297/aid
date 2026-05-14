@@ -13,8 +13,28 @@
 
 1. 统一接口说明
 
-   对称加密接口支持通过选项函数选择 ECB、CBC、CTR、GCM 四种模式：
+   #### 1.1 非对称加密接口
 
+   **Semener（种子）接口：**
+
+   | 方法 | 说明 |
+   |------|------|
+   | `NewSem(...)` | 创建种子，不传参则自动生成私钥；传入私钥或公钥参数时验证合法性 |
+   | `GeneratePriKey()` | 生成随机私钥，同时验证公私钥合法性 |
+   | `GetPriKeyBytes()` / `GetPriKeyBase64()` | 获取私钥 |
+   | `GetPubKeyBytes()` / `GetPubKeyBase64()` | 获取公钥 |
+
+   **Asymmetricer（加解密/签名）接口：**
+   | 方法 | 说明 |
+   |------|------|
+   | `Encrypt(plainText)` | 加密，返回 base64 密文 |
+   | `Decrypt(cipherBase64)` | 解密 |
+   | `Sign(data)` | 签名，返回 hex 签名 |
+   | `Verify(data, sigHex)` | 验签 |
+
+   #### 1.2 对称加密接口
+
+   **模式选择：**
    | 模式    | 选项函数                                    | Nonce/IV 长度 | 输出格式                   | 适用场景                  |
    | ------- | ------------------------------------------- | ------------- | -------------------------- | ------------------------- |
    | **ECB** | `sm4.AlgorithmECB()` / `aes.AlgorithmECB()` | 不需要        | 密文                       | ❌ 不推荐（不安全）        |
@@ -23,17 +43,21 @@
    | **GCM** | `sm4.AlgorithmGCM()` / `aes.AlgorithmGCM()` | 12 字节 nonce | nonce(12) + 密文 + tag(16) | ✅ 认证加密、API 加密、TLS |
 
    **随机数生成：**
+   - `sm4.RandKey()` / `aes.RandKey()` - 生成随机密钥
+   - `sm4.RandIV()` / `aes.RandIV()` - 生成随机 IV（16 字节）
    - `sm4.RandCTRNonce()` / `aes.RandCTRNonce()` - 生成 16 字节随机 nonce（CTR 模式）
    - `sm4.RandGCMNonce()` / `aes.RandGCMNonce()` - 生成 12 字节随机 nonce（GCM 模式）
 
    **默认模式为 CBC**
 
    **统一方法列表：**
-   | 方法                                | 说明             |
-   | ----------------------------------- | ---------------- |
-   | `Encrypt(in, out io.Reader/Writer)` | 流式加解密       |
-   | `EncryptBase64/DecryptBase64`       | Base64 编解码    |
-   | `EncryptFile/DecryptFile`           | 文件加解密       |
+   | 方法 | 说明 |
+   |------|------|
+   | `Encrypt(plainText)` | 加密，返回密文 |
+   | `Decrypt(cipherText)` | 解密 |
+   | `EncryptBase64/DecryptBase64` | Base64 编解码 |
+   | `EncryptStream/DecryptStream` | 流式加解密 |
+   | `EncryptFile/DecryptFile` | 文件加解密 |
    | `EncryptLargeFile/DecryptLargeFile` | 大文件流式加解密 |
 
 2. 非对称加密（*SM2*）
