@@ -321,110 +321,140 @@
       }
       ```
    
-3. 对称加密（*SM4-ECB*）
+3. 对称加密（*SM4*）
 
-   1. 基本用法
+   *SM4* 支持 *ECB* 和 *CBC* 两种模式，通过 `AlgorithmCBC()`/`AlgorithmECB()` 选择。默认 *CBC* 模式。
+
+   1. 基本用法（默认 *CBC* 模式）
+      ```go
+      func TestCBC(t *testing.T) {
+      	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
+      	if err != nil {
+      		t.Fatalf("创建 SM4 对象失败：%v", err)
+      	}
+      	cipherText, err := sm4Helper.Encrypt(testPlain)
+      	if err != nil {
+      		t.Fatalf("Encrypt failed: %v", err)
+      	}
+      	plain, err := sm4Helper.Decrypt(cipherText)
+      	if err != nil {
+      		t.Fatalf("Decrypt failed: %v", err)
+      	}
+      	if !bytes.Equal(plain, testPlain) {
+      		t.Fatalf("SM4 mismatch: got %s, want %s", plain, testPlain)
+      	}
+      	t.Logf("SM4 OK: %s", plain)
+      }
+      ```
+
+   2. *ECB* 模式：由于*ECB*模式不安全，所以不推荐
+      
       ```go
       func TestECB(t *testing.T) {
-      	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey))
+      	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.AlgorithmECB())
       	if err != nil {
       		t.Fatalf("创建 ECB 对象失败：%v", err)
       	}
-      	cipherText, err := sm4Helper.EncryptECB(testPlain)
+      	cipherText, err := sm4Helper.Encrypt(testPlain)
       	if err != nil {
-      		t.Fatalf("EncryptECB failed: %v", err)
+      		t.Fatalf("Encrypt failed: %v", err)
       	}
-      	plain, err := sm4Helper.DecryptECB(cipherText)
+      	plain, err := sm4Helper.Decrypt(cipherText)
       	if err != nil {
-      		t.Fatalf("DecryptECB failed: %v", err)
+      		t.Fatalf("Decrypt failed: %v", err)
       	}
       	if !bytes.Equal(plain, testPlain) {
       		t.Fatalf("ECB mismatch: got %s, want %s", plain, testPlain)
       	}
       	t.Logf("ECB OK: %s", plain)
       }
+      ```
       
+   3. Base64 编解码
+      ```go
       func TestECBBase64(t *testing.T) {
       	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey))
       	if err != nil {
-      		t.Fatalf("创建 ECB 对象失败：%v", err)
+      		t.Fatalf("创建 SM4 对象失败：%v", err)
       	}
-      	b64, err := sm4Helper.EncryptECBBase64(testPlain)
+      	b64, err := sm4Helper.EncryptBase64(testPlain)
       	if err != nil {
-      		t.Fatalf("EncryptECBBase64 failed: %v", err)
+      		t.Fatalf("加密失败: %v", err)
       	}
-      	t.Logf("ECB base64: %s", b64)
-      	plain, err := sm4Helper.DecryptECBBase64(b64)
+      	t.Logf("Base64: %s", b64)
+      	plain, err := sm4Helper.DecryptBase64(b64)
       	if err != nil {
-      		t.Fatalf("DecryptECBBase64 failed: %v", err)
+      		t.Fatalf("解密失败: %v", err)
       	}
       	if !bytes.Equal(plain, testPlain) {
-      		t.Fatalf("ECB base64 mismatch: got %s, want %s", plain, testPlain)
+      		t.Fatalf("匹配失败: 结果 %s，期望 %s", plain, testPlain)
       	}
-      	t.Logf("ECB base64 OK: %s", plain)
+      	t.Logf("Base64 OK: %s", plain)
       }
       ```
 
-4. 对称加密（*SM4-CBC*）
+5. 对称加密（*AES*）
 
-   1. 基本用法
+   AES 支持 ECB 和 CBC 两种模式，通过 `AlgorithmCBC()`/`AlgorithmECB()` 选择。默认 CBC 模式。
+
+   1. 基本用法（默认 CBC 模式）
       ```go
       func TestCBC(t *testing.T) {
-      	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
+      	var (
+      		testKey   = []byte("1234567890abcdef")
+      		testIV    = []byte("abcdef1234567890")
+      		testPlain = []byte("hello, AES encrypt test!")
+      	)
+      
+      	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testIV))
       	if err != nil {
-      		t.Fatalf("创建 CBC 对象失败：%v", err)
+      		t.Fatalf("创建 AES 对象失败：%v", err)
       	}
-      	cipherText, err := sm4Helper.EncryptCBC(testPlain)
+      
+      cipherText, err := aesHelper.Encrypt(testPlain)
       	if err != nil {
-      		t.Fatalf("EncryptCBC failed: %v", err)
+      		t.Fatalf("加密失败：%v", err)
       	}
-      	plain, err := sm4Helper.DecryptCBC(cipherText)
+      
+      	plain, err := aesHelper.Decrypt(cipherText)
       	if err != nil {
-      		t.Fatalf("DecryptCBC failed: %v", err)
+      		t.Fatalf("解密失败：%v", err)
       	}
+      
       	if !bytes.Equal(plain, testPlain) {
-      		t.Fatalf("CBC mismatch: got %s, want %s", plain, testPlain)
+      		t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
       	}
-      	t.Logf("CBC OK: %s", plain)
       }
       
       func TestCBCBase64(t *testing.T) {
-      	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
-      	if err != nil {
-      		t.Fatalf("创建 CBC 对象失败：%v", err)
-      	}
-      	b64, err := sm4Helper.EncryptCBCBase64(testPlain)
-      	if err != nil {
-      		t.Fatalf("EncryptCBCBase64 failed: %v", err)
-      	}
-      	t.Logf("CBC base64: %s", b64)
-      	plain, err := sm4Helper.DecryptCBCBase64(b64)
-      	if err != nil {
-      		t.Fatalf("DecryptCBCBase64 failed: %v", err)
-      	}
-      	if !bytes.Equal(plain, testPlain) {
-      		t.Fatalf("CBC base64 mismatch: got %s, want %s", plain, testPlain)
-      	}
-      	t.Logf("CBC base64 OK: %s", plain)
-      }
+      	var (
+      		testKey   = []byte("1234567890abcdef")
+      		testIV    = []byte("abcdef1234567890")
+      		testPlain = []byte("hello, AES encrypt test!")
+      	)
       
-      func TestInvalidKey(t *testing.T) {
-      	sm4Helper, err := sm4.New(sm4.KeyString("shortkey"))
+      	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testIV))
       	if err != nil {
-      		t.Fatalf("创建对象失败：%v", err)
+      		t.Fatalf("创建 AES 对象失败：%v", err)
       	}
-      	_, err = sm4Helper.EncryptECB(testPlain)
-      	if err == nil {
-      		t.Fatal("expected error for invalid key length")
+      
+      b64, err := aesHelper.EncryptBase64(testPlain)
+      	if err != nil {
+      		t.Fatalf("加密失败：%v", err)
       	}
-      	t.Logf("Invalid key error: %v", err)
+      
+      	plain, err := aesHelper.DecryptBase64(b64)
+      	if err != nil {
+      		t.Fatalf("解密失败：%v", err)
+      	}
+      
+      	if !bytes.Equal(plain, testPlain) {
+      		t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+      	}
       }
       ```
 
-5. 对称加密（*AES128-ECB*）
-
-   1. 基本用法
-
+   2. ECB 模式
       ```go
       func TestECB(t *testing.T) {
       	var (
@@ -432,23 +462,23 @@
       		testPlain = []byte("hello, AES encrypt test!")
       	)
       
-      	aesHelper, err := aes.New(aes.KeyBytes(testKey))
+      	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.AlgorithmECB())
       	if err != nil {
       		t.Fatalf("创建 ECB 对象失败：%v", err)
       	}
       
-      	cipherText, err := aesHelper.EncryptECB(testPlain)
+      cipherText, err := aesHelper.Encrypt(testPlain)
       	if err != nil {
-      		t.Fatalf("EncryptECB failed: %v", err)
+      		t.Fatalf("加密失败：%v", err)
       	}
       
-      	plain, err := aesHelper.DecryptECB(cipherText)
+      	plain, err := aesHelper.Decrypt(cipherText)
       	if err != nil {
-      		t.Fatalf("DecryptECB failed: %v", err)
+      		t.Fatalf("解密失败：%v", err)
       	}
       
       	if !bytes.Equal(plain, testPlain) {
-      		t.Fatalf("ECB mismatch: got %s, want %s", plain, testPlain)
+      		t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
       	}
       }
       
@@ -458,102 +488,28 @@
       		testPlain = []byte("hello, AES encrypt test!")
       	)
       
-      	aesHelper, err := aes.New(aes.KeyBytes(testKey))
+      	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.AlgorithmECB())
       	if err != nil {
       		t.Fatalf("创建 ECB 对象失败：%v", err)
       	}
       
-      	b64, err := aesHelper.EncryptECBBase64(testPlain)
+      b64, err := aesHelper.EncryptBase64(testPlain)
       	if err != nil {
-      		t.Fatalf("EncryptECBBase64 failed: %v", err)
+      		t.Fatalf("加密失败：%v", err)
       	}
       
-      	plain, err := aesHelper.DecryptECBBase64(b64)
+      	plain, err := aesHelper.DecryptBase64(b64)
       	if err != nil {
-      		t.Fatalf("DecryptECBBase64 failed: %v", err)
+      		t.Fatalf("解密失败：%v", err)
       	}
       
       	if !bytes.Equal(plain, testPlain) {
-      		t.Fatalf("ECB base64 mismatch: got %s, want %s", plain, testPlain)
+      		t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
       	}
       }
       ```
 
-6. 对称加密（*AES128-CBC*）
-
-   1. 基本用法
-      ```go
-      func TestCBC(t *testing.T) {
-      	var (
-      		testKey   = []byte("1234567890abcdef")
-      		testIV    = []byte("abcdef1234567890")
-      		testPlain = []byte("hello, AES encrypt test!")
-      	)
-      
-      	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testIV))
-      	if err != nil {
-      		t.Fatalf("创建 CBC 对象失败：%v", err)
-      	}
-      
-      	cipherText, err := aesHelper.EncryptCBC(testPlain)
-      	if err != nil {
-      		t.Fatalf("EncryptCBC failed: %v", err)
-      	}
-      
-      	plain, err := aesHelper.DecryptCBC(cipherText)
-      	if err != nil {
-      		t.Fatalf("DecryptCBC failed: %v", err)
-      	}
-      
-      	if !bytes.Equal(plain, testPlain) {
-      		t.Fatalf("CBC mismatch: got %s, want %s", plain, testPlain)
-      	}
-      }
-      
-      func TestCBCBase64(t *testing.T) {
-      	var (
-      		testKey   = []byte("1234567890abcdef")
-      		testIV    = []byte("abcdef1234567890")
-      		testPlain = []byte("hello, AES encrypt test!")
-      	)
-      
-      	aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testIV))
-      	if err != nil {
-      		t.Fatalf("创建 CBC 对象失败：%v", err)
-      	}
-      
-      	b64, err := aesHelper.EncryptCBCBase64(testPlain)
-      	if err != nil {
-      		t.Fatalf("EncryptCBCBase64 failed: %v", err)
-      	}
-      
-      	plain, err := aesHelper.DecryptCBCBase64(b64)
-      	if err != nil {
-      		t.Fatalf("DecryptCBCBase64 failed: %v", err)
-      	}
-      
-      	if !bytes.Equal(plain, testPlain) {
-      		t.Fatalf("CBC base64 mismatch: got %s, want %s", plain, testPlain)
-      	}
-      }
-      
-      func TestInvalidKey(t *testing.T) {
-      	var testPlain = []byte("hello, AES encrypt test!")
-      
-      	aesHelper, err := aes.New(aes.KeyString("shortkey"))
-      	if err != nil {
-      		t.Fatalf("创建对象失败：%v", err)
-      	}
-      
-      	_, err = aesHelper.EncryptECB(testPlain)
-      	if err == nil {
-      		t.Fatal("expected error for invalid key length")
-      	}
-      }
-      ```
-      
-   2. *AES192*和*AES256*支持
-
+   3. AES192 和 AES256 支持
       ```go
       func TestCBC192And256(t *testing.T) {
       	var (
@@ -576,16 +532,16 @@
       			if err != nil {
       				t.Fatalf("创建 CBC 对象失败：%v", err)
       			}
-      			cipherText, err := aesHelper.EncryptCBC(testPlain)
+      		cipherText, err := aesHelper.Encrypt(testPlain)
       			if err != nil {
-      				t.Fatalf("EncryptCBC failed: %v", err)
+      				t.Fatalf("加密失败：%v", err)
       			}
-      			plain, err := aesHelper.DecryptCBC(cipherText)
+      			plain, err := aesHelper.Decrypt(cipherText)
       			if err != nil {
-      				t.Fatalf("DecryptCBC failed: %v", err)
+      				t.Fatalf("解密失败：%v", err)
       			}
       			if !bytes.Equal(plain, testPlain) {
-      				t.Fatalf("CBC mismatch: got %s, want %s", plain, testPlain)
+      				t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
       			}
       		})
       	}
@@ -606,42 +562,15 @@
       		t.Fatalf("随机 key 长度错误: got %d, want 32", len(key))
       	}
       
-      	if _, err = aesHelper.EncryptCBC(testPlain); err != nil {
-      		t.Fatalf("EncryptCBC failed: %v", err)
-      	}
-      }
-      
-      func TestRandKeyWithKeySize(t *testing.T) {
-      	var (
-      		key       []byte
-      		testPlain = []byte("hello, AES encrypt test!")
-      	)
-      
-      	aesHelper, err := aes.New(aes.KeySize(aes.KeyBits192), aes.RandKey(&key), aes.RandIV())
-      	if err != nil {
-      		t.Fatalf("创建对象失败：%v", err)
-      	}
-      
-      	if len(key) != 24 {
-      		t.Fatalf("KeySize+RandKey 长度错误: got %d, want 24", len(key))
-      	}
-      
-      	if _, err = aesHelper.EncryptCBC(testPlain); err != nil {
-      		t.Fatalf("EncryptCBC failed: %v", err)
-      	}
-      }
-      
-      func TestRandKeyWithBitsInvalid(t *testing.T) {
-      	_, err := aes.New(aes.RandKeyWithBits(111), aes.RandIV())
-      	if err == nil {
-      		t.Fatal("expected error for invalid key bits")
+      if _, err = aesHelper.Encrypt(testPlain); err != nil {
+      		t.Fatalf("加密失败：%v", err)
       	}
       }
       ```
 
 7. 组合用法
 
-   1. *SM2+SM4-CBC*加密文件和大文件加密
+   1. *SM2+SM4*加密文件和大文件加密
 
       ```go
       package main
@@ -685,11 +614,11 @@
       		log.Fatalf("写入测试文件失败：%v", err)
       	}
       
-      	// 加密
+      	// 加密（默认 CBC 模式）
       	if sm4Encrypter, err = sm4.New(sm4.RandKey(&key), sm4.RandIV(&iv)); err != nil {
       		log.Fatalf("生成加密器(SM4)失败：%v", err)
       	}
-      	if err = sm4Encrypter.EncryptCBCFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
+      	if err = sm4Encrypter.EncryptFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
       		log.Fatalf("加密失败：%v", err)
       	}
       	log.Printf("加密成功：%s", encryptedFile)
@@ -706,7 +635,7 @@
       	if sm4Decrypter, err = sm4.New(sm4.KeyBytes(key), sm4.IVBytes(iv)); err != nil {
       		log.Fatalf("生成解密器(SM4)失败：%v", err)
       	}
-      	if err = sm4Decrypter.DecryptCBCFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
+      	if err = sm4Decrypter.DecryptFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
       		log.Fatalf("解密文件失败：%v", err)
       	}
       	log.Printf("解密成功：%s", decryptedFile)
@@ -731,9 +660,9 @@
       		sm2Encrypter, sm2Decrypter secret.Asymmetricer
       		sm4Encrypter, sm4Decrypter secret.Symmetricer
       		semEncrypterPriKeyBytes    []byte
-      		plainFile                        = "/tmp/sm2_test_large_plain.bin"
-      		encryptedFile                    = "/tmp/sm2_test_large_encrypted.bin"
-      		decryptedFile                    = "/tmp/sm2_test_large_decrypted.bin"
+      		plainFile                  = "/tmp/sm2_test_large_plain.bin"
+      		encryptedFile              = "/tmp/sm2_test_large_encrypted.bin"
+      		decryptedFile              = "/tmp/sm2_test_large_decrypted.bin"
       		fileSize                   int64 = 64 * 1024 * 1024 // 64MB 演示
       		key, iv                    []byte
       	)
@@ -770,11 +699,11 @@
       		log.Fatalf("生成大文件失败：%v", err)
       	}
       
-      	// 2) 流式加密
+      	// 2) 流式加密（默认 CBC 模式）
       	if sm4Encrypter, err = sm4.New(sm4.RandKey(&key), sm4.RandIV(&iv)); err != nil {
       		log.Fatalf("生成加密器(SM4)失败：%v", err)
       	}
-      	if err = sm4Encrypter.EncryptCBCLargeFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
+      	if err = sm4Encrypter.EncryptLargeFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
       		log.Fatalf("大文件加密失败：%v", err)
       	}
       	log.Printf("大文件加密成功：%s", encryptedFile)
@@ -796,7 +725,7 @@
       	if sm4Decrypter, err = sm4.New(sm4.KeyBytes(key), sm4.IVBytes(iv)); err != nil {
       		log.Fatalf("生成解密器(SM4)失败：%v", err)
       	}
-      	if err = sm4Decrypter.DecryptCBCLargeFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
+      	if err = sm4Decrypter.DecryptLargeFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
       		log.Fatalf("大文件解密失败：%v", err)
       	}
       	log.Printf("大文件解密成功：%s", decryptedFile)
@@ -861,7 +790,7 @@
       func main() { TestFileEncrypt(); TestLargeFileEncrypt() }
       ```
    
-   2. *RSA+AES128-CBC*
+   2. *RSA+AES*
    
       ```go
       package main
@@ -903,7 +832,7 @@
       	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AESKey192, &aesKey), aes.RandIV(&aesIV)); err != nil {
       		log.Fatalf("创建加密器(AES)失败：%v", err)
       	}
-      	if err = aesEncrypter.EncryptCBCFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
+      	if err = aesEncrypter.EncryptFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
       		log.Fatalf("加密失败：%v", err)
       	}
       	log.Printf("加密成功：%s", encryptedFile)
@@ -920,7 +849,7 @@
       	if aesDecrypter, err = aes.New(aes.KeyBytes(aesKey), aes.IVBytes(aesIV)); err != nil {
       		log.Fatalf("生成解密器(AES)失败：%v", err)
       	}
-      	if err = aesDecrypter.DecryptCBCFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
+      	if err = aesDecrypter.DecryptFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
       		log.Fatalf("解密文件失败：%v", err)
       	}
       	log.Printf("解密成功：%s", decryptedFile)
@@ -944,9 +873,9 @@
       		rsaEncrypter, rsaDecrypter secret.Asymmetricer
       		aesEncrypter, aesDecrypter secret.Symmetricer
       		aesKey, aesIV, priKeyBytes []byte
-      		plainFile                        = "/tmp/rsa_test_large_plain.bin"
-      		encryptedFile                    = "/tmp/rsa_test_large_encrypted.bin"
-      		decryptedFile                    = "/tmp/rsa_test_large_decrypted.bin"
+      		plainFile                  = "/tmp/rsa_test_large_plain.bin"
+      		encryptedFile              = "/tmp/rsa_test_large_encrypted.bin"
+      		decryptedFile              = "/tmp/rsa_test_large_decrypted.bin"
       		fileSize                   int64 = 64 * 1024 * 1024 // 64MB 演示
       	)
       
@@ -984,7 +913,7 @@
       	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AESKey256), aes.RandIV()); err != nil {
       		log.Fatalf("生成 AES 失败：%v", err)
       	}
-      	if err = aesEncrypter.EncryptCBCLargeFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
+      	if err = aesEncrypter.EncryptLargeFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
       		log.Fatalf("大文件加密失败：%v", err)
       	}
       	log.Printf("大文件加密成功：%s", encryptedFile)
@@ -1002,7 +931,7 @@
       		log.Fatalf("生成解密器(AES)失败：%v", err)
       	}
       
-      	if err = aesDecrypter.DecryptCBCLargeFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
+      	if err = aesDecrypter.DecryptLargeFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
       		log.Fatalf("大文件解密失败：%v", err)
       	}
       	log.Printf("大文件解密成功：%s", decryptedFile)
@@ -1065,3 +994,19 @@
       
       func main() { TestFileEncrypt(); TestLargeFileEncrypt() }
       ```
+
+8. 统一接口说明
+
+   对称加密接口支持通过选项函数选择 ECB 或 CBC 模式：
+
+   - `sm4.AlgorithmECB()` / `aes.AlgorithmECB()` - 电子密码本模式（各区块独立加密，不推荐用于加密敏感数据）
+   - `sm4.AlgorithmCBC()` / `aes.AlgorithmCBC()` - 密码块链接模式（需配合 IV 使用，安全性更高）
+   - **默认模式为 CBC**
+
+   **统一方法列表：**
+   | 方法 | 说明 |
+   |------|------|
+   | `Encrypt(in, out io.Reader/Writer)` | 流式加解密 |
+   | `EncryptBase64/DecryptBase64` | Base64 编解码 |
+   | `EncryptFile/DecryptFile` | 文件加解密 |
+   | `EncryptLargeFile/DecryptLargeFile` | 大文件流式加解密 |

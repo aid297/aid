@@ -38,28 +38,25 @@ type (
 	SymmetricAttr func(symm Symmetricer) (err error) // 对称加密属性
 
 	Symmetricer interface {
-		SetAttrs(attrs ...SymmetricAttr) (err error)                              // 设置属性
-		GetKeyString() string                                                     // 获取 key：string
-		GetKeyBytes() []byte                                                      // 获取 key：bytes
-		GetIVString() string                                                      // 获取 iv：string
-		GetIVBytes() []byte                                                       // 获取 iv：bytes
-		SetKeyString(key string)                                                  // 设置 key：string
-		SetKeyBytes(key []byte)                                                   // 设置 key：bytes
-		SetIVString(iv string)                                                    // 设置 iv：string
-		SetIVBytes(iv []byte)                                                     // 设置 iv：bytes
-		EncryptECBBase64(plainText []byte) (string, error)                        // ECB 模式加密，返回 base64 字符串
-		DecryptECBBase64(cipherBase64 string) ([]byte, error)                     // ECB 模式解密，输入 base64 字符串
-		EncryptECB(plainText []byte) ([]byte, error)                              // ECB 模式加密，返回原始字节
-		DecryptECB(cipherText []byte) ([]byte, error)                             // ECB 模式解密
-		EncryptCBCBase64(plainText []byte) (string, error)                        // CBC 模式加密，返回 base64 字符串
-		DecryptCBCBase64(cipherBase64 string) ([]byte, error)                     // CBC 模式解密，输入 base64 字符串
-		EncryptCBC(plainText []byte) ([]byte, error)                              // CBC 模式加密，返回原始字节
-		DecryptCBC(cipherText []byte) ([]byte, error)                             // CBC 模式解密
-		EncryptCBCStream(in io.Reader, out io.Writer) error                       // CBC 流式加密（适用于大文件）
-		DecryptCBCStream(in io.Reader, out io.Writer) error                       // CBC 流式解密（适用于大文件）
-		EncryptCBCFile(plainFile, outFile string, asymm Asymmetricer) error       // CBC 加密文件
-		DecryptCBCFile(cipherFile, outFile string, asymm Asymmetricer) error      // CBC 解密文件
-		EncryptCBCLargeFile(plainFile, outFile string, asymm Asymmetricer) error  // CBC 加密大文件
-		DecryptCBCLargeFile(cipherFile, outFile string, asymm Asymmetricer) error // CBC 解密大文件
+		SetAttrs(attrs ...SymmetricAttr) (err error)                                              // 设置属性
+		GetKeyString() string                                                                     // 获取 key：string
+		GetKeyBytes() []byte                                                                      // 获取 key：bytes
+		GetIVString() string                                                                      // 获取 iv：string
+		GetIVBytes() []byte                                                                       // 获取 iv：bytes
+		SetKeyString(key string)                                                                  // 设置 key：string
+		SetKeyBytes(key []byte)                                                                   // 设置 key：bytes
+		SetIVString(iv string)                                                                    // 设置 iv：string
+		SetIVBytes(iv []byte)                                                                     // 设置 iv：bytes
+		SetAlgorithm(algorithm string) (err error)                                                // 设置算法模式：CBC/ECB
+		Encrypt(plainText []byte) ([]byte, error)                                                 // 加密：通过原始内容
+		Decrypt(cipherText []byte) ([]byte, error)                                                // 解密：通过密文
+		EncryptBase64(plainText []byte) (string, error)                                           // 加密：通过原始内容，返回 base64 编码的密文
+		DecryptBase64(cipherBase64 string) ([]byte, error)                                        // 解密：通过 base64 编码的密文
+		EncryptStream(in io.Reader, out io.Writer) error                                          // 流式加密（适用于大文件，根据 Algorithm 选择 ECB/CBC）
+		DecryptStream(in io.Reader, out io.Writer) error                                          // 流式解密（适用于大文件，根据 Algorithm 选择 ECB/CBC）
+		EncryptFile(plainFile, outFile string, asymm Asymmetricer) error                           // 加密文件（根据 Algorithm 选择 ECB/CBC）
+		DecryptFile(cipherFile, outFile string, asymm Asymmetricer) error                          // 解密文件（根据 Algorithm 选择 ECB/CBC）
+		EncryptLargeFile(plainFile, outFile string, asymm Asymmetricer) error                      // 加密大文件（根据 Algorithm 选择 ECB/CBC）
+		DecryptLargeFile(cipherFile, outFile string, asymm Asymmetricer) error                     // 解密大文件（根据 Algorithm 选择 ECB/CBC）
 	}
 )

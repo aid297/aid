@@ -14,91 +14,91 @@ var (
 )
 
 func TestECB(t *testing.T) {
-	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey))
+	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.AlgorithmECB())
 	if err != nil {
 		t.Fatalf("创建 ECB 对象失败：%v", err)
 	}
-	cipherText, err := sm4Helper.EncryptECB(testPlain)
+	cipherText, err := sm4Helper.Encrypt(testPlain)
 	if err != nil {
-		t.Fatalf("EncryptECB failed: %v", err)
+		t.Fatalf("加密失败：%v", err)
 	}
-	plain, err := sm4Helper.DecryptECB(cipherText)
+	plain, err := sm4Helper.Decrypt(cipherText)
 	if err != nil {
-		t.Fatalf("DecryptECB failed: %v", err)
+		t.Fatalf("解密失败：%v", err)
 	}
 	if !bytes.Equal(plain, testPlain) {
-		t.Fatalf("ECB mismatch: got %s, want %s", plain, testPlain)
+		t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
 	}
 	t.Logf("ECB OK: %s", plain)
 }
 
 func TestECBBase64(t *testing.T) {
-	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey))
+	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.AlgorithmECB())
 	if err != nil {
 		t.Fatalf("创建 ECB 对象失败：%v", err)
 	}
-	b64, err := sm4Helper.EncryptECBBase64(testPlain)
+	b64, err := sm4Helper.EncryptBase64(testPlain)
 	if err != nil {
-		t.Fatalf("EncryptECBBase64 failed: %v", err)
+		t.Fatalf("加密失败：%v", err)
 	}
-	t.Logf("ECB base64: %s", b64)
-	plain, err := sm4Helper.DecryptECBBase64(b64)
+	t.Logf("加密后：%s", b64)
+	plain, err := sm4Helper.DecryptBase64(b64)
 	if err != nil {
-		t.Fatalf("DecryptECBBase64 failed: %v", err)
+		t.Fatalf("解密失败：%v", err)
 	}
 	if !bytes.Equal(plain, testPlain) {
-		t.Fatalf("ECB base64 mismatch: got %s, want %s", plain, testPlain)
+		t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
 	}
-	t.Logf("ECB base64 OK: %s", plain)
+	t.Logf("OK: %s", plain)
 }
 
 func TestCBC(t *testing.T) {
-	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
+	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV), sm4.AlgorithmCBC())
 	if err != nil {
 		t.Fatalf("创建 CBC 对象失败：%v", err)
 	}
-	cipherText, err := sm4Helper.EncryptCBC(testPlain)
+	cipherText, err := sm4Helper.Encrypt(testPlain)
 	if err != nil {
-		t.Fatalf("EncryptCBC failed: %v", err)
+		t.Fatalf("加密失败：%v", err)
 	}
-	plain, err := sm4Helper.DecryptCBC(cipherText)
+	plain, err := sm4Helper.Decrypt(cipherText)
 	if err != nil {
-		t.Fatalf("DecryptCBC failed: %v", err)
+		t.Fatalf("解密失败：%v", err)
 	}
 	if !bytes.Equal(plain, testPlain) {
-		t.Fatalf("CBC mismatch: got %s, want %s", plain, testPlain)
+		t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
 	}
 	t.Logf("CBC OK: %s", plain)
 }
 
 func TestCBCBase64(t *testing.T) {
-	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
+	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV), sm4.AlgorithmCBC())
 	if err != nil {
 		t.Fatalf("创建 CBC 对象失败：%v", err)
 	}
-	b64, err := sm4Helper.EncryptCBCBase64(testPlain)
+	b64, err := sm4Helper.EncryptBase64(testPlain)
 	if err != nil {
-		t.Fatalf("EncryptCBCBase64 failed: %v", err)
+		t.Fatalf("加密失败：%v", err)
 	}
-	t.Logf("CBC base64: %s", b64)
-	plain, err := sm4Helper.DecryptCBCBase64(b64)
+	t.Logf("加密成功：%s", b64)
+	plain, err := sm4Helper.DecryptBase64(b64)
 	if err != nil {
-		t.Fatalf("DecryptCBCBase64 failed: %v", err)
+		t.Fatalf("解密失败：%v", err)
 	}
 	if !bytes.Equal(plain, testPlain) {
-		t.Fatalf("CBC base64 mismatch: got %s, want %s", plain, testPlain)
+		t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
 	}
-	t.Logf("CBC base64 OK: %s", plain)
+	t.Logf("OK：%s", plain)
 }
 
 func TestInvalidKey(t *testing.T) {
-	sm4Helper, err := sm4.New(sm4.KeyString("shortkey"))
+	sm4Helper, err := sm4.New(sm4.KeyString("shortkey"), sm4.AlgorithmECB())
 	if err != nil {
 		t.Fatalf("创建对象失败：%v", err)
 	}
-	_, err = sm4Helper.EncryptECB(testPlain)
+	_, err = sm4Helper.Encrypt(testPlain)
 	if err == nil {
-		t.Fatal("expected error for invalid key length")
+		t.Fatal("验证key长度错误")
 	}
-	t.Logf("Invalid key error: %v", err)
+	t.Logf("验证不通过：%v", err)
 }

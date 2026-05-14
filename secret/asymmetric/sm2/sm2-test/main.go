@@ -43,7 +43,7 @@ func TestFileEncrypt() {
 	if sm4Encrypter, err = sm4.New(sm4.RandKey(&key), sm4.RandIV(&iv)); err != nil {
 		log.Fatalf("生成加密器(SM4)失败：%v", err)
 	}
-	if err = sm4Encrypter.EncryptCBCFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
+	if err = sm4Encrypter.EncryptFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
 		log.Fatalf("加密失败：%v", err)
 	}
 	log.Printf("加密成功：%s", encryptedFile)
@@ -60,7 +60,7 @@ func TestFileEncrypt() {
 	if sm4Decrypter, err = sm4.New(sm4.KeyBytes(key), sm4.IVBytes(iv)); err != nil {
 		log.Fatalf("生成解密器(SM4)失败：%v", err)
 	}
-	if err = sm4Decrypter.DecryptCBCFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
+	if err = sm4Decrypter.DecryptFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
 		log.Fatalf("解密文件失败：%v", err)
 	}
 	log.Printf("解密成功：%s", decryptedFile)
@@ -128,7 +128,7 @@ func TestLargeFileEncrypt() {
 	if sm4Encrypter, err = sm4.New(sm4.RandKey(&key), sm4.RandIV(&iv)); err != nil {
 		log.Fatalf("生成加密器(SM4)失败：%v", err)
 	}
-	if err = sm4Encrypter.EncryptCBCLargeFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
+	if err = sm4Encrypter.EncryptLargeFile(plainFile, encryptedFile, sm2Encrypter); err != nil {
 		log.Fatalf("大文件加密失败：%v", err)
 	}
 	log.Printf("大文件加密成功：%s", encryptedFile)
@@ -150,7 +150,7 @@ func TestLargeFileEncrypt() {
 	if sm4Decrypter, err = sm4.New(sm4.KeyBytes(key), sm4.IVBytes(iv)); err != nil {
 		log.Fatalf("生成解密器(SM4)失败：%v", err)
 	}
-	if err = sm4Decrypter.DecryptCBCLargeFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
+	if err = sm4Decrypter.DecryptLargeFile(encryptedFile, decryptedFile, sm2Decrypter); err != nil {
 		log.Fatalf("大文件解密失败：%v", err)
 	}
 	log.Printf("大文件解密成功：%s", decryptedFile)

@@ -59,3 +59,11 @@ func RandIV(outList ...*[]byte) secret.SymmetricAttr {
 		return
 	}
 }
+
+func AlgorithmECB() secret.SymmetricAttr {
+	return func(symmetricer secret.Symmetricer) (err error) { return symmetricer.SetAlgorithm("ECB") }
+}
+
+func AlgorithmCBC() secret.SymmetricAttr {
+	return func(symmetricer secret.Symmetricer) (err error) { return symmetricer.SetAlgorithm("CBC") }
+}

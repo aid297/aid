@@ -34,10 +34,10 @@ func TestFileEncrypt() {
 		log.Fatalf("写入测试文件失败：%v", err)
 	}
 
-	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AESKey192, &aesKey), aes.RandIV(&aesIV)); err != nil {
+	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AES192, &aesKey), aes.RandIV(&aesIV)); err != nil {
 		log.Fatalf("创建加密器(AES)失败：%v", err)
 	}
-	if err = aesEncrypter.EncryptCBCFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
+	if err = aesEncrypter.EncryptFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
 		log.Fatalf("加密失败：%v", err)
 	}
 	log.Printf("加密成功：%s", encryptedFile)
@@ -54,7 +54,7 @@ func TestFileEncrypt() {
 	if aesDecrypter, err = aes.New(aes.KeyBytes(aesKey), aes.IVBytes(aesIV)); err != nil {
 		log.Fatalf("生成解密器(AES)失败：%v", err)
 	}
-	if err = aesDecrypter.DecryptCBCFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
+	if err = aesDecrypter.DecryptFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
 		log.Fatalf("解密文件失败：%v", err)
 	}
 	log.Printf("解密成功：%s", decryptedFile)
@@ -115,10 +115,10 @@ func TestLargeFileEncrypt() {
 		log.Fatalf("生成大文件失败：%v", err)
 	}
 
-	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AESKey256), aes.RandIV()); err != nil {
+	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AES256), aes.RandIV()); err != nil {
 		log.Fatalf("生成 AES 失败：%v", err)
 	}
-	if err = aesEncrypter.EncryptCBCLargeFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
+	if err = aesEncrypter.EncryptLargeFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
 		log.Fatalf("大文件加密失败：%v", err)
 	}
 	log.Printf("大文件加密成功：%s", encryptedFile)
@@ -136,7 +136,7 @@ func TestLargeFileEncrypt() {
 		log.Fatalf("生成解密器(AES)失败：%v", err)
 	}
 
-	if err = aesDecrypter.DecryptCBCLargeFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
+	if err = aesDecrypter.DecryptLargeFile(encryptedFile, decryptedFile, rsaDecrypter); err != nil {
 		log.Fatalf("大文件解密失败：%v", err)
 	}
 	log.Printf("大文件解密成功：%s", decryptedFile)
