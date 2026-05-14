@@ -47,7 +47,7 @@ type (
 		SetKeyBytes(key []byte)                                                                   // 设置 key：bytes
 		SetIVString(iv string)                                                                    // 设置 iv：string
 		SetIVBytes(iv []byte)                                                                     // 设置 iv：bytes
-		SetAlgorithm(algorithm string) (err error)                                                // 设置算法模式：CBC/ECB
+		SetAlgorithm(algorithm string) (err error)                                               // 设置算法模式：ECB/CBC/CTR/GCM
 		Encrypt(plainText []byte) ([]byte, error)                                                 // 加密：通过原始内容
 		Decrypt(cipherText []byte) ([]byte, error)                                                // 解密：通过密文
 		EncryptBase64(plainText []byte) (string, error)                                           // 加密：通过原始内容，返回 base64 编码的密文

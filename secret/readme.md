@@ -1,6 +1,42 @@
 ## *Secret* 加密模块
 
-1. 非对称加密（*SM2*）
+### 目录
+
+| 章节 | 内容 |
+|------|------|
+| [1. 统一接口说明](#1-统一接口说明) | 选项函数对比、方法列表 |
+| [2. 非对称加密（SM2）](#2-非对称加密sm2) | 密钥生成、加解密、签名验证 |
+| [3. 非对称加密（RSA）](#3-非对称加密rsa) | 密钥生成、加解密、签名验证 |
+| [4. 对称加密（SM4）](#4-对称加密sm4) | ECB/CBC/CTR/GCM 模式，场景选择指南 |
+| [5. 对称加密（AES）](#5-对称加密aes) | ECB/CBC/CTR/GCM 模式，AES-192/256 |
+| [6. 组合用法](#6-组合用法) | SM2+SM4 / RSA+AES 文件加密 |
+
+1. 统一接口说明
+
+   对称加密接口支持通过选项函数选择 ECB、CBC、CTR、GCM 四种模式：
+
+   | 模式    | 选项函数                                    | Nonce/IV 长度 | 输出格式                   | 适用场景                  |
+   | ------- | ------------------------------------------- | ------------- | -------------------------- | ------------------------- |
+   | **ECB** | `sm4.AlgorithmECB()` / `aes.AlgorithmECB()` | 不需要        | 密文                       | ❌ 不推荐（不安全）        |
+   | **CBC** | `sm4.AlgorithmCBC()` / `aes.AlgorithmCBC()` | 16 字节 IV    | 密文                       | ✅ 通用场景、文件加密      |
+   | **CTR** | `sm4.AlgorithmCTR()` / `aes.AlgorithmCTR()` | 16 字节 nonce | nonce(16) + 密文           | ✅ 流式数据、大文件流加密  |
+   | **GCM** | `sm4.AlgorithmGCM()` / `aes.AlgorithmGCM()` | 12 字节 nonce | nonce(12) + 密文 + tag(16) | ✅ 认证加密、API 加密、TLS |
+
+   **随机数生成：**
+   - `sm4.RandCTRNonce()` / `aes.RandCTRNonce()` - 生成 16 字节随机 nonce（CTR 模式）
+   - `sm4.RandGCMNonce()` / `aes.RandGCMNonce()` - 生成 12 字节随机 nonce（GCM 模式）
+
+   **默认模式为 CBC**
+
+   **统一方法列表：**
+   | 方法                                | 说明             |
+   | ----------------------------------- | ---------------- |
+   | `Encrypt(in, out io.Reader/Writer)` | 流式加解密       |
+   | `EncryptBase64/DecryptBase64`       | Base64 编解码    |
+   | `EncryptFile/DecryptFile`           | 文件加解密       |
+   | `EncryptLargeFile/DecryptLargeFile` | 大文件流式加解密 |
+
+2. 非对称加密（*SM2*）
 
    1. 生成种子
       ```go
@@ -163,8 +199,8 @@
       	t.Logf("篡改数据正确被拒绝")
       }
       ```
-   
-2. 非对称加密（*RSA*）
+
+3. 非对称加密（*RSA*）
 
    1. 生成种子
       ```go
@@ -320,12 +356,33 @@
       	t.Logf("篡改数据正确被拒绝")
       }
       ```
-   
-3. 对称加密（*SM4*）
 
-   *SM4* 支持 *ECB* 和 *CBC* 两种模式，通过 `AlgorithmCBC()`/`AlgorithmECB()` 选择。默认 *CBC* 模式。
+4. 对称加密（*SM4*）
 
-   1. 基本用法（默认 *CBC* 模式）
+   *SM4* 支持 *ECB*、*CBC*、*CTR*、*GCM* 四种模式，通过 `AlgorithmCBC()`/`AlgorithmECB()`/`AlgorithmCTR()`/`AlgorithmGCM()` 选择。默认 *CBC* 模式。
+
+   ### 模式适用场景速查
+
+   | 模式 | 特性 | 适用场景 | 不适用场景 |
+   |------|------|----------|------------|
+   | **ECB** | 各区块独立加密，相同明文产生相同密文 | 学习/测试，理论演示 | **敏感数据加密**（会暴露明文模式） |
+   | **CBC** | 需 IV，区块链式依赖，支持填充 | 文件加密、数据库字段、通用数据 | 流式加密、大文件流处理（需填充） |
+   | **CTR** | 流式加密，无需填充，16字节 nonce | 网络通信、流式数据、大文件流加密 | 需要完整性认证的场景 |
+   | **GCM** | 认证加密，12字节 nonce，自动附加 16 字节 tag | TLS/SSL、API 加密、认证通信、敏感数据传输 | 简单快速加密（开销比 CTR 大） |
+
+   **推荐原则：**
+   - 需要认证：`GCM`
+   - 流式加密无需认证：`CTR`
+   - 通用文件加密：`CBC` 或 `GCM`
+   - **永远不要用 ECB 加密真实敏感数据**
+
+   ### 各模式详解
+
+   #### 3.1 CBC 模式（默认，推荐通用场景）
+
+   CBC（Cipher Block Chaining）模式通过将前一个密文块与当前明文块异或后再加密，安全性高，适用于大多数场景。
+
+   **基本用法（默认 *CBC* 模式）
       ```go
       func TestCBC(t *testing.T) {
       	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testIV))
@@ -347,8 +404,10 @@
       }
       ```
 
-   2. *ECB* 模式：由于*ECB*模式不安全，所以不推荐
-      
+   #### 3.2 ECB 模式（不推荐，仅供学习）
+
+   ⚠️ **警告**：ECB 模式下相同的明文块总是产生相同的密文块，会暴露明文的结构模式，**请勿用于加密敏感数据**。
+
       ```go
       func TestECB(t *testing.T) {
       	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.AlgorithmECB())
@@ -369,8 +428,8 @@
       	t.Logf("ECB OK: %s", plain)
       }
       ```
-      
-   3. Base64 编解码
+
+   #### 3.3 Base64 编解码
       ```go
       func TestECBBase64(t *testing.T) {
       	sm4Helper, err := sm4.New(sm4.KeyBytes(testKey))
@@ -389,15 +448,159 @@
       	if !bytes.Equal(plain, testPlain) {
       		t.Fatalf("匹配失败: 结果 %s，期望 %s", plain, testPlain)
       	}
-      	t.Logf("Base64 OK: %s", plain)
+      t.Logf("Base64 OK: %s", plain)
       }
       ```
 
+   #### 3.4 CTR 模式（流式加密，无需填充）
+
+   CTR（Counter）模式将分组密码转换为流密码，无需填充，适合流式数据加密和大文件流处理。
+
+   - **Nonce 长度**：16 字节（与 blockSize 相同）
+   - **输出格式**：`nonce(16) + 密文`
+   - **特点**：无需填充，可并行加密，速度快
+
+   ```go
+   func TestCTR(t *testing.T) {
+       var (
+           testKey   = []byte("1234567890abcdef") // 16 字节密钥
+           testNonce = []byte("abcdef1234567890") // 16 字节 nonce
+           testPlain = []byte("hello, SM4 CTR encrypt test!")
+       )
+   
+       sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testNonce), sm4.AlgorithmCTR())
+       if err != nil {
+           t.Fatalf("创建 CTR 对象失败：%v", err)
+       }
+       cipherText, err := sm4Helper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       plain, err := sm4Helper.Decrypt(cipherText)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("CTR OK: %s", plain)
+   }
+   
+   // 使用随机 nonce
+   func TestCTRWithRandNonce(t *testing.T) {
+       var testKey = []byte("1234567890abcdef")
+       var testPlain = []byte("hello, SM4 CTR with random nonce!")
+   
+       sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.RandCTRNonce(), sm4.AlgorithmCTR())
+       if err != nil {
+           t.Fatalf("创建 CTR 对象失败：%v", err)
+       }
+       cipherText, err := sm4Helper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       plain, err := sm4Helper.Decrypt(cipherText)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("CTR RandNonce OK: %s", plain)
+   }
+   ```
+
+   #### 3.5 GCM 模式（认证加密）
+
+   GCM（Galois/Counter Mode）是认证加密模式，同时提供机密性和完整性认证。解密时会自动验证数据完整性。
+
+   - **Nonce 长度**：12 字节（标准）
+   - **输出格式**：`nonce(12) + 密文 + tag(16)`
+   - **特点**：自动认证，防篡改，解密失败返回错误
+
+   ```go
+   func TestGCM(t *testing.T) {
+       var (
+           testKey   = []byte("1234567890abcdef") // 16 字节密钥
+           testNonce = []byte("abcdef123456")      // 12 字节 nonce
+           testPlain = []byte("hello, SM4 GCM encrypt test!")
+       )
+   
+       sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testNonce), sm4.AlgorithmGCM())
+       if err != nil {
+           t.Fatalf("创建 GCM 对象失败：%v", err)
+       }
+       cipherText, err := sm4Helper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       t.Logf("GCM 密文长度：%d 字节", len(cipherText)) // 52 = 12(nonce) + 24(加密) + 16(tag)
+   
+       plain, err := sm4Helper.Decrypt(cipherText)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("GCM OK: %s", plain)
+   }
+   
+   // 篡改检测
+   func TestGCMTampered(t *testing.T) {
+       testNonce := []byte("abcdef123456")
+       sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.IVBytes(testNonce), sm4.AlgorithmGCM())
+       if err != nil {
+           t.Fatalf("创建 GCM 对象失败：%v", err)
+       }
+       cipherText, err := sm4Helper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+   
+       // 篡改密文
+       if len(cipherText) > 20 {
+           cipherText[20] ^= 0xFF
+       }
+   
+       _, err = sm4Helper.Decrypt(cipherText)
+       if err == nil {
+           t.Fatal("GCM 认证应该失败：密文已被篡改")
+       }
+       t.Logf("GCM 篡改检测成功：%v", err)
+   }
+   
+   // 使用随机 nonce
+   func TestGCMWithRandNonce(t *testing.T) {
+       var testKey = []byte("1234567890abcdef")
+       var testPlain = []byte("hello, SM4 GCM with random nonce!")
+   
+       sm4Helper, err := sm4.New(sm4.KeyBytes(testKey), sm4.RandGCMNonce(), sm4.AlgorithmGCM())
+       if err != nil {
+           t.Fatalf("创建 GCM 对象失败：%v", err)
+       }
+       cipherText, err := sm4Helper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       plain, err := sm4Helper.Decrypt(cipherText)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("GCM RandNonce OK: %s", plain)
+   }
+   ```
+
 5. 对称加密（*AES*）
 
-   AES 支持 ECB 和 CBC 两种模式，通过 `AlgorithmCBC()`/`AlgorithmECB()` 选择。默认 CBC 模式。
+   AES 支持 ECB、CBC、CTR、GCM 四种模式，与 SM4 类似。默认 CBC 模式。支持 AES-128、AES-192、AES-256 三种密钥长度。
 
-   1. 基本用法（默认 CBC 模式）
+   #### 4.1 CBC 模式（默认，推荐通用场景）
+
+   **基本用法（默认 CBC 模式）**
       ```go
       func TestCBC(t *testing.T) {
       	var (
@@ -454,7 +657,9 @@
       }
       ```
 
-   2. ECB 模式
+   #### 4.2 ECB 模式（不推荐，仅供学习）
+
+   ⚠️ **警告**：ECB 模式下相同的明文块总是产生相同的密文块，**请勿用于加密敏感数据**。
       ```go
       func TestECB(t *testing.T) {
       	var (
@@ -509,7 +714,7 @@
       }
       ```
 
-   3. AES192 和 AES256 支持
+   #### 4.3 AES192 和 AES256 支持
       ```go
       func TestCBC192And256(t *testing.T) {
       	var (
@@ -568,7 +773,208 @@
       }
       ```
 
-7. 组合用法
+   #### 4.4 CTR 模式（流式加密，无需填充）
+
+   CTR（Counter）模式将分组密码转换为流密码，无需填充，适合流式数据加密。
+
+   - **Nonce 长度**：16 字节（与 blockSize 相同）
+   - **输出格式**：`nonce(16) + 密文`
+
+   ```go
+   func TestCTR(t *testing.T) {
+       var (
+           testKey   = []byte("1234567890abcdef") // 16 字节密钥
+           testNonce = []byte("abcdef1234567890") // 16 字节 nonce
+           testPlain = []byte("hello, AES CTR encrypt test!")
+       )
+   
+       aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testNonce), aes.AlgorithmCTR())
+       if err != nil {
+           t.Fatalf("创建 CTR 对象失败：%v", err)
+       }
+       cipherText, err := aesHelper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       plain, err := aesHelper.Decrypt(cipherText)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("CTR OK: %s", plain)
+   }
+   
+   func TestCTRBase64(t *testing.T) {
+       var (
+           testKey   = []byte("1234567890abcdef")
+           testNonce = []byte("abcdef1234567890")
+           testPlain = []byte("hello, AES CTR encrypt test!")
+       )
+   
+       aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testNonce), aes.AlgorithmCTR())
+       if err != nil {
+           t.Fatalf("创建 CTR 对象失败：%v", err)
+       }
+       b64, err := aesHelper.EncryptBase64(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       t.Logf("加密后 base64：%s", b64)
+       plain, err := aesHelper.DecryptBase64(b64)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("CTR Base64 OK: %s", plain)
+   }
+   
+   // 使用随机 nonce
+   func TestCTRWithRandNonce(t *testing.T) {
+       var (
+           testKey   = []byte("1234567890abcdef")
+           testPlain = []byte("hello, AES CTR with random nonce!")
+       )
+   
+       aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.RandCTRNonce(), aes.AlgorithmCTR())
+       if err != nil {
+           t.Fatalf("创建 CTR 对象失败：%v", err)
+       }
+       cipherText, err := aesHelper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       plain, err := aesHelper.Decrypt(cipherText)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("CTR RandNonce OK: %s", plain)
+   }
+   ```
+
+   #### 4.5 GCM 模式（认证加密）
+
+   GCM（Galois/Counter Mode）是认证加密模式，同时提供机密性和完整性认证。
+
+   - **Nonce 长度**：12 字节（标准）
+   - **输出格式**：`nonce(12) + 密文 + tag(16)`
+
+   ```go
+   func TestGCM(t *testing.T) {
+       var (
+           testKey   = []byte("1234567890abcdef")
+           testNonce = []byte("abcdef123456")      // 12 字节 nonce
+           testPlain = []byte("hello, AES GCM encrypt test!")
+       )
+   
+       aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testNonce), aes.AlgorithmGCM())
+       if err != nil {
+           t.Fatalf("创建 GCM 对象失败：%v", err)
+       }
+       cipherText, err := aesHelper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       t.Logf("GCM 密文长度：%d 字节", len(cipherText)) // 56 = 12(nonce) + 28(加密) + 16(tag)
+   
+       plain, err := aesHelper.Decrypt(cipherText)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("GCM OK: %s", plain)
+   }
+   
+   func TestGCMBase64(t *testing.T) {
+       var (
+           testKey   = []byte("1234567890abcdef")
+           testNonce = []byte("abcdef123456")
+           testPlain = []byte("hello, AES GCM encrypt test!")
+       )
+   
+       aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testNonce), aes.AlgorithmGCM())
+       if err != nil {
+           t.Fatalf("创建 GCM 对象失败：%v", err)
+       }
+       b64, err := aesHelper.EncryptBase64(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       t.Logf("加密后 base64：%s", b64)
+       plain, err := aesHelper.DecryptBase64(b64)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("GCM Base64 OK: %s", plain)
+   }
+   
+   // 使用随机 nonce
+   func TestGCMWithRandNonce(t *testing.T) {
+       var (
+           testKey   = []byte("1234567890abcdef")
+           testPlain = []byte("hello, AES GCM with random nonce!")
+       )
+   
+       aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.RandGCMNonce(), aes.AlgorithmGCM())
+       if err != nil {
+           t.Fatalf("创建 GCM 对象失败：%v", err)
+       }
+       cipherText, err := aesHelper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+       plain, err := aesHelper.Decrypt(cipherText)
+       if err != nil {
+           t.Fatalf("解密失败：%v", err)
+       }
+       if !bytes.Equal(plain, testPlain) {
+           t.Fatalf("比对失败：结果 %s，期望 %s", plain, testPlain)
+       }
+       t.Logf("GCM RandNonce OK: %s", plain)
+   }
+   
+   // 篡改检测
+   func TestGCMTampered(t *testing.T) {
+       var (
+           testKey   = []byte("1234567890abcdef")
+           testNonce = []byte("abcdef123456")
+           testPlain = []byte("hello, AES GCM tamper test!")
+       )
+   
+       aesHelper, err := aes.New(aes.KeyBytes(testKey), aes.IVBytes(testNonce), aes.AlgorithmGCM())
+       if err != nil {
+           t.Fatalf("创建 GCM 对象失败：%v", err)
+       }
+       cipherText, err := aesHelper.Encrypt(testPlain)
+       if err != nil {
+           t.Fatalf("加密失败：%v", err)
+       }
+   
+       // 篡改密文
+       if len(cipherText) > 20 {
+           cipherText[20] ^= 0xFF
+       }
+   
+       _, err = aesHelper.Decrypt(cipherText)
+       if err == nil {
+           t.Fatal("GCM 认证应该失败：密文已被篡改")
+       }
+       t.Logf("GCM 篡改检测成功：%v", err)
+   }
+   ```
+
+6. 组合用法
 
    1. *SM2+SM4*加密文件和大文件加密
 
@@ -789,9 +1195,9 @@
       
       func main() { TestFileEncrypt(); TestLargeFileEncrypt() }
       ```
-   
+
    2. *RSA+AES*
-   
+
       ```go
       package main
       
@@ -994,19 +1400,3 @@
       
       func main() { TestFileEncrypt(); TestLargeFileEncrypt() }
       ```
-
-8. 统一接口说明
-
-   对称加密接口支持通过选项函数选择 ECB 或 CBC 模式：
-
-   - `sm4.AlgorithmECB()` / `aes.AlgorithmECB()` - 电子密码本模式（各区块独立加密，不推荐用于加密敏感数据）
-   - `sm4.AlgorithmCBC()` / `aes.AlgorithmCBC()` - 密码块链接模式（需配合 IV 使用，安全性更高）
-   - **默认模式为 CBC**
-
-   **统一方法列表：**
-   | 方法 | 说明 |
-   |------|------|
-   | `Encrypt(in, out io.Reader/Writer)` | 流式加解密 |
-   | `EncryptBase64/DecryptBase64` | Base64 编解码 |
-   | `EncryptFile/DecryptFile` | 文件加解密 |
-   | `EncryptLargeFile/DecryptLargeFile` | 大文件流式加解密 |

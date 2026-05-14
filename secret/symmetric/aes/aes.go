@@ -4,6 +4,7 @@ import (
 	"bytes"
 	stdaes "crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -130,10 +131,10 @@ func (my *AESImpl) SetIVBytes(iv []byte) { my.iv = iv }
 // SetAlgorithm 设置算法
 func (my *AESImpl) SetAlgorithm(algorithm string) (err error) {
 	switch algorithm {
-	case "ECB", "CBC":
-		my.algorithm = algorithm
+	case "ECB", "CBC", "CTR", "GCM":
+		my.algorithm = strings.ToUpper(algorithm)
 	default:
-		err = errors.New("对称加密算法目前只支持：ECB/CBC")
+		err = errors.New("对称加密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 	return
 }
@@ -145,8 +146,12 @@ func (my *AESImpl) Encrypt(plainText []byte) ([]byte, error) {
 		return my.encryptECB(plainText)
 	case "CBC":
 		return my.encryptCBC(plainText)
+	case "CTR":
+		return my.encryptCTR(plainText)
+	case "GCM":
+		return my.encryptGCM(plainText)
 	default:
-		return nil, errors.New("对称加密算法目前只支持：ECB/CBC")
+		return nil, errors.New("对称加密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
@@ -157,8 +162,12 @@ func (my *AESImpl) Decrypt(cipherText []byte) ([]byte, error) {
 		return my.decryptECB(cipherText)
 	case "CBC":
 		return my.decryptCBC(cipherText)
+	case "CTR":
+		return my.decryptCTR(cipherText)
+	case "GCM":
+		return my.decryptGCM(cipherText)
 	default:
-		return nil, errors.New("对称解密算法目前只支持：ECB/CBC")
+		return nil, errors.New("对称解密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
@@ -177,7 +186,7 @@ func (my *AESImpl) DecryptBase64(cipherBase64 string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("base64解码错误：%w", err)
 	}
-	return my.decryptECB(cipherText)
+	return my.Decrypt(cipherText)
 }
 
 // encryptECB ECB 模式加密，返回原始字节
@@ -252,6 +261,134 @@ func (my *AESImpl) decryptCBC(cipherText []byte) ([]byte, error) {
 	plainText := make([]byte, len(cipherText))
 	cipher.NewCBCDecrypter(block, my.iv).CryptBlocks(plainText, cipherText)
 	return unPadPKCS7(plainText, blockSize)
+}
+
+// validateNonce 校验 Nonce 长度（CTR/GCM 使用）
+// CTR: 必须 16 字节（与 blockSize 相同）
+// GCM: 12 字节是标准
+func validateNonce(nonce []byte) error {
+	if len(nonce) != blockSize && len(nonce) != 12 {
+		return fmt.Errorf("错误的nonce长度 %d，CTR模式需要16字节，GCM模式需要12字节", len(nonce))
+	}
+	return nil
+}
+
+// encryptCTR CTR 模式加密，返回原始字节
+// CTR 模式将分组密码转换为流密码，无需填充
+// 输出格式：nonce(16) + 密文
+func (my *AESImpl) encryptCTR(plainText []byte) ([]byte, error) {
+	if err := validateKey(my.key); err != nil {
+		return nil, err
+	}
+	if err := validateNonce(my.iv); err != nil {
+		return nil, err
+	}
+
+	block, err := stdaes.NewCipher(my.key)
+	if err != nil {
+		return nil, err
+	}
+
+	// 输出格式：nonce(16) + 密文
+	cipherText := make([]byte, 16+len(plainText))
+	copy(cipherText, my.iv)
+
+	stream := cipher.NewCTR(block, my.iv)
+	stream.XORKeyStream(cipherText[16:], plainText)
+
+	return cipherText, nil
+}
+
+// decryptCTR CTR 模式解密
+// 输入格式：nonce(16) + 密文
+func (my *AESImpl) decryptCTR(cipherText []byte) ([]byte, error) {
+	if err := validateKey(my.key); err != nil {
+		return nil, err
+	}
+	if len(cipherText) < 16 {
+		return nil, errors.New("错误的密文长度：CTR 模式密文至少需要 16 字节（nonce）")
+	}
+
+	block, err := stdaes.NewCipher(my.key)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := cipherText[:16]
+	actualCipher := cipherText[16:]
+
+	plainText := make([]byte, len(actualCipher))
+	stream := cipher.NewCTR(block, nonce)
+	stream.XORKeyStream(plainText, actualCipher)
+
+	return plainText, nil
+}
+
+// encryptGCM GCM 模式加密（认证加密）
+// GCM 同时提供机密性和完整性认证
+// 输出格式：nonce(12) + 密文 + tag(16)
+func (my *AESImpl) encryptGCM(plainText []byte) ([]byte, error) {
+	if err := validateKey(my.key); err != nil {
+		return nil, err
+	}
+	if err := validateNonce(my.iv); err != nil {
+		return nil, err
+	}
+
+	block, err := stdaes.NewCipher(my.key)
+	if err != nil {
+		return nil, err
+	}
+
+	// GCM 标准 nonce 长度为 12 字节
+	nonce := make([]byte, 12)
+	if len(my.iv) >= 12 {
+		copy(nonce, my.iv[:12])
+	} else {
+		// 如果 IV 不足 12 字节，使用 IV 并填充
+		copy(nonce, my.iv)
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	// GCM 会自动生成随机 nonce 扩展到 12 字节，但我们直接使用传入的 nonce
+	cipherText := aesGCM.Seal(nonce, nonce, plainText, nil)
+
+	return cipherText, nil
+}
+
+// decryptGCM GCM 模式解密（认证解密）
+// 输入格式：nonce(12) + 密文 + tag(16)
+// 如果 tag 验证失败，返回错误
+func (my *AESImpl) decryptGCM(cipherText []byte) ([]byte, error) {
+	if err := validateKey(my.key); err != nil {
+		return nil, err
+	}
+	if len(cipherText) < 28 { // 12 (nonce) + 16 (tag) minimum
+		return nil, errors.New("错误的密文长度：GCM 模式密文至少需要 28 字节（12 字节 nonce + 16 字节 tag）")
+	}
+
+	block, err := stdaes.NewCipher(my.key)
+	if err != nil {
+		return nil, err
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := cipherText[:12]
+	// GCM 的 Open 方法会自动提取并验证 tag
+	plainText, err := aesGCM.Open(nil, nonce, cipherText[12:], nil)
+	if err != nil {
+		return nil, errors.New("GCM 认证失败：密文已被篡改或密钥错误")
+	}
+
+	return plainText, nil
 }
 
 // encryptCBCStream CBC 流式加密（适用于大文件）
@@ -891,74 +1028,729 @@ func (my *AESImpl) decryptECBLargeFile(cipherFile, outFile string, asymm secret.
 	return my.decryptECBStream(inF, outF)
 }
 
-// EncryptStream 流式加密（适用于大文件，根据 Algorithm 选择 ECB/CBC）
+// EncryptStream 流式加密（适用于大文件，根据 Algorithm 选择 ECB/CBC/CTR/GCM）
 func (my *AESImpl) EncryptStream(in io.Reader, out io.Writer) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.encryptECBStream(in, out)
 	case "CBC":
 		return my.encryptCBCStream(in, out)
+	case "CTR":
+		return my.encryptCTRStream(in, out)
+	case "GCM":
+		return my.encryptGCMStream(in, out)
 	default:
-		return errors.New("对称加密算法目前只支持：ECB/CBC")
+		return errors.New("对称加密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
-// DecryptStream 流式解密（适用于大文件，根据 Algorithm 选择 ECB/CBC）
+// DecryptStream 流式解密（适用于大文件，根据 Algorithm 选择 ECB/CBC/CTR/GCM）
 func (my *AESImpl) DecryptStream(in io.Reader, out io.Writer) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.decryptECBStream(in, out)
 	case "CBC":
 		return my.decryptCBCStream(in, out)
+	case "CTR":
+		return my.decryptCTRStream(in, out)
+	case "GCM":
+		return my.decryptGCMStream(in, out)
 	default:
-		return errors.New("对称解密算法目前只支持：ECB/CBC")
+		return errors.New("对称解密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
-// EncryptFile 加密文件（根据 Algorithm 选择 ECB/CBC）
+// EncryptFile 加密文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
 func (my *AESImpl) EncryptFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.encryptECBFile(plainFile, outFile, asymm)
 	case "CBC":
 		return my.encryptCBCFile(plainFile, outFile, asymm)
+	case "CTR":
+		return my.encryptCTRFile(plainFile, outFile, asymm)
+	case "GCM":
+		return my.encryptGCMFile(plainFile, outFile, asymm)
 	default:
-		return errors.New("对称加密算法目前只支持：ECB/CBC")
+		return errors.New("对称加密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
-// DecryptFile 解密文件（根据 Algorithm 选择 ECB/CBC）
+// DecryptFile 解密文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
 func (my *AESImpl) DecryptFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.decryptECBFile(cipherFile, outFile, asymm)
 	case "CBC":
 		return my.decryptCBCFile(cipherFile, outFile, asymm)
+	case "CTR":
+		return my.decryptCTRFile(cipherFile, outFile, asymm)
+	case "GCM":
+		return my.decryptGCMFile(cipherFile, outFile, asymm)
 	default:
-		return errors.New("对称解密算法目前只支持：ECB/CBC")
+		return errors.New("对称解密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
-// EncryptLargeFile 加密大文件（根据 Algorithm 选择 ECB/CBC）
+// EncryptLargeFile 加密大文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
 func (my *AESImpl) EncryptLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.encryptECBLargeFile(plainFile, outFile, asymm)
 	case "CBC":
 		return my.encryptCBCLargeFile(plainFile, outFile, asymm)
+	case "CTR":
+		return my.encryptCTRLargeFile(plainFile, outFile, asymm)
+	case "GCM":
+		return my.encryptGCMLargeFile(plainFile, outFile, asymm)
 	default:
-		return errors.New("对称加密算法目前只支持：ECB/CBC")
+		return errors.New("对称加密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
-// DecryptLargeFile 解密大文件（根据 Algorithm 选择 ECB/CBC）
+// DecryptLargeFile 解密大文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
 func (my *AESImpl) DecryptLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.decryptECBLargeFile(cipherFile, outFile, asymm)
 	case "CBC":
 		return my.decryptCBCLargeFile(cipherFile, outFile, asymm)
+	case "CTR":
+		return my.decryptCTRLargeFile(cipherFile, outFile, asymm)
+	case "GCM":
+		return my.decryptGCMLargeFile(cipherFile, outFile, asymm)
 	default:
-		return errors.New("对称解密算法目前只支持：ECB/CBC")
+		return errors.New("对称解密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
+}
+
+// encryptCTRStream CTR 流式加密（适用于大文件）
+func (my *AESImpl) encryptCTRStream(in io.Reader, out io.Writer) error {
+	if err := validateKey(my.key); err != nil {
+		return err
+	}
+	if err := validateNonce(my.iv); err != nil {
+		return err
+	}
+
+	block, err := stdaes.NewCipher(my.key)
+	if err != nil {
+		return err
+	}
+
+	stream := cipher.NewCTR(block, my.iv)
+
+	var (
+		readBuf = make([]byte, 1024*1024)
+	)
+
+	for {
+		n, readErr := in.Read(readBuf)
+		if n > 0 {
+			plainChunk := readBuf[:n]
+			cipherChunk := make([]byte, n)
+			stream.XORKeyStream(cipherChunk, plainChunk)
+			if _, err = out.Write(cipherChunk); err != nil {
+				return err
+			}
+		}
+
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			return readErr
+		}
+	}
+
+	return nil
+}
+
+// decryptCTRStream CTR 流式解密（适用于大文件）
+func (my *AESImpl) decryptCTRStream(in io.Reader, out io.Writer) error {
+	if err := validateKey(my.key); err != nil {
+		return err
+	}
+	if err := validateNonce(my.iv); err != nil {
+		return err
+	}
+
+	block, err := stdaes.NewCipher(my.key)
+	if err != nil {
+		return err
+	}
+
+	stream := cipher.NewCTR(block, my.iv)
+
+	var (
+		readBuf = make([]byte, 1024*1024)
+	)
+
+	for {
+		n, readErr := in.Read(readBuf)
+		if n > 0 {
+			cipherChunk := readBuf[:n]
+			plainChunk := make([]byte, n)
+			stream.XORKeyStream(plainChunk, cipherChunk)
+			if _, err = out.Write(plainChunk); err != nil {
+				return err
+			}
+		}
+
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			return readErr
+		}
+	}
+
+	return nil
+}
+
+// encryptGCMStream GCM 流式加密（适用于大文件）
+// 注意：GCM 是认证加密，流式加密时无法在解密端验证完整性
+// 如果需要验证完整性，请在完整数据流加密后单独验证，或使用分块 GCM
+func (my *AESImpl) encryptGCMStream(in io.Reader, out io.Writer) error {
+	if err := validateKey(my.key); err != nil {
+		return err
+	}
+	if err := validateNonce(my.iv); err != nil {
+		return err
+	}
+
+	block, err := stdaes.NewCipher(my.key)
+	if err != nil {
+		return err
+	}
+
+	nonce := make([]byte, 12)
+	if len(my.iv) >= 12 {
+		copy(nonce, my.iv[:12])
+	} else {
+		copy(nonce, my.iv)
+	}
+
+	// 生成随机 nonce 写入文件头部
+	if _, err := out.Write(nonce); err != nil {
+		return err
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return err
+	}
+
+	// 流式加密：每次处理一个块，生成独立的认证标签
+	// 由于是流式，我们累积数据最后一次性认证
+	var (
+		pending []byte
+		readBuf = make([]byte, 1024*1024)
+	)
+
+	for {
+		n, readErr := in.Read(readBuf)
+		if n > 0 {
+			pending = append(pending, readBuf[:n]...)
+		}
+
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			return readErr
+		}
+	}
+
+	// 整体加密并认证
+	cipherText := aesGCM.Seal(nil, nonce, pending, nil)
+	_, err = out.Write(cipherText)
+	return err
+}
+
+// decryptGCMStream GCM 流式解密（适用于大文件）
+func (my *AESImpl) decryptGCMStream(in io.Reader, out io.Writer) error {
+	if err := validateKey(my.key); err != nil {
+		return err
+	}
+
+	block, err := stdaes.NewCipher(my.key)
+	if err != nil {
+		return err
+	}
+
+	// 读取 nonce
+	nonce := make([]byte, 12)
+	if _, err := io.ReadFull(in, nonce); err != nil {
+		return errors.New("GCM 流式解密失败：无法读取 nonce")
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return err
+	}
+
+	// 读取所有密文
+	cipherData, err := io.ReadAll(in)
+	if err != nil {
+		return err
+	}
+
+	// 解密并验证
+	plainText, err := aesGCM.Open(nil, nonce, cipherData, nil)
+	if err != nil {
+		return errors.New("GCM 认证失败：密文已被篡改或密钥错误")
+	}
+
+	_, err = out.Write(plainText)
+	return err
+}
+
+// encryptCTRFile CTR 加密文件
+func (my *AESImpl) encryptCTRFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+	var (
+		err               error
+		plainData         []byte
+		fileCipher        []byte
+		aesKeyAndNonce    []byte
+		encryptedKeyStr   string
+		encryptedKeyBytes []byte
+		keyLen            int
+		out               []byte
+	)
+
+	if plainData, err = os.ReadFile(plainFile); err != nil {
+		return err
+	}
+
+	if fileCipher, err = my.encryptCTR(plainData); err != nil {
+		return err
+	}
+
+	// CTR 使用 16 字节 nonce
+	nonce := fileCipher[:16]
+	aesKeyAndNonce = append(my.key, nonce...)
+	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndNonce); err != nil {
+		return err
+	}
+	encryptedKeyBytes = []byte(encryptedKeyStr)
+
+	if err = validateKey(my.key); err != nil {
+		return err
+	}
+
+	keyLen = len(encryptedKeyBytes)
+	out = make([]byte, 5+keyLen+len(fileCipher))
+	out[0] = fileHeaderMagic
+	out[1] = fileHeaderVersion
+	out[2] = byte(len(my.key))
+	out[3] = byte(keyLen >> 8)
+	out[4] = byte(keyLen)
+	copy(out[5:], encryptedKeyBytes)
+	copy(out[5+keyLen:], fileCipher)
+
+	return os.WriteFile(outFile, out, 0644)
+}
+
+// decryptCTRFile CTR 解密文件
+func (my *AESImpl) decryptCTRFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+	var (
+		err                error
+		data               []byte
+		keyLen             int
+		encryptedKeyBase64 string
+		fileCipher         []byte
+		aesKeyAndNonce     []byte
+		plainData          []byte
+	)
+
+	if data, err = os.ReadFile(cipherFile); err != nil {
+		return err
+	}
+	if len(data) < 2 {
+		return os.ErrInvalid
+	}
+
+	keySize := 16
+	offset := 2
+	if len(data) >= 5 && data[0] == fileHeaderMagic {
+		if data[1] != fileHeaderVersion {
+			return os.ErrInvalid
+		}
+		keySize = int(data[2])
+		if err = validateKeySize(keySize); err != nil {
+			return err
+		}
+		keyLen = int(data[3])<<8 | int(data[4])
+		offset = 5
+	} else {
+		keyLen = int(data[0])<<8 | int(data[1])
+	}
+	if len(data) < offset+keyLen {
+		return os.ErrInvalid
+	}
+	encryptedKeyBase64 = string(data[offset : offset+keyLen])
+	fileCipher = data[offset+keyLen:]
+
+	if aesKeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+		return err
+	}
+	if len(aesKeyAndNonce) != keySize+16 {
+		return os.ErrInvalid
+	}
+	my.key = aesKeyAndNonce[:keySize]
+	my.iv = aesKeyAndNonce[keySize:] // 16 字节是 nonce
+
+	if plainData, err = my.decryptCTR(fileCipher); err != nil {
+		return err
+	}
+
+	return os.WriteFile(outFile, plainData, 0644)
+}
+
+// encryptGCMFile GCM 加密文件
+func (my *AESImpl) encryptGCMFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+	var (
+		err               error
+		plainData         []byte
+		fileCipher        []byte
+		aesKeyAndNonce    []byte
+		encryptedKeyStr   string
+		encryptedKeyBytes []byte
+		keyLen            int
+		out               []byte
+	)
+
+	if plainData, err = os.ReadFile(plainFile); err != nil {
+		return err
+	}
+
+	if fileCipher, err = my.encryptGCM(plainData); err != nil {
+		return err
+	}
+
+	// GCM 使用 12 字节 nonce
+	nonce := fileCipher[:12]
+	aesKeyAndNonce = append(my.key, nonce...)
+	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndNonce); err != nil {
+		return err
+	}
+	encryptedKeyBytes = []byte(encryptedKeyStr)
+
+	if err = validateKey(my.key); err != nil {
+		return err
+	}
+
+	keyLen = len(encryptedKeyBytes)
+	out = make([]byte, 5+keyLen+len(fileCipher))
+	out[0] = fileHeaderMagic
+	out[1] = fileHeaderVersion
+	out[2] = byte(len(my.key))
+	out[3] = byte(keyLen >> 8)
+	out[4] = byte(keyLen)
+	copy(out[5:], encryptedKeyBytes)
+	copy(out[5+keyLen:], fileCipher)
+
+	return os.WriteFile(outFile, out, 0644)
+}
+
+// decryptGCMFile GCM 解密文件
+func (my *AESImpl) decryptGCMFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+	var (
+		err                error
+		data               []byte
+		keyLen             int
+		encryptedKeyBase64 string
+		fileCipher         []byte
+		aesKeyAndNonce     []byte
+		plainData          []byte
+	)
+
+	if data, err = os.ReadFile(cipherFile); err != nil {
+		return err
+	}
+	if len(data) < 2 {
+		return os.ErrInvalid
+	}
+
+	keySize := 16
+	offset := 2
+	if len(data) >= 5 && data[0] == fileHeaderMagic {
+		if data[1] != fileHeaderVersion {
+			return os.ErrInvalid
+		}
+		keySize = int(data[2])
+		if err = validateKeySize(keySize); err != nil {
+			return err
+		}
+		keyLen = int(data[3])<<8 | int(data[4])
+		offset = 5
+	} else {
+		keyLen = int(data[0])<<8 | int(data[1])
+	}
+	if len(data) < offset+keyLen {
+		return os.ErrInvalid
+	}
+	encryptedKeyBase64 = string(data[offset : offset+keyLen])
+	fileCipher = data[offset+keyLen:]
+
+	if aesKeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+		return err
+	}
+	if len(aesKeyAndNonce) != keySize+12 {
+		return os.ErrInvalid
+	}
+	my.key = aesKeyAndNonce[:keySize]
+	my.iv = aesKeyAndNonce[keySize:] // 前 12 字节是 nonce
+
+	if plainData, err = my.decryptGCM(fileCipher); err != nil {
+		return err
+	}
+
+	return os.WriteFile(outFile, plainData, 0644)
+}
+
+// encryptCTRLargeFile 用 SM2+AES CTR 流式加密大文件（TB级）
+func (my *AESImpl) encryptCTRLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+	var (
+		err               error
+		inF, outF         *os.File
+		aesKeyAndNonce    []byte
+		encryptedKeyStr   string
+		encryptedKeyBytes []byte
+		nonce             []byte
+	)
+
+	if inF, err = os.Open(plainFile); err != nil {
+		return err
+	}
+	defer inF.Close()
+
+	if outF, err = os.Create(outFile); err != nil {
+		return err
+	}
+	defer outF.Close()
+
+	// 生成随机 16 字节 nonce
+	nonce = make([]byte, 16)
+	if _, err = rand.Read(nonce); err != nil {
+		return err
+	}
+
+	aesKeyAndNonce = append(my.key, nonce...)
+	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndNonce); err != nil {
+		return err
+	}
+	encryptedKeyBytes = []byte(encryptedKeyStr)
+	if err = validateKey(my.key); err != nil {
+		return err
+	}
+	if len(encryptedKeyBytes) > 0xFFFF {
+		return errors.New("encrypted key too long")
+	}
+
+	if _, err = outF.Write([]byte{fileHeaderMagic, fileHeaderVersion, byte(len(my.key)), byte(len(encryptedKeyBytes) >> 8), byte(len(encryptedKeyBytes))}); err != nil {
+		return err
+	}
+	if _, err = outF.Write(encryptedKeyBytes); err != nil {
+		return err
+	}
+
+	// 设置 nonce 到 iv
+	my.iv = nonce
+
+	return my.encryptCTRStream(inF, outF)
+}
+
+// decryptCTRLargeFile 用 SM2+AES CTR 流式解密大文件（TB级）
+func (my *AESImpl) decryptCTRLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+	var (
+		err                error
+		inF, outF          *os.File
+		keyLenBuf          = make([]byte, 2)
+		keyLen             int
+		encryptedKeyBytes  []byte
+		encryptedKeyBase64 string
+		aesKeyAndNonce     []byte
+	)
+
+	if inF, err = os.Open(cipherFile); err != nil {
+		return err
+	}
+	defer inF.Close()
+
+	if outF, err = os.Create(outFile); err != nil {
+		return err
+	}
+	defer outF.Close()
+
+	head := make([]byte, 1)
+	if _, err = io.ReadFull(inF, head); err != nil {
+		return err
+	}
+
+	keySize := 16
+	if head[0] == fileHeaderMagic {
+		newHeader := make([]byte, 4)
+		if _, err = io.ReadFull(inF, newHeader); err != nil {
+			return err
+		}
+		if newHeader[0] != fileHeaderVersion {
+			return os.ErrInvalid
+		}
+		keySize = int(newHeader[1])
+		if err = validateKeySize(keySize); err != nil {
+			return err
+		}
+		keyLen = int(newHeader[2])<<8 | int(newHeader[3])
+	} else {
+		keyLenBuf[0] = head[0]
+		if _, err = io.ReadFull(inF, keyLenBuf[1:2]); err != nil {
+			return err
+		}
+		keyLen = int(keyLenBuf[0])<<8 | int(keyLenBuf[1])
+	}
+
+	if keyLen <= 0 {
+		return os.ErrInvalid
+	}
+
+	encryptedKeyBytes = make([]byte, keyLen)
+	if _, err = io.ReadFull(inF, encryptedKeyBytes); err != nil {
+		return err
+	}
+	encryptedKeyBase64 = string(encryptedKeyBytes)
+
+	if aesKeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+		return err
+	}
+	if len(aesKeyAndNonce) != keySize+16 {
+		return os.ErrInvalid
+	}
+	my.key = aesKeyAndNonce[:keySize]
+	my.iv = aesKeyAndNonce[keySize:]
+
+	return my.decryptCTRStream(inF, outF)
+}
+
+// encryptGCMLargeFile 用 SM2+AES GCM 流式加密大文件（TB级）
+func (my *AESImpl) encryptGCMLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+	var (
+		err               error
+		inF, outF         *os.File
+		aesKeyAndNonce    []byte
+		encryptedKeyStr   string
+		encryptedKeyBytes []byte
+	)
+
+	if inF, err = os.Open(plainFile); err != nil {
+		return err
+	}
+	defer inF.Close()
+
+	if outF, err = os.Create(outFile); err != nil {
+		return err
+	}
+	defer outF.Close()
+
+	// 生成随机 nonce
+	nonce := make([]byte, 12)
+	if _, err = rand.Read(nonce); err != nil {
+		return err
+	}
+
+	aesKeyAndNonce = append(my.key, nonce...)
+	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndNonce); err != nil {
+		return err
+	}
+	encryptedKeyBytes = []byte(encryptedKeyStr)
+	if err = validateKey(my.key); err != nil {
+		return err
+	}
+	if len(encryptedKeyBytes) > 0xFFFF {
+		return errors.New("encrypted key too long")
+	}
+
+	if _, err = outF.Write([]byte{fileHeaderMagic, fileHeaderVersion, byte(len(my.key)), byte(len(encryptedKeyBytes) >> 8), byte(len(encryptedKeyBytes))}); err != nil {
+		return err
+	}
+	if _, err = outF.Write(encryptedKeyBytes); err != nil {
+		return err
+	}
+
+	// 设置 nonce 到 iv
+	my.iv = nonce
+
+	return my.encryptGCMStream(inF, outF)
+}
+
+// decryptGCMLargeFile 用 SM2+AES GCM 流式解密大文件（TB级）
+func (my *AESImpl) decryptGCMLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+	var (
+		err                error
+		inF, outF          *os.File
+		keyLenBuf          = make([]byte, 2)
+		keyLen             int
+		encryptedKeyBytes  []byte
+		encryptedKeyBase64 string
+		aesKeyAndNonce     []byte
+	)
+
+	if inF, err = os.Open(cipherFile); err != nil {
+		return err
+	}
+	defer inF.Close()
+
+	if outF, err = os.Create(outFile); err != nil {
+		return err
+	}
+	defer outF.Close()
+
+	head := make([]byte, 1)
+	if _, err = io.ReadFull(inF, head); err != nil {
+		return err
+	}
+
+	keySize := 16
+	if head[0] == fileHeaderMagic {
+		newHeader := make([]byte, 4)
+		if _, err = io.ReadFull(inF, newHeader); err != nil {
+			return err
+		}
+		if newHeader[0] != fileHeaderVersion {
+			return os.ErrInvalid
+		}
+		keySize = int(newHeader[1])
+		if err = validateKeySize(keySize); err != nil {
+			return err
+		}
+		keyLen = int(newHeader[2])<<8 | int(newHeader[3])
+	} else {
+		keyLenBuf[0] = head[0]
+		if _, err = io.ReadFull(inF, keyLenBuf[1:2]); err != nil {
+			return err
+		}
+		keyLen = int(keyLenBuf[0])<<8 | int(keyLenBuf[1])
+	}
+
+	if keyLen <= 0 {
+		return os.ErrInvalid
+	}
+
+	encryptedKeyBytes = make([]byte, keyLen)
+	if _, err = io.ReadFull(inF, encryptedKeyBytes); err != nil {
+		return err
+	}
+	encryptedKeyBase64 = string(encryptedKeyBytes)
+
+	if aesKeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+		return err
+	}
+	if len(aesKeyAndNonce) != keySize+12 {
+		return os.ErrInvalid
+	}
+	my.key = aesKeyAndNonce[:keySize]
+	my.iv = aesKeyAndNonce[keySize:]
+
+	return my.decryptGCMStream(inF, outF)
 }
