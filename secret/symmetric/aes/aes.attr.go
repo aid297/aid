@@ -20,28 +20,28 @@ func validateKeyBits(bits int) error {
 func toKeyBytes(bits int) int { return bits / 8 }
 
 func KeyString(key string) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetKeyString(key); return }
+	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetKeyString(key); return }
 }
 
 func KeyBytes(key []byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetKeyBytes(key); return }
+	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetKeyBytes(key); return }
 }
 
 func IVString(iv string) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetIVString(iv); return }
+	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetIVString(iv); return }
 }
 
 func IVBytes(iv []byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetIVBytes(iv); return }
+	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetIVBytes(iv); return }
 }
 
 // KeySize 按位数生成随机 AES key（支持 128/192/256）
 func KeySize(bits int, outList ...*[]byte) secret.SymmetricAttr {
-	return func(symm secret.Symmetricer) error {
+	return func(symmetricer secret.Symmetricer) error {
 		if err := validateKeyBits(bits); err != nil {
 			return err
 		}
-		helper, ok := symm.(*AESImpl)
+		helper, ok := symmetricer.(*AESImpl)
 		if !ok {
 			return errors.New("aes: KeySize only supports AESImpl")
 		}
@@ -69,7 +69,7 @@ func RandKey(outList ...*[]byte) secret.SymmetricAttr {
 
 // RandKeyWithBits 按位数生成随机 AES key（支持 128/192/256）
 func RandKeyWithBits(bits int, outList ...*[]byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) {
+	return func(symmetricer secret.Symmetricer) (err error) {
 		if err = validateKeyBits(bits); err != nil {
 			return err
 		}
@@ -81,8 +81,8 @@ func RandKeyWithBits(bits int, outList ...*[]byte) secret.SymmetricAttr {
 			return
 		}
 
-		sm4Helper.SetKeyBytes(key)
-		if helper, ok := sm4Helper.(*AESImpl); ok {
+		symmetricer.SetKeyBytes(key)
+		if helper, ok := symmetricer.(*AESImpl); ok {
 			helper.keyBits = bits
 		}
 

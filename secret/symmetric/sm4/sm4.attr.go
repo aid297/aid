@@ -6,33 +6,31 @@ import (
 	"github.com/aid297/aid/v2/secret"
 )
 
-type SM4Attr func(sm4Helper secret.Symmetricer) (err error)
-
 func KeyString(key string) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetKeyString(key); return }
+	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetKeyString(key); return }
 }
 
 func KeyBytes(key []byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetKeyBytes(key); return }
+	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetKeyBytes(key); return }
 }
 
 func IVString(iv string) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetIVString(iv); return }
+	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetIVString(iv); return }
 }
 
 func IVBytes(iv []byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) { sm4Helper.SetIVBytes(iv); return }
+	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetIVBytes(iv); return }
 }
 
 func RandKey(outList ...*[]byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) {
+	return func(symmetricer secret.Symmetricer) (err error) {
 		key := make([]byte, 16)
 
 		if _, err = rand.Read(key); err != nil {
 			return
 		}
 
-		sm4Helper.SetKeyBytes(key)
+		symmetricer.SetKeyBytes(key)
 
 		if len(outList) > 0 && outList[0] != nil {
 			*outList[0] = make([]byte, 16)
@@ -44,14 +42,14 @@ func RandKey(outList ...*[]byte) secret.SymmetricAttr {
 }
 
 func RandIV(outList ...*[]byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) {
+	return func(symmetricer secret.Symmetricer) (err error) {
 		iv := make([]byte, 16)
 
 		if _, err = rand.Read(iv); err != nil {
 			return
 		}
 
-		sm4Helper.SetIVBytes(iv)
+		symmetricer.SetIVBytes(iv)
 
 		if len(outList) > 0 && outList[0] != nil {
 			*outList[0] = make([]byte, 16)
