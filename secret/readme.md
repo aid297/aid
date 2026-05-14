@@ -7,6 +7,7 @@
 | [1. 统一接口说明](#1-统一接口说明) | 选项函数对比、方法列表 |
 | [2. 非对称加密（SM2）](#2-非对称加密sm2) | 密钥生成、加解密、签名验证 |
 | [3. 非对称加密（RSA）](#3-非对称加密rsa) | 密钥生成、加解密、签名验证 |
+| [JWT（secret/jwt）](#jwt-secretjwt) | 工具包：令牌编解码与校验，注入 Asymmetricer |
 | [4. 对称加密（SM4）](#4-对称加密sm4) | ECB/CBC/CTR/GCM 模式，场景选择指南 |
 | [5. 对称加密（AES）](#5-对称加密aes) | ECB/CBC/CTR/GCM 模式，AES-192/256 |
 | [6. 组合用法](#6-组合用法) | SM2+SM4 / RSA+AES 文件加密 |
@@ -377,9 +378,129 @@
       	if ok {
       		t.Fatal("篡改数据的验证应失败")
       	}
-      	t.Logf("篡改数据正确被拒绝")
+      t.Logf("篡改数据正确被拒绝")
       }
       ```
+
+### JWT（secret/jwt）
+
+   JWT（JSON Web Token）用于在各方之间安全传输声明。实现位于包 `github.com/aid297/aid/v2/secret/jwt`，作为 **secret 下的工具集**，与 `secret/asymmetric` 中的 RSA、ECDSA、Ed25519、SM2 等算法包并列，而非挂在某一非对称子包之下。支持 RS256、ES256、EdDSA、SM2 等，通过注入 `secret.Asymmetricer` 完成签名与验签。
+
+   ### 声明结构
+
+   ```go
+   type Claims struct {
+       Iss   string                 // 签发者
+       Sub   string                 // 主题
+       Aud   string                 // 受众
+       Exp   int64                  // 过期时间（Unix 时间戳）
+       Nbf   int64                  // 生效时间（Unix 时间戳）
+       Iat   int64                  // 签发时间（Unix 时间戳）
+       Jti   string                 // JWT ID
+       Extra map[string]interface{}  // 自定义声明
+   }
+   ```
+
+   ### 基本用法
+
+   ```go
+   import (
+       "testing"
+       "time"
+
+       "github.com/aid297/aid/v2/secret"
+       "github.com/aid297/aid/v2/secret/asymmetric/rsa"
+       "github.com/aid297/aid/v2/secret/jwt"
+   )
+
+   func TestJWTBasic(t *testing.T) {
+       // 1. 创建 RSA 密钥对
+       rsaSem, err := rsa.NewSem()
+       if err != nil {
+           t.Fatalf("生成密钥对失败: %v", err)
+       }
+
+       // 2. 创建 JWT 实例（使用 Asymmetricer 接口）
+       var asymm secret.Asymmetricer = rsa.New(rsaSem)
+       jwtInstance := jwt.New(asymm)
+
+       // 3. 构建声明
+       claims := &jwt.Claims{
+           Iss: "test-issuer",
+           Sub: "test-subject",
+           Aud: "test-audience",
+           Iat: time.Now().Unix(),
+           Exp: time.Now().Add(time.Hour).Unix(),
+           Nbf: time.Now().Unix() - 60,
+           Jti: "unique-token-id",
+       }
+
+       // 4. 生成 token
+       token, err := jwtInstance.Generate(claims)
+       if err != nil {
+           t.Fatalf("生成 JWT 失败: %v", err)
+       }
+       t.Logf("Token: %s", token)
+
+       // 5. 验证 token
+       verifiedClaims, err := jwtInstance.Verify(token)
+       if err != nil {
+           t.Fatalf("验证 JWT 失败: %v", err)
+       }
+       t.Logf("验证通过: %+v", verifiedClaims)
+   }
+   ```
+
+   ### 使用现有密钥对
+
+   ```go
+   import (
+       "testing"
+       "time"
+
+       "github.com/aid297/aid/v2/secret"
+       "github.com/aid297/aid/v2/secret/asymmetric/rsa"
+       "github.com/aid297/aid/v2/secret/jwt"
+   )
+
+   func TestJWTWithExistingKeys(t *testing.T) {
+       // 生成密钥对
+       rsaSem, err := rsa.NewSem()
+       if err != nil {
+           t.Fatalf("生成密钥对失败: %v", err)
+       }
+
+       // 获取公私钥
+       pubKeyBytes, _ := rsaSem.GetPubKeyBytes()
+       priKeyBytes, _ := rsaSem.GetPriKeyBytes()
+
+       // 使用公钥创建 JWT（仅验证）
+       rsaSemPub, _ := rsa.NewSem(rsa.PubKeyBytes(pubKeyBytes))
+       // 使用私钥创建 JWT（仅签名）
+       rsaSemPri, _ := rsa.NewSem(rsa.PriKeyBytes(priKeyBytes))
+
+       // 签名
+       var signerAsymm secret.Asymmetricer = rsa.New(rsaSemPri)
+       token, _ := jwt.New(signerAsymm).Generate(&jwt.Claims{
+           Iss: "test",
+           Exp: time.Now().Add(time.Hour).Unix(),
+       })
+
+       // 验证
+       var verifierAsymm secret.Asymmetricer = rsa.New(rsaSemPub)
+       claims, _ := jwt.New(verifierAsymm).Verify(token)
+       t.Logf("Iss: %s", claims.Iss)
+   }
+   ```
+
+   ### 支持多算法
+
+   由于使用 `secret.Asymmetricer` 接口，天然支持所有实现了该接口的算法：
+
+   - **RS256**：RSA + SHA-256 + PKCS1v15
+   - **SM2**：国密 SM2 算法
+
+   只需替换 `Asymmetricer` 实现即可切换算法。
 
 4. 对称加密（*SM4*）
 
