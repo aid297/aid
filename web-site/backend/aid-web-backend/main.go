@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/aid297/aid/v2/debugLogger"
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/command"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/initialize"
@@ -42,10 +42,10 @@ func parseArgs() ConsoleArgs {
 		cmdParams = originalCmds[1:]
 	}
 
-	_, configPath = operationV2.NewMultivariate[string]().
-		Append(operationV2.MultivariateAttr[string]{Item: configPath, HitFunc: func(_ int, item string) { debugLogger.Print("使用终端参数：%s读取配置", item) }}).
-		Append(operationV2.MultivariateAttr[string]{Item: os.Getenv("AID-BACKEND-CONFIG"), HitFunc: func(idx int, item string) { debugLogger.Print("使用环境变量：%s读取配置", item) }}).
-		SetDefault(operationV2.MultivariateAttr[string]{Item: "config.yaml", HitFunc: func(idx int, item string) { debugLogger.Print("使用默认参数：%s读取配置", item) }}).
+	_, configPath = operation.NewMultivariate[string]().
+		Append(operation.MultivariateAttr[string]{Item: configPath, HitFunc: func(_ int, item string) { debugLogger.Print("使用终端参数：%s读取配置", item) }}).
+		Append(operation.MultivariateAttr[string]{Item: os.Getenv("AID-BACKEND-CONFIG"), HitFunc: func(idx int, item string) { debugLogger.Print("使用环境变量：%s读取配置", item) }}).
+		SetDefault(operation.MultivariateAttr[string]{Item: "config.yaml", HitFunc: func(idx int, item string) { debugLogger.Print("使用默认参数：%s读取配置", item) }}).
 		Finally(func(item string) bool { return item != "" })
 
 	return ConsoleArgs{

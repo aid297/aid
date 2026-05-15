@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/aid297/aid/v2/filesystem"
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 // Daemon 守护进程服务提供者
@@ -62,7 +62,7 @@ func (*Daemon) bootLogFile() (fp *os.File) {
 			filesystem.Abs(
 				path.Join(
 					dir.GetFullPath(),
-					operationV2.NewTernary(operationV2.TrueValue(i.filename), operationV2.FalseValue("daemon.log")).GetByValue(i.filename != ""),
+					operation.NewTernary(operation.TrueValue(i.filename), operation.FalseValue("daemon.log")).GetByValue(i.filename != ""),
 				),
 			),
 		)

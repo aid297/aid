@@ -6,11 +6,10 @@ import (
 	"strings"
 
 	"github.com/dromara/carbon/v2"
-	"github.com/xuri/excelize/v2"
 
 	"github.com/aid297/aid/v2/anySlice"
-	"github.com/aid297/aid/v2/excel/excelV3/reader"
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/excel/excelV3/excelReader"
+	"github.com/aid297/aid/v2/operation"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 )
 
@@ -50,11 +49,15 @@ const (
 )
 
 // Cal 计算考勤
-func (my *CheckingInService) Cal(r reader.Reader, form *request.CheckingInCalRequest) (
+func (my *CheckingInService) Cal(
+	r excelReader.Reader,
+	form *request.CheckingInCalRequest,
+) (
 	standardDate *StandardDateRet,
 	everyday map[string]map[string]EverydayRet,
 	monthly map[string]map[string]string,
-	err error) {
+	err error,
+) {
 	if standardDate, err = my.getDateHeader(r, form); err != nil {
 		return
 	}
@@ -71,7 +74,7 @@ func (my *CheckingInService) Cal(r reader.Reader, form *request.CheckingInCalReq
 }
 
 // getDateHeader 获取日期头
-func (*CheckingInService) getDateHeader(r reader.Reader, form *request.CheckingInCalRequest) (*StandardDateRet, error) {
+func (*CheckingInService) getDateHeader(r excelReader.Reader, form *request.CheckingInCalRequest) (*StandardDateRet, error) {
 	var (
 		err          error
 		dates        = &StandardDateRet{}
@@ -80,7 +83,7 @@ func (*CheckingInService) getDateHeader(r reader.Reader, form *request.CheckingI
 
 	if err = r.Read(
 		"打卡时间",
-		func(cols []string, _ int, _ *excelize.Rows) (err error) {
+		func(_ int, cols []string) (err error) {
 			standardDateMap := make(map[string]StandardDate, len(cols))
 			dates.OriginalTexts = make([]string, len(cols))
 
@@ -100,9 +103,9 @@ func (*CheckingInService) getDateHeader(r reader.Reader, form *request.CheckingI
 			dates.StandardDateMap = standardDateMap
 			return
 		},
-		reader.OriginalRow(4),
-		reader.FinishedRow(4),
-		reader.OriginalColumn(6),
+		excelReader.OriginalRow(4),
+		excelReader.FinishedRow(4),
+		excelReader.OriginalColumn(6),
 	).GetError(); err != nil {
 		return nil, err
 	}
@@ -139,12 +142,12 @@ func getStandardDateKind(
 }
 
 // getEveryday 获取每日打卡记录
-func getEveryday(r reader.Reader) (map[string]map[string]EverydayRet, error) {
+func getEveryday(r excelReader.Reader) (map[string]map[string]EverydayRet, error) {
 	data := make(map[string]map[string]EverydayRet)
 
 	if err := r.Read(
 		"每日统计",
-		func(cols []string, _ int, _ *excelize.Rows) (err error) {
+		func(_ int, cols []string) (err error) {
 			name := strings.ReplaceAll(cols[0], " ", "")
 			date := getDate(cols[6])
 
@@ -153,11 +156,11 @@ func getEveryday(r reader.Reader) (map[string]map[string]EverydayRet, error) {
 			}
 
 			ret := EverydayRet{
-				ClockInTime1: operationV2.NewTernary(operationV2.TrueFn(func() string { return cols[9] })).GetByValue(len(cols) >= 9),
-				ClockInNote1: operationV2.NewTernary(operationV2.TrueFn(func() string { return cols[10] })).GetByValue(len(cols) >= 10),
-				ClockInTime2: operationV2.NewTernary(operationV2.TrueFn(func() string { return cols[11] })).GetByValue(len(cols) >= 11),
-				ClockInNote2: operationV2.NewTernary(operationV2.TrueFn(func() string { return cols[12] })).GetByValue(len(cols) >= 12),
-				EventNote:    operationV2.NewTernary(operationV2.TrueFn(func() string { return cols[21] })).GetByValue(len(cols) >= 21),
+				ClockInTime1: operation.NewTernary(operation.TrueFn(func() string { return cols[9] })).GetByValue(len(cols) >= 9),
+				ClockInNote1: operation.NewTernary(operation.TrueFn(func() string { return cols[10] })).GetByValue(len(cols) >= 10),
+				ClockInTime2: operation.NewTernary(operation.TrueFn(func() string { return cols[11] })).GetByValue(len(cols) >= 11),
+				ClockInNote2: operation.NewTernary(operation.TrueFn(func() string { return cols[12] })).GetByValue(len(cols) >= 12),
+				EventNote:    operation.NewTernary(operation.TrueFn(func() string { return cols[21] })).GetByValue(len(cols) >= 21),
 			}
 
 			ret.ClockInOK1 = carbon.Parse(fmt.Sprintf("%s %s", date, ret.ClockInTime1)).IsAM()
@@ -173,7 +176,7 @@ func getEveryday(r reader.Reader) (map[string]map[string]EverydayRet, error) {
 
 			return
 		},
-		reader.OriginalRow(5),
+		excelReader.OriginalRow(5),
 	).GetError(); err != nil {
 		return nil, err
 	}
@@ -189,12 +192,12 @@ func getDate(datetime string) string {
 }
 
 // getMonthly 获取月度汇总数据
-func getMonthly(r reader.Reader, form *request.CheckingInCalRequest) (map[string]map[string]string, error) {
+func getMonthly(r excelReader.Reader, form *request.CheckingInCalRequest) (map[string]map[string]string, error) {
 	data := make(map[string]map[string]string)
 
 	err := r.Read(
 		"月度汇总",
-		func(cols []string, _ int, _ *excelize.Rows) (err error) {
+		func(_ int, cols []string) (err error) {
 			name := strings.ReplaceAll(cols[0], " ", "")
 			for idx := range cols[6:] {
 				date := carbon.Parse(form.OriginalDate).AddDays(idx).ToDateString()
@@ -207,7 +210,7 @@ func getMonthly(r reader.Reader, form *request.CheckingInCalRequest) (map[string
 
 			return
 		},
-		reader.OriginalRow(5),
+		excelReader.OriginalRow(5),
 	).GetError()
 
 	return data, err

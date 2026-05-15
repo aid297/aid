@@ -10,7 +10,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/aid297/aid/v2/anySlice"
-	"github.com/aid297/aid/v2/excel/excelV3/reader"
+	"github.com/aid297/aid/v2/consts/digitalInfo"
+	"github.com/aid297/aid/v2/excel/excelV3/excelReader"
 	"github.com/aid297/aid/v2/filesystem"
 	"github.com/aid297/aid/v2/validator"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
@@ -62,10 +63,10 @@ func (*CheckingInAPI) Cal(c *gin.Context) {
 		return
 	}
 
-	r := reader.NewReader(
-		reader.Filename(saveFile.GetFullPath()),
-		reader.UnzipXMLSizeLimit(10*1024*1024),
-		reader.UnzipSizeLimit(10<<30),
+	r := excelReader.NewReader(
+		excelReader.Filename(saveFile.GetFullPath()),
+		excelReader.UnzipXMLSizeLimit(10*digitalInfo.MB),
+		excelReader.UnzipSizeLimit(100*digitalInfo.MB),
 	)
 
 	if standardDate,

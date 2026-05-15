@@ -3,7 +3,7 @@ package filesystem
 import (
 	"os"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 type IFilesystem interface {
@@ -43,5 +43,5 @@ func New(attr PathAttributer) (IFilesystem, error) {
 	if err != nil {
 		return nil, err
 	}
-	return operationV2.NewTernary(operationV2.TrueFn(func() IFilesystem { return NewFile(attr) }), operationV2.FalseFn(func() IFilesystem { return NewDir(attr) })).GetByValue(!isDir), nil
+	return operation.NewTernary(operation.TrueFn(func() IFilesystem { return NewFile(attr) }), operation.FalseFn(func() IFilesystem { return NewDir(attr) })).GetByValue(!isDir), nil
 }

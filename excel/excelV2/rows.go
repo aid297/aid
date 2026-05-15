@@ -3,7 +3,7 @@ package excelV2
 import (
 	"sync"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 type (
@@ -25,10 +25,10 @@ type (
 
 func NewRows(originalRow uint, rows ...IRow) IRows {
 	return (&Rows{
-		originalRow: operationV2.
+		originalRow: operation.
 			NewTernary(
-				operationV2.TrueValue(originalRow),
-				operationV2.FalseValue[uint](1),
+				operation.TrueValue(originalRow),
+				operation.FalseValue[uint](1),
 			).
 			GetByValue(originalRow != 0),
 	}).SetRows(rows...)

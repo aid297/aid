@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 type MySQLPool struct {
@@ -34,7 +34,7 @@ var (
 )
 
 func (*MySQLPool) Once(dbSetting *DBSetting) *MySQLPool {
-	return operationV2.NewTernary(operationV2.TrueValue(OnceMySqlPool(dbSetting)), operationV2.FalseValue(mysqlPoolIns)).GetByValue(dbSetting != nil)
+	return operation.NewTernary(operation.TrueValue(OnceMySqlPool(dbSetting)), operation.FalseValue(mysqlPoolIns)).GetByValue(dbSetting != nil)
 }
 
 // OnceMySqlPool 单例化：mysql链接池

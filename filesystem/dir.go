@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 type Dir struct {
@@ -239,7 +239,7 @@ func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 		return my
 	}
 
-	if dst = NewDir(operationV2.NewTernary(operationV2.TrueValue(Rel(dstPaths...)), operationV2.FalseValue(Abs(dstPaths...))).GetByValue(isRel)); !dst.GetExist() {
+	if dst = NewDir(operation.NewTernary(operation.TrueValue(Rel(dstPaths...)), operation.FalseValue(Abs(dstPaths...))).GetByValue(isRel)); !dst.GetExist() {
 		if err = dst.Create(Mode(my.Mode)).GetError(); err != nil {
 			my.Error = err
 			return my
@@ -247,7 +247,7 @@ func (my *Dir) CopyFilesTo(isRel bool, dstPaths ...string) *Dir {
 	}
 
 	for _, file := range my.Files {
-		newFile := operationV2.NewTernary(operationV2.TrueValue(append([]string{file.GetBasePath()}, dstPaths...)), operationV2.FalseValue(dstPaths)).GetByValue(isRel)
+		newFile := operation.NewTernary(operation.TrueValue(append([]string{file.GetBasePath()}, dstPaths...)), operation.FalseValue(dstPaths)).GetByValue(isRel)
 		newFile = append(newFile, file.GetName())
 		if err = file.CopyTo(false, newFile...).GetError(); err != nil {
 			my.Error = err
@@ -275,7 +275,7 @@ func (my *Dir) CopyDirsTo(isRel bool, dstPaths ...string) *Dir {
 	}
 
 	if len(my.Dirs) > 0 {
-		my.Error = copyDirTo(my.FullPath, NewDir(operationV2.NewTernary(operationV2.TrueValue(Rel(dstPaths...)), operationV2.FalseValue(Abs(dstPaths...))).GetByValue(isRel)).GetFullPath())
+		my.Error = copyDirTo(my.FullPath, NewDir(operation.NewTernary(operation.TrueValue(Rel(dstPaths...)), operation.FalseValue(Abs(dstPaths...))).GetByValue(isRel)).GetFullPath())
 	}
 
 	return my
@@ -302,7 +302,7 @@ func (my *Dir) CopyTo(isRel bool, dstPaths ...string) IFilesystem {
 		return my
 	}
 
-	if dst = NewDir(operationV2.NewTernary(operationV2.TrueValue(Rel(dstPaths...)), operationV2.FalseValue(Abs(dstPaths...))).GetByValue(isRel)); !dst.GetExist() {
+	if dst = NewDir(operation.NewTernary(operation.TrueValue(Rel(dstPaths...)), operation.FalseValue(Abs(dstPaths...))).GetByValue(isRel)); !dst.GetExist() {
 		if err = dst.Create(Mode(my.Mode)).GetError(); err != nil {
 			my.Error = err
 			return my

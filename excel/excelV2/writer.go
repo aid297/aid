@@ -11,7 +11,7 @@ import (
 	"github.com/xuri/excelize/v2"
 
 	"github.com/aid297/aid/v2/anySlice"
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 	"github.com/aid297/aid/v2/str"
 )
 
@@ -249,9 +249,9 @@ func (my *Write) setCellStyle(cell ICell) {
 			Bold:   cellFont.Bold,
 			Italic: cellFont.Italic,
 			Family: cellFont.Family,
-			Size: operationV2.NewTernary(
-				operationV2.TrueValue(cellFont.Size),
-				operationV2.FalseValue[float64](9),
+			Size: operation.NewTernary(
+				operation.TrueValue(cellFont.Size),
+				operation.FalseValue[float64](9),
 			).GetByValue(cellFont.Size > 0),
 			Color: cellFont.RGB,
 		},

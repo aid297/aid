@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 type File struct {
@@ -207,13 +207,13 @@ func (my *File) Read(attrs ...OperationAttributer) ([]byte, error) {
 
 	if file, err = os.OpenFile(
 		my.FullPath,
-		operationV2.NewTernary(
-			operationV2.TrueFn(func() int { return fileOperation.Flag }),
-			operationV2.FalseFn(func() int { return DefaultReadFlag }),
+		operation.NewTernary(
+			operation.TrueFn(func() int { return fileOperation.Flag }),
+			operation.FalseFn(func() int { return DefaultReadFlag }),
 		).GetByValue(fileOperation.Flag != 0),
-		operationV2.NewTernary(
-			operationV2.TrueFn(func() os.FileMode { return fileOperation.Mode }),
-			operationV2.FalseFn(func() os.FileMode { return os.FileMode(0777) }),
+		operation.NewTernary(
+			operation.TrueFn(func() os.FileMode { return fileOperation.Mode }),
+			operation.FalseFn(func() os.FileMode { return os.FileMode(0777) }),
 		).GetByValue(fileOperation.Mode != 0),
 	); err != nil {
 		return []byte{}, fmt.Errorf("%w:%w", ErrReadFile, err)
@@ -238,15 +238,15 @@ func (my *File) CopyTo(isRel bool, dstPaths ...string) IFilesystem {
 		return my
 	}
 
-	if dstDir := NewDir(operationV2.NewTernary(operationV2.TrueValue(Rel(dstPaths...)), operationV2.FalseValue(Abs(dstPaths...))).GetByValue(isRel)).Up(); dstDir.GetError() != nil {
+	if dstDir := NewDir(operation.NewTernary(operation.TrueValue(Rel(dstPaths...)), operation.FalseValue(Abs(dstPaths...))).GetByValue(isRel)).Up(); dstDir.GetError() != nil {
 		my.Error = dstDir.GetError()
 		return my
 	}
 
 	newPath := NewFile(
-		operationV2.NewTernary(
-			operationV2.TrueFn(func() PathAttributer { return Rel(dstPaths...) }),
-			operationV2.FalseFn(func() PathAttributer { return Abs(dstPaths...) }),
+		operation.NewTernary(
+			operation.TrueFn(func() PathAttributer { return Rel(dstPaths...) }),
+			operation.FalseFn(func() PathAttributer { return Abs(dstPaths...) }),
 		).GetByValue(isRel),
 	)
 

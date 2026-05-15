@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 	"github.com/aid297/aid/v2/str"
 )
 
@@ -403,6 +403,6 @@ func (my *Finder) FindOnlyCondition(finderCondition *FinderCondition, ret any) *
 }
 
 func (my *Finder) finderNext() *Finder {
-	my.total = operationV2.NewTernary(operationV2.TrueValue[int64](0), operationV2.FalseValue(my.total)).GetByValue(my.total == -1)
+	my.total = operation.NewTernary(operation.TrueValue[int64](0), operation.FalseValue(my.total)).GetByValue(my.total == -1)
 	return my
 }

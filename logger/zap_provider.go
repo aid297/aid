@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/aid297/aid/v2/filesystem"
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 // ZapProvider Zap日志服务提供者
@@ -75,9 +75,9 @@ func NewZapProvider(config *zapConfig) (*zap.Logger, error) {
 		}
 	)
 
-	fs = operationV2.NewTernary(
-		operationV2.TrueValue(filesystem.NewFile(filesystem.Abs(config.Path))),
-		operationV2.FalseValue(filesystem.NewFile(filesystem.Rel(config.Path))),
+	fs = operation.NewTernary(
+		operation.TrueValue(filesystem.NewFile(filesystem.Abs(config.Path))),
+		operation.FalseValue(filesystem.NewFile(filesystem.Rel(config.Path))),
 	).GetByValue(config.PathAbs)
 	if !fs.GetExist() {
 		if err = fs.Create().GetError(); err != nil {
@@ -109,10 +109,10 @@ func NewZapProvider(config *zapConfig) (*zap.Logger, error) {
 	// if config.InConsole {
 	// 	zapLogger = zapLogger.WithOptions(zap.AddCaller())
 	// }
-	zapLogger = operationV2.NewTernary(operationV2.TrueFn(func() *zap.Logger { return zapLogger.WithOptions(zap.AddCaller()) }), operationV2.FalseValue(zapLogger)).GetByValue(config.InConsole)
+	zapLogger = operation.NewTernary(operation.TrueFn(func() *zap.Logger { return zapLogger.WithOptions(zap.AddCaller()) }), operation.FalseValue(zapLogger)).GetByValue(config.InConsole)
 
 	defer func() {
-		_ = operationV2.NewTernary(operationV2.TrueFn(func() error { return nil }), operationV2.FalseFn(func() error { return zapLogger.Sync() })).GetByValue(config.InConsole)
+		_ = operation.NewTernary(operation.TrueFn(func() error { return nil }), operation.FalseFn(func() error { return zapLogger.Sync() })).GetByValue(config.InConsole)
 		// if config.InConsole {
 		// 	return
 		// }
