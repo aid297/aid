@@ -1,4 +1,4 @@
-package operationV2
+package operation
 
 import "github.com/aid297/aid/v2/anySlice"
 

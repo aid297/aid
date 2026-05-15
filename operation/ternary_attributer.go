@@ -1,4 +1,4 @@
-package operationV2
+package operation
 
 type (
 	TernaryAttributer[T any] interface {

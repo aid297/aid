@@ -1,4 +1,4 @@
-package operationV2
+package operation
 
 type MultivariateAttr[T any] struct {
 	Item    T

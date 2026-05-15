@@ -161,7 +161,7 @@ func (my *Reflection) GetReflectionType() ReflectionType {
 
 		switch my.GetType().Kind() {
 		case reflect.Int:
-			return operation.Ternary(is64, Int64, Int32)
+			return operation.NewTernary(operation.TrueValue(Int64), operation.FalseValue(Int32)).GetByValue(is64)
 		case reflect.Int8:
 			return Int8
 		case reflect.Int16:
@@ -171,7 +171,7 @@ func (my *Reflection) GetReflectionType() ReflectionType {
 		case reflect.Int64:
 			return Int64
 		case reflect.Uint:
-			return operation.Ternary(is64, Uint64, Uint32)
+			return operation.NewTernary(operation.TrueValue(Uint64), operation.FalseValue(Uint32)).GetByValue(is64)
 		case reflect.Uint8:
 			return Uint8
 		case reflect.Uint16:
@@ -332,7 +332,7 @@ func compareTagAndTarget(
 		return anySlice.New(anySlice.List(strings.Split(tagValue, ";"))).
 			Every(func(s string) string {
 				t := anySlice.New(anySlice.List(strings.Split(s, ":")))
-				return operation.Ternary(t.First() == tagField, t.Last(), "")
+				return operation.NewTernary(operation.TrueFn(t.Last)).GetByValue(t.First() == tagField)
 			}).
 			In(target)
 	} else {

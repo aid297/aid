@@ -1,40 +1,85 @@
 package operation
 
-// Ternary 三元运算：通过值
-func Ternary[V any](condition bool, T, F V) V {
-	if condition {
-		return T
-	}
-	return F
+type Ternary[T any] struct {
+	trueFn  func() T
+	falseFn func() T
 }
 
-// TernaryFunc 三元运算：通过回调函数
-func TernaryFunc[V any](condition func() bool, T V, F V) V { return Ternary(condition(), T, F) }
+// NewTernary 实例化：三元运算
+func NewTernary[T any](attrs ...TernaryAttributer[T]) Ternary[T] { return Ternary[T]{}.Set(attrs...) }
 
-// TernaryFuncReturn 三元运算：返回值使用回调方法
-func TernaryFuncReturn[V any](condition bool, trueFn func() V, falseFn func() V) V {
-	var v V
-	if trueFn == nil || falseFn == nil {
-		return v
+func (t Ternary[T]) Set(attrs ...TernaryAttributer[T]) Ternary[T] {
+	if len(attrs) > 0 {
+		for idx := range attrs {
+			attrs[idx].Register(&t)
+		}
 	}
-
-	if condition {
-		return trueFn()
-	}
-
-	return falseFn()
+	return t
 }
 
-// TernaryFuncAll 三元运算：通过回调函数，返回值也使用回调函数
-func TernaryFuncAll[V any](condition func() bool, trueFn func() V, falseFn func() V) V {
-	var v V
-	if condition == nil || trueFn == nil || falseFn == nil {
-		return v
+// DoByValue 执行回调 → 通过值
+func (t Ternary[T]) DoByValue(condition bool) {
+	if condition {
+		if t.trueFn != nil {
+			t.trueFn()
+		}
+	} else {
+		if t.falseFn != nil {
+			t.falseFn()
+		}
 	}
+}
 
+// DoByFunc 执行回调 → 通过函数
+func (t Ternary[T]) DoByFunc(condition func() bool) {
 	if condition() {
-		return trueFn()
+		if t.trueFn != nil {
+			t.trueFn()
+		}
+	} else {
+		if t.falseFn != nil {
+			t.falseFn()
+		}
 	}
+}
 
-	return falseFn()
+// GetByValue 获取值 → 通过值
+func (t Ternary[T]) GetByValue(condition bool) T {
+	var empty T
+	if condition {
+		if t.trueFn != nil {
+			return t.trueFn()
+		} else {
+			return empty
+		}
+	} else {
+		if t.falseFn != nil {
+			return t.falseFn()
+		} else {
+			return empty
+		}
+	}
+}
+
+// GetByFunc 获取值 → 通过函数
+func (t Ternary[T]) GetByFunc(condition func() bool) T {
+	var empty T
+	if condition() {
+		if t.trueFn != nil {
+			return t.trueFn()
+		} else {
+			return empty
+		}
+	} else {
+		if t.falseFn != nil {
+			return t.falseFn()
+		} else {
+			return empty
+		}
+	}
+}
+
+// OrError 三元运算符 → 处理错误
+func OrError(target bool, trueValue, falseValue error) error {
+	return NewTernary(TrueValue(trueValue), FalseValue(falseValue)).GetByValue(target)
 }

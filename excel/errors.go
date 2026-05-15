@@ -1,12 +1,10 @@
 package excel
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/aid297/aid/v2/anySlice"
 	"github.com/aid297/aid/v2/myError"
-	"github.com/aid297/aid/v2/operation"
 )
 
 type (
@@ -42,7 +40,7 @@ func (*SetCellError) New(msg string) myError.IMyError {
 }
 
 func (*SetCellError) Wrap(err error) myError.IMyError {
-	return &SetCellError{myError.MyError{Msg: fmt.Errorf("设置单元格错误"+operation.Ternary(err != nil, "：%w", "%w"), err).Error()}}
+	return &SetCellError{myError.MyError{Msg: anySlice.NewItems("设置单元格错误", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*SetCellError) Panic() myError.IMyError {
