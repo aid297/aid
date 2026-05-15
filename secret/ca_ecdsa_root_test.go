@@ -251,7 +251,7 @@ func TestECDSA_ServerCASignsAgentCSR_AgentVerifiesCAAndLeaf(t *testing.T) {
 	if !ok {
 		t.Fatal("Agent CSR 公钥应为 ECDSA")
 	}
-	if agentCSRPublicKey.X.Cmp(agentPublicKey.X) != 0 || agentCSRPublicKey.Y.Cmp(agentPublicKey.Y) != 0 {
+	if !agentCSRPublicKey.Equal(agentPublicKey) {
 		t.Fatal("Agent CSR 中公钥与本地 Agent 公钥不一致")
 	}
 
@@ -304,7 +304,7 @@ func TestECDSA_ServerCASignsAgentCSR_AgentVerifiesCAAndLeaf(t *testing.T) {
 	if !ok {
 		t.Fatal("Agent 叶子证书公钥应为 ECDSA")
 	}
-	if agentLeafPublicKey.X.Cmp(agentPublicKey.X) != 0 || agentLeafPublicKey.Y.Cmp(agentPublicKey.Y) != 0 {
+	if !agentLeafPublicKey.Equal(agentPublicKey) {
 		t.Fatal("叶子证书公钥与 Agent 本地公钥不一致")
 	}
 

@@ -311,11 +311,11 @@ func decodeBytesKeyToPEM(bytesKey []byte, isPublic bool) ([]byte, error) {
 	return nil, errors.New("rsa: invalid private key der")
 }
 
-func decodeBase64KeyToPEM(base64Key string, isPublic bool) ([]byte, error) {
-	derOrPem, err := base64.StdEncoding.DecodeString(base64Key)
-	if err != nil {
-		return nil, err
-	}
+// func decodeBase64KeyToPEM(base64Key string, isPublic bool) ([]byte, error) {
+// 	derOrPem, err := base64.StdEncoding.DecodeString(base64Key)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return decodeBytesKeyToPEM(derOrPem, isPublic)
-}
+// 	return decodeBytesKeyToPEM(derOrPem, isPublic)
+// }
