@@ -17,13 +17,13 @@ func TestFileEncrypt() {
 	// 生成密钥对
 	var (
 		err                        error
-		semEncrypter, semDecrypter secret.Semener
-		sm2Encrypter, sm2Decrypter secret.Asymmetricer
+		semEncrypter, semDecrypter secret.Semen
+		sm2Encrypter, sm2Decrypter secret.Asymmetric
 		semPriKeyEncrypter         []byte
 		plainFile                  = "/tmp/sm2_test_plain.txt"
 		encryptedFile              = "/tmp/sm2_test_encrypted.bin"
 		decryptedFile              = "/tmp/sm2_test_decrypted.txt"
-		sm4Encrypter, sm4Decrypter secret.Symmetricer
+		sm4Encrypter, sm4Decrypter secret.Symmetric
 		key                        []byte
 		iv                         []byte
 	)
@@ -81,9 +81,9 @@ func TestFileEncrypt() {
 func TestLargeFileEncrypt() {
 	var (
 		err                        error
-		semEncrypter, semDecrypter secret.Semener
-		sm2Encrypter, sm2Decrypter secret.Asymmetricer
-		sm4Encrypter, sm4Decrypter secret.Symmetricer
+		semEncrypter, semDecrypter secret.Semen
+		sm2Encrypter, sm2Decrypter secret.Asymmetric
+		sm4Encrypter, sm4Decrypter secret.Symmetric
 		semEncrypterPriKeyBytes    []byte
 		plainFile                        = "/tmp/sm2_test_large_plain.bin"
 		encryptedFile                    = "/tmp/sm2_test_large_encrypted.bin"

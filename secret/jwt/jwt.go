@@ -1,4 +1,4 @@
-// Package jwt 提供 JWT 的生成与校验，通过 secret.Asymmetricer 接入各类签名算法。
+// Package jwt 提供 JWT 的生成与校验，通过 secret.Asymmetric 接入各类签名算法。
 // 本包位于 secret/jwt，作为 secret 下的工具集，与 asymmetric 下的具体算法实现解耦。
 package jwt
 
@@ -20,20 +20,20 @@ type Header struct {
 
 // Claims JWT 标准声明
 type Claims struct {
-	Iss   string                 `json:"iss,omitempty"` // 签发者
-	Sub   string                 `json:"sub,omitempty"` // 主题
-	Aud   string                 `json:"aud,omitempty"` // 受众
-	Exp   int64                  `json:"exp,omitempty"` // 过期时间
-	Nbf   int64                  `json:"nbf,omitempty"` // 生效时间
-	Iat   int64                  `json:"iat,omitempty"` // 签发时间
-	Jti   string                 `json:"jti,omitempty"` // JWT ID
-	Extra map[string]interface{} `json:"-"`             // 自定义声明
+	Iss   string         `json:"iss,omitempty"` // 签发者
+	Sub   string         `json:"sub,omitempty"` // 主题
+	Aud   string         `json:"aud,omitempty"` // 受众
+	Exp   int64          `json:"exp,omitempty"` // 过期时间
+	Nbf   int64          `json:"nbf,omitempty"` // 生效时间
+	Iat   int64          `json:"iat,omitempty"` // 签发时间
+	Jti   string         `json:"jti,omitempty"` // JWT ID
+	Extra map[string]any `json:"-"`             // 自定义声明
 }
 
 // JWT JWT 实现，支持 RS256/ES256/EdDSA/SM2 等算法
 type JWT struct {
 	alg   string // 算法标识：RS256/ES256/EdDSA/SM2
-	asymm secret.Asymmetricer
+	asymm secret.Asymmetric
 }
 
 // Alg JWT 算法枚举
@@ -50,15 +50,15 @@ const (
 	AlgSM2   Alg = "SM2"   // 国密 SM2
 )
 
-// New 创建 JWT 实例，使用 secret.Asymmetricer 接口
+// New 创建 JWT 实例，使用 secret.Asymmetric 接口
 // 算法标识 alg 可选，不设置时 header 中不包含 alg 字段
-func New(asymm secret.Asymmetricer) *JWT {
+func New(asymm secret.Asymmetric) *JWT {
 	return &JWT{asymm: asymm}
 }
 
 // NewWithAlg 创建 JWT 实例并指定算法标识
 // alg 支持：RS256/RS384/RS512/ES256/ES384/ES512/EdDSA/SM2
-func NewWithAlg(alg Alg, asymm secret.Asymmetricer) *JWT {
+func NewWithAlg(alg Alg, asymm secret.Asymmetric) *JWT {
 	return &JWT{alg: string(alg), asymm: asymm}
 }
 
@@ -71,7 +71,7 @@ func (j *JWT) Generate(claims *Claims) (string, error) {
 		return "", errors.New("claims 不能为空")
 	}
 	if j.asymm == nil {
-		return "", errors.New("asymmetricer 不能为空")
+		return "", errors.New("Asymmetric 不能为空")
 	}
 
 	// 设置 iat 默认值
@@ -110,7 +110,7 @@ func (j *JWT) Generate(claims *Claims) (string, error) {
 // Verify 验证 JWT token
 func (j *JWT) Verify(tokenString string) (*Claims, error) {
 	if j.asymm == nil {
-		return nil, errors.New("asymmetricer 不能为空")
+		return nil, errors.New("Asymmetric 不能为空")
 	}
 
 	parts := strings.Split(tokenString, ".")

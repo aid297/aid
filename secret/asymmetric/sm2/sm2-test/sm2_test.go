@@ -11,7 +11,7 @@ import (
 func TestGenerateKeyPair(t *testing.T) {
 	var (
 		err                        error
-		sem                        secret.Semener
+		sem                        secret.Semen
 		pubKeyBase64, priKeyBase64 string
 		pubKeyBytes, priKeyBytes   []byte
 	)
@@ -47,8 +47,8 @@ func TestGenerateKeyPair(t *testing.T) {
 func TestEncryptDecrypt(t *testing.T) {
 	var (
 		err                        error
-		semEncrypter, semDecrypter secret.Semener
-		sm2Encrypter, sm2Decrypter secret.Asymmetricer
+		semEncrypter, semDecrypter secret.Semen
+		sm2Encrypter, sm2Decrypter secret.Asymmetric
 		sm2SemAPriKeyBytes         []byte
 		plainText                  = []byte("hello, SM2 非对称加密测试!")
 		cipherBase64               string
@@ -92,8 +92,8 @@ func TestEncryptDecrypt(t *testing.T) {
 func TestSignVerify(t *testing.T) {
 	var (
 		err                error
-		semSign, semVerify secret.Semener
-		sm2Sign, sm2Verify secret.Asymmetricer
+		semSign, semVerify secret.Semen
+		sm2Sign, sm2Verify secret.Asymmetric
 		data               = []byte("hello, SM2 数字签名测试!")
 		sigHex             string
 		ok                 bool
@@ -127,8 +127,8 @@ func TestSignVerify(t *testing.T) {
 func TestVerifyWithWrongData(t *testing.T) {
 	var (
 		err                error
-		semSign, semVerify secret.Semener
-		sm2Sign, sm2Verify secret.Asymmetricer
+		semSign, semVerify secret.Semen
+		sm2Sign, sm2Verify secret.Asymmetric
 		data               = []byte("original data")
 		sigHex             string
 		ok                 bool

@@ -232,7 +232,7 @@ func TestMultipleSignaturesDeterministic(t *testing.T) {
 }
 
 func TestMustGeneratePriKey(t *testing.T) {
-	sem := &Ed25519SemImpl{}
+	sem := &Ed25519Sem{}
 	if err := MustGeneratePriKey(sem); err != nil {
 		t.Fatalf("MustGeneratePriKey 失败：%v", err)
 	}
@@ -243,7 +243,7 @@ func TestMustGeneratePriKey(t *testing.T) {
 }
 
 func TestSetPubKeyBytesInvalid(t *testing.T) {
-	sem := &Ed25519SemImpl{}
+	sem := &Ed25519Sem{}
 	err := sem.SetPubKeyBytes([]byte("not-a-key"))
 	if err == nil {
 		t.Fatal("非法公钥字节应返回错误")
@@ -251,7 +251,7 @@ func TestSetPubKeyBytesInvalid(t *testing.T) {
 }
 
 func TestSetPriKeyBytesInvalid(t *testing.T) {
-	sem := &Ed25519SemImpl{}
+	sem := &Ed25519Sem{}
 	err := sem.SetPriKeyBytes([]byte("not-a-key"))
 	if err == nil {
 		t.Fatal("非法私钥字节应返回错误")
@@ -259,7 +259,7 @@ func TestSetPriKeyBytesInvalid(t *testing.T) {
 }
 
 func TestGetPubKeyBytesWhenMissing(t *testing.T) {
-	sem := &Ed25519SemImpl{}
+	sem := &Ed25519Sem{}
 	_, err := sem.GetPubKeyBytes()
 	if err == nil {
 		t.Fatal("未设置密钥时应无法获取公钥 bytes")
@@ -267,7 +267,7 @@ func TestGetPubKeyBytesWhenMissing(t *testing.T) {
 }
 
 func TestGetPriKeyBytesWhenMissing(t *testing.T) {
-	sem := &Ed25519SemImpl{}
+	sem := &Ed25519Sem{}
 	_, err := sem.GetPriKeyBytes()
 	if err == nil {
 		t.Fatal("未设置私钥时应无法获取私钥 bytes")

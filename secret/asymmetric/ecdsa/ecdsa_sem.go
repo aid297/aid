@@ -13,17 +13,17 @@ import (
 	"github.com/aid297/aid/v2/secret"
 )
 
-type ECDSASemImpl struct {
-	priKey secret.SemenerPriKey
-	pubKey secret.SemenerPubKey
+type ECDSASem struct {
+	priKey secret.SemenPriKey
+	pubKey secret.SemenPubKey
 }
 
 // NewSem 实例化：种子
 // 默认使用 P-256 曲线（ES256）
-func NewSem(attrs ...secret.SemenerAttr) (secret.Semener, error) {
+func NewSem(attrs ...secret.SemenAttr) (secret.Semen, error) {
 	var (
 		err error
-		sem secret.Semener = &ECDSASemImpl{}
+		sem secret.Semen = &ECDSASem{}
 	)
 
 	if err = sem.SetAttrs(attrs...); err != nil {
@@ -40,7 +40,7 @@ func NewSem(attrs ...secret.SemenerAttr) (secret.Semener, error) {
 }
 
 // setAttr 设置属性
-func (my *ECDSASemImpl) SetAttrs(attrs ...secret.SemenerAttr) error {
+func (my *ECDSASem) SetAttrs(attrs ...secret.SemenAttr) error {
 	for _, attr := range attrs {
 		if err := attr(my); err != nil {
 			return err
@@ -51,7 +51,7 @@ func (my *ECDSASemImpl) SetAttrs(attrs ...secret.SemenerAttr) error {
 }
 
 // GeneratePriKey 生成私钥（P-256 曲线）
-func (my *ECDSASemImpl) GeneratePriKey() (err error) {
+func (my *ECDSASem) GeneratePriKey() (err error) {
 	priKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return err
@@ -61,10 +61,13 @@ func (my *ECDSASemImpl) GeneratePriKey() (err error) {
 }
 
 // SetPubKey 设置公钥
-func (my *ECDSASemImpl) SetPubKey(pubKey secret.SemenerPubKey) (err error) { my.pubKey = pubKey; return }
+func (my *ECDSASem) SetPubKey(pubKey secret.SemenPubKey) (err error) {
+	my.pubKey = pubKey
+	return
+}
 
 // SetPubKeyBytes 设置公钥：bytes
-func (my *ECDSASemImpl) SetPubKeyBytes(pubKeyBytes []byte) (err error) {
+func (my *ECDSASem) SetPubKeyBytes(pubKeyBytes []byte) (err error) {
 	var pubKey *ecdsa.PublicKey
 	if pubKey, err = parseECDSAPublicKey(pubKeyBytes); err != nil {
 		return errors.New("公钥(bytes)内容不合法")
@@ -74,7 +77,7 @@ func (my *ECDSASemImpl) SetPubKeyBytes(pubKeyBytes []byte) (err error) {
 }
 
 // SetPubKeyBase64 设置公钥：base64
-func (my *ECDSASemImpl) SetPubKeyBase64(pubKeyBase64 string) (err error) {
+func (my *ECDSASem) SetPubKeyBase64(pubKeyBase64 string) (err error) {
 	var pubKeyBytes []byte
 
 	if pubKeyBytes, err = base64.StdEncoding.DecodeString(pubKeyBase64); err != nil {
@@ -87,7 +90,7 @@ func (my *ECDSASemImpl) SetPubKeyBase64(pubKeyBase64 string) (err error) {
 }
 
 // GetPubKey 获取公钥：如果公钥存在则返回公钥，如果公钥不存在则使用私钥返回公钥
-func (my *ECDSASemImpl) GetPubKey() secret.SemenerPubKey {
+func (my *ECDSASem) GetPubKey() secret.SemenPubKey {
 	if my.pubKey != nil {
 		return my.pubKey
 	}
@@ -100,7 +103,7 @@ func (my *ECDSASemImpl) GetPubKey() secret.SemenerPubKey {
 }
 
 // GetPubKeyBytes 获取公钥：bytes
-func (my *ECDSASemImpl) GetPubKeyBytes() ([]byte, error) {
+func (my *ECDSASem) GetPubKeyBytes() ([]byte, error) {
 	pubKey := my.GetPubKey()
 	if pubKey == nil {
 		return nil, errors.New("公钥不存在")
@@ -110,7 +113,7 @@ func (my *ECDSASemImpl) GetPubKeyBytes() ([]byte, error) {
 }
 
 // GetPubKeyBase64 获取公钥：base64
-func (my *ECDSASemImpl) GetPubKeyBase64() (string, error) {
+func (my *ECDSASem) GetPubKeyBase64() (string, error) {
 	var (
 		err         error
 		pubKeyBytes []byte
@@ -124,10 +127,10 @@ func (my *ECDSASemImpl) GetPubKeyBase64() (string, error) {
 }
 
 // SetPriKey 设置私钥
-func (my *ECDSASemImpl) SetPriKey(priKey secret.SemenerPriKey) (err error) { my.priKey = priKey; return }
+func (my *ECDSASem) SetPriKey(priKey secret.SemenPriKey) (err error) { my.priKey = priKey; return }
 
 // SetPriKeyBytes 设置私钥：bytes
-func (my *ECDSASemImpl) SetPriKeyBytes(priKeyBytes []byte) (err error) {
+func (my *ECDSASem) SetPriKeyBytes(priKeyBytes []byte) (err error) {
 	var priKey *ecdsa.PrivateKey
 	if priKey, err = parseECDSAPrivateKey(priKeyBytes); err != nil {
 		return errors.New("私钥(bytes)内容不合法")
@@ -137,7 +140,7 @@ func (my *ECDSASemImpl) SetPriKeyBytes(priKeyBytes []byte) (err error) {
 }
 
 // SetPriKeyBase64 设置私钥：base64
-func (my *ECDSASemImpl) SetPriKeyBase64(priKeyBase64 string) (err error) {
+func (my *ECDSASem) SetPriKeyBase64(priKeyBase64 string) (err error) {
 	var priKeyBytes []byte
 
 	if priKeyBytes, err = base64.StdEncoding.DecodeString(priKeyBase64); err != nil {
@@ -150,10 +153,10 @@ func (my *ECDSASemImpl) SetPriKeyBase64(priKeyBase64 string) (err error) {
 }
 
 // GetPriKey 获取私钥
-func (my *ECDSASemImpl) GetPriKey() secret.SemenerPriKey { return my.priKey }
+func (my *ECDSASem) GetPriKey() secret.SemenPriKey { return my.priKey }
 
 // GetPriKeyBytes 获取私钥：bytes
-func (my *ECDSASemImpl) GetPriKeyBytes() ([]byte, error) {
+func (my *ECDSASem) GetPriKeyBytes() ([]byte, error) {
 	if my.priKey == nil {
 		return nil, errors.New("私钥不能为空")
 	}
@@ -162,7 +165,7 @@ func (my *ECDSASemImpl) GetPriKeyBytes() ([]byte, error) {
 }
 
 // GetPriKeyBase64 获取私钥：base64
-func (my *ECDSASemImpl) GetPriKeyBase64() (string, error) {
+func (my *ECDSASem) GetPriKeyBase64() (string, error) {
 	var (
 		err         error
 		priKeyBytes []byte
@@ -176,37 +179,37 @@ func (my *ECDSASemImpl) GetPriKeyBase64() (string, error) {
 }
 
 // PubKey 设置公钥属性
-func PubKey(pubKey secret.SemenerPubKey) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPubKey(pubKey) }
+func PubKey(pubKey secret.SemenPubKey) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPubKey(pubKey) }
 }
 
 // PubKeyBytes 设置公钥属性：bytes
-func PubKeyBytes(pubKeyBytes []byte) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPubKeyBytes(pubKeyBytes) }
+func PubKeyBytes(pubKeyBytes []byte) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPubKeyBytes(pubKeyBytes) }
 }
 
 // PubKeyBase64 设置公钥属性：base64
-func PubKeyBase64(pubKeyBase64 string) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPubKeyBase64(pubKeyBase64) }
+func PubKeyBase64(pubKeyBase64 string) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPubKeyBase64(pubKeyBase64) }
 }
 
 // PriKey 设置私钥属性
-func PriKey(priKey secret.SemenerPriKey) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPriKey(priKey) }
+func PriKey(priKey secret.SemenPriKey) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPriKey(priKey) }
 }
 
 // PriKeyBytes 设置私钥属性：bytes
-func PriKeyBytes(priKeyBytes []byte) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPriKeyBytes(priKeyBytes) }
+func PriKeyBytes(priKeyBytes []byte) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPriKeyBytes(priKeyBytes) }
 }
 
 // PriKeyBase64 设置私钥属性：base64
-func PriKeyBase64(priKeyBase64 string) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPriKeyBase64(priKeyBase64) }
+func PriKeyBase64(priKeyBase64 string) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPriKeyBase64(priKeyBase64) }
 }
 
 // MustGeneratePriKey 生成私钥并验证
-func MustGeneratePriKey(sem secret.Semener) (err error) {
+func MustGeneratePriKey(sem secret.Semen) (err error) {
 	var (
 		pubKeyBase64, priKeyBase64 string
 		pubKeyBytes, priKeyBytes   []byte

@@ -21,8 +21,8 @@ func TestGenerateAndVerify(t *testing.T) {
 		t.Fatalf("生成密钥对失败: %v", err)
 	}
 
-	// 创建 JWT 实例（使用 Asymmetricer 接口）
-	var asymm secret.Asymmetricer = rsa.New(rsaSem)
+	// 创建 JWT 实例（使用 secret.Asymmetric）
+	var asymm secret.Asymmetric = rsa.New(rsaSem)
 	jwtInstance := New(asymm)
 
 	// 构建声明
@@ -79,7 +79,7 @@ func TestVerifyExpiredToken(t *testing.T) {
 		t.Fatalf("生成密钥对失败: %v", err)
 	}
 
-	var asymm secret.Asymmetricer = rsa.New(rsaSem)
+	var asymm secret.Asymmetric = rsa.New(rsaSem)
 	jwtInstance := New(asymm)
 
 	// 构建已过期的声明
@@ -117,7 +117,7 @@ func TestVerifyInvalidSignature(t *testing.T) {
 	}
 
 	// 用第一组密钥生成 token
-	var asymm1 secret.Asymmetricer = rsa.New(rsaSem1)
+	var asymm1 secret.Asymmetric = rsa.New(rsaSem1)
 	claims := &Claims{
 		Iss: "test-issuer",
 		Exp: time.Now().Add(time.Hour).Unix(),
@@ -128,7 +128,7 @@ func TestVerifyInvalidSignature(t *testing.T) {
 	}
 
 	// 用第二组密钥验证（应该失败）
-	var asymm2 secret.Asymmetricer = rsa.New(rsaSem2)
+	var asymm2 secret.Asymmetric = rsa.New(rsaSem2)
 	_, err = New(asymm2).Verify(token)
 	if err == nil {
 		t.Fatal("应该返回签名错误")
@@ -142,7 +142,7 @@ func TestVerifyNotYetValid(t *testing.T) {
 		t.Fatalf("生成密钥对失败: %v", err)
 	}
 
-	var asymm secret.Asymmetricer = rsa.New(rsaSem)
+	var asymm secret.Asymmetric = rsa.New(rsaSem)
 	jwtInstance := New(asymm)
 
 	// 构建尚未生效的声明
@@ -175,7 +175,7 @@ func TestVerifyInvalidFormat(t *testing.T) {
 		t.Fatalf("生成密钥对失败: %v", err)
 	}
 
-	var asymm secret.Asymmetricer = rsa.New(rsaSem)
+	var asymm secret.Asymmetric = rsa.New(rsaSem)
 	jwtInstance := New(asymm)
 
 	// 测试各种无效格式
@@ -211,7 +211,7 @@ func TestWithExistingKeyPair(t *testing.T) {
 	rsaSemPri, _ := rsa.NewSem(rsa.PriKeyBytes(priKeyBytes))
 
 	// 签名
-	var signerAsymm secret.Asymmetricer = rsa.New(rsaSemPri)
+	var signerAsymm secret.Asymmetric = rsa.New(rsaSemPri)
 	signer := New(signerAsymm)
 	claims := &Claims{
 		Iss: "test",
@@ -224,7 +224,7 @@ func TestWithExistingKeyPair(t *testing.T) {
 	}
 
 	// 验证
-	var verifierAsymm secret.Asymmetricer = rsa.New(rsaSemPub)
+	var verifierAsymm secret.Asymmetric = rsa.New(rsaSemPub)
 	verifiedClaims, err := New(verifierAsymm).Verify(token)
 	if err != nil {
 		t.Fatalf("验证 JWT 失败: %v", err)
@@ -244,7 +244,7 @@ func TestES256GenerateAndVerify(t *testing.T) {
 	}
 
 	// 创建 JWT 实例（使用 ES256 算法）
-	var asymm secret.Asymmetricer = ecdsa.New(ecdsaSem)
+	var asymm secret.Asymmetric = ecdsa.New(ecdsaSem)
 	jwtInstance := NewWithAlg(AlgES256, asymm)
 
 	// 构建声明
@@ -291,7 +291,7 @@ func TestEdDSAGenerateAndVerify(t *testing.T) {
 	}
 
 	// 创建 JWT 实例（使用 EdDSA 算法）
-	var asymm secret.Asymmetricer = ed25519.New(edSem)
+	var asymm secret.Asymmetric = ed25519.New(edSem)
 	jwtInstance := NewWithAlg(AlgEdDSA, asymm)
 
 	// 构建声明
@@ -338,7 +338,7 @@ func TestSM2GenerateAndVerify(t *testing.T) {
 	}
 
 	// 创建 JWT 实例（使用 SM2 算法）
-	var asymm secret.Asymmetricer = sm2.New(sm2Sem)
+	var asymm secret.Asymmetric = sm2.New(sm2Sem)
 	jwtInstance := NewWithAlg(AlgSM2, asymm)
 
 	// 构建声明
@@ -383,7 +383,7 @@ func TestRS256WithAlg(t *testing.T) {
 		t.Fatalf("生成 RSA 密钥对失败: %v", err)
 	}
 
-	var asymm secret.Asymmetricer = rsa.New(rsaSem)
+	var asymm secret.Asymmetric = rsa.New(rsaSem)
 	jwtInstance := NewWithAlg(AlgRS256, asymm)
 
 	claims := &Claims{
@@ -416,7 +416,7 @@ func TestJWTWithoutAlg(t *testing.T) {
 		t.Fatalf("生成 RSA 密钥对失败: %v", err)
 	}
 
-	var asymm secret.Asymmetricer = rsa.New(rsaSem)
+	var asymm secret.Asymmetric = rsa.New(rsaSem)
 	jwtInstance := New(asymm) // 不设置算法
 
 	claims := &Claims{
@@ -449,7 +449,7 @@ func TestGetAlg(t *testing.T) {
 		t.Fatalf("生成密钥对失败: %v", err)
 	}
 
-	var asymm secret.Asymmetricer = rsa.New(rsaSem)
+	var asymm secret.Asymmetric = rsa.New(rsaSem)
 
 	// 不带算法
 	jwt1 := New(asymm)
@@ -482,7 +482,7 @@ func TestES256WithExistingKeyPair(t *testing.T) {
 	ecdsaSemPri, _ := ecdsa.NewSem(ecdsa.PriKeyBytes(priKeyBytes))
 
 	// 签名
-	var signerAsymm secret.Asymmetricer = ecdsa.New(ecdsaSemPri)
+	var signerAsymm secret.Asymmetric = ecdsa.New(ecdsaSemPri)
 	signer := NewWithAlg(AlgES256, signerAsymm)
 	claims := &Claims{
 		Iss: "test",
@@ -495,7 +495,7 @@ func TestES256WithExistingKeyPair(t *testing.T) {
 	}
 
 	// 验证
-	var verifierAsymm secret.Asymmetricer = ecdsa.New(ecdsaSemPub)
+	var verifierAsymm secret.Asymmetric = ecdsa.New(ecdsaSemPub)
 	verifiedClaims, err := NewWithAlg(AlgES256, verifierAsymm).Verify(token)
 	if err != nil {
 		t.Fatalf("验证 ES256 JWT 失败: %v", err)
@@ -524,7 +524,7 @@ func TestEdDSAWithExistingKeyPair(t *testing.T) {
 	edSemPri, _ := ed25519.NewSem(ed25519.PriKeyBytes(priKeyBytes))
 
 	// 签名
-	var signerAsymm secret.Asymmetricer = ed25519.New(edSemPri)
+	var signerAsymm secret.Asymmetric = ed25519.New(edSemPri)
 	signer := NewWithAlg(AlgEdDSA, signerAsymm)
 	claims := &Claims{
 		Iss: "test",
@@ -537,7 +537,7 @@ func TestEdDSAWithExistingKeyPair(t *testing.T) {
 	}
 
 	// 验证
-	var verifierAsymm secret.Asymmetricer = ed25519.New(edSemPub)
+	var verifierAsymm secret.Asymmetric = ed25519.New(edSemPub)
 	verifiedClaims, err := NewWithAlg(AlgEdDSA, verifierAsymm).Verify(token)
 	if err != nil {
 		t.Fatalf("验证 EdDSA JWT 失败: %v", err)
@@ -566,7 +566,7 @@ func TestSM2WithExistingKeyPair(t *testing.T) {
 	sm2SemPri, _ := sm2.NewSem(sm2.PriKeyBytes(priKeyBytes))
 
 	// 签名
-	var signerAsymm secret.Asymmetricer = sm2.New(sm2SemPri)
+	var signerAsymm secret.Asymmetric = sm2.New(sm2SemPri)
 	signer := NewWithAlg(AlgSM2, signerAsymm)
 	claims := &Claims{
 		Iss: "test",
@@ -579,7 +579,7 @@ func TestSM2WithExistingKeyPair(t *testing.T) {
 	}
 
 	// 验证
-	var verifierAsymm secret.Asymmetricer = sm2.New(sm2SemPub)
+	var verifierAsymm secret.Asymmetric = sm2.New(sm2SemPub)
 	verifiedClaims, err := NewWithAlg(AlgSM2, verifierAsymm).Verify(token)
 	if err != nil {
 		t.Fatalf("验证 SM2 JWT 失败: %v", err)

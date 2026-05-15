@@ -12,19 +12,15 @@ import (
 	"github.com/aid297/aid/v2/secret"
 )
 
-var _ secret.Asymmetricer = (*RSAImpl)(nil)
+var _ secret.Asymmetric = (*RSA)(nil)
 
-type RSAImpl struct {
-	sem secret.Semener
-	// publicKey  *cryptorsa.PublicKey
-	// privateKey *cryptorsa.PrivateKey
-}
+type RSA struct{ sem secret.Semen }
 
 // New 实例化
-func New(sem secret.Semener) secret.Asymmetricer { return &RSAImpl{sem: sem} }
+func New(sem secret.Semen) secret.Asymmetric { return &RSA{sem: sem} }
 
 // // NewByPEM 使用 PEM 公私钥创建 RSA 实例（可只传公钥或只传私钥）
-// func NewByPEM(publicKeyPEM, privateKeyPEM []byte) (secret.Asymmetricer, error) {
+// func NewByPEM(publicKeyPEM, privateKeyPEM []byte) (secret.Asymmetric, error) {
 // 	my := &RSAImpl{}
 // 	if len(publicKeyPEM) > 0 {
 // 		pub, err := parsePublicKeyPEM(publicKeyPEM)
@@ -50,7 +46,7 @@ func New(sem secret.Semener) secret.Asymmetricer { return &RSAImpl{sem: sem} }
 // }
 
 // // NewByBase64 使用 base64(DER 或 PEM文本) 公私钥创建 RSA 实例
-// func NewByBase64(base64PublicKey, base64PrivateKey string) (secret.Asymmetricer, error) {
+// func NewByBase64(base64PublicKey, base64PrivateKey string) (secret.Asymmetric, error) {
 // 	var (
 // 		pubPEM []byte
 // 		priPEM []byte
@@ -113,7 +109,7 @@ func New(sem secret.Semener) secret.Asymmetricer { return &RSAImpl{sem: sem} }
 // }
 
 // Encrypt 公钥加密，返回 base64 密文（自动分段）
-func (my *RSAImpl) Encrypt(plainText []byte) (string, error) {
+func (my *RSA) Encrypt(plainText []byte) (string, error) {
 	var (
 		err        error
 		pubKey     = my.sem.GetPubKey().(*cryptorsa.PublicKey)
@@ -139,7 +135,7 @@ func (my *RSAImpl) Encrypt(plainText []byte) (string, error) {
 }
 
 // Decrypt 私钥解密，输入 base64 密文（自动分段）
-func (my *RSAImpl) Decrypt(cipherBase64 string) ([]byte, error) {
+func (my *RSA) Decrypt(cipherBase64 string) ([]byte, error) {
 	var (
 		err        error
 		priKey     = my.sem.GetPriKey().(*cryptorsa.PrivateKey)
@@ -170,7 +166,7 @@ func (my *RSAImpl) Decrypt(cipherBase64 string) ([]byte, error) {
 }
 
 // Sign 私钥签名（SHA-256 + PKCS1v15），返回 base64 签名
-func (my *RSAImpl) Sign(data []byte) (string, error) {
+func (my *RSA) Sign(data []byte) (string, error) {
 	var (
 		err    error
 		h      [32]byte = sha256.Sum256(data)
@@ -186,7 +182,7 @@ func (my *RSAImpl) Sign(data []byte) (string, error) {
 }
 
 // Verify 公钥验签（SHA-256 + PKCS1v15），输入 base64 签名
-func (my *RSAImpl) Verify(data []byte, sigBase64 string) (bool, error) {
+func (my *RSA) Verify(data []byte, sigBase64 string) (bool, error) {
 	var (
 		err    error
 		h      [32]byte = sha256.Sum256(data)

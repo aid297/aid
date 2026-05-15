@@ -7,16 +7,18 @@
 | [1. 统一接口说明](#1-统一接口说明) | 选项函数对比、方法列表 |
 | [2. 非对称加密（SM2）](#2-非对称加密sm2) | 密钥生成、加解密、签名验证 |
 | [3. 非对称加密（RSA）](#3-非对称加密rsa) | 密钥生成、加解密、签名验证 |
-| [JWT（secret/jwt）](#jwt-secretjwt) | 工具包：令牌编解码与校验，注入 Asymmetricer |
 | [4. 对称加密（SM4）](#4-对称加密sm4) | ECB/CBC/CTR/GCM 模式，场景选择指南 |
 | [5. 对称加密（AES）](#5-对称加密aes) | ECB/CBC/CTR/GCM 模式，AES-192/256 |
 | [6. 组合用法](#6-组合用法) | SM2+SM4 / RSA+AES 文件加密 |
+| [7. JWT 工具（secret/jwt）](#7-jwt-工具secretjwt) | 令牌工具包：编解码与校验，注入 `secret.Asymmetric` |
 
 1. 统一接口说明
 
    #### 1.1 非对称加密接口
 
-   **Semener（种子）接口：**
+   **Semen（种子）接口：**
+
+   非对称种子类型为 **`secret.Semen`**；选项属性为 **`secret.SemenAttr`**（如 `rsa.PriKeyBytes`）；公钥/私钥在类型上分别为 **`secret.SemenPubKey`** / **`secret.SemenPriKey`**（与 `crypto` 中公钥私钥概念对应）。
 
    | 方法 | 说明 |
    |------|------|
@@ -25,7 +27,7 @@
    | `GetPriKeyBytes()` / `GetPriKeyBase64()` | 获取私钥 |
    | `GetPubKeyBytes()` / `GetPubKeyBase64()` | 获取公钥 |
 
-   **Asymmetricer（加解密/签名）接口：**
+   **Asymmetric（加解密/签名）接口：**
    | 方法 | 说明 |
    |------|------|
    | `Encrypt(plainText)` | 加密，返回 base64 密文 |
@@ -34,6 +36,8 @@
    | `Verify(data, sigHex)` | 验签 |
 
    #### 1.2 对称加密接口
+
+   对称算法通过 **`secret.Symmetric`** 使用；`sm4.New` / `aes.New` 接受 **`secret.SymmetricAttr`** 选项函数（如 `sm4.KeyBytes`、`aes.AlgorithmCBC` 等）。文件/大文件加解密方法需传入 **`secret.Asymmetric`** 以包装对称密钥。
 
    **模式选择：**
    | 模式    | 选项函数                                    | Nonce/IV 长度 | 输出格式                   | 适用场景                  |
@@ -68,7 +72,7 @@
       func TestGenerateKeyPair(t *testing.T) {
       	var (
       		err                        error
-      		sem                        secret.Semener
+      		sem                        secret.Semen
       		pubKeyBase64, priKeyBase64 string
       		pubKeyBytes, priKeyBytes   []byte
       	)
@@ -109,8 +113,8 @@
       func TestEncryptDecrypt(t *testing.T) {
       	var (
       		err                        error
-      		semEncrypter, semDecrypter secret.Semener
-      		sm2Encrypter, sm2Decrypter secret.Asymmetricer
+      		semEncrypter, semDecrypter secret.Semen
+      		sm2Encrypter, sm2Decrypter secret.Asymmetric
       		sm2SemAPriKeyBytes         []byte
       		plainText                  = []byte("hello, SM2 非对称加密测试!")
       		cipherBase64               string
@@ -159,8 +163,8 @@
       func TestSignVerify(t *testing.T) {
       	var (
       		err                error
-      		semSign, semVerify secret.Semener
-      		sm2Sign, sm2Verify secret.Asymmetricer
+      		semSign, semVerify secret.Semen
+      		sm2Sign, sm2Verify secret.Asymmetric
       		data               = []byte("hello, SM2 数字签名测试!")
       		sigHex             string
       		ok                 bool
@@ -194,8 +198,8 @@
       func TestVerifyWithWrongData(t *testing.T) {
       	var (
       		err                error
-      		semSign, semVerify secret.Semener
-      		sm2Sign, sm2Verify secret.Asymmetricer
+      		semSign, semVerify secret.Semen
+      		sm2Sign, sm2Verify secret.Asymmetric
       		data               = []byte("original data")
       		sigHex             string
       		ok                 bool
@@ -232,7 +236,7 @@
       func TestGenerateKeyPair(t *testing.T) {
       	var (
       		err                        error
-      		sem                        secret.Semener
+      		sem                        secret.Semen
       		pubKeyBase64, priKeyBase64 string
       		pubKeyBytes, priKeyBytes   []byte
       	)
@@ -271,8 +275,8 @@
       func TestEncryptDecrypt(t *testing.T) {
       	var (
       		err          error
-      		semA, semB   secret.Semener
-      		rsaA, rsaB   secret.Asymmetricer
+      		semA, semB   secret.Semen
+      		rsaA, rsaB   secret.Asymmetric
       		plainText    = []byte("hello, RSA 非对称加密测试!")
       		cipherBase64 string
       		decrypted    []byte
@@ -313,8 +317,8 @@
       func TestSignVerify(t *testing.T) {
       	var (
       		err                error
-      		semSign, semVerify secret.Semener
-      		rsaSign, rsaVerify secret.Asymmetricer
+      		semSign, semVerify secret.Semen
+      		rsaSign, rsaVerify secret.Asymmetric
       		data               = []byte("hello, RSA 数字签名测试!")
       		sigHex             string
       		ok                 bool
@@ -348,8 +352,8 @@
       func TestVerifyWithWrongData(t *testing.T) {
       	var (
       		err                error
-      		semSign, semVerify secret.Semener
-      		rsaSign, rsaVerify secret.Asymmetricer
+      		semSign, semVerify secret.Semen
+      		rsaSign, rsaVerify secret.Asymmetric
       		data               = []byte("original data")
       		sigHex             string
       		ok                 bool
@@ -381,126 +385,6 @@
       t.Logf("篡改数据正确被拒绝")
       }
       ```
-
-### JWT（secret/jwt）
-
-   JWT（JSON Web Token）用于在各方之间安全传输声明。实现位于包 `github.com/aid297/aid/v2/secret/jwt`，作为 **secret 下的工具集**，与 `secret/asymmetric` 中的 RSA、ECDSA、Ed25519、SM2 等算法包并列，而非挂在某一非对称子包之下。支持 RS256、ES256、EdDSA、SM2 等，通过注入 `secret.Asymmetricer` 完成签名与验签。
-
-   ### 声明结构
-
-   ```go
-   type Claims struct {
-       Iss   string                 // 签发者
-       Sub   string                 // 主题
-       Aud   string                 // 受众
-       Exp   int64                  // 过期时间（Unix 时间戳）
-       Nbf   int64                  // 生效时间（Unix 时间戳）
-       Iat   int64                  // 签发时间（Unix 时间戳）
-       Jti   string                 // JWT ID
-       Extra map[string]interface{}  // 自定义声明
-   }
-   ```
-
-   ### 基本用法
-
-   ```go
-   import (
-       "testing"
-       "time"
-
-       "github.com/aid297/aid/v2/secret"
-       "github.com/aid297/aid/v2/secret/asymmetric/rsa"
-       "github.com/aid297/aid/v2/secret/jwt"
-   )
-
-   func TestJWTBasic(t *testing.T) {
-       // 1. 创建 RSA 密钥对
-       rsaSem, err := rsa.NewSem()
-       if err != nil {
-           t.Fatalf("生成密钥对失败: %v", err)
-       }
-
-       // 2. 创建 JWT 实例（使用 Asymmetricer 接口）
-       var asymm secret.Asymmetricer = rsa.New(rsaSem)
-       jwtInstance := jwt.New(asymm)
-
-       // 3. 构建声明
-       claims := &jwt.Claims{
-           Iss: "test-issuer",
-           Sub: "test-subject",
-           Aud: "test-audience",
-           Iat: time.Now().Unix(),
-           Exp: time.Now().Add(time.Hour).Unix(),
-           Nbf: time.Now().Unix() - 60,
-           Jti: "unique-token-id",
-       }
-
-       // 4. 生成 token
-       token, err := jwtInstance.Generate(claims)
-       if err != nil {
-           t.Fatalf("生成 JWT 失败: %v", err)
-       }
-       t.Logf("Token: %s", token)
-
-       // 5. 验证 token
-       verifiedClaims, err := jwtInstance.Verify(token)
-       if err != nil {
-           t.Fatalf("验证 JWT 失败: %v", err)
-       }
-       t.Logf("验证通过: %+v", verifiedClaims)
-   }
-   ```
-
-   ### 使用现有密钥对
-
-   ```go
-   import (
-       "testing"
-       "time"
-
-       "github.com/aid297/aid/v2/secret"
-       "github.com/aid297/aid/v2/secret/asymmetric/rsa"
-       "github.com/aid297/aid/v2/secret/jwt"
-   )
-
-   func TestJWTWithExistingKeys(t *testing.T) {
-       // 生成密钥对
-       rsaSem, err := rsa.NewSem()
-       if err != nil {
-           t.Fatalf("生成密钥对失败: %v", err)
-       }
-
-       // 获取公私钥
-       pubKeyBytes, _ := rsaSem.GetPubKeyBytes()
-       priKeyBytes, _ := rsaSem.GetPriKeyBytes()
-
-       // 使用公钥创建 JWT（仅验证）
-       rsaSemPub, _ := rsa.NewSem(rsa.PubKeyBytes(pubKeyBytes))
-       // 使用私钥创建 JWT（仅签名）
-       rsaSemPri, _ := rsa.NewSem(rsa.PriKeyBytes(priKeyBytes))
-
-       // 签名
-       var signerAsymm secret.Asymmetricer = rsa.New(rsaSemPri)
-       token, _ := jwt.New(signerAsymm).Generate(&jwt.Claims{
-           Iss: "test",
-           Exp: time.Now().Add(time.Hour).Unix(),
-       })
-
-       // 验证
-       var verifierAsymm secret.Asymmetricer = rsa.New(rsaSemPub)
-       claims, _ := jwt.New(verifierAsymm).Verify(token)
-       t.Logf("Iss: %s", claims.Iss)
-   }
-   ```
-
-   ### 支持多算法
-
-   由于使用 `secret.Asymmetricer` 接口，天然支持所有实现了该接口的算法：
-
-   - **RS256**：RSA + SHA-256 + PKCS1v15
-   - **SM2**：国密 SM2 算法
-
-   只需替换 `Asymmetricer` 实现即可切换算法。
 
 4. 对称加密（*SM4*）
 
@@ -1143,13 +1027,13 @@
       	// 生成密钥对
       	var (
       		err                        error
-      		semEncrypter, semDecrypter secret.Semener
-      		sm2Encrypter, sm2Decrypter secret.Asymmetricer
+      		semEncrypter, semDecrypter secret.Semen
+      		sm2Encrypter, sm2Decrypter secret.Asymmetric
       		semPriKeyEncrypter         []byte
       		plainFile                  = "/tmp/sm2_test_plain.txt"
       		encryptedFile              = "/tmp/sm2_test_encrypted.bin"
       		decryptedFile              = "/tmp/sm2_test_decrypted.txt"
-      		sm4Encrypter, sm4Decrypter secret.Symmetricer
+      		sm4Encrypter, sm4Decrypter secret.Symmetric
       		key                        []byte
       		iv                         []byte
       	)
@@ -1207,9 +1091,9 @@
       func TestLargeFileEncrypt() {
       	var (
       		err                        error
-      		semEncrypter, semDecrypter secret.Semener
-      		sm2Encrypter, sm2Decrypter secret.Asymmetricer
-      		sm4Encrypter, sm4Decrypter secret.Symmetricer
+      		semEncrypter, semDecrypter secret.Semen
+      		sm2Encrypter, sm2Decrypter secret.Asymmetric
+      		sm4Encrypter, sm4Decrypter secret.Symmetric
       		semEncrypterPriKeyBytes    []byte
       		plainFile                  = "/tmp/sm2_test_large_plain.bin"
       		encryptedFile              = "/tmp/sm2_test_large_encrypted.bin"
@@ -1362,9 +1246,9 @@
       func TestFileEncrypt() {
       	var (
       		err                        error
-      		semEncrypter, semDecrypter secret.Semener
-      		rsaEncrypter, rsaDecrypter secret.Asymmetricer
-      		aesEncrypter, aesDecrypter secret.Symmetricer
+      		semEncrypter, semDecrypter secret.Semen
+      		rsaEncrypter, rsaDecrypter secret.Asymmetric
+      		aesEncrypter, aesDecrypter secret.Symmetric
       		aesKey, aesIV, priKeyBytes []byte
       		plainFile                  = "/tmp/rsa_test_plain.txt"
       		encryptedFile              = "/tmp/rsa_test_encrypted.bin"
@@ -1420,9 +1304,9 @@
       func TestLargeFileEncrypt() {
       	var (
       		err                        error
-      		semEncrypter, semDecrypter secret.Semener
-      		rsaEncrypter, rsaDecrypter secret.Asymmetricer
-      		aesEncrypter, aesDecrypter secret.Symmetricer
+      		semEncrypter, semDecrypter secret.Semen
+      		rsaEncrypter, rsaDecrypter secret.Asymmetric
+      		aesEncrypter, aesDecrypter secret.Symmetric
       		aesKey, aesIV, priKeyBytes []byte
       		plainFile                  = "/tmp/rsa_test_large_plain.bin"
       		encryptedFile              = "/tmp/rsa_test_large_encrypted.bin"
@@ -1545,3 +1429,127 @@
       
       func main() { TestFileEncrypt(); TestLargeFileEncrypt() }
       ```
+
+7. JWT 工具（*secret/jwt*）
+
+   本节放在文档末尾：JWT 属于 **secret 下的令牌工具包**（包路径 `github.com/aid297/aid/v2/secret/jwt`），与 `secret/asymmetric` 中的 RSA、ECDSA、Ed25519、SM2 等**并列**，通过注入 `secret.Asymmetric` 完成签名与验签，而不作为某一类非对称子算法目录的一部分。
+
+   JWT（JSON Web Token）用于在各方之间安全传输声明。
+
+   ### 声明结构
+
+   ```go
+   type Claims struct {
+       Iss   string                 // 签发者
+       Sub   string                 // 主题
+       Aud   string                 // 受众
+       Exp   int64                  // 过期时间（Unix 时间戳）
+       Nbf   int64                  // 生效时间（Unix 时间戳）
+       Iat   int64                  // 签发时间（Unix 时间戳）
+       Jti   string                 // JWT ID
+       Extra map[string]interface{}  // 自定义声明
+   }
+   ```
+
+   ### 基本用法
+
+   ```go
+   import (
+       "testing"
+       "time"
+
+       "github.com/aid297/aid/v2/secret"
+       "github.com/aid297/aid/v2/secret/asymmetric/rsa"
+       "github.com/aid297/aid/v2/secret/jwt"
+   )
+
+   func TestJWTBasic(t *testing.T) {
+       // 1. 创建 RSA 密钥对
+       rsaSem, err := rsa.NewSem()
+       if err != nil {
+           t.Fatalf("生成密钥对失败: %v", err)
+       }
+
+       // 2. 创建 JWT 实例（使用 secret.Asymmetric）
+       var asymm secret.Asymmetric = rsa.New(rsaSem)
+       jwtInstance := jwt.New(asymm)
+
+       // 3. 构建声明
+       claims := &jwt.Claims{
+           Iss: "test-issuer",
+           Sub: "test-subject",
+           Aud: "test-audience",
+           Iat: time.Now().Unix(),
+           Exp: time.Now().Add(time.Hour).Unix(),
+           Nbf: time.Now().Unix() - 60,
+           Jti: "unique-token-id",
+       }
+
+       // 4. 生成 token
+       token, err := jwtInstance.Generate(claims)
+       if err != nil {
+           t.Fatalf("生成 JWT 失败: %v", err)
+       }
+       t.Logf("Token: %s", token)
+
+       // 5. 验证 token
+       verifiedClaims, err := jwtInstance.Verify(token)
+       if err != nil {
+           t.Fatalf("验证 JWT 失败: %v", err)
+       }
+       t.Logf("验证通过: %+v", verifiedClaims)
+   }
+   ```
+
+   ### 使用现有密钥对
+
+   ```go
+   import (
+       "testing"
+       "time"
+
+       "github.com/aid297/aid/v2/secret"
+       "github.com/aid297/aid/v2/secret/asymmetric/rsa"
+       "github.com/aid297/aid/v2/secret/jwt"
+   )
+
+   func TestJWTWithExistingKeys(t *testing.T) {
+       // 生成密钥对
+       rsaSem, err := rsa.NewSem()
+       if err != nil {
+           t.Fatalf("生成密钥对失败: %v", err)
+       }
+
+       // 获取公私钥
+       pubKeyBytes, _ := rsaSem.GetPubKeyBytes()
+       priKeyBytes, _ := rsaSem.GetPriKeyBytes()
+
+       // 使用公钥创建 JWT（仅验证）
+       rsaSemPub, _ := rsa.NewSem(rsa.PubKeyBytes(pubKeyBytes))
+       // 使用私钥创建 JWT（仅签名）
+       rsaSemPri, _ := rsa.NewSem(rsa.PriKeyBytes(priKeyBytes))
+
+       // 签名
+       var signerAsymm secret.Asymmetric = rsa.New(rsaSemPri)
+       token, _ := jwt.New(signerAsymm).Generate(&jwt.Claims{
+           Iss: "test",
+           Exp: time.Now().Add(time.Hour).Unix(),
+       })
+
+       // 验证
+       var verifierAsymm secret.Asymmetric = rsa.New(rsaSemPub)
+       claims, _ := jwt.New(verifierAsymm).Verify(token)
+       t.Logf("Iss: %s", claims.Iss)
+   }
+   ```
+
+   ### 支持多算法
+
+   通过 `secret.Asymmetric` 注入算法；头部 `alg` 使用 **`jwt.NewWithAlg(alg, asymm)`**（`alg` 类型为 `jwt.Alg`）。不写 `alg` 时用 **`jwt.New(asymm)`**。
+
+   - **RS256** / **RS384** / **RS512**：RSA + PKCS#1 v1.5 + 对应 SHA（`rsa.New`）  
+   - **ES256** / **ES384** / **ES512**：ECDSA + 对应 SHA（`ecdsa.New`，当前种子默认 P-256 对应 **ES256**）  
+   - **EdDSA**：Ed25519（`ed25519.New`）  
+   - **SM2**：国密 SM2（`sm2.New`）  
+
+   只需替换 `secret.Asymmetric` 实现及 `jwt.Alg` 即可切换算法。

@@ -16,9 +16,9 @@ import (
 func TestFileEncrypt() {
 	var (
 		err                        error
-		semEncrypter, semDecrypter secret.Semener
-		rsaEncrypter, rsaDecrypter secret.Asymmetricer
-		aesEncrypter, aesDecrypter secret.Symmetricer
+		semEncrypter, semDecrypter secret.Semen
+		rsaEncrypter, rsaDecrypter secret.Asymmetric
+		aesEncrypter, aesDecrypter secret.Symmetric
 		aesKey, aesIV, priKeyBytes []byte
 		plainFile                  = "/tmp/rsa_test_plain.txt"
 		encryptedFile              = "/tmp/rsa_test_encrypted.bin"
@@ -74,9 +74,9 @@ func TestFileEncrypt() {
 func TestLargeFileEncrypt() {
 	var (
 		err                        error
-		semEncrypter, semDecrypter secret.Semener
-		rsaEncrypter, rsaDecrypter secret.Asymmetricer
-		aesEncrypter, aesDecrypter secret.Symmetricer
+		semEncrypter, semDecrypter secret.Semen
+		rsaEncrypter, rsaDecrypter secret.Asymmetric
+		aesEncrypter, aesDecrypter secret.Symmetric
 		aesKey, aesIV, priKeyBytes []byte
 		plainFile                        = "/tmp/rsa_test_large_plain.bin"
 		encryptedFile                    = "/tmp/rsa_test_large_encrypted.bin"

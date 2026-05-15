@@ -14,16 +14,16 @@ import (
 	"encoding/pem"
 )
 
-type RSASemImpl struct {
-	priKey secret.SemenerPriKey
-	pubKey secret.SemenerPubKey
+type RSASem struct {
+	priKey secret.SemenPriKey
+	pubKey secret.SemenPubKey
 }
 
 // NewSem 实例化：种子
-func NewSem(attrs ...secret.SemenerAttr) (secret.Semener, error) {
+func NewSem(attrs ...secret.SemenAttr) (secret.Semen, error) {
 	var (
 		err error
-		sem secret.Semener = &RSASemImpl{}
+		sem secret.Semen = &RSASem{}
 	)
 
 	if err = sem.SetAttrs(attrs...); err != nil {
@@ -40,7 +40,7 @@ func NewSem(attrs ...secret.SemenerAttr) (secret.Semener, error) {
 }
 
 // setAttr 设置属性
-func (my *RSASemImpl) SetAttrs(attrs ...secret.SemenerAttr) error {
+func (my *RSASem) SetAttrs(attrs ...secret.SemenAttr) error {
 	for _, attr := range attrs {
 		if err := attr(my); err != nil {
 			return err
@@ -51,7 +51,7 @@ func (my *RSASemImpl) SetAttrs(attrs ...secret.SemenerAttr) error {
 }
 
 // GeneratePriKey 生成私钥
-func (my *RSASemImpl) GeneratePriKey() (err error) {
+func (my *RSASem) GeneratePriKey() (err error) {
 	if my.priKey, err = cryptorsa.GenerateKey(rand.Reader, 2048); err != nil {
 		return
 	}
@@ -59,10 +59,10 @@ func (my *RSASemImpl) GeneratePriKey() (err error) {
 }
 
 // SetPubKey 设置公钥
-func (my *RSASemImpl) SetPubKey(pubKey secret.SemenerPubKey) (err error) { my.pubKey = pubKey; return }
+func (my *RSASem) SetPubKey(pubKey secret.SemenPubKey) (err error) { my.pubKey = pubKey; return }
 
 // SetPubKeyBytes 设置公钥：bytes
-func (my *RSASemImpl) SetPubKeyBytes(pubKeyBytes []byte) (err error) {
+func (my *RSASem) SetPubKeyBytes(pubKeyBytes []byte) (err error) {
 	var (
 		ok        bool
 		pubKeyPEM []byte
@@ -90,7 +90,7 @@ func (my *RSASemImpl) SetPubKeyBytes(pubKeyBytes []byte) (err error) {
 }
 
 // SetPubKeyBase64 设置公钥：base64
-func (my *RSASemImpl) SetPubKeyBase64(pubKeyBase64 string) (err error) {
+func (my *RSASem) SetPubKeyBase64(pubKeyBase64 string) (err error) {
 	var pubKeyBytes []byte
 
 	if pubKeyBytes, err = base64.StdEncoding.DecodeString(pubKeyBase64); err != nil {
@@ -103,7 +103,7 @@ func (my *RSASemImpl) SetPubKeyBase64(pubKeyBase64 string) (err error) {
 }
 
 // GetPubKey 获取公钥：如果公钥存在则返回公钥，如果公钥不存在则使用私钥返回公钥
-func (my *RSASemImpl) GetPubKey() secret.SemenerPubKey {
+func (my *RSASem) GetPubKey() secret.SemenPubKey {
 	if my.pubKey != nil {
 		return my.pubKey
 	}
@@ -116,7 +116,7 @@ func (my *RSASemImpl) GetPubKey() secret.SemenerPubKey {
 }
 
 // GetPubKeyBytes 获取公钥：bytes
-func (my *RSASemImpl) GetPubKeyBytes() ([]byte, error) {
+func (my *RSASem) GetPubKeyBytes() ([]byte, error) {
 	var (
 		err         error
 		pubKeyBytes []byte
@@ -134,7 +134,7 @@ func (my *RSASemImpl) GetPubKeyBytes() ([]byte, error) {
 }
 
 // GetPubKeyBase64 获取公钥：base64
-func (my *RSASemImpl) GetPubKeyBase64() (string, error) {
+func (my *RSASem) GetPubKeyBase64() (string, error) {
 	var (
 		err         error
 		pubKeyBytes []byte
@@ -148,10 +148,10 @@ func (my *RSASemImpl) GetPubKeyBase64() (string, error) {
 }
 
 // SetPriKey
-func (my *RSASemImpl) SetPriKey(priKey secret.SemenerPriKey) (err error) { my.priKey = priKey; return }
+func (my *RSASem) SetPriKey(priKey secret.SemenPriKey) (err error) { my.priKey = priKey; return }
 
 // SetPriKeyBytes 设置私钥：bytes（PKCS8 DER 格式，与 GetPriKeyBytes 对应）
-func (my *RSASemImpl) SetPriKeyBytes(priKeyBytes []byte) (err error) {
+func (my *RSASem) SetPriKeyBytes(priKeyBytes []byte) (err error) {
 	var (
 		pemBlock  *pem.Block
 		priPKCS8  any
@@ -180,7 +180,7 @@ func (my *RSASemImpl) SetPriKeyBytes(priKeyBytes []byte) (err error) {
 }
 
 // SetPriKeyBase64 设置私钥：base64
-func (my *RSASemImpl) SetPriKeyBase64(priKeyBase64 string) (err error) {
+func (my *RSASem) SetPriKeyBase64(priKeyBase64 string) (err error) {
 	var priKeyBytes []byte
 
 	if priKeyBytes, err = base64.StdEncoding.DecodeString(priKeyBase64); err != nil {
@@ -193,10 +193,10 @@ func (my *RSASemImpl) SetPriKeyBase64(priKeyBase64 string) (err error) {
 }
 
 // GetPriKey 获取私钥
-func (my *RSASemImpl) GetPriKey() secret.SemenerPriKey { return my.priKey }
+func (my *RSASem) GetPriKey() secret.SemenPriKey { return my.priKey }
 
 // GetPriKeyBytes 获取私钥：bytes
-func (my *RSASemImpl) GetPriKeyBytes() ([]byte, error) {
+func (my *RSASem) GetPriKeyBytes() ([]byte, error) {
 	if my.priKey == nil {
 		return nil, errors.New("私钥不能为空")
 	}
@@ -205,7 +205,7 @@ func (my *RSASemImpl) GetPriKeyBytes() ([]byte, error) {
 }
 
 // GetPriKeyBase64 获取私钥：base64
-func (my *RSASemImpl) GetPriKeyBase64() (string, error) {
+func (my *RSASem) GetPriKeyBase64() (string, error) {
 	var (
 		err         error
 		priKeyBytes []byte
@@ -217,31 +217,31 @@ func (my *RSASemImpl) GetPriKeyBase64() (string, error) {
 	return base64.StdEncoding.EncodeToString(priKeyBytes), nil
 }
 
-func PubKey(pubKey secret.SemenerPubKey) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPubKey(pubKey) }
+func PubKey(pubKey secret.SemenPubKey) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPubKey(pubKey) }
 }
 
-func PubKeyBytes(pubKeyBytes []byte) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPubKeyBytes(pubKeyBytes) }
+func PubKeyBytes(pubKeyBytes []byte) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPubKeyBytes(pubKeyBytes) }
 }
 
-func PubKeyBase64(pubKeyBase64 string) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPubKeyBase64(pubKeyBase64) }
+func PubKeyBase64(pubKeyBase64 string) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPubKeyBase64(pubKeyBase64) }
 }
 
-func PriKey(priKey secret.SemenerPriKey) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPriKey(priKey) }
+func PriKey(priKey secret.SemenPriKey) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPriKey(priKey) }
 }
 
-func PriKeyBytes(priKeyBytes []byte) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPriKeyBytes(priKeyBytes) }
+func PriKeyBytes(priKeyBytes []byte) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPriKeyBytes(priKeyBytes) }
 }
 
-func PriKeyBase64(priKeyBase64 string) secret.SemenerAttr {
-	return func(sem secret.Semener) error { return sem.SetPriKeyBase64(priKeyBase64) }
+func PriKeyBase64(priKeyBase64 string) secret.SemenAttr {
+	return func(sem secret.Semen) error { return sem.SetPriKeyBase64(priKeyBase64) }
 }
 
-func MustGeneratePriKey(sem secret.Semener) (err error) {
+func MustGeneratePriKey(sem secret.Semen) (err error) {
 	var (
 		pubKeyBase64, priKeyBase64 string
 		pubKeyBytes, priKeyBytes   []byte

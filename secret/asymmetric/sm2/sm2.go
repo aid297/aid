@@ -13,15 +13,15 @@ import (
 	"github.com/aid297/aid/v2/secret"
 )
 
-var _ secret.Asymmetricer = (*SM2Impl)(nil)
+var _ secret.Asymmetric = (*SM2)(nil)
 
-type SM2Impl struct{ sem secret.Semener }
+type SM2 struct{ sem secret.Semen }
 
 // New 实例化
-func New(sem secret.Semener) secret.Asymmetricer { return &SM2Impl{sem: sem} }
+func New(sem secret.Semen) secret.Asymmetric { return &SM2{sem: sem} }
 
 // Encrypt 加密
-func (my *SM2Impl) Encrypt(plainText []byte) (string, error) {
+func (my *SM2) Encrypt(plainText []byte) (string, error) {
 	var (
 		pubKeyBytes  []byte
 		err          error
@@ -45,7 +45,7 @@ func (my *SM2Impl) Encrypt(plainText []byte) (string, error) {
 }
 
 // Decrypt 使用 base64 私钥解密，输入 base64 密文
-func (my *SM2Impl) Decrypt(cipherBase64 string) ([]byte, error) {
+func (my *SM2) Decrypt(cipherBase64 string) ([]byte, error) {
 	var (
 		err          error
 		priKeyBytes  []byte
@@ -69,7 +69,7 @@ func (my *SM2Impl) Decrypt(cipherBase64 string) ([]byte, error) {
 }
 
 // Sign 使用 base64 私钥对数据签名，返回 hex 签名字符串
-func (my *SM2Impl) Sign(data []byte) (string, error) {
+func (my *SM2) Sign(data []byte) (string, error) {
 	var (
 		err            error
 		priKeyBytes    []byte
@@ -101,7 +101,7 @@ func (my *SM2Impl) Sign(data []byte) (string, error) {
 }
 
 // Verify 使用 base64 公钥验证 hex 签名
-func (my *SM2Impl) Verify(data []byte, sigHex string) (bool, error) {
+func (my *SM2) Verify(data []byte, sigHex string) (bool, error) {
 	var (
 		err          error
 		pubKeyBytes  []byte

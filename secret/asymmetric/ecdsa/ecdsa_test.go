@@ -177,7 +177,7 @@ func TestSignASN1VerifyASN1RoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("生成种子(ECDSA)失败：%v", err)
 	}
-	var asymm *ECDSAImpl = New(sem).(*ECDSAImpl)
+	var asymm *ECDSA = New(sem).(*ECDSA)
 
 	msg := []byte("ASN.1 path uses caller-supplied digest")
 	hash := sha256.Sum256(msg)
@@ -206,7 +206,7 @@ func TestVerifyASN1WrongDigest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("生成种子(ECDSA)失败：%v", err)
 	}
-	var asymm *ECDSAImpl = New(sem).(*ECDSAImpl)
+	var asymm *ECDSA = New(sem).(*ECDSA)
 
 	h1 := sha256.Sum256([]byte("a"))
 	h2 := sha256.Sum256([]byte("b"))
@@ -288,7 +288,7 @@ func TestMultipleSignaturesBothVerify(t *testing.T) {
 }
 
 func TestMustGeneratePriKey(t *testing.T) {
-	sem := &ECDSASemImpl{}
+	sem := &ECDSASem{}
 	if err := MustGeneratePriKey(sem); err != nil {
 		t.Fatalf("MustGeneratePriKey 失败：%v", err)
 	}
@@ -299,7 +299,7 @@ func TestMustGeneratePriKey(t *testing.T) {
 }
 
 func TestSetPubKeyBytesInvalid(t *testing.T) {
-	sem := &ECDSASemImpl{}
+	sem := &ECDSASem{}
 	err := sem.SetPubKeyBytes([]byte("not-a-key"))
 	if err == nil {
 		t.Fatal("非法公钥字节应返回错误")
@@ -307,7 +307,7 @@ func TestSetPubKeyBytesInvalid(t *testing.T) {
 }
 
 func TestSetPriKeyBytesInvalid(t *testing.T) {
-	sem := &ECDSASemImpl{}
+	sem := &ECDSASem{}
 	err := sem.SetPriKeyBytes([]byte("not-a-key"))
 	if err == nil {
 		t.Fatal("非法私钥字节应返回错误")
@@ -315,7 +315,7 @@ func TestSetPriKeyBytesInvalid(t *testing.T) {
 }
 
 func TestGetPubKeyBytesWhenMissing(t *testing.T) {
-	sem := &ECDSASemImpl{}
+	sem := &ECDSASem{}
 	_, err := sem.GetPubKeyBytes()
 	if err == nil {
 		t.Fatal("未设置密钥时应无法获取公钥 bytes")
@@ -323,7 +323,7 @@ func TestGetPubKeyBytesWhenMissing(t *testing.T) {
 }
 
 func TestGetPriKeyBytesWhenMissing(t *testing.T) {
-	sem := &ECDSASemImpl{}
+	sem := &ECDSASem{}
 	_, err := sem.GetPriKeyBytes()
 	if err == nil {
 		t.Fatal("未设置私钥时应无法获取私钥 bytes")

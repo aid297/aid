@@ -15,7 +15,7 @@ import (
 	"github.com/aid297/aid/v2/secret"
 )
 
-var _ secret.Symmetricer = (*AESImpl)(nil)
+var _ secret.Symmetric = (*AES)(nil)
 
 const (
 	AES128 = 128
@@ -23,21 +23,21 @@ const (
 	AES256 = 256
 )
 
-type AESImpl struct {
+type AES struct {
 	key, iv   []byte
 	keyBits   int
 	algorithm string
 }
 
 // New 实例化
-func New(attrs ...secret.SymmetricAttr) (my secret.Symmetricer, err error) {
-	my = &AESImpl{keyBits: AES128, algorithm: "CBC"}
+func New(attrs ...secret.SymmetricAttr) (my secret.Symmetric, err error) {
+	my = &AES{keyBits: AES128, algorithm: "CBC"}
 	err = my.SetAttrs(attrs...)
 	return
 }
 
 // SetAttrs 设置属性
-func (my *AESImpl) SetAttrs(attrs ...secret.SymmetricAttr) (err error) {
+func (my *AES) SetAttrs(attrs ...secret.SymmetricAttr) (err error) {
 	for idx := range attrs {
 		if err = attrs[idx](my); err != nil {
 			return
@@ -105,31 +105,31 @@ func validateIV(iv []byte) error {
 }
 
 // GetKeyString 获取 key：string
-func (my *AESImpl) GetKeyString() string { return string(my.key) }
+func (my *AES) GetKeyString() string { return string(my.key) }
 
 // GetKeyBytes 获取 key：bytes
-func (my *AESImpl) GetKeyBytes() []byte { return my.key }
+func (my *AES) GetKeyBytes() []byte { return my.key }
 
 // GetIVString 获取 iv：string
-func (my *AESImpl) GetIVString() string { return string(my.iv) }
+func (my *AES) GetIVString() string { return string(my.iv) }
 
 // GetIVBytes 获取 iv：bytes
-func (my *AESImpl) GetIVBytes() []byte { return my.iv }
+func (my *AES) GetIVBytes() []byte { return my.iv }
 
 // SetKeyString 设置 key：string
-func (my *AESImpl) SetKeyString(key string) { my.key = []byte(key) }
+func (my *AES) SetKeyString(key string) { my.key = []byte(key) }
 
 // SetKeyBytes 设置 key：bytes
-func (my *AESImpl) SetKeyBytes(key []byte) { my.key = key }
+func (my *AES) SetKeyBytes(key []byte) { my.key = key }
 
 // SetIVString 设置 iv：string
-func (my *AESImpl) SetIVString(iv string) { my.iv = []byte(iv) }
+func (my *AES) SetIVString(iv string) { my.iv = []byte(iv) }
 
 // SetIVBytes 设置 iv：bytes
-func (my *AESImpl) SetIVBytes(iv []byte) { my.iv = iv }
+func (my *AES) SetIVBytes(iv []byte) { my.iv = iv }
 
 // SetAlgorithm 设置算法
-func (my *AESImpl) SetAlgorithm(algorithm string) (err error) {
+func (my *AES) SetAlgorithm(algorithm string) (err error) {
 	switch algorithm {
 	case "ECB", "CBC", "CTR", "GCM":
 		my.algorithm = strings.ToUpper(algorithm)
@@ -140,7 +140,7 @@ func (my *AESImpl) SetAlgorithm(algorithm string) (err error) {
 }
 
 // Encrypt 加密：通过原始内容
-func (my *AESImpl) Encrypt(plainText []byte) ([]byte, error) {
+func (my *AES) Encrypt(plainText []byte) ([]byte, error) {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.encryptECB(plainText)
@@ -156,7 +156,7 @@ func (my *AESImpl) Encrypt(plainText []byte) ([]byte, error) {
 }
 
 // Decrypt 解密：通过密文
-func (my *AESImpl) Decrypt(cipherText []byte) ([]byte, error) {
+func (my *AES) Decrypt(cipherText []byte) ([]byte, error) {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.decryptECB(cipherText)
@@ -172,7 +172,7 @@ func (my *AESImpl) Decrypt(cipherText []byte) ([]byte, error) {
 }
 
 // EcryptBase64 加密：通过原始内容，返回 base64 编码的密文
-func (my *AESImpl) EncryptBase64(plainText []byte) (string, error) {
+func (my *AES) EncryptBase64(plainText []byte) (string, error) {
 	cipherText, err := my.Encrypt(plainText)
 	if err != nil {
 		return "", err
@@ -181,7 +181,7 @@ func (my *AESImpl) EncryptBase64(plainText []byte) (string, error) {
 }
 
 // DecryptBase64 解密：通过 base64 编码的密文
-func (my *AESImpl) DecryptBase64(cipherBase64 string) ([]byte, error) {
+func (my *AES) DecryptBase64(cipherBase64 string) ([]byte, error) {
 	cipherText, err := base64.StdEncoding.DecodeString(cipherBase64)
 	if err != nil {
 		return nil, fmt.Errorf("base64解码错误：%w", err)
@@ -190,7 +190,7 @@ func (my *AESImpl) DecryptBase64(cipherBase64 string) ([]byte, error) {
 }
 
 // encryptECB ECB 模式加密，返回原始字节
-func (my *AESImpl) encryptECB(plainText []byte) ([]byte, error) {
+func (my *AES) encryptECB(plainText []byte) ([]byte, error) {
 	if err := validateKey(my.key); err != nil {
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func (my *AESImpl) encryptECB(plainText []byte) ([]byte, error) {
 }
 
 // decryptECB ECB 模式解密
-func (my *AESImpl) decryptECB(cipherText []byte) ([]byte, error) {
+func (my *AES) decryptECB(cipherText []byte) ([]byte, error) {
 	if err := validateKey(my.key); err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func (my *AESImpl) decryptECB(cipherText []byte) ([]byte, error) {
 }
 
 // encryptCBC CBC 模式加密，返回原始字节
-func (my *AESImpl) encryptCBC(plainText []byte) ([]byte, error) {
+func (my *AES) encryptCBC(plainText []byte) ([]byte, error) {
 	if err := validateKey(my.key); err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func (my *AESImpl) encryptCBC(plainText []byte) ([]byte, error) {
 }
 
 // decryptCBC CBC 模式解密
-func (my *AESImpl) decryptCBC(cipherText []byte) ([]byte, error) {
+func (my *AES) decryptCBC(cipherText []byte) ([]byte, error) {
 	if err := validateKey(my.key); err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func validateNonce(nonce []byte) error {
 // encryptCTR CTR 模式加密，返回原始字节
 // CTR 模式将分组密码转换为流密码，无需填充
 // 输出格式：nonce(16) + 密文
-func (my *AESImpl) encryptCTR(plainText []byte) ([]byte, error) {
+func (my *AES) encryptCTR(plainText []byte) ([]byte, error) {
 	if err := validateKey(my.key); err != nil {
 		return nil, err
 	}
@@ -301,7 +301,7 @@ func (my *AESImpl) encryptCTR(plainText []byte) ([]byte, error) {
 
 // decryptCTR CTR 模式解密
 // 输入格式：nonce(16) + 密文
-func (my *AESImpl) decryptCTR(cipherText []byte) ([]byte, error) {
+func (my *AES) decryptCTR(cipherText []byte) ([]byte, error) {
 	if err := validateKey(my.key); err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (my *AESImpl) decryptCTR(cipherText []byte) ([]byte, error) {
 // encryptGCM GCM 模式加密（认证加密）
 // GCM 同时提供机密性和完整性认证
 // 输出格式：nonce(12) + 密文 + tag(16)
-func (my *AESImpl) encryptGCM(plainText []byte) ([]byte, error) {
+func (my *AES) encryptGCM(plainText []byte) ([]byte, error) {
 	if err := validateKey(my.key); err != nil {
 		return nil, err
 	}
@@ -363,7 +363,7 @@ func (my *AESImpl) encryptGCM(plainText []byte) ([]byte, error) {
 // decryptGCM GCM 模式解密（认证解密）
 // 输入格式：nonce(12) + 密文 + tag(16)
 // 如果 tag 验证失败，返回错误
-func (my *AESImpl) decryptGCM(cipherText []byte) ([]byte, error) {
+func (my *AES) decryptGCM(cipherText []byte) ([]byte, error) {
 	if err := validateKey(my.key); err != nil {
 		return nil, err
 	}
@@ -392,7 +392,7 @@ func (my *AESImpl) decryptGCM(cipherText []byte) ([]byte, error) {
 }
 
 // encryptCBCStream CBC 流式加密（适用于大文件）
-func (my *AESImpl) encryptCBCStream(in io.Reader, out io.Writer) error {
+func (my *AES) encryptCBCStream(in io.Reader, out io.Writer) error {
 	if err := validateKey(my.key); err != nil {
 		return err
 	}
@@ -445,7 +445,7 @@ func (my *AESImpl) encryptCBCStream(in io.Reader, out io.Writer) error {
 }
 
 // decryptCBCStream CBC 流式解密（适用于大文件）
-func (my *AESImpl) decryptCBCStream(in io.Reader, out io.Writer) error {
+func (my *AES) decryptCBCStream(in io.Reader, out io.Writer) error {
 	if err := validateKey(my.key); err != nil {
 		return err
 	}
@@ -507,7 +507,7 @@ func (my *AESImpl) decryptCBCStream(in io.Reader, out io.Writer) error {
 }
 
 // encryptCBCFile CBC 加密文件
-func (my *AESImpl) encryptCBCFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) encryptCBCFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -551,7 +551,7 @@ func (my *AESImpl) encryptCBCFile(plainFile, outFile string, asymm secret.Asymme
 }
 
 // decryptCBCFile CBC 解密文件
-func (my *AESImpl) decryptCBCFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) decryptCBCFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -607,7 +607,7 @@ func (my *AESImpl) decryptCBCFile(cipherFile, outFile string, asymm secret.Asymm
 }
 
 // encryptCBCLargeFile 用 SM2+AES 流式加密大文件（TB级）
-func (my *AESImpl) encryptCBCLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) encryptCBCLargeFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -649,7 +649,7 @@ func (my *AESImpl) encryptCBCLargeFile(plainFile, outFile string, asymm secret.A
 }
 
 // decryptCBCLargeFile 用 SM2+AES 流式解密大文件（TB级）
-func (my *AESImpl) decryptCBCLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) decryptCBCLargeFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -720,7 +720,7 @@ func (my *AESImpl) decryptCBCLargeFile(cipherFile, outFile string, asymm secret.
 }
 
 // encryptECBStream ECB 流式加密（适用于大文件）
-func (my *AESImpl) encryptECBStream(in io.Reader, out io.Writer) error {
+func (my *AES) encryptECBStream(in io.Reader, out io.Writer) error {
 	if err := validateKey(my.key); err != nil {
 		return err
 	}
@@ -773,7 +773,7 @@ func (my *AESImpl) encryptECBStream(in io.Reader, out io.Writer) error {
 }
 
 // decryptECBStream ECB 流式解密（适用于大文件）
-func (my *AESImpl) decryptECBStream(in io.Reader, out io.Writer) error {
+func (my *AES) decryptECBStream(in io.Reader, out io.Writer) error {
 	if err := validateKey(my.key); err != nil {
 		return err
 	}
@@ -826,7 +826,7 @@ func (my *AESImpl) decryptECBStream(in io.Reader, out io.Writer) error {
 }
 
 // encryptECBFile ECB 加密文件
-func (my *AESImpl) encryptECBFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) encryptECBFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -868,7 +868,7 @@ func (my *AESImpl) encryptECBFile(plainFile, outFile string, asymm secret.Asymme
 }
 
 // decryptECBFile ECB 解密文件
-func (my *AESImpl) decryptECBFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) decryptECBFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -921,7 +921,7 @@ func (my *AESImpl) decryptECBFile(cipherFile, outFile string, asymm secret.Asymm
 }
 
 // encryptECBLargeFile 用 SM2+AES ECB 流式加密大文件（TB级）
-func (my *AESImpl) encryptECBLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) encryptECBLargeFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -961,7 +961,7 @@ func (my *AESImpl) encryptECBLargeFile(plainFile, outFile string, asymm secret.A
 }
 
 // decryptECBLargeFile 用 SM2+AES ECB 流式解密大文件（TB级）
-func (my *AESImpl) decryptECBLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) decryptECBLargeFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -1029,7 +1029,7 @@ func (my *AESImpl) decryptECBLargeFile(cipherFile, outFile string, asymm secret.
 }
 
 // EncryptStream 流式加密（适用于大文件，根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AESImpl) EncryptStream(in io.Reader, out io.Writer) error {
+func (my *AES) EncryptStream(in io.Reader, out io.Writer) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.encryptECBStream(in, out)
@@ -1045,7 +1045,7 @@ func (my *AESImpl) EncryptStream(in io.Reader, out io.Writer) error {
 }
 
 // DecryptStream 流式解密（适用于大文件，根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AESImpl) DecryptStream(in io.Reader, out io.Writer) error {
+func (my *AES) DecryptStream(in io.Reader, out io.Writer) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.decryptECBStream(in, out)
@@ -1061,7 +1061,7 @@ func (my *AESImpl) DecryptStream(in io.Reader, out io.Writer) error {
 }
 
 // EncryptFile 加密文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AESImpl) EncryptFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) EncryptFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.encryptECBFile(plainFile, outFile, asymm)
@@ -1077,7 +1077,7 @@ func (my *AESImpl) EncryptFile(plainFile, outFile string, asymm secret.Asymmetri
 }
 
 // DecryptFile 解密文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AESImpl) DecryptFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) DecryptFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.decryptECBFile(cipherFile, outFile, asymm)
@@ -1093,7 +1093,7 @@ func (my *AESImpl) DecryptFile(cipherFile, outFile string, asymm secret.Asymmetr
 }
 
 // EncryptLargeFile 加密大文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AESImpl) EncryptLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) EncryptLargeFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.encryptECBLargeFile(plainFile, outFile, asymm)
@@ -1109,7 +1109,7 @@ func (my *AESImpl) EncryptLargeFile(plainFile, outFile string, asymm secret.Asym
 }
 
 // DecryptLargeFile 解密大文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AESImpl) DecryptLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) DecryptLargeFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
 		return my.decryptECBLargeFile(cipherFile, outFile, asymm)
@@ -1125,7 +1125,7 @@ func (my *AESImpl) DecryptLargeFile(cipherFile, outFile string, asymm secret.Asy
 }
 
 // encryptCTRStream CTR 流式加密（适用于大文件）
-func (my *AESImpl) encryptCTRStream(in io.Reader, out io.Writer) error {
+func (my *AES) encryptCTRStream(in io.Reader, out io.Writer) error {
 	if err := validateKey(my.key); err != nil {
 		return err
 	}
@@ -1167,7 +1167,7 @@ func (my *AESImpl) encryptCTRStream(in io.Reader, out io.Writer) error {
 }
 
 // decryptCTRStream CTR 流式解密（适用于大文件）
-func (my *AESImpl) decryptCTRStream(in io.Reader, out io.Writer) error {
+func (my *AES) decryptCTRStream(in io.Reader, out io.Writer) error {
 	if err := validateKey(my.key); err != nil {
 		return err
 	}
@@ -1211,7 +1211,7 @@ func (my *AESImpl) decryptCTRStream(in io.Reader, out io.Writer) error {
 // encryptGCMStream GCM 流式加密（适用于大文件）
 // 注意：GCM 是认证加密，流式加密时无法在解密端验证完整性
 // 如果需要验证完整性，请在完整数据流加密后单独验证，或使用分块 GCM
-func (my *AESImpl) encryptGCMStream(in io.Reader, out io.Writer) error {
+func (my *AES) encryptGCMStream(in io.Reader, out io.Writer) error {
 	if err := validateKey(my.key); err != nil {
 		return err
 	}
@@ -1269,7 +1269,7 @@ func (my *AESImpl) encryptGCMStream(in io.Reader, out io.Writer) error {
 }
 
 // decryptGCMStream GCM 流式解密（适用于大文件）
-func (my *AESImpl) decryptGCMStream(in io.Reader, out io.Writer) error {
+func (my *AES) decryptGCMStream(in io.Reader, out io.Writer) error {
 	if err := validateKey(my.key); err != nil {
 		return err
 	}
@@ -1307,7 +1307,7 @@ func (my *AESImpl) decryptGCMStream(in io.Reader, out io.Writer) error {
 }
 
 // encryptCTRFile CTR 加密文件
-func (my *AESImpl) encryptCTRFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) encryptCTRFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -1353,7 +1353,7 @@ func (my *AESImpl) encryptCTRFile(plainFile, outFile string, asymm secret.Asymme
 }
 
 // decryptCTRFile CTR 解密文件
-func (my *AESImpl) decryptCTRFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) decryptCTRFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -1409,7 +1409,7 @@ func (my *AESImpl) decryptCTRFile(cipherFile, outFile string, asymm secret.Asymm
 }
 
 // encryptGCMFile GCM 加密文件
-func (my *AESImpl) encryptGCMFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) encryptGCMFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -1455,7 +1455,7 @@ func (my *AESImpl) encryptGCMFile(plainFile, outFile string, asymm secret.Asymme
 }
 
 // decryptGCMFile GCM 解密文件
-func (my *AESImpl) decryptGCMFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) decryptGCMFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -1511,7 +1511,7 @@ func (my *AESImpl) decryptGCMFile(cipherFile, outFile string, asymm secret.Asymm
 }
 
 // encryptCTRLargeFile 用 SM2+AES CTR 流式加密大文件（TB级）
-func (my *AESImpl) encryptCTRLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) encryptCTRLargeFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -1563,7 +1563,7 @@ func (my *AESImpl) encryptCTRLargeFile(plainFile, outFile string, asymm secret.A
 }
 
 // decryptCTRLargeFile 用 SM2+AES CTR 流式解密大文件（TB级）
-func (my *AESImpl) decryptCTRLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) decryptCTRLargeFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -1634,7 +1634,7 @@ func (my *AESImpl) decryptCTRLargeFile(cipherFile, outFile string, asymm secret.
 }
 
 // encryptGCMLargeFile 用 SM2+AES GCM 流式加密大文件（TB级）
-func (my *AESImpl) encryptGCMLargeFile(plainFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) encryptGCMLargeFile(plainFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -1685,7 +1685,7 @@ func (my *AESImpl) encryptGCMLargeFile(plainFile, outFile string, asymm secret.A
 }
 
 // decryptGCMLargeFile 用 SM2+AES GCM 流式解密大文件（TB级）
-func (my *AESImpl) decryptGCMLargeFile(cipherFile, outFile string, asymm secret.Asymmetricer) error {
+func (my *AES) decryptGCMLargeFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File

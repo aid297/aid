@@ -20,28 +20,28 @@ func validateKeyBits(bits int) error {
 func toKeyBytes(bits int) int { return bits / 8 }
 
 func KeyString(key string) secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetKeyString(key); return }
+	return func(symmetricer secret.Symmetric) (err error) { symmetricer.SetKeyString(key); return }
 }
 
 func KeyBytes(key []byte) secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetKeyBytes(key); return }
+	return func(symmetricer secret.Symmetric) (err error) { symmetricer.SetKeyBytes(key); return }
 }
 
 func IVString(iv string) secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetIVString(iv); return }
+	return func(symmetricer secret.Symmetric) (err error) { symmetricer.SetIVString(iv); return }
 }
 
 func IVBytes(iv []byte) secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) { symmetricer.SetIVBytes(iv); return }
+	return func(symmetricer secret.Symmetric) (err error) { symmetricer.SetIVBytes(iv); return }
 }
 
 // KeySize 按位数生成随机 AES key（支持 128/192/256）
 func KeySize(bits int, outList ...*[]byte) secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) error {
+	return func(symmetricer secret.Symmetric) error {
 		if err := validateKeyBits(bits); err != nil {
 			return err
 		}
-		helper, ok := symmetricer.(*AESImpl)
+		helper, ok := symmetricer.(*AES)
 		if !ok {
 			return errors.New("aes: KeySize only supports AESImpl")
 		}
@@ -54,8 +54,8 @@ func KeySize(bits int, outList ...*[]byte) secret.SymmetricAttr {
 }
 
 func RandKey(outList ...*[]byte) secret.SymmetricAttr {
-	return func(symm secret.Symmetricer) (err error) {
-		helper, ok := symm.(*AESImpl)
+	return func(symm secret.Symmetric) (err error) {
+		helper, ok := symm.(*AES)
 		if !ok {
 			return errors.New("aes: RandKey only supports AESImpl")
 		}
@@ -69,7 +69,7 @@ func RandKey(outList ...*[]byte) secret.SymmetricAttr {
 
 // RandKeyWithBits 按位数生成随机 AES key（支持 128/192/256）
 func RandKeyWithBits(bits int, outList ...*[]byte) secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) {
+	return func(symmetricer secret.Symmetric) (err error) {
 		if err = validateKeyBits(bits); err != nil {
 			return err
 		}
@@ -82,7 +82,7 @@ func RandKeyWithBits(bits int, outList ...*[]byte) secret.SymmetricAttr {
 		}
 
 		symmetricer.SetKeyBytes(key)
-		if helper, ok := symmetricer.(*AESImpl); ok {
+		if helper, ok := symmetricer.(*AES); ok {
 			helper.keyBits = bits
 		}
 
@@ -96,7 +96,7 @@ func RandKeyWithBits(bits int, outList ...*[]byte) secret.SymmetricAttr {
 }
 
 func RandIV(outList ...*[]byte) secret.SymmetricAttr {
-	return func(sm4Helper secret.Symmetricer) (err error) {
+	return func(sm4Helper secret.Symmetric) (err error) {
 		iv := make([]byte, 16)
 
 		if _, err = rand.Read(iv); err != nil {
@@ -115,24 +115,24 @@ func RandIV(outList ...*[]byte) secret.SymmetricAttr {
 }
 
 func AlgorithmECB() secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) { return symmetricer.SetAlgorithm("ECB") }
+	return func(symmetricer secret.Symmetric) (err error) { return symmetricer.SetAlgorithm("ECB") }
 }
 
 func AlgorithmCBC() secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) { return symmetricer.SetAlgorithm("CBC") }
+	return func(symmetricer secret.Symmetric) (err error) { return symmetricer.SetAlgorithm("CBC") }
 }
 
 func AlgorithmCTR() secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) { return symmetricer.SetAlgorithm("CTR") }
+	return func(symmetricer secret.Symmetric) (err error) { return symmetricer.SetAlgorithm("CTR") }
 }
 
 func AlgorithmGCM() secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) { return symmetricer.SetAlgorithm("GCM") }
+	return func(symmetricer secret.Symmetric) (err error) { return symmetricer.SetAlgorithm("GCM") }
 }
 
 // RandCTRNonce 生成随机 nonce（适用于 CTR 模式：16字节）
 func RandCTRNonce(outList ...*[]byte) secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) {
+	return func(symmetricer secret.Symmetric) (err error) {
 		nonce := make([]byte, 16)
 
 		if _, err = rand.Read(nonce); err != nil {
@@ -152,7 +152,7 @@ func RandCTRNonce(outList ...*[]byte) secret.SymmetricAttr {
 
 // RandGCMNonce 生成 12 字节随机 nonce（适用于 GCM 模式）
 func RandGCMNonce(outList ...*[]byte) secret.SymmetricAttr {
-	return func(symmetricer secret.Symmetricer) (err error) {
+	return func(symmetricer secret.Symmetric) (err error) {
 		nonce := make([]byte, 12)
 
 		if _, err = rand.Read(nonce); err != nil {
