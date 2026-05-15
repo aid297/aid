@@ -6,7 +6,7 @@
 |------|------|
 | [1. 统一接口说明](#1-统一接口说明) | 选项函数对比、方法列表 |
 | [2. 非对称加密（SM2）](#2-非对称加密sm2) | 密钥生成、加解密、签名验证 |
-| [3. 非对称加密（RSA）](#3-非对称加密rsa) | 密钥生成、加解密、签名验证 |
+| [3. 非对称加密（RSA）](#3-非对称加密rsa) | 密钥生成、加解密、签名验证；[RSA-OAEP](#rsa-oaep)（`rsaoaep`） |
 | [4. 对称加密（SM4）](#4-对称加密sm4) | ECB/CBC/CTR/GCM 模式，场景选择指南 |
 | [5. 对称加密（AES）](#5-对称加密aes) | ECB/CBC/CTR/GCM 模式，AES-192/256 |
 | [6. 组合用法](#6-组合用法) | SM2+SM4 / RSA+AES 文件加密 |
@@ -18,7 +18,7 @@
 
    **Semen（种子）接口：**
 
-   非对称种子类型为 **`secret.Semen`**；选项属性为 **`secret.SemenAttr`**（如 `rsa.PriKeyBytes`）；公钥/私钥在类型上分别为 **`secret.SemenPubKey`** / **`secret.SemenPriKey`**（与 `crypto` 中公钥私钥概念对应）。
+   非对称种子类型为 **`secret.Semen`**；选项属性为 **`secret.SemenAttr`**（如 `rsa.PriKeyBytes`）；公钥/私钥在类型上分别为 **`secret.SemenPubKey`** / **`secret.SemenPriKey`**（与 `crypto` 中公钥私钥概念对应）。**RSA-OAEP**（包 `secret/asymmetric/rsaoaep`）与 **RSA** 共用同一种子接口，可用 `rsaoaep.NewSem` 或 `rsa.NewSem` 生成密钥后再 `rsaoaep.New(sem)`。
 
    | 方法 | 说明 |
    |------|------|
@@ -383,6 +383,46 @@
       		t.Fatal("篡改数据的验证应失败")
       	}
       t.Logf("篡改数据正确被拒绝")
+      }
+      ```
+
+   #### RSA-OAEP
+
+   包路径：`secret/asymmetric/rsaOAEP`。
+
+   - **加解密**：`Encrypt` / `Decrypt` 使用 **RSA-OAEP**，哈希为 **SHA-256**（MGF1 同哈希），**label 固定为空**；按密钥长度自动分段，密文为 **base64**（与 `rsa` 包输出形式一致，但填充不同）。
+   - **签名**：`Sign` / `Verify` 与 **`rsa.New` 相同**，为 **SHA-256 + PKCS#1 v1.5**（OAEP 仅用于加密，不用于签名）。
+   - **密钥**：`rsaoaep.NewSem` 委托 `rsa.NewSem`，也可对已有 `rsa` 种子调用 `rsaoaep.New(sem)`。**不得**用 `rsa.New(...).Decrypt` 解 `rsaoaep` 加密结果。
+
+   示例（需导入 `secret`、`secret/asymmetric/rsa`、`secret/asymmetric/rsaoaep`）：
+
+      ```go
+      func ExampleRSAOAEP(t *testing.T) {
+      	var (
+      		err                    error
+      		semEnc, semDec         secret.Semen
+      		enc, dec               secret.Asymmetric
+      		plain                  = []byte("hello, RSA-OAEP")
+      		cipherBase64 string
+      		out          []byte
+      	)
+      	if semEnc, err = rsaoaep.NewSem(); err != nil {
+      		t.Fatal(err)
+      	}
+      	enc = rsaoaep.New(semEnc)
+      	if cipherBase64, err = enc.Encrypt(plain); err != nil {
+      		t.Fatal(err)
+      	}
+      	if semDec, err = rsa.NewSem(rsa.PriKey(semEnc.GetPriKey())); err != nil {
+      		t.Fatal(err)
+      	}
+      	dec = rsaoaep.New(semDec)
+      	if out, err = dec.Decrypt(cipherBase64); err != nil {
+      		t.Fatal(err)
+      	}
+      	if string(out) != string(plain) {
+      		t.Fatalf("want %q got %q", plain, out)
+      	}
       }
       ```
 
@@ -1432,7 +1472,7 @@
 
 7. JWT 工具（*secret/jwt*）
 
-   本节放在文档末尾：JWT 属于 **secret 下的令牌工具包**（包路径 `github.com/aid297/aid/v2/secret/jwt`），与 `secret/asymmetric` 中的 RSA、ECDSA、Ed25519、SM2 等**并列**，通过注入 `secret.Asymmetric` 完成签名与验签，而不作为某一类非对称子算法目录的一部分。
+   本节放在文档末尾：JWT 属于 **secret 下的令牌工具包**（包路径 `github.com/aid297/aid/v2/secret/jwt`），与 `secret/asymmetric` 中的 RSA、RSA-OAEP（`rsaoaep`）、ECDSA、Ed25519、SM2 等**并列**，通过注入 `secret.Asymmetric` 完成签名与验签，而不作为某一类非对称子算法目录的一部分。
 
    JWT（JSON Web Token）用于在各方之间安全传输声明。
 
@@ -1457,23 +1497,23 @@
    import (
        "testing"
        "time"
-
+   
        "github.com/aid297/aid/v2/secret"
        "github.com/aid297/aid/v2/secret/asymmetric/rsa"
        "github.com/aid297/aid/v2/secret/jwt"
    )
-
+   
    func TestJWTBasic(t *testing.T) {
        // 1. 创建 RSA 密钥对
        rsaSem, err := rsa.NewSem()
        if err != nil {
            t.Fatalf("生成密钥对失败: %v", err)
        }
-
+   
        // 2. 创建 JWT 实例（使用 secret.Asymmetric）
        var asymm secret.Asymmetric = rsa.New(rsaSem)
        jwtInstance := jwt.New(asymm)
-
+   
        // 3. 构建声明
        claims := &jwt.Claims{
            Iss: "test-issuer",
@@ -1484,14 +1524,14 @@
            Nbf: time.Now().Unix() - 60,
            Jti: "unique-token-id",
        }
-
+   
        // 4. 生成 token
        token, err := jwtInstance.Generate(claims)
        if err != nil {
            t.Fatalf("生成 JWT 失败: %v", err)
        }
        t.Logf("Token: %s", token)
-
+   
        // 5. 验证 token
        verifiedClaims, err := jwtInstance.Verify(token)
        if err != nil {
@@ -1507,35 +1547,35 @@
    import (
        "testing"
        "time"
-
+   
        "github.com/aid297/aid/v2/secret"
        "github.com/aid297/aid/v2/secret/asymmetric/rsa"
        "github.com/aid297/aid/v2/secret/jwt"
    )
-
+   
    func TestJWTWithExistingKeys(t *testing.T) {
        // 生成密钥对
        rsaSem, err := rsa.NewSem()
        if err != nil {
            t.Fatalf("生成密钥对失败: %v", err)
        }
-
+   
        // 获取公私钥
        pubKeyBytes, _ := rsaSem.GetPubKeyBytes()
        priKeyBytes, _ := rsaSem.GetPriKeyBytes()
-
+   
        // 使用公钥创建 JWT（仅验证）
        rsaSemPub, _ := rsa.NewSem(rsa.PubKeyBytes(pubKeyBytes))
        // 使用私钥创建 JWT（仅签名）
        rsaSemPri, _ := rsa.NewSem(rsa.PriKeyBytes(priKeyBytes))
-
+   
        // 签名
        var signerAsymm secret.Asymmetric = rsa.New(rsaSemPri)
        token, _ := jwt.New(signerAsymm).Generate(&jwt.Claims{
            Iss: "test",
            Exp: time.Now().Add(time.Hour).Unix(),
        })
-
+   
        // 验证
        var verifierAsymm secret.Asymmetric = rsa.New(rsaSemPub)
        claims, _ := jwt.New(verifierAsymm).Verify(token)
@@ -1547,7 +1587,7 @@
 
    通过 `secret.Asymmetric` 注入算法；头部 `alg` 使用 **`jwt.NewWithAlg(alg, asymm)`**（`alg` 类型为 `jwt.Alg`）。不写 `alg` 时用 **`jwt.New(asymm)`**。
 
-   - **RS256** / **RS384** / **RS512**：RSA + PKCS#1 v1.5 + 对应 SHA（`rsa.New`）  
+   - **RS256** / **RS384** / **RS512**：RSA + PKCS#1 v1.5 + 对应 SHA（`rsa.New`；`rsaoaep.New` 的签名与此相同，仅加解密为 OAEP）  
    - **ES256** / **ES384** / **ES512**：ECDSA + 对应 SHA（`ecdsa.New`，当前种子默认 P-256 对应 **ES256**）  
    - **EdDSA**：Ed25519（`ed25519.New`）  
    - **SM2**：国密 SM2（`sm2.New`）  

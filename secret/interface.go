@@ -25,14 +25,16 @@ type (
 		SetPubKeyBytes(pubKeyBytes []byte) (err error)   // 设置公钥：bytes
 		SetPubKeyBase64(pubKeyBase64 string) (err error) // 设置公钥：base64
 		GetPubKey() SemenPubKey                          // 获取公钥：crypto.PublicKey(secret.SemenPubKey) 如果公钥存在则返回公钥，如果公钥不存在则使用私钥返回公钥
-		GetPubKeyBytes() ([]byte, error)                 // 获取公钥：bytes
+		GetPubKeyBytes() ([]byte, error)                 // 获取公钥：bytes（PKIX DER）
 		GetPubKeyBase64() (string, error)                // 获取公钥：base64
+		GetPubKeyPEM() ([]byte, error)                   // 获取公钥：PEM（PUBLIC KEY）
 		SetPriKey(priKey SemenPriKey) (err error)        // 获取私钥：crypto.PrivateKey(secret.SemenPriKey)
 		SetPriKeyBytes(priKeyBytes []byte) (err error)   // 设置私钥：bytes
 		SetPriKeyBase64(priKeyBase64 string) (err error) // 设置私钥：base64
 		GetPriKey() SemenPriKey                          // 获取私钥：crypto.PrivateKey(secret.SemenPriKey)
 		GetPriKeyBytes() ([]byte, error)                 // 获取私钥：bytes
 		GetPriKeyBase64() (string, error)                // 获取私钥：base64
+		GetPriKeyPEM() ([]byte, error)                   // 获取私钥：PEM（PRIVATE KEY，PKCS#8）
 	}
 
 	SymmetricAttr func(s Symmetric) (err error) // 对称加密属性

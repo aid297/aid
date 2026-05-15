@@ -178,6 +178,31 @@ func (my *Ed25519Sem) GetPriKeyBase64() (string, error) {
 	return base64.StdEncoding.EncodeToString(priKeyBytes), nil
 }
 
+// GetPubKeyPEM 获取公钥：PEM（PUBLIC KEY）
+func (my *Ed25519Sem) GetPubKeyPEM() ([]byte, error) {
+	pub := my.GetPubKey()
+	if pub == nil {
+		return nil, errors.New("公钥不存在")
+	}
+	der, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return nil, err
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der}), nil
+}
+
+// GetPriKeyPEM 获取私钥：PEM（PRIVATE KEY，PKCS#8）
+func (my *Ed25519Sem) GetPriKeyPEM() ([]byte, error) {
+	if my.priKey == nil {
+		return nil, errors.New("私钥不能为空")
+	}
+	der, err := x509.MarshalPKCS8PrivateKey(my.priKey.(ed25519.PrivateKey))
+	if err != nil {
+		return nil, err
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}), nil
+}
+
 // PubKey 设置公钥属性
 func PubKey(pubKey secret.SemenPubKey) secret.SemenAttr {
 	return func(sem secret.Semen) error { return sem.SetPubKey(pubKey) }

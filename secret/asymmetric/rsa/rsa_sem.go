@@ -147,6 +147,19 @@ func (my *RSASem) GetPubKeyBase64() (string, error) {
 	return base64.StdEncoding.EncodeToString(pubKeyBytes), nil
 }
 
+// GetPubKeyPEM 获取公钥：PEM（PUBLIC KEY）
+func (my *RSASem) GetPubKeyPEM() ([]byte, error) {
+	pub := my.GetPubKey()
+	if pub == nil {
+		return nil, errors.New("公钥不存在")
+	}
+	der, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return nil, err
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der}), nil
+}
+
 // SetPriKey
 func (my *RSASem) SetPriKey(priKey secret.SemenPriKey) (err error) { my.priKey = priKey; return }
 
@@ -215,6 +228,15 @@ func (my *RSASem) GetPriKeyBase64() (string, error) {
 	}
 
 	return base64.StdEncoding.EncodeToString(priKeyBytes), nil
+}
+
+// GetPriKeyPEM 获取私钥：PEM（PRIVATE KEY，PKCS#8）
+func (my *RSASem) GetPriKeyPEM() ([]byte, error) {
+	der, err := my.GetPriKeyBytes()
+	if err != nil {
+		return nil, err
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}), nil
 }
 
 func PubKey(pubKey secret.SemenPubKey) secret.SemenAttr {

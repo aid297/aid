@@ -169,6 +169,23 @@ func (my *SM2Sem) GetPriKeyBase64() (string, error) {
 	return base64.StdEncoding.EncodeToString(priKeyBytes), nil
 }
 
+// GetPubKeyPEM 获取公钥：PEM（PUBLIC KEY）
+func (my *SM2Sem) GetPubKeyPEM() ([]byte, error) {
+	pub := my.GetPubKey()
+	if pub == nil {
+		return nil, errors.New("公钥不存在")
+	}
+	return x509.WritePublicKeyToPem(pub.(*sm2.PublicKey))
+}
+
+// GetPriKeyPEM 获取私钥：PEM（PRIVATE KEY，国密 SM2 PKCS#8）
+func (my *SM2Sem) GetPriKeyPEM() ([]byte, error) {
+	if my.priKey == nil {
+		return nil, errors.New("私钥不能为空")
+	}
+	return x509.WritePrivateKeyToPem(my.priKey.(*sm2.PrivateKey), nil)
+}
+
 func PubKey(pubKey secret.SemenPubKey) secret.SemenAttr {
 	return func(sem secret.Semen) error { return sem.SetPubKey(pubKey) }
 }
