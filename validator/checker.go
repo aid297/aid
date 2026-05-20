@@ -11,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/aid297/aid/v2/anySlice"
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 type (
@@ -42,8 +42,8 @@ func (my *Check) Invalid() bool { return len(my.wrongs) > 0 }
 func (my *Check) OK() bool { return len(my.wrongs) == 0 }
 
 func (my *Check) Error() error {
-	return operationV2.NewTernary(
-		operationV2.TrueFn(func() error { return errors.New(my.ErrorToString("")) }),
+	return operation.NewTernary(
+		operation.TrueFn(func() error { return errors.New(my.ErrorToString("")) }),
 	).
 		GetByValue(len(my.wrongs) > 0)
 }
@@ -51,9 +51,9 @@ func (my *Check) Error() error {
 func (my *Check) ErrorToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
 		ret = anySlice.FillFunc(my.wrongs, func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) }).
-			JoinNotEmpty(operationV2.NewTernary(
-				operationV2.TrueValue(limit),
-				operationV2.FalseValue(my.defaultLimit),
+			JoinNotEmpty(operation.NewTernary(
+				operation.TrueValue(limit),
+				operation.FalseValue(my.defaultLimit),
 			).GetByValue(limit != ""))
 	}
 
@@ -275,7 +275,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 					infos = append(
 						infos,
 						getStructFieldInfos(
-							operationV2.NewTernary(operationV2.TrueFn(reflect.Zero(elemType).Interface), operationV2.FalseValue(value)).
+							operation.NewTernary(operation.TrueFn(reflect.Zero(elemType).Interface), operation.FalseValue(value)).
 								GetByValue(isPtr && isNil),
 							vNameTag,
 						)...,

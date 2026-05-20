@@ -18,8 +18,8 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-// issueGRPCServerECDSALeaf 由 CA 签发用于 gRPC 服务端 TLS 的 ECDSA 叶子证书（含 localhost / 127.0.0.1 SAN，ServerAuth）。
-func issueGRPCServerECDSALeaf(t *testing.T, ca *x509.Certificate, caPriv *ecdsa.PrivateKey) tls.Certificate {
+// newServerCert 由 CA 签发用于 gRPC 服务端 TLS 的 ECDSA 叶子证书（含 localhost / 127.0.0.1 SAN，ServerAuth）。
+func newServerCert(t *testing.T, ca *x509.Certificate, caPriv *ecdsa.PrivateKey) tls.Certificate {
 	t.Helper()
 	sem, err := myECDSA.NewSem()
 	if err != nil {
@@ -66,51 +66,61 @@ func issueGRPCServerECDSALeaf(t *testing.T, ca *x509.Certificate, caPriv *ecdsa.
 
 // TestECDSA_gRPCTLS_ClientTrustsCA 模拟客户端仅持有 CA 根证书：建立 gRPC over TLS，调用标准 Health.Check。
 func TestECDSA_gRPCTLS_ClientTrustsCA(t *testing.T) {
-	serverRootCert, serverRootPrivKey := newServerECDSACARoot(t)
-	serverTLSCert := issueGRPCServerECDSALeaf(t, serverRootCert, serverRootPrivKey)
+	var (
+		err         error
+		caCrt       *x509.Certificate
+		caPrivKey   *ecdsa.PrivateKey
+		serverCrt   tls.Certificate
+		serverCreds credentials.TransportCredentials
+		lis         net.Listener
+		grpcServer  *grpc.Server
+		hs          *health.Server
+	)
 
-	serverCreds := credentials.NewServerTLSFromCert(&serverTLSCert)
+	caCrt, caPrivKey = newCARoot(t)                // 获取根 CA 证书
+	serverCrt = newServerCert(t, caCrt, caPrivKey) // 获取服务器签证
 
-	lis, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("Listen：%v", err)
+	serverCreds = credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{serverCrt}}) // 创建服务器信用凭证
+
+	// 开启 gRPC 服务
+	if lis, err = net.Listen("tcp", "127.0.0.1:0"); err != nil {
+		t.Fatalf("监听端口失败：%v", err)
 	}
 	t.Cleanup(func() { _ = lis.Close() })
 
-	grpcServer := grpc.NewServer(grpc.Creds(serverCreds))
-	hs := health.NewServer()
+	grpcServer = grpc.NewServer(grpc.Creds(serverCreds))
+	hs = health.NewServer()
 	healthpb.RegisterHealthServer(grpcServer, hs)
 	hs.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 
 	go func() { _ = grpcServer.Serve(lis) }()
 	t.Cleanup(func() { grpcServer.Stop() })
 
-	pool := x509.NewCertPool()
-	pool.AddCert(serverRootCert)
-	clientTLS := &tls.Config{
-		RootCAs:    pool,
-		MinVersion: tls.VersionTLS12,
-	}
-	clientCreds := credentials.NewTLS(clientTLS)
+	var (
+		pool        *x509.CertPool
+		clientCreds credentials.TransportCredentials
+		conn        *grpc.ClientConn
+		hc          healthpb.HealthClient
+		resp        *healthpb.HealthCheckResponse
+	)
+
+	pool = x509.NewCertPool()                                                                  // 创建信任池
+	pool.AddCert(caCrt)                                                                        // 加入 CA 根证书
+	clientCreds = credentials.NewTLS(&tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12}) // 创建客户端 gRPC 信任凭证
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	conn, err := grpc.NewClient(
-		lis.Addr().String(),
-		grpc.WithTransportCredentials(clientCreds),
-	)
-	if err != nil {
-		t.Fatalf("grpc.NewClient：%v", err)
+	if conn, err = grpc.NewClient(lis.Addr().String(), grpc.WithTransportCredentials(clientCreds)); err != nil {
+		t.Fatalf("创建 [gRPC 客户端] 失败：%v", err)
 	}
 	t.Cleanup(func() { _ = conn.Close() })
 
-	hc := healthpb.NewHealthClient(conn)
-	resp, err := hc.Check(ctx, &healthpb.HealthCheckRequest{})
-	if err != nil {
-		t.Fatalf("Health.Check：%v", err)
+	hc = healthpb.NewHealthClient(conn)
+	if resp, err = hc.Check(ctx, &healthpb.HealthCheckRequest{}); err != nil {
+		t.Fatalf("[gRPC 客户端] 健康检查失败：%v", err)
 	}
 	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
-		t.Fatalf("Health 状态：%v，期望 SERVING", resp.GetStatus())
+		t.Fatalf("[gRPC 客户端] 健康状态错误：%v，期望 SERVING", resp.GetStatus())
 	}
 }

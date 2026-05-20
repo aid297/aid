@@ -16,7 +16,7 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 	"github.com/aid297/aid/v2/str"
 )
 
@@ -497,9 +497,9 @@ func (my *HTTPClient) Error() error {
 }
 
 func (my *HTTPClient) GetStatusCode() int {
-	return operationV2.NewTernary(operationV2.TrueFn(func() int { return my.GetRawResponse().StatusCode })).GetByValue(my.GetRawResponse() != nil)
+	return operation.NewTernary(operation.TrueFn(func() int { return my.GetRawResponse().StatusCode })).GetByValue(my.GetRawResponse() != nil)
 }
 
 func (my *HTTPClient) GetStatus() string {
-	return operationV2.NewTernary(operationV2.TrueFn(func() string { return my.GetRawResponse().Status })).GetByValue(my.GetRawResponse() != nil)
+	return operation.NewTernary(operation.TrueFn(func() string { return my.GetRawResponse().Status })).GetByValue(my.GetRawResponse() != nil)
 }

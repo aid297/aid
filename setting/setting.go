@@ -9,7 +9,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 	"github.com/aid297/aid/v2/str"
 )
 
@@ -29,10 +29,10 @@ func newSetting(attrs ...SettingAttributes) (v *viper.Viper, err error) {
 		ins        = Setting{}.SetAttrs(attrs...)
 	)
 
-	if _, configPath = operationV2.NewMultivariate[string]().
-		Append(operationV2.MultivariateAttr[string]{Item: ins.configFilename}).
-		Append(operationV2.MultivariateAttr[string]{Item: os.Getenv(ins.envName)}).
-		SetDefault(operationV2.MultivariateAttr[string]{Item: ins.defaultName}).
+	if _, configPath = operation.NewMultivariate[string]().
+		Append(operation.MultivariateAttr[string]{Item: ins.configFilename}).
+		Append(operation.MultivariateAttr[string]{Item: os.Getenv(ins.envName)}).
+		SetDefault(operation.MultivariateAttr[string]{Item: ins.defaultName}).
 		Finally(func(item string) bool { return item != "" }); configPath == "" {
 		return nil, ErrConfigNotSet
 	}

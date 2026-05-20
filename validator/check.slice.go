@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 // checkSlice 检查数组、切片，支持：required、min>、min>=、max<、max<=、size=、size!=、ex:
@@ -75,7 +75,7 @@ func (my FieldInfo) checkSlice() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := APP.Validator.Once().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(operationV2.NewTernary(operationV2.TrueFn(my.RefValue.Interface)).GetByValue(my.RefValue.CanInterface())); err != nil {
+						if err := fn(operation.NewTernary(operation.TrueFn(my.RefValue.Interface)).GetByValue(my.RefValue.CanInterface())); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}

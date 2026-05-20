@@ -3,7 +3,7 @@ package coroutineGroup
 import (
 	"sync"
 
-	"github.com/aid297/aid/v2/operation/operationV2"
+	"github.com/aid297/aid/v2/operation"
 )
 
 type (
@@ -45,7 +45,7 @@ func (my *CoroutineGroup[T]) SetCapacity(capacities uint) *CoroutineGroup[T] {
 
 // SetBatchesByCapacities 根据总数和每批次容量计算批次数并设置
 func (my *CoroutineGroup[T]) SetBatchesByCapacities(total, capacities int) *CoroutineGroup[T] {
-	my.batches = operationV2.NewTernary(operationV2.TrueFn(func() uint { return GetBatches(total, capacities) }), operationV2.FalseValue[uint](1)).GetByValue(total > capacities)
+	my.batches = operation.NewTernary(operation.TrueFn(func() uint { return GetBatches(total, capacities) }), operation.FalseValue[uint](1)).GetByValue(total > capacities)
 	my.capacities = uint(capacities)
 	return my
 }

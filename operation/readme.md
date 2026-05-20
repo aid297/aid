@@ -6,13 +6,13 @@
    
    import (
    	. `fmt`
-   	`github.com/aid297/aid/v2/operation/operationV2`
+   	`github.com/aid297/aid/v2/operation`
    )
    
    func main() {
-   	res := operationV2.NewTernary(
-   		operationV2.TrueValue("及格"),
-   		operationV2.FalseValue("不及格"),
+   	res := operation.NewTernary(
+   		operation.TrueValue("及格"),
+   		operation.FalseValue("不及格"),
    	).GetByValue(true)
    
    	Printf("是否及格：%s", res)
@@ -25,7 +25,7 @@
    
    import (
    	. `fmt`
-   	`github.com/aid297/aid/v2/operation/operationV2`
+   	`github.com/aid297/aid/v2/operation`
    )
    
    type Condition struct {
@@ -35,24 +35,24 @@
    func main() {
    	condition := &Condition{Score: 85}
    
-   	res := operationV2.NewTernary(
-   		operationV2.TrueValue("及格"),
-   		operationV2.FalseValue("不及格"),
+   	res := operation.NewTernary(
+   		operation.TrueValue("及格"),
+   		operation.FalseValue("不及格"),
    	).GetByValue(condition != nil && condition.Score >= 60)
    
    	Printf("是否及格：%s", res)
    
    	conditionMap := map[string]int{"分数": 70}
    
-   	res2 := operationV2.NewTernary(
-   		operationV2.TrueFn(func() int {
+   	res2 := operation.NewTernary(
+   		operation.TrueFn(func() int {
    			score, exist := conditionMap["分数"]
    			if !exist {
    				return 0
    			}
    			return score
    		}),
-   		operationV2.FalseValue(0),
+   		operation.FalseValue(0),
    	).GetByFunc(func() bool { return condition != nil })
    
    	Printf("是否及格2：%s\n", res2)
@@ -66,14 +66,14 @@
    import (
    	. `fmt`
    
-   	`github.com/aid297/aid/v2/operation/operationV2`
+   	`github.com/aid297/aid/v2/operation`
    )
    
    func main() {
-   	m := operationV2.NewMultivariate[string]().
-   		Append(operationV2.MultivariateAttr[string]{Item: "a", HitFunc: func(_ int, _ string) { Printf("采用高级") }}). // A 最高优先级：终端命令
-   		Append(operationV2.MultivariateAttr[string]{Item: "b", HitFunc: func(idx int, item string) { Printf("采用次高级") }}). // B 次高优先级：全局变量
-   		SetDefault(operationV2.MultivariateAttr[string]{Item: "c"}) // 设置默认值
+   	m := operation.NewMultivariate[string]().
+   		Append(operation.MultivariateAttr[string]{Item: "a", HitFunc: func(_ int, _ string) { Printf("采用高级") }}). // A 最高优先级：终端命令
+   		Append(operation.MultivariateAttr[string]{Item: "b", HitFunc: func(idx int, item string) { Printf("采用次高级") }}). // B 次高优先级：全局变量
+   		SetDefault(operation.MultivariateAttr[string]{Item: "c"}) // 设置默认值
    
    	_, f := m.Finally(func(item string) bool { return item != "" })
    
