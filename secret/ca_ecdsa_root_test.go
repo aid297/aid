@@ -255,15 +255,15 @@ func newClientCrt(t *testing.T) (*x509.Certificate, secret.Semen) {
 		clientPub                   secret.SemenPubKey
 		clientPrivPEM, clientPubPEM []byte
 		caPrivFile, clientPrivFile, clientPubFile,
-		caCrtFile, serverCrtFile, clientCrtFile filesystem.IFilesystem
-		caCrtPEM, serverCrtPEM, caPrivPEM, clientDER []byte
-		caCrtBlock, serverCrtBlock                   *pem.Block
-		caCrt, serverCrt, clientTpl, clientCrt       *x509.Certificate
-		caPriv, clientPriv                           secret.SemenPriKey
-		sn                                           *big.Int
-		now                                          time.Time
-		clientCSR                                    *x509.CertificateRequest
-		clientCSRDER                                 []byte
+		caCrtFile, clientCrtFile filesystem.IFilesystem
+		caCrtPEM, caPrivPEM, clientDER []byte
+		caCrtBlock                     *pem.Block
+		caCrt, clientTpl, clientCrt    *x509.Certificate
+		caPriv, clientPriv             secret.SemenPriKey
+		sn                             *big.Int
+		now                            time.Time
+		clientCSR                      *x509.CertificateRequest
+		clientCSRDER                   []byte
 	)
 
 	// 生成客户端：公私钥
@@ -291,6 +291,20 @@ func newClientCrt(t *testing.T) (*x509.Certificate, secret.Semen) {
 		t.Fatalf("写入 [客户端公钥] PEM 失败：%v", err)
 	}
 
+	// 生成 客户端 CSR（模拟客户端）
+	clientCSR = &x509.CertificateRequest{
+		Subject: pkix.Name{
+			Organization: []string{"client-ca"},
+			CommonName:   "ECDSA P-256 Client CA",
+		},
+		SignatureAlgorithm: x509.ECDSAWithSHA256,
+		PublicKey:          clientPub,
+	}
+	if clientCSRDER, err = x509.CreateCertificateRequest(rand.Reader, clientCSR, clientPriv); err != nil {
+		t.Fatalf("生成 [客户端 CSR] 失败：%v", err)
+	}
+
+	//////////////////////////////模拟服务器//////////////////////////////
 	// 获取 CA 证书
 	if caCrtFile = filesystem.NewFile(filesystem.Rel(testPath, "ca.crt")); !caCrtFile.GetExist() {
 		t.Fatalf("[CA 证书]文件不存在：%v", err)
@@ -319,22 +333,14 @@ func newClientCrt(t *testing.T) (*x509.Certificate, secret.Semen) {
 		t.Fatalf("CA 私钥应为 *ecdsa.PrivateKey")
 	}
 
-	// 生成 客户端 CSR（模拟客户端）
-	clientCSR = &x509.CertificateRequest{
-		Subject: pkix.Name{
-			Organization: []string{"client-ca"},
-			CommonName:   "ECDSA P-256 Client CA",
-		},
-		SignatureAlgorithm: x509.ECDSAWithSHA256,
-		PublicKey:          clientPub,
-	}
-	if clientCSRDER, err = x509.CreateCertificateRequest(rand.Reader, clientCSR, clientPriv); err != nil {
-		t.Fatalf("生成 [客户端 CSR] 失败：%v", err)
-	}
-
-	// 解析 客户端 CSR（模拟服务器）
+	// 解析 客户端 CSR
 	if clientCSR, err = x509.ParseCertificateRequest(clientCSRDER); err != nil {
 		t.Fatalf("解析 [客户端 CSR] 失败：%v", err)
+	}
+
+	// 验证 客户端CSR POP 签名
+	if err = clientCSR.CheckSignature(); err != nil {
+		t.Fatalf("验证 [客户端 CSR PoP 签名] 失败：%v", err)
 	}
 
 	// 生成客户端证书并保存
@@ -363,7 +369,7 @@ func newClientCrt(t *testing.T) (*x509.Certificate, secret.Semen) {
 		t.Fatalf("解析 [客户端证书] 失败：%v", err)
 	}
 	if err = clientCrt.CheckSignatureFrom(caCrt); err != nil {
-		t.Fatalf("[客户端证书]校验失败：%v", err)
+		t.Fatalf("[客户端证书] 校验失败：%v", err)
 	}
 	clientCrtFile = filesystem.NewFile(filesystem.Rel(testPath, "client.crt"))
 	if err = clientCrtFile.Write(
@@ -372,23 +378,6 @@ func newClientCrt(t *testing.T) (*x509.Certificate, secret.Semen) {
 		filesystem.Flag(os.O_CREATE|os.O_TRUNC|os.O_WRONLY),
 	).GetError(); err != nil {
 		t.Fatalf("写入 [客户端证书] PEM 失败：%v", err)
-	}
-
-	if serverCrtFile = filesystem.NewFile(filesystem.Rel(testPath, "server.crt")); !serverCrtFile.GetExist() {
-		t.Fatalf("[服务器证书]文件不存在：%v", err)
-	}
-	if serverCrtPEM, err = serverCrtFile.Read(filesystem.Mode(0644)); err != nil {
-		t.Fatalf("读取 [服务器证书] PEM 失败：%v", err)
-	}
-	if serverCrtBlock, _ = pem.Decode(serverCrtPEM); serverCrtBlock == nil || serverCrtBlock.Type != "CERTIFICATE" {
-		t.Fatal("[服务器证书] PEM 解码失败或类型不是 CERTIFICATE")
-	}
-	if serverCrt, err = x509.ParseCertificate(serverCrtBlock.Bytes); err != nil {
-		t.Fatalf("解析 [服务器证书] 失败：%v", err)
-	}
-
-	if err = serverCrt.CheckSignatureFrom(caCrt); err != nil {
-		t.Fatalf("[服务器证书]校验失败：%v", err)
 	}
 
 	return clientCrt, clientSem

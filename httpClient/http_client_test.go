@@ -1,13 +1,52 @@
 package httpClient
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"log"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 )
 
+func getCAPool() *x509.CertPool {
+	caFile := "ca.crt"
+	caPEM, err := os.ReadFile(caFile)
+	if err != nil {
+		log.Fatalf("读取 CA %s: %v", caFile, err)
+	}
+	caPool := x509.NewCertPool()
+	if !caPool.AppendCertsFromPEM(caPEM) {
+		log.Fatalf("解析 CA PEM 失败: %s", caFile)
+	}
+	return caPool
+}
+
 func Test1(t *testing.T) {
 	t.Run("http client request init", func(t *testing.T) {
+		caPool := getCAPool() // 获取 CA 证书池
+		clientBCrt := "client-b.crt"
+		clientBPriv := "client-b.key"
+		clientBKeyPair, err := tls.LoadX509KeyPair(clientBCrt, clientBPriv)
+		if err != nil {
+			log.Fatalf("加载节点证书 %s + %s: %v", clientBCrt, clientBPriv, err)
+		}
+
+		clientBTLSConfig := &tls.Config{
+			Certificates: []tls.Certificate{clientBKeyPair}, // 设置客户端证书
+			RootCAs:      caPool,                            // 设置 CA 证书池(所有出站请求都必须在此信任链中)
+			MinVersion:   tls.VersionTLS12,                  // 设置最小 TLS 版本
+		}
+
+		transport := &http.Transport{
+			DisableKeepAlives:   true,             // 禁用连接复用
+			MaxIdleConns:        100,              // 最大空闲连接数
+			IdleConnTimeout:     90 * time.Second, // 空闲连接超时时间
+			TLSHandshakeTimeout: 10 * time.Second, // TLS 握手超时时间
+			TLSClientConfig:     clientBTLSConfig, // TLS 证书
+		}
+
 		hc := APP.HTTPClient.New(
 			URL("http://www", ".baidu", ".com"),
 			Method(http.MethodGet),
@@ -16,12 +55,7 @@ func Test1(t *testing.T) {
 			SetHeaderValue(nil).ContentType(ContentTypeJSON).Accept(AcceptJSON),
 			JSON(map[string]any{"李四": 20, "王五": 30, "赵六": 40}),
 			Timeout(5*time.Minute),
-			Transport(&http.Transport{
-				DisableKeepAlives:   true,             // 禁用连接复用
-				MaxIdleConns:        100,              // 最大空闲连接数
-				IdleConnTimeout:     90 * time.Second, // 空闲连接超时时间
-				TLSHandshakeTimeout: 10 * time.Second, // TLS握手超时时间
-			}),
+			Transport(transport),
 			Cert(nil),
 			AutoCopy(false),
 		)
