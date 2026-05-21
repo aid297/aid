@@ -11,12 +11,96 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aid297/aid/v2/secret"
 	myECDSA "github.com/aid297/aid/v2/secret/asymmetric/ecdsa"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
+
+// tlsCertFromSem 将 *x509.Certificate 与 Semen 私钥组装为 tls.Certificate，chain 为附加的签发链（如根 CA）。
+func tlsCertFromSem(t *testing.T, leaf *x509.Certificate, sem secret.Semen, chain ...*x509.Certificate) tls.Certificate {
+	t.Helper()
+	priv, ok := sem.GetPriKey().(*ecdsa.PrivateKey)
+	if !ok || priv == nil {
+		t.Fatal("私钥应为 *ecdsa.PrivateKey")
+	}
+	raw := make([][]byte, 0, 1+len(chain))
+	raw = append(raw, leaf.Raw)
+	for _, c := range chain {
+		raw = append(raw, c.Raw)
+	}
+	return tls.Certificate{Certificate: raw, PrivateKey: priv}
+}
+
+// certPoolFromRoot 用根 CA 证书构建 TLS 信任池。
+func certPoolFromRoot(t *testing.T, root *x509.Certificate) *x509.CertPool {
+	t.Helper()
+	pool := x509.NewCertPool()
+	pool.AddCert(root)
+	return pool
+}
+
+// TestGRPC 使用 test.data/ecdsa 下的 ca / server / client 证书与种子，建立双向 TLS 的 gRPC 连接并做健康检查。
+func TestGRPC(t *testing.T) {
+	caCrt, _ := newRootCrt(t)
+	serverCrt, serverSem := newServerCrt(t)
+
+	caPool := certPoolFromRoot(t, caCrt)
+	serverTLSCert := tlsCertFromSem(t, serverCrt, serverSem, caCrt)
+
+	serverTLS := &tls.Config{
+		Certificates: []tls.Certificate{serverTLSCert},
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		ClientCAs:    caPool,
+		MinVersion:   tls.VersionTLS12,
+	}
+	serverCreds := credentials.NewTLS(serverTLS)
+
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("监听端口失败：%v", err)
+	}
+	t.Cleanup(func() { _ = lis.Close() })
+
+	grpcServer := grpc.NewServer(grpc.Creds(serverCreds))
+	hs := health.NewServer()
+	healthpb.RegisterHealthServer(grpcServer, hs)
+	hs.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+
+	go func() { _ = grpcServer.Serve(lis) }()
+	t.Cleanup(func() { grpcServer.Stop() })
+
+	clientCrt, clientSem := newClientCrt(t)
+	clientTLSCert := tlsCertFromSem(t, clientCrt, clientSem, caCrt)
+
+	clientTLS := &tls.Config{
+		RootCAs:      caPool,
+		Certificates: []tls.Certificate{clientTLSCert},
+		ServerName:   "localhost",
+		MinVersion:   tls.VersionTLS12,
+	}
+	clientCreds := credentials.NewTLS(clientTLS)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	conn, err := grpc.NewClient(lis.Addr().String(), grpc.WithTransportCredentials(clientCreds))
+	if err != nil {
+		t.Fatalf("创建 [gRPC 客户端] 失败：%v", err)
+	}
+	t.Cleanup(func() { _ = conn.Close() })
+
+	hc := healthpb.NewHealthClient(conn)
+	resp, err := hc.Check(ctx, &healthpb.HealthCheckRequest{})
+	if err != nil {
+		t.Fatalf("[gRPC 客户端] 健康检查失败：%v", err)
+	}
+	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
+		t.Fatalf("[gRPC 客户端] 健康状态错误：%v，期望 SERVING", resp.GetStatus())
+	}
+}
 
 // newServerCert 由 CA 签发用于 gRPC 服务端 TLS 的 ECDSA 叶子证书（含 localhost / 127.0.0.1 SAN，ServerAuth）。
 func newServerCert(t *testing.T, ca *x509.Certificate, caPriv *ecdsa.PrivateKey) tls.Certificate {
@@ -69,6 +153,7 @@ func TestECDSA_gRPCTLS_ClientTrustsCA(t *testing.T) {
 	var (
 		err         error
 		caCrt       *x509.Certificate
+		caSem       secret.Semen
 		caPrivKey   *ecdsa.PrivateKey
 		serverCrt   tls.Certificate
 		serverCreds credentials.TransportCredentials
@@ -77,12 +162,15 @@ func TestECDSA_gRPCTLS_ClientTrustsCA(t *testing.T) {
 		hs          *health.Server
 	)
 
-	caCrt, caPrivKey = newCARoot(t)                // 获取根 CA 证书
-	serverCrt = newServerCert(t, caCrt, caPrivKey) // 获取服务器签证
+	caCrt, caSem = newRootCrt(t)
+	caPrivKey, ok := caSem.GetPriKey().(*ecdsa.PrivateKey)
+	if !ok || caPrivKey == nil {
+		t.Fatal("CA 私钥应为 *ecdsa.PrivateKey")
+	}
+	serverCrt = newServerCert(t, caCrt, caPrivKey)
 
-	serverCreds = credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{serverCrt}}) // 创建服务器信用凭证
+	serverCreds = credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{serverCrt}})
 
-	// 开启 gRPC 服务
 	if lis, err = net.Listen("tcp", "127.0.0.1:0"); err != nil {
 		t.Fatalf("监听端口失败：%v", err)
 	}
@@ -104,9 +192,9 @@ func TestECDSA_gRPCTLS_ClientTrustsCA(t *testing.T) {
 		resp        *healthpb.HealthCheckResponse
 	)
 
-	pool = x509.NewCertPool()                                                                  // 创建信任池
-	pool.AddCert(caCrt)                                                                        // 加入 CA 根证书
-	clientCreds = credentials.NewTLS(&tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12}) // 创建客户端 gRPC 信任凭证
+	pool = x509.NewCertPool()
+	pool.AddCert(caCrt)
+	clientCreds = credentials.NewTLS(&tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

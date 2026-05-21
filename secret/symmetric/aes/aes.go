@@ -507,7 +507,7 @@ func (my *AES) decryptCBCStream(in io.Reader, out io.Writer) error {
 }
 
 // encryptCBCFile CBC 加密文件
-func (my *AES) encryptCBCFile(plainFile, outFile string, asymm secret.Asymmetric) error {
+func (my *AES) encryptCBCFile(plainFile, outFile string, asymmetric secret.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -528,7 +528,7 @@ func (my *AES) encryptCBCFile(plainFile, outFile string, asymm secret.Asymmetric
 	}
 
 	aesKeyAndIV = append(my.key, my.iv...)
-	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndIV); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(aesKeyAndIV); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -551,7 +551,7 @@ func (my *AES) encryptCBCFile(plainFile, outFile string, asymm secret.Asymmetric
 }
 
 // decryptCBCFile CBC 解密文件
-func (my *AES) decryptCBCFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
+func (my *AES) decryptCBCFile(cipherFile, outFile string, asymmetric secret.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -590,7 +590,7 @@ func (my *AES) decryptCBCFile(cipherFile, outFile string, asymm secret.Asymmetri
 	encryptedKeyBase64 = string(data[offset : offset+keyLen])
 	fileCipher = data[offset+keyLen:]
 
-	if aesKeyAndIV, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if aesKeyAndIV, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(aesKeyAndIV) != keySize+blockSize {
@@ -607,7 +607,7 @@ func (my *AES) decryptCBCFile(cipherFile, outFile string, asymm secret.Asymmetri
 }
 
 // encryptCBCLargeFile 用 SM2+AES 流式加密大文件（TB级）
-func (my *AES) encryptCBCLargeFile(plainFile, outFile string, asymm secret.Asymmetric) error {
+func (my *AES) encryptCBCLargeFile(plainFile, outFile string, asymmetric secret.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -627,7 +627,7 @@ func (my *AES) encryptCBCLargeFile(plainFile, outFile string, asymm secret.Asymm
 	defer outF.Close()
 
 	aesKeyAndIV = append(my.key, my.iv...)
-	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndIV); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(aesKeyAndIV); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -649,7 +649,7 @@ func (my *AES) encryptCBCLargeFile(plainFile, outFile string, asymm secret.Asymm
 }
 
 // decryptCBCLargeFile 用 SM2+AES 流式解密大文件（TB级）
-func (my *AES) decryptCBCLargeFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
+func (my *AES) decryptCBCLargeFile(cipherFile, outFile string, asymmetric secret.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -707,7 +707,7 @@ func (my *AES) decryptCBCLargeFile(cipherFile, outFile string, asymm secret.Asym
 	}
 	encryptedKeyBase64 = string(encryptedKeyBytes)
 
-	if aesKeyAndIV, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if aesKeyAndIV, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(aesKeyAndIV) != keySize+blockSize {
@@ -921,7 +921,7 @@ func (my *AES) decryptECBFile(cipherFile, outFile string, asymm secret.Asymmetri
 }
 
 // encryptECBLargeFile 用 SM2+AES ECB 流式加密大文件（TB级）
-func (my *AES) encryptECBLargeFile(plainFile, outFile string, asymm secret.Asymmetric) error {
+func (my *AES) encryptECBLargeFile(plainFile, outFile string, asymmetric secret.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -939,7 +939,7 @@ func (my *AES) encryptECBLargeFile(plainFile, outFile string, asymm secret.Asymm
 	}
 	defer outF.Close()
 
-	if encryptedKeyStr, err = asymm.Encrypt(my.key); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(my.key); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -961,7 +961,7 @@ func (my *AES) encryptECBLargeFile(plainFile, outFile string, asymm secret.Asymm
 }
 
 // decryptECBLargeFile 用 SM2+AES ECB 流式解密大文件（TB级）
-func (my *AES) decryptECBLargeFile(cipherFile, outFile string, asymm secret.Asymmetric) error {
+func (my *AES) decryptECBLargeFile(cipherFile, outFile string, asymmetric secret.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -1018,7 +1018,7 @@ func (my *AES) decryptECBLargeFile(cipherFile, outFile string, asymm secret.Asym
 	}
 	encryptedKeyBase64 = string(encryptedKeyBytes)
 
-	if my.key, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if my.key, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(my.key) != keySize {

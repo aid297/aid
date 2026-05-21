@@ -115,7 +115,7 @@ func TestLargeFileEncrypt() {
 		log.Fatalf("生成大文件失败：%v", err)
 	}
 
-	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AES256), aes.RandIV()); err != nil {
+	if aesEncrypter, err = aes.New(aes.RandKeyWithBits(aes.AES256, &aesIV), aes.RandIV(&aesIV)); err != nil {
 		log.Fatalf("生成 AES 失败：%v", err)
 	}
 	if err = aesEncrypter.EncryptLargeFile(plainFile, encryptedFile, rsaEncrypter); err != nil {
