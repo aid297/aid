@@ -14,7 +14,7 @@ var APP struct {
 	Finder        Finder
 }
 
-var MySQLBasic struct {
+type MySQLBasic struct {
 	ID        int64          `gorm:"column:id;type:bigint unsigned;primaryKey"`
 	CreatedAt time.Time      `gorm:"column:created_at;type:datetime;not null;default:current_timestamp"`
 	UpdatedAt time.Time      `gorm:"column:updated_at;type:datetime;not null;default:current_timestamp"`
