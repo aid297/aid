@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -126,7 +125,6 @@ func (my *File) Write(content []byte, attrs ...OperationAttributer) IFilesystem 
 		dir       IFilesystem
 		flag                  = DefaultCreateFlag
 		mode      os.FileMode = 0755
-		a         int
 	)
 
 	if dir = NewDir(Abs(my.BasePath)); !dir.GetExist() {
@@ -152,12 +150,10 @@ func (my *File) Write(content []byte, attrs ...OperationAttributer) IFilesystem 
 	}
 	defer func() { _ = file.Close() }()
 
-	if a, err = file.Write(content); err != nil {
+	if _, err = file.Write(content); err != nil {
 		my.Error = fmt.Errorf("%w:%w", ErrWriteFile, err)
 		return my
 	}
-
-	log.Printf("%d", a)
 
 	return my.refresh()
 }
