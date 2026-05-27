@@ -10,7 +10,7 @@ type (
 	// Modeler 接口：模型
 	Modeler interface{ TableName() string }
 
-	ModelAttributer interface {
+	ModelAttr interface {
 		Register(model Modeler, db *gorm.DB) *gorm.DB
 	}
 
@@ -31,7 +31,7 @@ type (
 	AttrDistinct struct{ args []any }
 )
 
-func DefaultModel[model Modeler](db *gorm.DB, attrs ...ModelAttributer) *gorm.DB {
+func ToModel[model Modeler](db *gorm.DB, attrs ...ModelAttr) *gorm.DB {
 	ins := new(model)
 	db = db.Model(ins)
 
@@ -42,8 +42,8 @@ func DefaultModel[model Modeler](db *gorm.DB, attrs ...ModelAttributer) *gorm.DB
 	return db
 }
 
-func DefaultFinder[model Modeler](db *gorm.DB, attrs ...ModelAttributer) *Finder {
-	return APP.Finder.New(DefaultModel[model](db, attrs...))
+func ToFinder[model Modeler](db *gorm.DB, attrs ...ModelAttr) *Finder {
+	return APP.Finder.New(ToModel[model](db, attrs...))
 }
 
 func Table(table string) *AttrTable { return &AttrTable{table: table} }
