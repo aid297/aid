@@ -18,7 +18,7 @@ import (
 type MessageBoardService struct{}
 
 func (*MessageBoardService) getDirectionFile() (
-	directionFile filesystem.IFilesystem,
+	directionFile filesystem.Filesystem,
 	directionFileSlice anySlice.AnySlicer[string],
 	err error,
 ) {
@@ -64,7 +64,7 @@ func (*MessageBoardService) getDirectionFile() (
 func (*MessageBoardService) List() (messages []map[string]string, err error) {
 	var (
 		directionFileSlice anySlice.AnySlicer[string]
-		messageFile        filesystem.IFilesystem
+		messageFile        filesystem.Filesystem
 		messageFileContent []byte
 		messageContent     map[string]string
 	)
@@ -100,11 +100,11 @@ func (*MessageBoardService) List() (messages []map[string]string, err error) {
 // Store 留言板服务：保存信息
 func (*MessageBoardService) Store(form *request.MessageBoardStoreRequest) (err error) {
 	var (
-		directionFile      filesystem.IFilesystem
+		directionFile      filesystem.Filesystem
 		directionFileJSON  []byte
 		directionFileSlice anySlice.AnySlicer[string]
 		newUUID            = uuid.Must(uuid.NewV7())
-		messageFile        filesystem.IFilesystem
+		messageFile        filesystem.Filesystem
 		messageFileContent []byte
 	)
 
@@ -138,7 +138,7 @@ func (*MessageBoardService) Store(form *request.MessageBoardStoreRequest) (err e
 // Destroy 留言板服务：删除信息
 func (*MessageBoardService) Destroy(form *request.MessageBoardDestroyRequest) (err error) {
 	var (
-		directionFile      filesystem.IFilesystem
+		directionFile      filesystem.Filesystem
 		directionFileJSON  []byte
 		directionFileSlice anySlice.AnySlicer[string]
 		idx                int

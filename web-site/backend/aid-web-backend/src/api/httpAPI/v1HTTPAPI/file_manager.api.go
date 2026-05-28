@@ -97,11 +97,11 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	var (
 		title        = "获取文件列表"
 		err          error
-		dir          filesystem.IFilesystem
+		dir          filesystem.Filesystem
 		form         request.FileListRequest
 		checker      validator.Checker
-		iFilesystems []filesystem.IFilesystem
-		rootPath     filesystem.IFilesystem
+		iFilesystems []filesystem.Filesystem
+		rootPath     filesystem.Filesystem
 		currentPath  string
 	)
 
@@ -119,7 +119,7 @@ func (*FileManagerAPI) List(c *gin.Context) {
 	}
 	dir.LS()
 
-	iFilesystems = make([]filesystem.IFilesystem, 0, len(dir.GetDirs())+len(dir.GetFiles()))
+	iFilesystems = make([]filesystem.Filesystem, 0, len(dir.GetDirs())+len(dir.GetFiles()))
 	iFilesystems = append(append(iFilesystems, dir.GetDirs()...), dir.GetFiles()...)
 
 	if rootPath, err = filesystem.New(filesystem.Rel(global.CONFIG.FileManager.Dir)); err != nil {
@@ -147,7 +147,7 @@ func (*FileManagerAPI) StoreFolder(c *gin.Context) {
 	var (
 		title       = "创建文件夹"
 		err         error
-		iFilesystem filesystem.IFilesystem
+		iFilesystem filesystem.Filesystem
 		form        request.FileStoreFolderRequest
 		checker     validator.Checker
 	)
@@ -183,7 +183,7 @@ func (*FileManagerAPI) Destroy(c *gin.Context) {
 	var (
 		title       = "删除文件或目录"
 		err         error
-		iFilesystem filesystem.IFilesystem
+		iFilesystem filesystem.Filesystem
 		form        request.FileDestroyRequest
 		checker     validator.Checker
 	)
@@ -223,7 +223,7 @@ func (*FileManagerAPI) Destroy(c *gin.Context) {
 // @Failure 403 {object} httpModule.HTTPResponse "下载失败"
 func (*FileManagerAPI) Download(c *gin.Context) {
 	var (
-		dir  filesystem.IFilesystem
+		dir  filesystem.Filesystem
 		path = c.Query("path")
 		name = c.Query("name")
 	)
@@ -256,7 +256,7 @@ func (*FileManagerAPI) Zip(c *gin.Context) {
 	var (
 		title               = "压缩文件或目录"
 		err                 error
-		iFilesystem, zipped filesystem.IFilesystem
+		iFilesystem, zipped filesystem.Filesystem
 		form                request.FileZipRequest
 		checker             validator.Checker
 	)

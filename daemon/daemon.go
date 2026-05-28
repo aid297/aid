@@ -52,8 +52,8 @@ func (*Daemon) SetLogEnable(enable bool) *Daemon { i.enable = enable; return i }
 func (*Daemon) bootLogFile() (fp *os.File) {
 	var (
 		err  error
-		dir  filesystem.IFilesystem
-		file filesystem.IFilesystem
+		dir  filesystem.Filesystem
+		file filesystem.Filesystem
 	)
 
 	if i.enable && i.dir != "" {

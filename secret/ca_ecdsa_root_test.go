@@ -36,7 +36,7 @@ func newRootCrt(t *testing.T) (*x509.Certificate, secret.Semen) {
 		now                              time.Time
 		caTpl                            *x509.Certificate
 		caDER                            []byte
-		caPrivFile, caPubFile, caCrtFile filesystem.IFilesystem
+		caPrivFile, caPubFile, caCrtFile filesystem.Filesystem
 		pemBlock                         *pem.Block
 		rootCA                           *x509.Certificate
 	)
@@ -129,7 +129,7 @@ func newServerCrt(t *testing.T) (*x509.Certificate, secret.Semen) {
 		caPriv                                                              secret.SemenPriKey
 		serverPub                                                           secret.SemenPubKey
 		serverPrivPEM, serverPubPEM, serverPEM                              []byte
-		serverPrivFile, serverPubFile, caPrivFile, caCrtFile, serverCrtFile filesystem.IFilesystem
+		serverPrivFile, serverPubFile, caPrivFile, caCrtFile, serverCrtFile filesystem.Filesystem
 		ok                                                                  bool
 		serverDER, caCrtPEM, caPrivPEM, caPrivDER                           []byte
 		caCrtBlock, caPrivBlock                                             *pem.Block
@@ -255,7 +255,7 @@ func newClientCrt(t *testing.T) (*x509.Certificate, secret.Semen) {
 		clientPub                   secret.SemenPubKey
 		clientPrivPEM, clientPubPEM []byte
 		caPrivFile, clientPrivFile, clientPubFile,
-		caCrtFile, clientCrtFile filesystem.IFilesystem
+		caCrtFile, clientCrtFile filesystem.Filesystem
 		caCrtPEM, caPrivPEM, clientDER []byte
 		caCrtBlock                     *pem.Block
 		caCrt, clientTpl, clientCrt    *x509.Certificate

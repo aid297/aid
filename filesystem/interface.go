@@ -6,42 +6,42 @@ import (
 	"github.com/aid297/aid/v2/operation"
 )
 
-type IFilesystem interface {
+type Filesystem interface {
 	GetName() string
 	GetExist() bool
 	GetError() error
 	GetBasePath() string
 	GetFullPath() string
 	GetInfo() os.FileInfo
-	GetDirs() []IFilesystem
-	GetFiles() []IFilesystem
+	GetDirs() []Filesystem
+	GetFiles() []Filesystem
 	GetKind() string
-	SetAttrs(attrs ...PathAttributer) IFilesystem
-	SetFullPathForAttr(path string) IFilesystem
-	SetFullPathByAttr(attrs ...PathAttributer) IFilesystem
-	refresh() IFilesystem
-	Lock() IFilesystem
-	Unlock() IFilesystem
-	RLock() IFilesystem
-	RUnlock() IFilesystem
-	Join(paths ...string) IFilesystem
-	Create(attrs ...OperationAttributer) IFilesystem
-	Rename(newName string) IFilesystem
-	Remove() IFilesystem
-	RemoveAll() IFilesystem
-	Write(content []byte, attrs ...OperationAttributer) IFilesystem
+	SetAttrs(attrs ...PathAttributer) Filesystem
+	SetFullPathForAttr(path string) Filesystem
+	SetFullPathByAttr(attrs ...PathAttributer) Filesystem
+	refresh() Filesystem
+	Lock() Filesystem
+	Unlock() Filesystem
+	RLock() Filesystem
+	RUnlock() Filesystem
+	Join(paths ...string) Filesystem
+	Create(attrs ...OperationAttributer) Filesystem
+	Rename(newName string) Filesystem
+	Remove() Filesystem
+	RemoveAll() Filesystem
+	Write(content []byte, attrs ...OperationAttributer) Filesystem
 	Read(attrs ...OperationAttributer) ([]byte, error)
-	CopyTo(isRel bool, dstPaths ...string) IFilesystem
-	Copy() IFilesystem
-	Up() IFilesystem
-	LS() IFilesystem
-	Zip() IFilesystem
+	CopyTo(isRel bool, dstPaths ...string) Filesystem
+	Copy() Filesystem
+	Up() Filesystem
+	LS() Filesystem
+	Zip() Filesystem
 }
 
-func New(attr PathAttributer) (IFilesystem, error) {
+func New(attr PathAttributer) (Filesystem, error) {
 	isDir, err := isDir(attr.GetPath())
 	if err != nil {
 		return nil, err
 	}
-	return operation.NewTernary(operation.TrueFn(func() IFilesystem { return NewFile(attr) }), operation.FalseFn(func() IFilesystem { return NewDir(attr) })).GetByValue(!isDir), nil
+	return operation.NewTernary(operation.TrueFn(func() Filesystem { return NewFile(attr) }), operation.FalseFn(func() Filesystem { return NewDir(attr) })).GetByValue(!isDir), nil
 }

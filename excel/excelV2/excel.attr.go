@@ -25,7 +25,7 @@ type (
 )
 
 func Filename(filename string) FilenameAttributer { return &AttrFilename{filename: filename} }
-func File(file filesystem.IFilesystem) FilenameAttributer {
+func File(file filesystem.Filesystem) FilenameAttributer {
 	return &AttrFilename{filename: file.GetFullPath()}
 }
 func (my *AttrFilename) RegisterForWriter(writer Writer) { writer.setFilename(my.filename) }

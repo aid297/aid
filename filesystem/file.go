@@ -32,21 +32,21 @@ var (
 	DefaultReadFlag   = os.O_RDWR
 )
 
-func NewFile(attrs ...PathAttributer) IFilesystem {
+func NewFile(attrs ...PathAttributer) Filesystem {
 	return (&File{mu: sync.RWMutex{}, Kind: "FILE"}).SetAttrs(attrs...).refresh()
 }
 
-func (my *File) GetName() string         { return my.Name }
-func (my *File) GetExist() bool          { return my.Exist }
-func (my *File) GetError() error         { return my.Error }
-func (my *File) GetBasePath() string     { return my.BasePath }
-func (my *File) GetFullPath() string     { return my.FullPath }
-func (my *File) GetInfo() os.FileInfo    { return my.Info }
-func (my *File) GetDirs() []IFilesystem  { return nil }
-func (my *File) GetFiles() []IFilesystem { return nil }
-func (my *File) GetKind() string         { return my.Kind }
+func (my *File) GetName() string        { return my.Name }
+func (my *File) GetExist() bool         { return my.Exist }
+func (my *File) GetError() error        { return my.Error }
+func (my *File) GetBasePath() string    { return my.BasePath }
+func (my *File) GetFullPath() string    { return my.FullPath }
+func (my *File) GetInfo() os.FileInfo   { return my.Info }
+func (my *File) GetDirs() []Filesystem  { return nil }
+func (my *File) GetFiles() []Filesystem { return nil }
+func (my *File) GetKind() string        { return my.Kind }
 
-func (my *File) SetAttrs(attrs ...PathAttributer) IFilesystem {
+func (my *File) SetAttrs(attrs ...PathAttributer) Filesystem {
 	my.mu.Lock()
 	defer my.mu.Unlock()
 	for idx := range attrs {
@@ -55,14 +55,14 @@ func (my *File) SetAttrs(attrs ...PathAttributer) IFilesystem {
 	return my
 }
 
-func (my *File) SetFullPathForAttr(path string) IFilesystem { my.FullPath = path; return my }
+func (my *File) SetFullPathForAttr(path string) Filesystem { my.FullPath = path; return my }
 
-func (my *File) SetFullPathByAttr(attrs ...PathAttributer) IFilesystem {
+func (my *File) SetFullPathByAttr(attrs ...PathAttributer) Filesystem {
 	return my.SetAttrs(attrs...).refresh()
 }
 
 // refresh 刷新文件信息
-func (my *File) refresh() IFilesystem {
+func (my *File) refresh() Filesystem {
 	var err error
 
 	if my.FullPath != "" {
@@ -97,32 +97,32 @@ func (my *File) refresh() IFilesystem {
 }
 
 // Lock 加锁 → 写
-func (my *File) Lock() IFilesystem { my.mu.Lock(); return my }
+func (my *File) Lock() Filesystem { my.mu.Lock(); return my }
 
 // Unlock 解锁 → 写
-func (my *File) Unlock() IFilesystem { my.mu.Unlock(); return my }
+func (my *File) Unlock() Filesystem { my.mu.Unlock(); return my }
 
 // RLock 加锁 → 读
-func (my *File) RLock() IFilesystem { my.mu.RLock(); return my }
+func (my *File) RLock() Filesystem { my.mu.RLock(); return my }
 
 // RUnlock 解锁 → 读
-func (my *File) RUnlock() IFilesystem { my.mu.RUnlock(); return my }
+func (my *File) RUnlock() Filesystem { my.mu.RUnlock(); return my }
 
-func (my *File) Join(paths ...string) IFilesystem {
+func (my *File) Join(paths ...string) Filesystem {
 	my.FullPath = filepath.Join(append([]string{my.FullPath}, paths...)...)
 	return my.refresh()
 }
 
 // Create 创建文件
-func (my *File) Create(attrs ...OperationAttributer) IFilesystem { return my.Write(nil, attrs...) }
+func (my *File) Create(attrs ...OperationAttributer) Filesystem { return my.Write(nil, attrs...) }
 
 // 向文件内写入内容
-func (my *File) Write(content []byte, attrs ...OperationAttributer) IFilesystem {
+func (my *File) Write(content []byte, attrs ...OperationAttributer) Filesystem {
 	var (
 		err       error
 		operation = new(Operation)
 		file      *os.File
-		dir       IFilesystem
+		dir       Filesystem
 		flag                  = DefaultCreateFlag
 		mode      os.FileMode = 0755
 	)
@@ -159,7 +159,7 @@ func (my *File) Write(content []byte, attrs ...OperationAttributer) IFilesystem 
 }
 
 // Rename 重命名文件
-func (my *File) Rename(newName string) IFilesystem {
+func (my *File) Rename(newName string) Filesystem {
 	var (
 		err     error
 		newFile = NewFile(Abs(my.BasePath, newName))
@@ -174,7 +174,7 @@ func (my *File) Rename(newName string) IFilesystem {
 }
 
 // Remove 删除文件
-func (my *File) Remove() IFilesystem {
+func (my *File) Remove() Filesystem {
 	var err error
 
 	if my.FullPath == "" {
@@ -190,7 +190,7 @@ func (my *File) Remove() IFilesystem {
 	return my.refresh()
 }
 
-func (my *File) RemoveAll() IFilesystem { return my.Remove() }
+func (my *File) RemoveAll() Filesystem { return my.Remove() }
 
 // Read 读取文件内容
 func (my *File) Read(attrs ...OperationAttributer) ([]byte, error) {
@@ -223,7 +223,7 @@ func (my *File) Read(attrs ...OperationAttributer) ([]byte, error) {
 }
 
 // CopyTo 复制文件到指定路径
-func (my *File) CopyTo(isRel bool, dstPaths ...string) IFilesystem {
+func (my *File) CopyTo(isRel bool, dstPaths ...string) Filesystem {
 	if my.FullPath == "" {
 		my.Error = ErrMissFullPath
 		return my
@@ -252,7 +252,7 @@ func (my *File) CopyTo(isRel bool, dstPaths ...string) IFilesystem {
 }
 
 // Zip 压缩文件到 zip 格式
-func (my *File) Zip() IFilesystem {
+func (my *File) Zip() Filesystem {
 	var (
 		err       error
 		srcFile   *os.File
@@ -316,8 +316,8 @@ func (my *File) Zip() IFilesystem {
 	return NewFile(Abs(zipPath))
 }
 
-func (my *File) Copy() IFilesystem { return NewFile(Abs(my.FullPath)) }
+func (my *File) Copy() Filesystem { return NewFile(Abs(my.FullPath)) }
 
-func (my *File) Up() IFilesystem { return my }
+func (my *File) Up() Filesystem { return my }
 
-func (my *File) LS() IFilesystem { return my }
+func (my *File) LS() Filesystem { return my }

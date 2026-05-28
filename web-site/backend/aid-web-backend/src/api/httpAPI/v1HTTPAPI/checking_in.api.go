@@ -29,7 +29,7 @@ func (*CheckingInAPI) Cal(c *gin.Context) {
 		err          error
 		file         *multipart.FileHeader
 		newFilename  string
-		saveFile     filesystem.IFilesystem
+		saveFile     filesystem.Filesystem
 		checker      validator.Checker
 		form         request.CheckingInCalRequest
 		standardDate *v1HTTPService.StandardDateRet

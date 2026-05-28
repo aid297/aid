@@ -12,7 +12,7 @@ type ReaderAttribute func(reader *Read) (err error)
 
 func Filename(filename string) ReaderAttribute {
 	return func(reader *Read) (err error) {
-		var fs filesystem.IFilesystem
+		var fs filesystem.Filesystem
 		if fs = filesystem.NewFile(filesystem.Abs(filename)); !fs.GetExist() {
 			return errors.New("文件不存在")
 		}
@@ -23,7 +23,7 @@ func Filename(filename string) ReaderAttribute {
 	}
 }
 
-func Filesystem(fs filesystem.IFilesystem) ReaderAttribute {
+func Filesystem(fs filesystem.Filesystem) ReaderAttribute {
 	return func(reader *Read) (err error) {
 		if !fs.GetExist() {
 			return errors.New("文件不存在")

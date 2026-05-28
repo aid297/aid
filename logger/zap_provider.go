@@ -51,7 +51,7 @@ func (*ZapProvider) New(config *zapConfig) (*zap.Logger, error) { return NewZapP
 func NewZapProvider(config *zapConfig) (*zap.Logger, error) {
 	var (
 		err             error
-		fs              filesystem.IFilesystem
+		fs              filesystem.Filesystem
 		zapLogger       *zap.Logger
 		zapCores        = make([]zapcore.Core, 0, 7)
 		zapLoggerConfig = zapcore.EncoderConfig{
