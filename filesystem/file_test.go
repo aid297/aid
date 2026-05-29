@@ -11,7 +11,7 @@ func Test1(t *testing.T) {
 	for i := range 5 {
 		file := NewFile(Rel("./a", fmt.Sprintf("file-%d.txt", i+1)))
 		file.Create()
-		file.Write([]byte(fmt.Sprintf("file %d", i+1)))
+		file.Write(fmt.Appendf(nil, "file %d", i+1))
 	}
 }
 
