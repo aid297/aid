@@ -41,7 +41,7 @@ func (*RedisPool) Once(redisSetting *RedisSetting) *RedisPool {
 					conn: rds.NewClient(&rds.Options{
 						Addr:     str.APP.Buffer.NewAny(redisSetting.Host).Any(":", redisSetting.Port).String(),
 						Password: redisSetting.Password,
-						DB:       redisSetting.Pool[idx].DbNum,
+						DB:       redisSetting.Pool[idx].DBNum,
 					}),
 				})
 			}

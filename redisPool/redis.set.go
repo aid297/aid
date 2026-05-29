@@ -4,17 +4,21 @@ import (
 	"github.com/aid297/aid/v2/setting"
 )
 
-type RedisSetting struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Password string `yaml:"password"`
-	Prefix   string `yaml:"prefix"`
-	Pool     []struct {
+type (
+	RedisSetting struct {
+		Host     string             `yaml:"host"`
+		Port     int                `yaml:"port"`
+		Password string             `yaml:"password"`
+		Prefix   string             `yaml:"prefix"`
+		Pools    []RedisSettingPool `yaml:"pools"`
+	}
+
+	RedisSettingPool struct {
 		Key    string `yaml:"key"`
 		Prefix string `yaml:"prefix"`
-		DbNum  int    `yaml:"dbNum"`
+		DBNum  int    `yaml:"dbNum"`
 	}
-}
+)
 
 // New 初始化：数据库配置
 func (*RedisSetting) New(path string) (rs *RedisSetting, err error) {
