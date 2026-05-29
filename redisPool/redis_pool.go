@@ -34,14 +34,14 @@ func (*RedisPool) Once(redisSetting *RedisSetting) *RedisPool {
 		redisPoolIns = &RedisPool{}
 		redisPoolIns.connections = anyMap.New[string, *redisConn]()
 
-		if len(redisSetting.Pool) > 0 {
-			for idx := range redisSetting.Pool {
-				redisPoolIns.connections.SetDatum(redisSetting.Pool[idx].Key, &redisConn{
-					prefix: str.APP.Buffer.NewString(redisSetting.Prefix).S(":", redisSetting.Pool[idx].Prefix).String(),
+		if len(redisSetting.Pools) > 0 {
+			for idx := range redisSetting.Pools {
+				redisPoolIns.connections.SetDatum(redisSetting.Pools[idx].Key, &redisConn{
+					prefix: str.APP.Buffer.NewString(redisSetting.Prefix).S(":", redisSetting.Pools[idx].Prefix).String(),
 					conn: rds.NewClient(&rds.Options{
 						Addr:     str.APP.Buffer.NewAny(redisSetting.Host).Any(":", redisSetting.Port).String(),
 						Password: redisSetting.Password,
-						DB:       redisSetting.Pool[idx].DBNum,
+						DB:       redisSetting.Pools[idx].DBNum,
 					}),
 				})
 			}
