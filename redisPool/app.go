@@ -1,6 +1,6 @@
 package redisPool
 
-var Elements struct {
+var APP struct {
 	Setting RedisSetting
 	Pool    RedisPool
 }
