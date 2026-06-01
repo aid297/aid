@@ -22,21 +22,23 @@ import (
 
 type (
 	HTTPClient struct {
-		err          error
-		url          string
-		queries      map[string]any
-		method       string
-		headers      map[string][]any
-		requestBody  *bytes.Buffer
-		responseBody []byte
-		timeout      time.Duration
-		transport    *http.Transport
-		cert         []byte
-		rawRequest   *http.Request
-		rawResponse  *http.Response
-		client       *http.Client
-		autoCopy     bool
-		lock         sync.RWMutex
+		err               error
+		url               string
+		queries           map[string]any
+		method            string
+		headers           map[string][]any
+		requestBody       io.Reader
+		requestBodyBuffer *bytes.Buffer
+		rateLimit         int64
+		responseBody      []byte
+		timeout           time.Duration
+		transport         *http.Transport
+		cert              []byte
+		rawRequest        *http.Request
+		rawResponse       *http.Response
+		client            *http.Client
+		autoCopy          bool
+		lock              sync.RWMutex
 		// OK           *bool
 	}
 
@@ -46,7 +48,8 @@ type (
 )
 
 func (*HTTPClient) init(method string, attrs ...HTTPClientAttributer) *HTTPClient {
-	return (&HTTPClient{requestBody: bytes.NewBuffer([]byte{})}).SetAttrs(Method(method), AppendHeaderValues(map[string][]any{})).SetAttrs(attrs...)
+	buffer := bytes.NewBuffer([]byte{})
+	return (&HTTPClient{requestBody: buffer, requestBodyBuffer: buffer}).SetAttrs(Method(method), AppendHeaderValues(map[string][]any{})).SetAttrs(attrs...)
 }
 
 func (*HTTPClientBuilder) New(attrs ...HTTPClientAttributer) *HTTPClientBuilder {
@@ -169,7 +172,16 @@ func (my *HTTPClient) GetBody() []byte {
 	return my.getBody()
 }
 
-func (my *HTTPClient) getBody() []byte { b, _ := io.ReadAll(my.requestBody); return b }
+func (my *HTTPClient) getBody() []byte {
+	if my.requestBodyBuffer != nil {
+		return my.requestBodyBuffer.Bytes()
+	}
+	if my.requestBody != nil {
+		b, _ := io.ReadAll(my.requestBody)
+		return b
+	}
+	return nil
+}
 
 func (my *HTTPClient) GetTimeout() time.Duration {
 	my.lock.RLock()
@@ -230,7 +242,12 @@ func (my *HTTPClient) send() *HTTPClient {
 		return my
 	}
 
-	if my.rawRequest, my.err = http.NewRequest(my.method, my.getURL(), my.requestBody); my.err != nil {
+	bodyReader := my.requestBody
+	if bodyReader != nil && my.rateLimit > 0 {
+		bodyReader = NewUploadRateReader(bodyReader, my.rateLimit*1024)
+	}
+
+	if my.rawRequest, my.err = http.NewRequest(my.method, my.getURL(), bodyReader); my.err != nil {
 		return my
 	}
 
@@ -274,6 +291,35 @@ func (my *HTTPClient) send() *HTTPClient {
 	}
 
 	return my
+}
+
+type rateLimitReader struct {
+	reader io.Reader
+	rate   int64
+}
+
+func NewUploadRateReader(reader io.Reader, rate int64) io.Reader {
+	return &rateLimitReader{reader: reader, rate: rate}
+}
+
+func (r *rateLimitReader) Read(p []byte) (int, error) {
+	if r.rate <= 0 {
+		return r.reader.Read(p)
+	}
+
+	if len(p) > int(r.rate) {
+		p = p[:int(r.rate)]
+	}
+
+	n, err := r.reader.Read(p)
+	if n > 0 {
+		sleep := time.Duration(int64(n)) * time.Second / time.Duration(r.rate)
+		if sleep > 0 {
+			time.Sleep(sleep)
+		}
+	}
+
+	return n, err
 }
 
 // OK 检查响应是否成功，返回布尔值和错误信息

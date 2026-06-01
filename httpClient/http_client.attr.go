@@ -43,6 +43,7 @@ type (
 		contentType ContentType
 	}
 	AttrTimeout          struct{ timeout time.Duration }
+	AttrRateLimit        struct{ rate int64 }
 	AttrTransport        struct{ transport *http.Transport }
 	AttrTransportDefault struct{ transport *http.Transport }
 	AttrCert             struct{ cert []byte }
@@ -446,6 +447,7 @@ func File(filename string) *AttrBody {
 
 func (my *AttrBody) Register(req *HTTPClient) {
 	req.requestBody = my.body
+	req.requestBodyBuffer = my.body
 	if my.contentType != "" {
 		// todo 因为form-data的缘故，content-type只能使用string类型，所以不限制content-type的具体内容在一定的范围内
 		// []any{ContentTypes[my.contentType]}
@@ -457,6 +459,20 @@ func (my *AttrBody) Register(req *HTTPClient) {
 func (my *AttrBody) Error() error { return my.err }
 
 func (*AttrBody) ImplHTTPClientAttributer() {}
+
+func RateLimit(rate int64) *AttrRateLimit {
+	if rate <= 0 {
+		rate = 0
+	}
+
+	return &AttrRateLimit{rate: rate}
+}
+
+func (my *AttrRateLimit) Register(req *HTTPClient) { req.rateLimit = my.rate }
+
+func (my *AttrRateLimit) Error() error { return nil }
+
+func (*AttrRateLimit) ImplHTTPClientAttributer() {}
 
 func Timeout(timeout time.Duration) *AttrTimeout {
 	if timeout <= 0 {

@@ -89,3 +89,19 @@ func Test2(t *testing.T) {
 
 	t.Logf("结果：%s\n", hc.ToBytes())
 }
+
+func TestUploadRateAttribute(t *testing.T) {
+	hc := new(HTTPClient).init(http.MethodPost,
+		URL("http:example.com/upload"),
+		RateLimit(1),
+		JSON(map[string]any{"hello": "world"}),
+	)
+
+	if hc.rateLimit != 1024 {
+		t.Fatalf("expected uploadRate 1024, got %d", hc.rateLimit)
+	}
+
+	if len(hc.GetBody()) == 0 {
+		t.Fatal("expected request body to be present")
+	}
+}
