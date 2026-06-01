@@ -20,6 +20,7 @@ import (
 	"github.com/aid297/aid/v2/anyMap"
 	"github.com/aid297/aid/v2/debugLogger"
 	"github.com/aid297/aid/v2/operation"
+	"github.com/aid297/aid/v2/secret"
 	"github.com/aid297/aid/v2/str"
 )
 
@@ -44,6 +45,7 @@ type (
 	}
 	AttrTimeout          struct{ timeout time.Duration }
 	AttrRateLimit        struct{ rate int64 }
+	AttrEncrypt          struct{ symmetricEncryptor secret.Symmetric }
 	AttrTransport        struct{ transport *http.Transport }
 	AttrTransportDefault struct{ transport *http.Transport }
 	AttrCert             struct{ cert []byte }
@@ -522,3 +524,32 @@ func (my *AttrAutoCopyResBody) Register(req *HTTPClient) { req.autoCopy = my.aut
 func (*AttrAutoCopyResBody) Error() error { return nil }
 
 func (*AttrAutoCopyResBody) ImplHTTPClientAttributer() {}
+
+func (my *AttrEncrypt) Register(req *HTTPClient) {
+	if my.symmetricEncryptor == nil {
+		req.err = errors.New("encrypt: encryptor not set")
+		return
+	}
+	if req.requestBodyBuffer == nil {
+		req.err = errors.New("encrypt: no request body to encrypt")
+		return
+	}
+
+	plain := req.requestBodyBuffer.Bytes()
+	cipherText, err := my.symmetricEncryptor.Encrypt(plain)
+	if err != nil {
+		req.err = err
+		return
+	}
+
+	req.requestBodyBuffer = bytes.NewBuffer(cipherText)
+	req.requestBody = req.requestBodyBuffer
+}
+
+func (my *AttrEncrypt) Error() error { return nil }
+
+func (*AttrEncrypt) ImplHTTPClientAttributer() {}
+
+func Encrypt(symmetricEncryptor secret.Symmetric) *AttrEncrypt {
+	return &AttrEncrypt{symmetricEncryptor: symmetricEncryptor}
+}

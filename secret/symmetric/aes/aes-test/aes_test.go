@@ -270,7 +270,7 @@ func TestCTRBase64(t *testing.T) {
 
 func TestCTRWithRandNonce(t *testing.T) {
 	var (
-		testKey = []byte("1234567890abcdef")
+		testKey   = []byte("1234567890abcdef")
 		testPlain = []byte("hello, AES CTR with random nonce!")
 	)
 
@@ -355,7 +355,7 @@ func TestGCMBase64(t *testing.T) {
 
 func TestGCMWithRandNonce(t *testing.T) {
 	var (
-		testKey = []byte("1234567890abcdef")
+		testKey   = []byte("1234567890abcdef")
 		testPlain = []byte("hello, AES GCM with random nonce!")
 	)
 
