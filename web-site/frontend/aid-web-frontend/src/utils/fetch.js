@@ -29,7 +29,7 @@ const f = async (endpoint, method = 'GET', options = {}) => {
     const { headers, ...restOptions } = options;
 
     try {
-        await fetch(`${API_URL}/v1/${endpoint}`, { method, ...restOptions, headers: { ...DEFAULT_HEADERS, ...headers } });
+        await fetch(`${API_URL}${endpoint}`, { method, ...restOptions, headers: { ...DEFAULT_HEADERS, ...headers } });
     } catch (error) {
         console.error('Fetch error:', error);
         throw error;
