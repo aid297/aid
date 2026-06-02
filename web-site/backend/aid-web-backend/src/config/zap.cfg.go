@@ -7,6 +7,5 @@ type ZapCfg struct {
 	InConsole   bool   `mapstructure:"in-console" json:"in-console" yaml:"in-console" toml:"in-console"`
 	MaxSize     int    `mapstructure:"max-size" json:"max-size" yaml:"max-size" toml:"max-size"`
 	MaxDay      int    `mapstructure:"max-day" json:"max-day" yaml:"max-day" toml:"max-day"`
-	DirAbs      bool   `mapstructure:"dir-abs" json:"dir-abs" yaml:"dir-abs" toml:"dir-abs"`
 	Dir         string `mapstructure:"dir" json:"dir" yaml:"dir" toml:"dir"`
 }

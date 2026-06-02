@@ -2,7 +2,6 @@ package initialize
 
 import (
 	"log"
-	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -26,15 +25,14 @@ func (*ZapInitialize) Boot() {
 		}
 	)
 
-	if global.LOG, err = logger.APP.Zap.New(
-		logger.APP.ZapConfig.New(zapLevels[global.CONFIG.Log.Zap.Level]).
-			SetEncoderType(logger.EncoderType(strings.ToUpper(global.CONFIG.Log.Zap.EncoderType))).
-			SetExtension(global.CONFIG.Log.Zap.Extension).
-			SetInConsole(global.CONFIG.System.Debug || global.CONFIG.Log.Zap.InConsole).
-			SetMaxSize(global.CONFIG.Log.Zap.MaxSize).
-			SetMaxDay(global.CONFIG.Log.Zap.MaxDay).
-			SetPathAbs(global.CONFIG.Log.Zap.DirAbs).
-			SetPath(global.CONFIG.Log.Zap.Dir),
+	if global.LOG, err = logger.NewZapLog(
+		logger.Level(zapLevels[global.CONFIG.Log.Zap.Level]),
+		logger.EncoderType(logger.ZapLogEncoderType(global.CONFIG.Log.Zap.EncoderType)),
+		logger.Extension(global.CONFIG.Log.Zap.Extension),
+		logger.InConsole(global.CONFIG.System.Debug || global.CONFIG.Log.Zap.InConsole),
+		logger.MaxSize(global.CONFIG.Log.Zap.MaxSize),
+		logger.MaxDay(global.CONFIG.Log.Zap.MaxDay),
+		logger.Path(global.CONFIG.Log.Zap.Dir),
 	); err != nil {
 		log.Fatalf("【启动日志失败】 %s", err.Error())
 	}

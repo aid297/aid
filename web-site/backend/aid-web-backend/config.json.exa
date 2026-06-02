@@ -27,7 +27,6 @@
             "extension": ".log",
             "in-console": true,
             "dir": "storage/runtime/log/system",
-            "dir-abs": false,
             "max-size": 100,
             "max-day": 10
         }
