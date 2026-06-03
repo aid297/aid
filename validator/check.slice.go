@@ -32,12 +32,6 @@ func (my FieldInfo) checkSlice() FieldInfo {
 			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 			return my
 		}
-	} else {
-		if my.IsPtr && (my.IsNil || my.IsZero) {
-			return my
-		} else if !my.IsPtr && my.IsZero {
-			return my
-		}
 	}
 
 	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {

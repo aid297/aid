@@ -60,12 +60,6 @@ func (my FieldInfo) checkString() FieldInfo {
 			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 			return my
 		}
-	} else {
-		if my.IsPtr && (my.IsNil || my.IsZero) {
-			return my
-		} else if !my.IsPtr && my.IsZero {
-			return my
-		}
 	}
 
 	if value, ok = my.Value.(string); !ok {
