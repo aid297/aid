@@ -60,6 +60,12 @@ func (my FieldInfo) checkString() FieldInfo {
 			my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrNotEmpty)}
 			return my
 		}
+	} else {
+		if my.IsPtr && (my.IsNil || my.IsZero) {
+			return my
+		} else if !my.IsPtr && my.IsZero {
+			return my
+		}
 	}
 
 	if value, ok = my.Value.(string); !ok {
@@ -159,7 +165,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		} else if strings.HasPrefix(rule, "ex") {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for _, exFnName := range exFnNames {
-					if fn := APP.Validator.Once().GetExFn(exFnName); fn != nil {
+					if fn := OnceValidator().GetExFn(exFnName); fn != nil {
 						if err := fn(value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}

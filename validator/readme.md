@@ -27,7 +27,7 @@
    		Age:       180,
    	}
    
-   	checker := validatorV3.APP.Validator.Once().Checker(&userRequest)
+   	checker := validatorV3.OnceValidator().Checker(&userRequest)
    
    	checker.Validate()
    	debugLogger.Print("验证结果：%v\n", checker.OK())
@@ -126,7 +126,7 @@
    		Articles2: []*ArticleRequest{{Title: "李四"}},
    	}
    
-   	checker := APP.Validator.Once().Checker(ur)
+   	checker := OnceValidator().Checker(ur)
    	checker.Validate()
    	t.Logf("验证是否通过：%v\n", checker.OK())
    	for _, wrong := range checker.Wrongs() {
@@ -174,7 +174,7 @@
    		Firstname: "张三",
    	}
    
-   	validator := APP.Validator.Once().RegisterExFn("some-ex-check-fn", someExCheckFn) // validator 是单例，只需要在程序初始化时提前注册好检查方法即可
+   	validator := OnceValidator().RegisterExFn("some-ex-check-fn", someExCheckFn) // validator 是单例，只需要在程序初始化时提前注册好检查方法即可
    
    	checker := validator.Checker(ur)
    	checker.Validate()
@@ -207,7 +207,7 @@
     		Firstname: "张三",
     	}
     
-    	validator := APP.Validator.Once()
+    	validator := OnceValidator()
     
     	checker := validator.Checker(ur)
     	checker.Validate(func(form any) (err error) {

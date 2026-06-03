@@ -38,8 +38,6 @@ import (
 
 func getRuleRequired(rules anySlice.AnySlicer[string]) bool { return rules.In("required") }
 
-func getRuleNotZero(rules anySlice.AnySlicer[string]) bool { return rules.In("not-zero") }
-
 func getRuleExFnNames(rule string) (exFnNames []string) {
 	var (
 		value string
