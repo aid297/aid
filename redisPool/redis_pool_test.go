@@ -1,6 +1,3 @@
-### RedisPool 说明
-
-```go
 package redisPool_test
 
 import (
@@ -45,6 +42,3 @@ func TestOnceRedisPool(t *testing.T) {
 
 	t.Cleanup(func() { rp.Clean() })
 }
-
-```
-

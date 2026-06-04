@@ -1,0 +1,16 @@
+package redisPool
+
+type RedisPoolAttr func(redisPool *RedisPool)
+
+func Addr(addr string) RedisPoolAttr { return func(redisPool *RedisPool) { redisPool.SetAddr(addr) } }
+func Password(password string) RedisPoolAttr {
+	return func(redisPool *RedisPool) { redisPool.SetPassword(password) }
+}
+func Prefix(prefix string) RedisPoolAttr {
+	return func(redisPool *RedisPool) { redisPool.SetPrefix(prefix) }
+}
+func Pool(clientName, prefix string, dbNum int) RedisPoolAttr {
+	return func(redisPool *RedisPool) {
+		redisPool.SetPool(clientName, prefix, dbNum)
+	}
+}

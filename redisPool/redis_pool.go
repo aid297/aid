@@ -4,56 +4,80 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	rds "github.com/redis/go-redis/v9"
 
 	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anySlice"
 	"github.com/aid297/aid/v2/str"
 )
 
 type (
 	RedisPool struct {
-		connections anyMap.AnyMapper[string, *redisConn]
+		redisClients anyMap.AnyMapper[string, *redisClient]
+		addr         string
+		password     string
+		prefix       string
+		pools        anySlice.AnySlicer[redisPoolSetting]
 	}
 
-	redisConn struct {
+	redisClient struct {
 		prefix string
 		conn   *rds.Client
 	}
+
+	redisPoolSetting struct {
+		ClientName string
+		Prefix     string
+		DBNum      int
+	}
 )
 
-var (
-	redisPoolIns  *RedisPool
-	redisPoolOnce sync.Once
-)
+// NewRedisPool 实例化：redis连接池
+func NewRedisPool(attrs ...RedisPoolAttr) *RedisPool {
+	var redisPool = &RedisPool{
+		redisClients: anyMap.New[string, *redisClient](),
+		pools:        anySlice.New[redisPoolSetting](),
+	}
 
-func (*RedisPool) Once(redisSetting *RedisSetting) *RedisPool {
-	redisPoolOnce.Do(func() {
-		redisPoolIns = &RedisPool{}
-		redisPoolIns.connections = anyMap.New[string, *redisConn]()
+	if len(attrs) > 0 {
+		redisPool.SetAttrs(attrs...)
+	}
 
-		if len(redisSetting.Pools) > 0 {
-			for idx := range redisSetting.Pools {
-				redisPoolIns.connections.SetDatum(redisSetting.Pools[idx].Key, &redisConn{
-					prefix: str.APP.Buffer.NewString(redisSetting.Prefix).S(":", redisSetting.Pools[idx].Prefix).String(),
-					conn: rds.NewClient(&rds.Options{
-						Addr:     str.APP.Buffer.NewAny(redisSetting.Host).Any(":", redisSetting.Port).String(),
-						Password: redisSetting.Password,
-						DB:       redisSetting.Pools[idx].DBNum,
-					}),
-				})
-			}
+	if redisPool.pools.NotEmpty() {
+		for _, redisPoolSetting := range redisPool.pools.ToSlice() {
+			redisPool.redisClients.SetDatum(redisPoolSetting.ClientName, &redisClient{
+				prefix: str.APP.Buffer.JoinString(redisPool.prefix, ":", redisPoolSetting.Prefix),
+				conn: rds.NewClient(&rds.Options{
+					Addr:     redisPool.addr,
+					Password: redisPool.password,
+					DB:       redisPoolSetting.DBNum,
+				}),
+			})
 		}
-	})
+	}
 
-	return redisPoolIns
+	return redisPool
+}
+
+// SetAttrs 设置属性
+func (my *RedisPool) SetAttrs(attrs ...RedisPoolAttr) {
+	for _, attr := range attrs {
+		attr(my)
+	}
+}
+
+func (my *RedisPool) SetAddr(addr string)         { my.addr = addr }
+func (my *RedisPool) SetPassword(password string) { my.password = password }
+func (my *RedisPool) SetPrefix(prefix string)     { my.prefix = prefix }
+func (my *RedisPool) SetPool(clientName, prefix string, dbNum int) {
+	my.pools.Append(redisPoolSetting{ClientName: clientName, Prefix: prefix, DBNum: dbNum})
 }
 
 // GetClient 获取链接和链接前缀
-func (*RedisPool) GetClient(key string) (string, *rds.Client) {
-	if client, exist := redisPoolIns.connections.GetValueByKey(key); exist {
+func (my *RedisPool) GetClient(clientName string) (string, *rds.Client) {
+	if client, exist := my.redisClients.GetValueByKey(clientName); exist {
 		return client.prefix, client.conn
 	}
 
@@ -61,20 +85,19 @@ func (*RedisPool) GetClient(key string) (string, *rds.Client) {
 }
 
 // Get 获取值
-func (*RedisPool) Get(clientName, key string) (string, error) {
+func (my *RedisPool) Get(ctx context.Context, clientName, key string) (string, error) {
 	var (
 		err         error
 		prefix, ret string
 		client      *rds.Client
 	)
 
-	prefix, client = redisPoolIns.GetClient(clientName)
+	prefix, client = my.GetClient(clientName)
 	if client == nil {
 		return "", fmt.Errorf("没有找到redis链接：%s", clientName)
 	}
 
-	ret, err = client.Get(context.Background(), fmt.Sprintf("%s:%s", prefix, key)).Result()
-	if err != nil {
+	if ret, err = client.Get(ctx, fmt.Sprintf("%s:%s", prefix, key)).Result(); err != nil {
 		if errors.Is(err, rds.Nil) {
 			return "", nil
 		} else {
@@ -86,33 +109,33 @@ func (*RedisPool) Get(clientName, key string) (string, error) {
 }
 
 // Set 设置值
-func (*RedisPool) Set(clientName, key string, val any, exp time.Duration) (string, error) {
+func (my *RedisPool) Set(ctx context.Context, clientName, key string, val any, exp time.Duration) (string, error) {
 	var (
 		prefix string
 		client *rds.Client
 	)
 
-	prefix, client = redisPoolIns.GetClient(clientName)
+	prefix, client = my.GetClient(clientName)
 	if client == nil {
 		return "", fmt.Errorf("没有找到redis链接：%s", clientName)
 	}
 
-	return client.Set(context.Background(), fmt.Sprintf("%s:%s", prefix, key), val, exp).Result()
+	return client.Set(ctx, fmt.Sprintf("%s:%s", prefix, key), val, exp).Result()
 }
 
 // Close 关闭链接
-func (my *RedisPool) Close(key string) error {
-	if client, exist := redisPoolIns.connections.GetValueByKey(key); exist {
+func (my *RedisPool) Close(key string) (err error) {
+	if client, exist := my.redisClients.GetValueByKey(key); exist {
 		return client.conn.Close()
 	}
 
-	return nil
+	return
 }
 
 // Clean 清理链接
-func (*RedisPool) Clean() {
-	for key, val := range redisPoolIns.connections.ToMap() {
+func (my *RedisPool) Clean() {
+	for key, val := range my.redisClients.ToMap() {
 		_ = val.conn.Close()
-		redisPoolIns.connections.RemoveByKey(key)
+		my.redisClients.RemoveByKey(key)
 	}
 }

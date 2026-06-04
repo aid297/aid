@@ -1,10 +1,10 @@
-package logger_test
+package log_test
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/aid297/aid/v2/logger"
+	"github.com/aid297/aid/v2/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -16,15 +16,15 @@ func Test1(t *testing.T) {
 			err       error
 		)
 
-		if zapLogger, err = logger.NewZapLog(
-			logger.Level(zapcore.DebugLevel),
-			logger.Path("."),
-			logger.InConsole(false),
-			logger.EncoderType(logger.EncoderTypeConsole),
-			logger.Compress(true),
-			logger.MaxBackup(30),
-			logger.MaxSize(10),
-			logger.MaxDay(30),
+		if zapLogger, err = log.NewZapLog(
+			log.Level(zapcore.DebugLevel),
+			log.Path("."),
+			log.InConsole(false),
+			log.EncoderType(log.EncoderTypeConsole),
+			log.Compress(true),
+			log.MaxBackup(30),
+			log.MaxSize(10),
+			log.MaxDay(30),
 		); err != nil {
 			t.Fatal(err)
 		}
