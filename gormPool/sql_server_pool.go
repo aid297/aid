@@ -20,10 +20,10 @@ type SQLServerPool struct {
 	maxLifetime  int
 	maxIdleConns int
 	maxOpenConns int
-	mainDsn      *Dsn
+	mainDsn      *DSN
 	mainConn     *gorm.DB
-	sources      map[string]*SQLServerConnection
-	replicas     map[string]*SQLServerConnection
+	sources      map[string]*SQLServerEndpoint
+	replicas     map[string]*SQLServerEndpoint
 }
 
 var (
@@ -59,7 +59,7 @@ func OnceSqlServerPool(dbSetting *DBSetting) GORMPool {
 	)
 
 	// 配置主库
-	postgresPoolIns.mainDsn = &Dsn{
+	postgresPoolIns.mainDsn = &DSN{
 		Name: "main",
 		Content: fmt.Sprintf(
 			SqlServerDsnFormat,
@@ -107,14 +107,14 @@ func (my *SQLServerPool) getRws() *gorm.DB {
 	var (
 		err                                 error
 		sourceDialectors, replicaDialectors []gorm.Dialector
-		sources                             []*Dsn
-		replicas                            []*Dsn
+		sources                             []*DSN
+		replicas                            []*DSN
 	)
 	// 配置写库
 	if len(my.sources) > 0 {
-		sources = make([]*Dsn, 0)
+		sources = make([]*DSN, 0)
 		for idx, item := range my.sources {
-			sources = append(sources, &Dsn{
+			sources = append(sources, &DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
 					SqlServerDsnFormat,
@@ -130,9 +130,9 @@ func (my *SQLServerPool) getRws() *gorm.DB {
 
 	// 配置读库
 	if len(my.replicas) > 0 {
-		replicas = make([]*Dsn, 0)
+		replicas = make([]*DSN, 0)
 		for idx, item := range my.replicas {
-			replicas = append(replicas, &Dsn{
+			replicas = append(replicas, &DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
 					SqlServerDsnFormat,

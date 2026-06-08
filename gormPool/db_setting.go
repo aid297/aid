@@ -21,22 +21,22 @@ type (
 		MaxIdleTime        int    `yaml:"max-idle-time"`
 	}
 
-	Dsn struct {
+	DSN struct {
 		Name    string
 		Content string
 	}
 
 	MySQLSetting struct {
-		Database  string                      `yaml:"database"`
-		Charset   string                      `yaml:"charset"`
-		Collation string                      `yaml:"collation"`
-		Rws       bool                        `yaml:"rws"`
-		Main      *MySQLConnection            `yaml:"main"`
-		Sources   map[string]*MySQLConnection `yaml:"sources"`
-		Replicas  map[string]*MySQLConnection `yaml:"replicas"`
+		Database  string                   `yaml:"database"`
+		Charset   string                   `yaml:"charset"`
+		Collation string                   `yaml:"collation"`
+		Rws       bool                     `yaml:"rws"`
+		Main      *MySQLEndpoint           `yaml:"main"`
+		Sources   map[string]MySQLEndpoint `yaml:"sources"`
+		Replicas  map[string]MySQLEndpoint `yaml:"replicas"`
 	}
 
-	MySQLConnection struct {
+	MySQLEndpoint struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`
@@ -44,14 +44,14 @@ type (
 	}
 
 	ArSQLSetting struct {
-		Database string                      `yaml:"database"`
-		Rws      bool                        `yaml:"rws"`
-		Main     *MySQLConnection            `yaml:"main"`
-		Sources  map[string]*ArSQLConnection `yaml:"sources"`
-		Replicas map[string]*ArSQLConnection `yaml:"replicas"`
+		Database string                    `yaml:"database"`
+		Rws      bool                      `yaml:"rws"`
+		Main     *MySQLEndpoint            `yaml:"main"`
+		Sources  map[string]*ArSQLEndpoint `yaml:"sources"`
+		Replicas map[string]*ArSQLEndpoint `yaml:"replicas"`
 	}
 
-	ArSQLConnection struct {
+	ArSQLEndpoint struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`
@@ -59,10 +59,10 @@ type (
 	}
 
 	PGSetting struct {
-		Main *PGConnection `yaml:"main"`
+		Main *PGEndpoint `yaml:"main"`
 	}
 
-	PGConnection struct {
+	PGEndpoint struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`
@@ -73,10 +73,10 @@ type (
 	}
 
 	SQLServerSetting struct {
-		Main *SQLServerConnection `yaml:"main"`
+		Main *SQLServerEndpoint `yaml:"main"`
 	}
 
-	SQLServerConnection struct {
+	SQLServerEndpoint struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`

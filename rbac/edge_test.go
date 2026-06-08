@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aid297/aid/v2/gormPool"
+	"github.com/aid297/aid/v2/gormPool/mysqlPool"
 )
 
 func init() {
@@ -14,7 +15,24 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	pool := gormPool.MySqlPoolApp.Once(dbSetting)
+	pool, err := mysqlPool.NewMySQLPool(
+		dbSetting.MySQL.Database,
+		dbSetting.MySQL.Charset,
+		dbSetting.MySQL.Rws,
+		mysqlPool.Username(dbSetting.MySQL.Main.Username),
+		mysqlPool.Password(dbSetting.MySQL.Main.Password),
+		mysqlPool.Host(dbSetting.MySQL.Main.Host),
+		mysqlPool.Port(dbSetting.MySQL.Main.Port),
+		mysqlPool.Sources(dbSetting.MySQL.Sources),
+		mysqlPool.Replicas(dbSetting.MySQL.Replicas),
+		mysqlPool.MaxIdleTime(dbSetting.Common.MaxIdleTime),
+		mysqlPool.MaxLifetime(dbSetting.Common.MaxLifetime),
+		mysqlPool.MaxIdleConnections(dbSetting.Common.MaxIdleConnections),
+		mysqlPool.MaxOpenConnections(dbSetting.Common.MaxOpenConnections),
+	)
+	if err != nil {
+		log.Fatalf("创建mysql连接池错误：%v", err)
+	}
 	db := pool.GetConn()
 
 	tr := APP.Edge.Once(TablePrefix("my_rbac"), DB(db))

@@ -7,11 +7,9 @@ import (
 )
 
 var APP struct {
-	MySQLPool     MySQLPool
 	PGPool        PGPool
 	SQLServerPool SQLServerPool
 	DBSetting     DBSetting
-	Finder        Finder
 }
 
 type MySQLBasic struct {

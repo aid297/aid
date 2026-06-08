@@ -10,9 +10,41 @@ import (
 	"github.com/aid297/aid/v2/str"
 )
 
+var _ Finder = (*FinderImpl)(nil)
+
 type (
-	// Finder 查询帮助器
-	Finder struct {
+	Finder interface {
+		GetDB() *gorm.DB
+		Find(ret any, preloads ...string) Finder
+		Ex(functions ...func(db *gorm.DB)) Finder
+		TryPagination(page, size int) Finder
+		TryOrder(orders ...string) Finder
+		TryPreload(preloads ...string) Finder
+		TryQuery(mode string, fieldName string, values ...any)
+		SetTotal(total int64) Finder
+		GetTotal() int64
+		When(condition bool, query any, args ...any) Finder
+		WhenIn(condition bool, query any, args any) Finder
+		WhenInPtr(condition bool, query any, args any) Finder
+		WhenNotIn(condition bool, query any, args any) Finder
+		WhenNotInPtr(condition bool, query any, args any) Finder
+		WhenBetween(condition bool, query any, args ...any) Finder
+		WhenNotBetween(condition bool, query any, args ...any) Finder
+		WhenLike(condition bool, query, arg any) Finder
+		WhenLikeLeft(condition bool, query, arg any) Finder
+		WhenLikeRight(condition bool, query, arg any) Finder
+		WhenFunc(condition bool, fn func(db *gorm.DB)) Finder
+		Transaction(functions ...func(db *gorm.DB)) error
+		QueryUseMap(queries map[string][]any) Finder
+		QueryUseCondition(finderCondition *FinderCondition) Finder
+		FindUseMap(queries map[string][]any, preloads []string, orders []string, page, size int, ret any) Finder
+		FindUseCondition(finderCondition *FinderCondition, page, size int, ret any) Finder
+		FindOnlyCondition(finderCondition *FinderCondition, ret any) Finder
+		finderNext() Finder
+	}
+
+	// FinderImpl 查询帮助器
+	FinderImpl struct {
 		db    *gorm.DB
 		total int64
 	}
@@ -41,14 +73,16 @@ type (
 	}
 )
 
-// New 实例化：查询帮助器
-func (*Finder) New(db *gorm.DB) *Finder { return &Finder{db: db, total: -1} }
+func NewFinder(db *gorm.DB) Finder { return &FinderImpl{db: db, total: -1} }
+
+// // New 实例化：查询帮助器
+// func (*FinderImpl) New(db *gorm.DB) *FinderImpl { return &FinderImpl{db: db, total: -1} }
 
 // GetDB 获取 gorm.DB 对象
-func (my *Finder) GetDB() *gorm.DB { return my.db }
+func (my *FinderImpl) GetDB() *gorm.DB { return my.db }
 
 // Find 查询数据
-func (my *Finder) Find(ret any, preloads ...string) *Finder {
+func (my *FinderImpl) Find(ret any, preloads ...string) Finder {
 	my.TryPreload(preloads...)
 	my.db.Find(ret)
 
@@ -56,7 +90,7 @@ func (my *Finder) Find(ret any, preloads ...string) *Finder {
 }
 
 // Ex 额外操作
-func (my *Finder) Ex(functions ...func(db *gorm.DB)) *Finder {
+func (my *FinderImpl) Ex(functions ...func(db *gorm.DB)) Finder {
 	if len(functions) > 0 {
 		for _, fn := range functions {
 			fn(my.db)
@@ -67,7 +101,7 @@ func (my *Finder) Ex(functions ...func(db *gorm.DB)) *Finder {
 }
 
 // TryPagination 尝试分页
-func (my *Finder) TryPagination(page, size int) *Finder {
+func (my *FinderImpl) TryPagination(page, size int) Finder {
 	if page > 0 && size > 0 {
 		if my.total == -1 {
 			if my.db.Count(&my.total).Error != nil {
@@ -82,7 +116,7 @@ func (my *Finder) TryPagination(page, size int) *Finder {
 }
 
 // TryOrder 尝试排序
-func (my *Finder) TryOrder(orders ...string) *Finder {
+func (my *FinderImpl) TryOrder(orders ...string) Finder {
 	for _, order := range orders {
 		my.db.Order(order)
 	}
@@ -91,7 +125,7 @@ func (my *Finder) TryOrder(orders ...string) *Finder {
 }
 
 // TryPreload 尝试深度查询
-func (my *Finder) TryPreload(preloads ...string) *Finder {
+func (my *FinderImpl) TryPreload(preloads ...string) Finder {
 	for _, preload := range preloads {
 		my.db.Preload(preload)
 	}
@@ -100,7 +134,7 @@ func (my *Finder) TryPreload(preloads ...string) *Finder {
 }
 
 // TryQuery 尝试查询
-func (my *Finder) TryQuery(mode string, fieldName string, values ...any) {
+func (my *FinderImpl) TryQuery(mode string, fieldName string, values ...any) {
 	switch mode {
 	case "and", "":
 		my.db.Where(fieldName, values...)
@@ -112,16 +146,16 @@ func (my *Finder) TryQuery(mode string, fieldName string, values ...any) {
 }
 
 // SetTotal 设置总数
-func (my *Finder) SetTotal(total int64) *Finder {
+func (my *FinderImpl) SetTotal(total int64) Finder {
 	my.total = total
 	return my
 }
 
 // GetTotal 获取总数
-func (my *Finder) GetTotal() int64 { return my.total }
+func (my *FinderImpl) GetTotal() int64 { return my.total }
 
 // When 当条件满足时执行：where
-func (my *Finder) When(condition bool, query any, args ...any) *Finder {
+func (my *FinderImpl) When(condition bool, query any, args ...any) Finder {
 	if condition {
 		my.db.Where(query, args...)
 	}
@@ -130,7 +164,7 @@ func (my *Finder) When(condition bool, query any, args ...any) *Finder {
 }
 
 // WhenIn 当条件满足时执行：where in
-func (my *Finder) WhenIn(condition bool, query any, args any) *Finder {
+func (my *FinderImpl) WhenIn(condition bool, query any, args any) Finder {
 	if condition {
 		ref := reflect.ValueOf(args)
 		if ref.Kind() == reflect.Ptr && !ref.IsNil() {
@@ -147,7 +181,7 @@ func (my *Finder) WhenIn(condition bool, query any, args any) *Finder {
 
 // WhenInPtr 当条件满足时执行：where in
 // args 为指针类型
-func (my *Finder) WhenInPtr(condition bool, query any, args any) *Finder {
+func (my *FinderImpl) WhenInPtr(condition bool, query any, args any) Finder {
 	if condition && args != nil {
 		my.db.Where(str.APP.Buffer.JoinStringLimit(" ", cast.ToString(query), "in", "(?)"), reflect.ValueOf(args).Elem().Interface())
 		// my.db.Where(fmt.Sprintf("%v in (?)", query), reflect.ValueOf(args).Elem().Interface())
@@ -157,7 +191,7 @@ func (my *Finder) WhenInPtr(condition bool, query any, args any) *Finder {
 }
 
 // WhenNotIn 当条件满足时执行：where not in
-func (my *Finder) WhenNotIn(condition bool, query any, args any) *Finder {
+func (my *FinderImpl) WhenNotIn(condition bool, query any, args any) Finder {
 	if condition {
 		ref := reflect.ValueOf(args)
 		if ref.Kind() == reflect.Ptr && !ref.IsNil() {
@@ -174,7 +208,7 @@ func (my *Finder) WhenNotIn(condition bool, query any, args any) *Finder {
 
 // WhenNotInPtr 当条件满足时执行：where in
 // args 为指针类型
-func (my *Finder) WhenNotInPtr(condition bool, query any, args any) *Finder {
+func (my *FinderImpl) WhenNotInPtr(condition bool, query any, args any) Finder {
 	if condition && args != nil {
 		my.db.Where(str.APP.Buffer.JoinStringLimit(" ", cast.ToString(query), "not", "in", "(?)"), reflect.ValueOf(args).Elem().Interface())
 		// my.db.Where(fmt.Sprintf("%v not in (?)", query), reflect.ValueOf(args).Elem().Interface())
@@ -184,7 +218,7 @@ func (my *Finder) WhenNotInPtr(condition bool, query any, args any) *Finder {
 }
 
 // WhenBetween 当条件满足时执行：where between
-func (my *Finder) WhenBetween(condition bool, query any, args ...any) *Finder {
+func (my *FinderImpl) WhenBetween(condition bool, query any, args ...any) Finder {
 	if condition {
 		my.db.Where(str.APP.Buffer.JoinStringLimit(" ", cast.ToString(query), "between", "?", "and", "?"), args...)
 		// my.db.Where(fmt.Sprintf("%v between ? and ?", query), args...)
@@ -194,7 +228,7 @@ func (my *Finder) WhenBetween(condition bool, query any, args ...any) *Finder {
 }
 
 // WhenNotBetween 当条件满足时执行：where not between
-func (my *Finder) WhenNotBetween(condition bool, query any, args ...any) *Finder {
+func (my *FinderImpl) WhenNotBetween(condition bool, query any, args ...any) Finder {
 	if condition {
 		my.db.Where(str.APP.Buffer.JoinStringLimit(" ", cast.ToString(query), "not", "between", "?", "and", "?"), args...)
 		// my.db.Where(fmt.Sprintf("%v not between ? and ?", query), args...)
@@ -204,7 +238,7 @@ func (my *Finder) WhenNotBetween(condition bool, query any, args ...any) *Finder
 }
 
 // WhenLike 当条件满足时执行：like %?%
-func (my *Finder) WhenLike(condition bool, query, arg any) *Finder {
+func (my *FinderImpl) WhenLike(condition bool, query, arg any) Finder {
 	if condition {
 		my.db.Where(str.APP.Buffer.JoinStringLimit(" ", cast.ToString(query), "like", "?"), str.APP.Buffer.JoinString("%", cast.ToString(arg), "%"))
 		// my.db.Where(fmt.Sprintf("%v like ?", query), fmt.Sprintf("%%%s%%", arg))
@@ -214,7 +248,7 @@ func (my *Finder) WhenLike(condition bool, query, arg any) *Finder {
 }
 
 // WhenLikeLeft 当条件满足时执行：like %?
-func (my *Finder) WhenLikeLeft(condition bool, query, arg any) *Finder {
+func (my *FinderImpl) WhenLikeLeft(condition bool, query, arg any) Finder {
 	if condition {
 		my.db.Where(str.APP.Buffer.JoinStringLimit(" ", cast.ToString(query), "like", "?"), str.APP.Buffer.JoinString("%", cast.ToString(arg)))
 		// my.db.Where(fmt.Sprintf("%v like ?", query), fmt.Sprintf("%%%s", arg))
@@ -224,7 +258,7 @@ func (my *Finder) WhenLikeLeft(condition bool, query, arg any) *Finder {
 }
 
 // WhenLikeRight 当条件满足时执行：like ?%
-func (my *Finder) WhenLikeRight(condition bool, query, arg any) *Finder {
+func (my *FinderImpl) WhenLikeRight(condition bool, query, arg any) Finder {
 	if condition {
 		my.db.Where(str.APP.Buffer.JoinStringLimit(" ", cast.ToString(query), "like", "?"), str.APP.Buffer.JoinString(cast.ToString(arg)), "%")
 		// my.db.Where(fmt.Sprintf("%v like ?", query), fmt.Sprintf("%s%%", arg))
@@ -234,7 +268,7 @@ func (my *Finder) WhenLikeRight(condition bool, query, arg any) *Finder {
 }
 
 // WhenFunc 当条件满足时执行：通过回调执行
-func (my *Finder) WhenFunc(condition bool, fn func(db *gorm.DB)) *Finder {
+func (my *FinderImpl) WhenFunc(condition bool, fn func(db *gorm.DB)) Finder {
 	if condition {
 		fn(my.db)
 	}
@@ -247,7 +281,7 @@ func (my *Finder) WhenFunc(condition bool, fn func(db *gorm.DB)) *Finder {
 // 如果任一函数执行出错,将回滚整个事务并返回错误
 // 所有函数执行成功后提交事务
 // 返回 error,nil 表示事务执行成功,非 nil 表示事务执行失败
-func (my *Finder) Transaction(functions ...func(db *gorm.DB)) error {
+func (my *FinderImpl) Transaction(functions ...func(db *gorm.DB)) error {
 	my.db.Begin()
 
 	for _, fn := range functions {
@@ -264,7 +298,7 @@ func (my *Finder) Transaction(functions ...func(db *gorm.DB)) error {
 }
 
 // QueryUseMap 从map中解析参数并查询
-func (my *Finder) QueryUseMap(queries map[string][]any) *Finder {
+func (my *FinderImpl) QueryUseMap(queries map[string][]any) Finder {
 	for key, value := range queries {
 		var (
 			ok       = false
@@ -317,7 +351,7 @@ func (my *Finder) QueryUseMap(queries map[string][]any) *Finder {
 }
 
 // QueryUseCondition 从请求体中获取查询条件
-func (my *Finder) QueryUseCondition(finderCondition *FinderCondition) *Finder {
+func (my *FinderImpl) QueryUseCondition(finderCondition *FinderCondition) Finder {
 	if finderCondition == nil {
 		return my
 	}
@@ -384,12 +418,12 @@ func (my *Finder) QueryUseCondition(finderCondition *FinderCondition) *Finder {
 }
 
 // FindUseMap 自动填充查询条件并查询：使用map[string][]any
-func (my *Finder) FindUseMap(queries map[string][]any, preloads []string, orders []string, page, size int, ret any) *Finder {
+func (my *FinderImpl) FindUseMap(queries map[string][]any, preloads []string, orders []string, page, size int, ret any) Finder {
 	return my.QueryUseMap(queries).TryPagination(page, size).TryOrder(orders...).Find(ret, preloads...).finderNext()
 }
 
 // FindUseCondition 自动填充查询条件并查询：使用FinderCondition
-func (my *Finder) FindUseCondition(finderCondition *FinderCondition, page, size int, ret any) *Finder {
+func (my *FinderImpl) FindUseCondition(finderCondition *FinderCondition, page, size int, ret any) Finder {
 	if finderCondition != nil && finderCondition.Page > 0 && finderCondition.Limit > 0 {
 		page = finderCondition.Page
 		size = finderCondition.Limit
@@ -398,11 +432,11 @@ func (my *Finder) FindUseCondition(finderCondition *FinderCondition, page, size 
 }
 
 // FindOnlyCondition  自动填充查询条件并查询：使用FinderCondition
-func (my *Finder) FindOnlyCondition(finderCondition *FinderCondition, ret any) *Finder {
+func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret any) Finder {
 	return my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.Limit).Find(ret).finderNext()
 }
 
-func (my *Finder) finderNext() *Finder {
+func (my *FinderImpl) finderNext() Finder {
 	my.total = operation.NewTernary(operation.TrueValue[int64](0), operation.FalseValue(my.total)).GetByValue(my.total == -1)
 	return my
 }
