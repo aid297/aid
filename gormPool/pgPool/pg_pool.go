@@ -47,7 +47,10 @@ type (
 	}
 )
 
-var PostgresDsnFormat = "host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s"
+var (
+	_           PGPool = (*PGPoolImpl)(nil)
+	pgDSNFormat        = "host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s"
+)
 
 func New(database, username, password string, rws bool, attrs ...PGPoolAttr) (PGPool, error) {
 	var (
@@ -67,7 +70,7 @@ func New(database, username, password string, rws bool, attrs ...PGPoolAttr) (PG
 	ins.mainDSN = &gormPool.DSN{
 		Name: "main",
 		Content: fmt.Sprintf(
-			PostgresDsnFormat,
+			pgDSNFormat,
 			ins.host, ins.username, ins.password, ins.database, ins.port, ins.sslMode, ins.timezone,
 		),
 	}
@@ -134,7 +137,7 @@ func (my *PGPoolImpl) getRws() *gorm.DB {
 			sources = append(sources, &gormPool.DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
-					PostgresDsnFormat,
+					pgDSNFormat,
 					item.Host,
 					item.Username,
 					item.Password,
@@ -154,7 +157,7 @@ func (my *PGPoolImpl) getRws() *gorm.DB {
 			replicas = append(replicas, &gormPool.DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
-					PostgresDsnFormat,
+					pgDSNFormat,
 					item.Host,
 					item.Username,
 					item.Password,

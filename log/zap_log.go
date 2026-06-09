@@ -160,17 +160,17 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 		ins.Level = zapcore.FatalLevel
 	}
 
-	for logLevel := ins.Level; logLevel <= zapcore.FatalLevel; logLevel++ {
-		writer := getWriteSync(*ins, fs.Copy().Join(fmt.Sprintf("%s%s", logLevel.String(), ins.Extension)).GetFullPath())
-		zapCores = append(zapCores, zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, logLevel))
-	}
-
-	// for _, logLevel := range []zapcore.Level{zapcore.DebugLevel, zapcore.InfoLevel, zapcore.WarnLevel, zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel} {
-	// 	if config.Level >= logLevel {
-	// 		writer := getWriteSync(config, fs.Copy().Join(logLevel.String()+config.Extension).GetDir())
-	// 		zapCores = append(zapCores, zapcore.NewCore(encoderTypes[config.EncoderType](zapLoggerConfig), writer, logLevel))
-	// 	}
+	// for logLevel := ins.Level; logLevel <= zapcore.FatalLevel; logLevel++ {
+	// 	writer := getWriteSync(*ins, fs.Copy().Join(fmt.Sprintf("%s%s", logLevel.String(), ins.Extension)).GetFullPath())
+	// 	zapCores = append(zapCores, zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, logLevel))
 	// }
+
+	for _, logLevel := range []zapcore.Level{zapcore.DebugLevel, zapcore.InfoLevel, zapcore.WarnLevel, zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel} {
+		if ins.Level >= logLevel {
+			writer := getWriteSync(*ins, fs.Copy().Join(fmt.Sprintf("%s%s", time.Now().Format("2016_01_02"), ins.Extension)).GetFullPath())
+			zapCores = append(zapCores, zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, logLevel))
+		}
+	}
 
 	zapLogger = zap.New(zapcore.NewTee(zapCores...))
 	if ins.InConsole {

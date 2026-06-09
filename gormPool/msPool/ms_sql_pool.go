@@ -43,7 +43,10 @@ type (
 	}
 )
 
-var MSSQLDSNFormat = "sqlserver://%s:%s@%s:?%d?database=%s"
+var (
+	_              MSSQLPool = (*MSSQLPoolImpl)(nil)
+	mssqlDSNFormat           = "sqlserver://%s:%s@%s:?%d?database=%s"
+)
 
 func New(database, username, password string, rws bool, attrs ...MSSQLPoolAttr) (MSSQLPool, error) {
 	var (
@@ -62,7 +65,7 @@ func New(database, username, password string, rws bool, attrs ...MSSQLPoolAttr) 
 	ins.mainDsn = &gormPool.DSN{
 		Name: "main",
 		Content: fmt.Sprintf(
-			MSSQLDSNFormat,
+			mssqlDSNFormat,
 			ins.username, ins.password, ins.host, ins.port, ins.database,
 		),
 	}
@@ -126,7 +129,7 @@ func (my *MSSQLPoolImpl) getRws() *gorm.DB {
 			sources = append(sources, &gormPool.DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
-					MSSQLDSNFormat,
+					mssqlDSNFormat,
 					item.Username,
 					item.Password,
 					item.Host,
@@ -144,7 +147,7 @@ func (my *MSSQLPoolImpl) getRws() *gorm.DB {
 			replicas = append(replicas, &gormPool.DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
-					MSSQLDSNFormat,
+					mssqlDSNFormat,
 					item.Username,
 					item.Password,
 					item.Host,

@@ -10,8 +10,6 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
-var MySQLDSNFormat = "%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local"
-
 type (
 	MySQLPool interface {
 		GetConn() *gorm.DB
@@ -48,6 +46,11 @@ type (
 	}
 )
 
+var (
+	_              MySQLPool = (*MySQLPoolImpl)(nil)
+	mysqlDSNFormat           = "%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local"
+)
+
 func New(database, charset string, rws bool, attrs ...MySQLPoolAttr) (MySQLPool, error) {
 	var (
 		err      error
@@ -68,7 +71,7 @@ func New(database, charset string, rws bool, attrs ...MySQLPoolAttr) (MySQLPool,
 
 	// 配置主库
 	ins.mainDsn = &gormPool.DSN{Name: "main", Content: fmt.Sprintf(
-		MySQLDSNFormat,
+		mysqlDSNFormat,
 		ins.username, ins.password, ins.host, ins.port, ins.database, ins.charset,
 	)}
 
@@ -151,7 +154,7 @@ func (my *MySQLPoolImpl) getRws() *gorm.DB {
 			sources = append(sources, &gormPool.DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
-					MySQLDSNFormat,
+					mysqlDSNFormat,
 					item.Username,
 					item.Password,
 					item.Host,
@@ -170,7 +173,7 @@ func (my *MySQLPoolImpl) getRws() *gorm.DB {
 			replicas = append(replicas, &gormPool.DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
-					MySQLDSNFormat,
+					mysqlDSNFormat,
 					item.Username,
 					item.Password,
 					item.Host,
