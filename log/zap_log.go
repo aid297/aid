@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/natefinch/lumberjack"
@@ -16,14 +18,14 @@ import (
 // ZapProvider Zap日志服务提供者
 type (
 	ZapLog struct {
-		Level       zapcore.Level
-		Path        string
-		MaxSize     int
-		MaxBackup   int
-		MaxDay      int
-		Compress    bool
-		InConsole   bool
-		Extension   string
+		Level     zapcore.Level
+		Path      string
+		MaxSize   int
+		MaxBackup int
+		MaxDay    int
+		Compress  bool
+		InConsole bool
+		// Extension   string
 		EncoderType ZapLogEncoderType
 	}
 
@@ -37,7 +39,6 @@ type (
 		SetMaxDay(maxDay int) (err error)
 		SetCompress(compress bool) (err error)
 		SetInConsole(inConsole bool) (err error)
-		SetExtension(extension string) (err error)
 		SetEncoderType(encoderType ZapLogEncoderType) (err error)
 		GetLevel() zapcore.Level
 		GetPath() string
@@ -46,7 +47,6 @@ type (
 		GetMaxDay() int
 		GetCompress() bool
 		GetInConsole() bool
-		GetExtension() string
 		SetAttrs(attrs ...ZapLogAttr) (err error)
 	}
 )
@@ -69,10 +69,11 @@ func (zapLog *ZapLog) SetInConsole(inConsole bool) (err error) {
 	zapLog.InConsole = inConsole
 	return nil
 }
-func (zapLog *ZapLog) SetExtension(extension string) (err error) {
-	zapLog.Extension = extension
-	return nil
-}
+
+//	func (zapLog *ZapLog) SetExtension(extension string) (err error) {
+//		zapLog.Extension = extension
+//		return nil
+//	}
 func (zapLog *ZapLog) SetEncoderType(encoderType ZapLogEncoderType) (err error) {
 	zapLog.EncoderType = encoderType
 	return nil
@@ -84,31 +85,90 @@ func (zapLog *ZapLog) GetMaxBackup() int       { return zapLog.MaxBackup }
 func (zapLog *ZapLog) GetMaxDay() int          { return zapLog.MaxDay }
 func (zapLog *ZapLog) GetCompress() bool       { return zapLog.Compress }
 func (zapLog *ZapLog) GetInConsole() bool      { return zapLog.InConsole }
-func (zapLog *ZapLog) GetExtension() string    { return zapLog.Extension }
 
-// getWriteSync 获取 zapcore.WriteSync
-func getWriteSync(zapLog ZapLog, path string) zapcore.WriteSyncer {
-	fileWriter := &lumberjack.Logger{
+type dailyRotateWriteSyncer struct {
+	mu          sync.Mutex
+	zapLog      ZapLog
+	target      logTarget
+	dateLayout  string
+	currentDate string
+	fileWriter  *lumberjack.Logger
+}
+
+type logTarget struct {
+	dirPath   string
+	filename  string
+	extension string
+}
+
+func buildLogTarget(path string) logTarget {
+	cleanPath := filepath.Clean(path)
+	pathExt := filepath.Ext(cleanPath)
+
+	// 完整路径模式：Path("/path/client.log") -> client.2026_01_02.log
+	return logTarget{
+		dirPath:   filepath.Dir(cleanPath),
+		filename:  strings.TrimSuffix(filepath.Base(cleanPath), pathExt),
+		extension: pathExt,
+	}
+}
+
+func newLumberjackWriter(zapLog ZapLog, path string) *lumberjack.Logger {
+	return &lumberjack.Logger{
 		Filename:   path,             // 日志文件名称
 		MaxSize:    zapLog.MaxSize,   // 文件大小限制,单位MB
 		MaxBackups: zapLog.MaxBackup, // 最大保留日志文件数量
 		MaxAge:     zapLog.MaxDay,    // 日志文件保留天数
 		Compress:   zapLog.Compress,  // 是否压缩处理,压缩以后文件为xxxxx.gz
 	}
+}
 
-	if zapLog.InConsole {
-		return zapcore.NewMultiWriteSyncer(zapcore.AddSync(fileWriter), zapcore.AddSync(os.Stdout))
-	} else {
-		return zapcore.AddSync(fileWriter)
+func (syncer *dailyRotateWriteSyncer) rotateIfNeeded(now time.Time) {
+	date := now.Format(syncer.dateLayout)
+	if syncer.fileWriter != nil && date == syncer.currentDate {
+		return
+	}
+
+	syncer.currentDate = date
+	filePath := filepath.Join(syncer.target.dirPath, fmt.Sprintf("%s%s", date, syncer.target.extension))
+	if syncer.target.filename != "" {
+		filePath = filepath.Join(syncer.target.dirPath, fmt.Sprintf("%s.%s%s", syncer.target.filename, date, syncer.target.extension))
+	}
+	syncer.fileWriter = newLumberjackWriter(syncer.zapLog, filePath)
+}
+
+func (syncer *dailyRotateWriteSyncer) Write(p []byte) (n int, err error) {
+	syncer.mu.Lock()
+	defer syncer.mu.Unlock()
+
+	syncer.rotateIfNeeded(time.Now())
+	n, err = syncer.fileWriter.Write(p)
+	if err != nil {
+		return n, err
+	}
+
+	if syncer.zapLog.InConsole {
+		_, _ = os.Stdout.Write(p)
+	}
+
+	return n, nil
+}
+
+func (syncer *dailyRotateWriteSyncer) Sync() error { return nil }
+
+func newDailyRotateWriteSyncer(zapLog ZapLog, target logTarget) zapcore.WriteSyncer {
+	return &dailyRotateWriteSyncer{
+		zapLog:     zapLog,
+		target:     target,
+		dateLayout: "2006_01_02",
 	}
 }
 
 func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 	var (
-		err error
-		d   filesystem.Filesystem
-		// zapLogger       *zap.Logger
-		zapCores        = make([]zapcore.Core, 0, 7)
+		err             error
+		d               filesystem.Filesystem
+		target          logTarget
 		zapLoggerConfig = zapcore.EncoderConfig{
 			MessageKey:    "message",
 			LevelKey:      "logLevel",
@@ -130,14 +190,14 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 		}
 
 		ins = &ZapLog{
-			Level:       zapcore.DebugLevel,
-			Path:        ".",
-			MaxSize:     1,
-			MaxBackup:   5,
-			MaxDay:      30,
-			Compress:    false,
-			InConsole:   false,
-			Extension:   ".log",
+			Level:     zapcore.DebugLevel,
+			Path:      ".",
+			MaxSize:   1,
+			MaxBackup: 5,
+			MaxDay:    30,
+			Compress:  false,
+			InConsole: false,
+			// Extension:   ".log",
 			EncoderType: EncoderTypeConsole,
 		}
 	)
@@ -146,7 +206,8 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	if d = filesystem.NewDir(filesystem.Auto(ins.Path)); !d.GetExist() {
+	target = buildLogTarget(ins.Path)
+	if d = filesystem.NewDir(filesystem.Auto(target.dirPath)); !d.GetExist() {
 		if err = d.Create().GetError(); err != nil {
 			return nil, fmt.Errorf("创建日志目录失败：%w", err)
 		}
@@ -160,18 +221,12 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 		ins.Level = zapcore.FatalLevel
 	}
 
-	// for logLevel := ins.Level; logLevel <= zapcore.FatalLevel; logLevel++ {
-	// 	writer := getWriteSync(*ins, fs.Copy().Join(fmt.Sprintf("%s%s", logLevel.String(), ins.Extension)).GetFullPath())
-	// 	zapCores = append(zapCores, zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, logLevel))
-	// }
-
-	for _, logLevel := range []zapcore.Level{zapcore.DebugLevel, zapcore.InfoLevel, zapcore.WarnLevel, zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel} {
-		if ins.Level >= logLevel {
-			writer := getWriteSync(*ins, filepath.Join(d.GetFullPath(), fmt.Sprintf("%s%s", time.Now().Format("2006_01_02"), ins.Extension)))
-			zapCores = append(zapCores, zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, logLevel))
-		}
-	}
-	return zap.New(zapcore.NewTee(zapCores...)), nil
+	writer := newDailyRotateWriteSyncer(*ins, target)
+	levelEnabler := zap.LevelEnablerFunc(func(logLevel zapcore.Level) bool {
+		return logLevel >= ins.Level
+	})
+	core := zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, levelEnabler)
+	return zap.New(core), nil
 }
 
 func (my *ZapLog) SetAttrs(attrs ...ZapLogAttr) (err error) {

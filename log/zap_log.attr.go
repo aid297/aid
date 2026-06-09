@@ -25,9 +25,6 @@ func Compress(compress bool) ZapLogAttr {
 func InConsole(inConsole bool) ZapLogAttr {
 	return func(zapLog ZapLogger) (err error) { zapLog.SetInConsole(inConsole); return nil }
 }
-func Extension(extension string) ZapLogAttr {
-	return func(zapLog ZapLogger) (err error) { zapLog.SetExtension(extension); return nil }
-}
 func EncoderType(encoderType ZapLogEncoderType) ZapLogAttr {
 	return func(zapLog ZapLogger) (err error) { zapLog.SetEncoderType(encoderType); return nil }
 }

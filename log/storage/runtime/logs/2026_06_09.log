@@ -1,4 +1,0 @@
-2026-06-09 11:45:38.342	info	test-info	{"a": "b"}
-2026-06-09 11:45:38.342	debug	test-debug	{"c": "d"}
-2026-06-09 11:45:38.342	warn	test-warning	{"any": ["haha","hehe",1,2,3,4]}
-2026-06-09 11:45:38.343	error	test-error	{"errors": [{"error": "err1"}, {"error": "err2"}, {"error": "err3"}]}
