@@ -32,7 +32,7 @@ func (*ZapInitialize) Boot() {
 		zapLog.InConsole(global.CONFIG.System.Debug || global.CONFIG.Log.Zap.InConsole),
 		zapLog.MaxSize(global.CONFIG.Log.Zap.MaxSize),
 		zapLog.MaxDay(global.CONFIG.Log.Zap.MaxDay),
-		zapLog.Path(global.CONFIG.Log.Zap.Dir),
+		zapLog.Filename(global.CONFIG.Log.Zap.Dir),
 	); err != nil {
 		log.Fatalf("【启动日志失败】 %s", err.Error())
 	}

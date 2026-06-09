@@ -19,7 +19,7 @@ import (
 type (
 	ZapLog struct {
 		Level     zapcore.Level
-		Path      string
+		Filename  string
 		MaxSize   int
 		MaxBackup int
 		MaxDay    int
@@ -33,7 +33,7 @@ type (
 
 	ZapLogger interface {
 		SetLevel(level zapcore.Level) (err error)
-		SetPath(path string) (err error)
+		SetFilename(path string) (err error)
 		SetMaxSize(maxSize int) (err error)
 		SetMaxBackup(maxBackup int) (err error)
 		SetMaxDay(maxDay int) (err error)
@@ -41,7 +41,7 @@ type (
 		SetInConsole(inConsole bool) (err error)
 		SetEncoderType(encoderType ZapLogEncoderType) (err error)
 		GetLevel() zapcore.Level
-		GetPath() string
+		GetFilename() string
 		GetMaxSize() int
 		GetMaxBackup() int
 		GetMaxDay() int
@@ -57,8 +57,11 @@ const (
 )
 
 func (zapLog *ZapLog) SetLevel(level zapcore.Level) (err error) { zapLog.Level = level; return nil }
-func (zapLog *ZapLog) SetPath(path string) (err error)          { zapLog.Path = path; return nil }
-func (zapLog *ZapLog) SetMaxSize(maxSize int) (err error)       { zapLog.MaxSize = maxSize; return nil }
+func (zapLog *ZapLog) SetFilename(filename string) (err error) {
+	zapLog.Filename = filename
+	return nil
+}
+func (zapLog *ZapLog) SetMaxSize(maxSize int) (err error) { zapLog.MaxSize = maxSize; return nil }
 func (zapLog *ZapLog) SetMaxBackup(maxBackup int) (err error) {
 	zapLog.MaxBackup = maxBackup
 	return nil
@@ -79,7 +82,7 @@ func (zapLog *ZapLog) SetEncoderType(encoderType ZapLogEncoderType) (err error) 
 	return nil
 }
 func (zapLog *ZapLog) GetLevel() zapcore.Level { return zapLog.Level }
-func (zapLog *ZapLog) GetPath() string         { return zapLog.Path }
+func (zapLog *ZapLog) GetFilename() string     { return zapLog.Filename }
 func (zapLog *ZapLog) GetMaxSize() int         { return zapLog.MaxSize }
 func (zapLog *ZapLog) GetMaxBackup() int       { return zapLog.MaxBackup }
 func (zapLog *ZapLog) GetMaxDay() int          { return zapLog.MaxDay }
@@ -191,7 +194,7 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 
 		ins = &ZapLog{
 			Level:     zapcore.DebugLevel,
-			Path:      ".",
+			Filename:  ".",
 			MaxSize:   1,
 			MaxBackup: 5,
 			MaxDay:    30,
@@ -206,7 +209,7 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	target = buildLogTarget(ins.Path)
+	target = buildLogTarget(ins.Filename)
 	if d = filesystem.NewDir(filesystem.Auto(target.dirPath)); !d.GetExist() {
 		if err = d.Create().GetError(); err != nil {
 			return nil, fmt.Errorf("创建日志目录失败：%w", err)

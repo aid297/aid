@@ -18,7 +18,7 @@ func Test1(t *testing.T) {
 
 		if zapLogger, err = log.NewZapLog(
 			log.Level(zapcore.DebugLevel),
-			log.Path("./storage/runtime/logs/server.log"),
+			log.Filename("./storage/runtime/logs/server.log"),
 			log.InConsole(false),
 			log.EncoderType(log.EncoderTypeConsole),
 			log.Compress(true),

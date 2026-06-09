@@ -7,8 +7,8 @@ type ZapLogAttr func(zapLog ZapLogger) (err error)
 func Level(level zapcore.Level) ZapLogAttr {
 	return func(zapLog ZapLogger) (err error) { zapLog.SetLevel(level); return nil }
 }
-func Path(path string) ZapLogAttr {
-	return func(zapLog ZapLogger) (err error) { zapLog.SetPath(path); return nil }
+func Filename(filename string) ZapLogAttr {
+	return func(zapLog ZapLogger) (err error) { zapLog.SetFilename(filename); return nil }
 }
 func MaxSize(maxSize int) ZapLogAttr {
 	return func(zapLog ZapLogger) (err error) { zapLog.SetMaxSize(maxSize); return nil }
