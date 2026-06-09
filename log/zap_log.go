@@ -167,7 +167,7 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 
 	for _, logLevel := range []zapcore.Level{zapcore.DebugLevel, zapcore.InfoLevel, zapcore.WarnLevel, zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel} {
 		if ins.Level >= logLevel {
-			writer := getWriteSync(*ins, fs.Copy().Join(fmt.Sprintf("%s%s", time.Now().Format("2016_01_02"), ins.Extension)).GetFullPath())
+			writer := getWriteSync(*ins, fs.Copy().Join(fmt.Sprintf("%s%s", time.Now().Format("2006_01_02"), ins.Extension)).GetFullPath())
 			zapCores = append(zapCores, zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, logLevel))
 		}
 	}
