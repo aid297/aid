@@ -48,7 +48,7 @@ type (
 	}
 )
 
-func NewMySQLPool(database, charset string, rws bool, attrs ...MySQLPoolAttr) (MySQLPool, error) {
+func New(database, charset string, rws bool, attrs ...MySQLPoolAttr) (MySQLPool, error) {
 	var (
 		err      error
 		dbConfig *gorm.Config

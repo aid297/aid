@@ -7,9 +7,7 @@ import (
 )
 
 var APP struct {
-	PGPool        PGPool
-	SQLServerPool SQLServerPool
-	DBSetting     DBSetting
+	DBSetting DBSetting
 }
 
 type MySQLBasic struct {

@@ -6,11 +6,11 @@ import (
 
 type (
 	DBSetting struct {
-		Common    *Common           `yaml:"common,omitempty"`
-		MySQL     *MySQLSetting     `yaml:"mysql,omitempty"`
-		Postgres  *PGSetting        `yaml:"postgres,omitempty"`
-		SQLServer *SQLServerSetting `yaml:"sql-server,omitempty"`
-		ArSQL     *ArSQLSetting     `yaml:"ar-sql,omitempty"`
+		Common    *Common       `yaml:"common,omitempty"`
+		MySQL     *MySQLSetting `yaml:"mysql,omitempty"`
+		Postgres  *PGSetting    `yaml:"postgres,omitempty"`
+		SQLServer *MSSQLSetting `yaml:"sql-server,omitempty"`
+		ArSQL     *ArSQLSetting `yaml:"ar-sql,omitempty"`
 	}
 
 	Common struct {
@@ -72,11 +72,11 @@ type (
 		SSLMode  string `yaml:"ssl-mode"`
 	}
 
-	SQLServerSetting struct {
-		Main *SQLServerEndpoint `yaml:"main"`
+	MSSQLSetting struct {
+		Main *MSSQLEndpoint `yaml:"main"`
 	}
 
-	SQLServerEndpoint struct {
+	MSSQLEndpoint struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`

@@ -21,7 +21,7 @@ func Test1(t *testing.T) {
 	if err != nil {
 		t.Fatalf("读取配置文件失败：%v", err)
 	}
-	pool, err := mysqlPool.NewMySQLPool(
+	pool, err := mysqlPool.New(
 		dbSetting.MySQL.Database,
 		dbSetting.MySQL.Charset,
 		dbSetting.MySQL.Rws,
