@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/natefinch/lumberjack"
@@ -10,7 +11,6 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/aid297/aid/v2/filesystem"
-	"github.com/aid297/aid/v2/operation"
 )
 
 // ZapProvider Zap日志服务提供者
@@ -105,9 +105,9 @@ func getWriteSync(zapLog ZapLog, path string) zapcore.WriteSyncer {
 
 func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 	var (
-		err             error
-		fs              filesystem.Filesystem
-		zapLogger       *zap.Logger
+		err error
+		d   filesystem.Filesystem
+		// zapLogger       *zap.Logger
 		zapCores        = make([]zapcore.Core, 0, 7)
 		zapLoggerConfig = zapcore.EncoderConfig{
 			MessageKey:    "message",
@@ -146,8 +146,8 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	if fs = filesystem.NewFile(filesystem.Auto(ins.Path)); !fs.GetExist() {
-		if err = fs.Create().GetError(); err != nil {
+	if d = filesystem.NewDir(filesystem.Auto(ins.Path)); !d.GetExist() {
+		if err = d.Create().GetError(); err != nil {
 			return nil, fmt.Errorf("创建日志目录失败：%w", err)
 		}
 	}
@@ -167,26 +167,11 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 
 	for _, logLevel := range []zapcore.Level{zapcore.DebugLevel, zapcore.InfoLevel, zapcore.WarnLevel, zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel} {
 		if ins.Level >= logLevel {
-			n := fs.Copy().Join(fmt.Sprintf("%s%s", time.Now().Format("2006_01_02"), ins.Extension)).GetFullPath()
-			writer := getWriteSync(*ins, n)
+			writer := getWriteSync(*ins, filepath.Join(d.GetFullPath(), fmt.Sprintf("%s%s", time.Now().Format("2006_01_02"), ins.Extension)))
 			zapCores = append(zapCores, zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, logLevel))
 		}
 	}
-
-	zapLogger = zap.New(zapcore.NewTee(zapCores...))
-	if ins.InConsole {
-		zapLogger = zapLogger.WithOptions(zap.AddCaller())
-	}
-
-	defer func() {
-		_ = operation.NewTernary(operation.TrueFn(func() error { return nil }), operation.FalseFn(func() error { return zapLogger.Sync() })).GetByValue(ins.InConsole)
-		// if config.InConsole {
-		// 	return
-		// }
-		// err = zapLogger.Sync()
-	}()
-
-	return zapLogger, nil
+	return zap.New(zapcore.NewTee(zapCores...)), nil
 }
 
 func (my *ZapLog) SetAttrs(attrs ...ZapLogAttr) (err error) {
