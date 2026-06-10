@@ -136,7 +136,7 @@ func (my *RedisPool) GetPipe(clientName string) (prefix string, pipeliner rds.Pi
 }
 
 // Pipe 执行管道操作
-func (my *RedisPool) Pipe(clientName string, fn func(prefix string, pipe rds.Pipeliner) error) error {
+func (my *RedisPool) Pipe(clientName string, fn func(prefix string, pipe rds.Pipeliner) (err error)) error {
 	prefix, pipeliner, err := my.GetPipe(clientName)
 	if err != nil {
 		return err
