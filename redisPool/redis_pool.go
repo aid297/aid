@@ -123,6 +123,18 @@ func (my *RedisPool) Set(ctx context.Context, clientName, key string, val any, e
 	return client.Set(ctx, fmt.Sprintf("%s:%s", prefix, key), val, exp).Result()
 }
 
+// GetPipe 获取管道
+func (my *RedisPool) GetPipe(clientName string) (prefix string, pipeliner rds.Pipeliner, err error) {
+	var client *rds.Client
+
+	prefix, client = my.GetClient(clientName)
+	if client == nil {
+		return "", nil, fmt.Errorf("没有找到redis链接：%s", clientName)
+	}
+
+	return
+}
+
 // Close 关闭链接
 func (my *RedisPool) Close(key string) (err error) {
 	if client, exist := my.redisClients.GetValueByKey(key); exist {
