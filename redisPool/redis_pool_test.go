@@ -11,7 +11,7 @@ import (
 func TestOnceRedisPool(t *testing.T) {
 	rp := redisPool.New(
 		"localhost:6379",
-		"", "", "bsiness",
+		"bsiness",
 		redisPool.Pool("user", 0),
 		redisPool.Pool("order", 1),
 	)
