@@ -9,8 +9,8 @@ func Password(password string) RedisPoolAttr {
 func Prefix(prefix string) RedisPoolAttr {
 	return func(redisPool *RedisPool) { redisPool.SetPrefix(prefix) }
 }
-func Pool(clientName, prefix string, dbNum int) RedisPoolAttr {
+func Pool(clientName string, dbNum int) RedisPoolAttr {
 	return func(redisPool *RedisPool) {
-		redisPool.SetPool(clientName, prefix, dbNum)
+		redisPool.SetPool(clientName, dbNum)
 	}
 }

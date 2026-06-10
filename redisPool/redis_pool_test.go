@@ -12,8 +12,8 @@ func TestOnceRedisPool(t *testing.T) {
 	rp := redisPool.NewRedisPool(
 		redisPool.Addr("localhost:6379"),
 		redisPool.Prefix("business"),
-		redisPool.Pool("user", "users", 0),
-		redisPool.Pool("order", "orders", 1),
+		redisPool.Pool("user", 0),
+		redisPool.Pool("order", 1),
 	)
 
 	prefix, rc := rp.GetClient("user")
