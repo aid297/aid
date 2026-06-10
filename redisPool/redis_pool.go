@@ -135,6 +135,16 @@ func (my *RedisPool) GetPipe(clientName string) (prefix string, pipeliner rds.Pi
 	return
 }
 
+// Pipe 执行管道操作
+func (my *RedisPool) Pipe(clientName string, fn func(prefix string, pipe rds.Pipeliner) error) error {
+	prefix, pipeliner, err := my.GetPipe(clientName)
+	if err != nil {
+		return err
+	}
+
+	return fn(prefix, pipeliner)
+}
+
 // Close 关闭链接
 func (my *RedisPool) Close(key string) (err error) {
 	if client, exist := my.redisClients.GetValueByKey(key); exist {
