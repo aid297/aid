@@ -3,6 +3,9 @@ package redisPool
 type RedisPoolAttr func(redisPool *RedisPool)
 
 func Addr(addr string) RedisPoolAttr { return func(redisPool *RedisPool) { redisPool.SetAddr(addr) } }
+func Username(username string) RedisPoolAttr {
+	return func(redisPool *RedisPool) { redisPool.SetUsername(username) }
+}
 func Password(password string) RedisPoolAttr {
 	return func(redisPool *RedisPool) { redisPool.SetPassword(password) }
 }

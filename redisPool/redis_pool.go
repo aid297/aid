@@ -67,6 +67,7 @@ func (my *RedisPool) SetAttrs(attrs ...RedisPoolAttr) {
 }
 
 func (my *RedisPool) SetAddr(addr string)         { my.addr = addr }
+func (my *RedisPool) SetUsername(username string) { my.username = username }
 func (my *RedisPool) SetPassword(password string) { my.password = password }
 func (my *RedisPool) SetPrefix(prefix string)     { my.prefix = prefix }
 func (my *RedisPool) SetPool(clientName string, dbNum int) {
