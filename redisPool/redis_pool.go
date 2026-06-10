@@ -4,18 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	rds "github.com/redis/go-redis/v9"
 
-	"github.com/aid297/aid/v2/anyMap"
 	"github.com/aid297/aid/v2/anySlice"
-	"github.com/aid297/aid/v2/str"
 )
 
 type (
 	RedisPool struct {
-		redisClients anyMap.AnyMapper[string, *redisClient]
+		redisClients sync.Map
 		addr         string
 		password     string
 		prefix       string
@@ -29,36 +28,32 @@ type (
 
 	redisPoolSetting struct {
 		ClientName string
-		Prefix     string
 		DBNum      int
 	}
 )
 
 // NewRedisPool 实例化：redis连接池
 func NewRedisPool(attrs ...RedisPoolAttr) *RedisPool {
-	var redisPool = &RedisPool{
-		redisClients: anyMap.New[string, *redisClient](),
+	var ins = &RedisPool{
+		redisClients: sync.Map{},
 		pools:        anySlice.New[redisPoolSetting](),
 	}
 
 	if len(attrs) > 0 {
-		redisPool.SetAttrs(attrs...)
+		ins.SetAttrs(attrs...)
 	}
 
-	if redisPool.pools.NotEmpty() {
-		for _, redisPoolSetting := range redisPool.pools.ToSlice() {
-			redisPool.redisClients.SetDatum(redisPoolSetting.ClientName, &redisClient{
-				prefix: str.APP.Buffer.JoinString(redisPool.prefix, ":", redisPoolSetting.Prefix),
-				conn: rds.NewClient(&rds.Options{
-					Addr:     redisPool.addr,
-					Password: redisPool.password,
-					DB:       redisPoolSetting.DBNum,
-				}),
+	if ins.pools.NotEmpty() {
+		ins.pools.Each(func(_ int, item redisPoolSetting) (isBreak bool) {
+			ins.redisClients.Store(item.ClientName, &redisClient{
+				prefix: fmt.Sprintf("%s:%s", ins.prefix, item.ClientName),
+				conn:   rds.NewClient(&rds.Options{Addr: ins.addr, Password: ins.password, DB: item.DBNum}),
 			})
-		}
+			return
+		})
 	}
 
-	return redisPool
+	return ins
 }
 
 // SetAttrs 设置属性
@@ -72,13 +67,13 @@ func (my *RedisPool) SetAddr(addr string)         { my.addr = addr }
 func (my *RedisPool) SetPassword(password string) { my.password = password }
 func (my *RedisPool) SetPrefix(prefix string)     { my.prefix = prefix }
 func (my *RedisPool) SetPool(clientName, prefix string, dbNum int) {
-	my.pools.Append(redisPoolSetting{ClientName: clientName, Prefix: prefix, DBNum: dbNum})
+	my.pools.Append(redisPoolSetting{ClientName: clientName, DBNum: dbNum})
 }
 
 // GetClient 获取链接和链接前缀
 func (my *RedisPool) GetClient(clientName string) (string, *rds.Client) {
-	if client, exist := my.redisClients.GetValueByKey(clientName); exist {
-		return client.prefix, client.conn
+	if value, exist := my.redisClients.Load(clientName); exist {
+		return value.(*redisClient).prefix, value.(*redisClient).conn
 	}
 
 	return "", nil
@@ -147,8 +142,8 @@ func (my *RedisPool) Pipe(clientName string, fn func(prefix string, pipe rds.Pip
 
 // Close 关闭链接
 func (my *RedisPool) Close(key string) (err error) {
-	if client, exist := my.redisClients.GetValueByKey(key); exist {
-		return client.conn.Close()
+	if client, exist := my.redisClients.Load(key); exist {
+		return client.(*redisClient).conn.Close()
 	}
 
 	return
@@ -156,8 +151,9 @@ func (my *RedisPool) Close(key string) (err error) {
 
 // Clean 清理链接
 func (my *RedisPool) Clean() {
-	for key, val := range my.redisClients.ToMap() {
-		_ = val.conn.Close()
-		my.redisClients.RemoveByKey(key)
-	}
+	my.redisClients.Range(func(key, value any) bool {
+		_ = value.(*redisClient).conn.Close()
+		my.redisClients.Delete(key)
+		return true
+	})
 }
