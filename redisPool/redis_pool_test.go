@@ -9,9 +9,9 @@ import (
 )
 
 func TestOnceRedisPool(t *testing.T) {
-	rp := redisPool.NewRedisPool(
-		redisPool.Addr("localhost:6379"),
-		redisPool.Prefix("business"),
+	rp := redisPool.New(
+		"localhost:6379",
+		"", "", "bsiness",
 		redisPool.Pool("user", 0),
 		redisPool.Pool("order", 1),
 	)

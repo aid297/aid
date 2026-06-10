@@ -16,6 +16,7 @@ type (
 	RedisPool struct {
 		redisClients sync.Map
 		addr         string
+		username     string
 		password     string
 		prefix       string
 		pools        anySlice.AnySlicer[redisPoolSetting]
@@ -32,9 +33,11 @@ type (
 	}
 )
 
-// NewRedisPool 实例化：redis连接池
-func NewRedisPool(attrs ...RedisPoolAttr) *RedisPool {
+// New 实例化：redis连接池
+func New(addr, appName string, attrs ...RedisPoolAttr) *RedisPool {
 	var ins = &RedisPool{
+		addr:         addr,
+		prefix:       appName,
 		redisClients: sync.Map{},
 		pools:        anySlice.New[redisPoolSetting](),
 	}
@@ -47,7 +50,7 @@ func NewRedisPool(attrs ...RedisPoolAttr) *RedisPool {
 		ins.pools.Each(func(_ int, item redisPoolSetting) (isBreak bool) {
 			ins.redisClients.Store(item.ClientName, &redisClient{
 				prefix: fmt.Sprintf("%s:%s", ins.prefix, item.ClientName),
-				conn:   rds.NewClient(&rds.Options{Addr: ins.addr, Password: ins.password, DB: item.DBNum}),
+				conn:   rds.NewClient(&rds.Options{Addr: addr, Username: ins.username, Password: ins.password, DB: item.DBNum}),
 			})
 			return
 		})
