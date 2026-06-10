@@ -131,6 +131,8 @@ func (my *RedisPool) GetPipe(clientName string) (prefix string, pipeliner rds.Pi
 		return "", nil, fmt.Errorf("没有找到redis链接：%s", clientName)
 	}
 
+	pipeliner = client.TxPipeline()
+
 	return
 }
 
