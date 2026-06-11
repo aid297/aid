@@ -1,24 +1,24 @@
 package httpClient
 
 type (
-	ContentType = string
-	Accept      string
+	HTTPContentType = string
+	HTTPAccept      string
 )
 
 var (
-	ContentTypeJSON               ContentType = "application/json"
-	ContentTypeXML                ContentType = "application/xml"
-	ContentTypeXWwwFormURLencoded ContentType = "application/x-www-form-urlencoded"
-	ContentTypeFormData           ContentType = "form-data"
-	ContentTypePlain              ContentType = "text/plain"
-	ContentTypeHTML               ContentType = "text/html"
-	ContentTypeCSS                ContentType = "text/css"
-	ContentTypeJavascript         ContentType = "text/javascript"
-	ContentTypeSteam              ContentType = "application/octet-stream"
-	ContentTypes                              = map[ContentType]string{
+	ContentTypeJSON               HTTPContentType = "application/json"
+	ContentTypeXML                HTTPContentType = "application/xml"
+	ContentTypeXWWWFormURLEncoded HTTPContentType = "application/x-www-form-urlencoded"
+	ContentTypeFormData           HTTPContentType = "form-data"
+	ContentTypePlain              HTTPContentType = "text/plain"
+	ContentTypeHTML               HTTPContentType = "text/html"
+	ContentTypeCSS                HTTPContentType = "text/css"
+	ContentTypeJavascript         HTTPContentType = "text/javascript"
+	ContentTypeSteam              HTTPContentType = "application/octet-stream"
+	HTTPContentTypes                              = map[HTTPContentType]string{
 		ContentTypeJSON:               "application/json",
 		ContentTypeXML:                "application/xml",
-		ContentTypeXWwwFormURLencoded: "application/x-www-form-urlencoded",
+		ContentTypeXWWWFormURLEncoded: "application/x-www-form-urlencoded",
 		ContentTypeFormData:           "form-data",
 		ContentTypePlain:              "text/plain",
 		ContentTypeHTML:               "text/html",
@@ -27,16 +27,16 @@ var (
 		ContentTypeSteam:              "application/octet-stream",
 	}
 
-	AcceptJSON       Accept = "application/json"
-	AcceptXML        Accept = "application/xml"
-	AcceptPlain      Accept = "text/plain"
-	AcceptHTML       Accept = "text/html"
-	AcceptCSS        Accept = "text/css"
-	AcceptJavascript Accept = "text/javascript"
-	AcceptSteam      Accept = "application/octet-stream"
-	AcceptAny        Accept = "*/*"
+	AcceptJSON       HTTPAccept = "application/json"
+	AcceptXML        HTTPAccept = "application/xml"
+	AcceptPlain      HTTPAccept = "text/plain"
+	AcceptHTML       HTTPAccept = "text/html"
+	AcceptCSS        HTTPAccept = "text/css"
+	AcceptJavascript HTTPAccept = "text/javascript"
+	AcceptSteam      HTTPAccept = "application/octet-stream"
+	AcceptAny        HTTPAccept = "*/*"
 
-	Accepts = map[Accept]string{
+	HTTPAccepts = map[HTTPAccept]string{
 		AcceptJSON:       "application/json",
 		AcceptXML:        "application/xml",
 		AcceptPlain:      "text/plain",

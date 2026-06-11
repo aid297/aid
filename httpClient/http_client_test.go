@@ -50,18 +50,22 @@ func Test1(t *testing.T) {
 			TLSClientConfig:     clientBTLSConfig, // TLS 证书
 		}
 
-		hc := httpClient.APP.HTTPClient.New(
+		hc, err := httpClient.New(
 			httpClient.URL("http://www", ".baidu", ".com"),
 			httpClient.Method(http.MethodGet),
 			httpClient.Queries(map[string]any{"name": "张三", "age": 18}),
-			httpClient.SetHeaderValue(nil).Authorization("username", "password", "Basic").Accept(httpClient.AcceptJSON).ContentType(httpClient.ContentTypeJSON),
-			httpClient.SetHeaderValue(nil).ContentType(httpClient.ContentTypeJSON).Accept(httpClient.AcceptJSON),
+			httpClient.Authorization("username", "password", "Basic"),
+			httpClient.Accept(httpClient.AcceptJSON),
+			httpClient.ContentType(httpClient.ContentTypeJSON),
 			httpClient.JSON(map[string]any{"李四": 20, "王五": 30, "赵六": 40}),
 			httpClient.Timeout(5*time.Minute),
 			httpClient.Transport(transport),
 			httpClient.Cert(nil),
 			httpClient.AutoCopy(false),
 		)
+		if err != nil {
+			t.Fatalf("初始化 HTTP 客户端失败：%v", err)
+		}
 
 		t.Logf("%+v\n", hc)
 		t.Logf("url: %s\n", hc.GetURL())
@@ -78,15 +82,21 @@ func Test1(t *testing.T) {
 }
 
 func Test2(t *testing.T) {
-	hc := httpClient.APP.HTTPClient.New(
+	hc, err := httpClient.New(
 		httpClient.TransportDefault(),
 		httpClient.URL("http://127.0.0.1:19003/project/list"),
-		httpClient.SetHeaderValue(map[string]any{"User-Info": "eyJ1dWlkIjoiYmIwZjJhYjItYTRiNy00ZjYxLWIzYTQtMWRlNTMzOGNkNmNkIiwibmlja25hbWUiOiLkvZkiLCJ1c2VybmFtZSI6Inl1aml6aG91IiwiZW1haWwiOiIxMzUyMjE3ODA1N0BlbWFpbC5jb20iLCJpc0FkbWluIjpmYWxzZSwidGVhbUlkIjoyLCJvd25lclRlYW1JZHMiOlszM10sImhhc1RlYW1JZHMiOlsyLDMzLDM3XSwidG9rZW4iOiIvZWREdnBCRGhManlaVWJ0TC9iVkdaZktRWlRoajJNdDc1bVBxSVduTWxQdFFGOGdxbWpJQjEzMG5MVDllelF2SmJvN1dGbG9YVzU3SW5JZkQvNkRrMU1ERmtpWVJ5aHdZRENSanZJVnArZzY2bnFwSTd5bDBCcWpDN0FBU2NrT3cyQzFWSmY1emtjaGVqbWxIMDhJNnB5Ylk2NmtzaEwwOWxGNlJMZVIzd0xNQ3l5RGNjSVpmclJQQS9IOUtNM3YvNWdVTFk3UGpKL1BSR0NzSzJlYkMyTHlEdGpTMk02MmJ1N0FRekhRQmhkSFEvN3hsQXlUTk1aT0NPU0tyWlRQWmVWK0V5b2NMMGNqNEozQ0ZzMGRFZHkvdG5iVWV3SFhIa0grU0lvUG0vQ2pPeVN4SFFEV3FCS0plemRiSFdCN2ZUMjZZcWljcjBJVmROOTB3UE1SZGtQSHJvSmVkVHNGQSs2SGhVZ1hsVHc9In0="}),
-		httpClient.Timeout(1*time.Second),
+		httpClient.Header("User-Info", "eyJ1dWlkIjoiYmIwZjJhYjItYTRiNy00ZjYxLWIzYTQtMWRlNTMzOGNkNmNkIiwibmlja25hbWUiOiLkvZkiLCJ1c2VybmFtZSI6Inl1aml6aG91IiwiZW1haWwiOiIxMzUyMjE3ODA1N0BlbWFpbC5jb20iLCJpc0FkbWluIjpmYWxzZSwidGVhbUlkIjoyLCJvd25lclRlYW1JZHMiOlszM10sImhhc1RlYW1JZHMiOlsyLDMzLDM3XSwidG9rZW4iOiIvZWREdnBCRGhManlaVWJ0TC9iVkdaZktRWlRoajJNdDc1bVBxSVduTWxQdFFGOGdxbWpJQjEzMG5MVDllelF2SmJvN1dGbG9YVzU3SW5JZkQvNkRrMU1ERmtpWVJ5aHdZRENSanZJVnArZzY2bnFwSTd5bDBCcWpDN0FBU2NrT3cyQzFWSmY1emtjaGVqbWxIMDhJNnB5Ylk2NmtzaEwwOWxGNlJMZVIzd0xNQ3l5RGNjSVpmclJQQS9IOUtNM3YvNWdVTFk3UGpKL1BSR0NzSzJlYkMyTHlEdGpTMk02MmJ1N0FRekhRQmhkSFEvN3hsQXlUTk1aT0NPU0tyWlRQWmVWK0V5b2NMMGNqNEozQ0ZzMGRFZHkvdG5iVWV3SFhIa0grU0lvUG0vQ2pPeVN4SFFEV3FCS0plemRiSFdCN2ZUMjZZcWljcjBJVmROOTB3UE1SZGtQSHJvSmVkVHNGQSs2SGhVZ1hsVHc9In0="),
+		httpClient.Timeout(time.Second),
 		httpClient.Method(http.MethodPost),
 		httpClient.JSON(map[string]any{"projectUUID": "1f06786e-07bd-6868-8ef5-355bce72ed9b"}),
 		httpClient.AutoCopy(true),
-	).Send()
+	)
+	if err != nil {
+		t.Fatalf("初始化 HTTP 客户端失败：%v", err)
+	}
+	if err = hc.Send().Error(); err != nil {
+		t.Fatalf("发送 HTTP 请求失败：%v", err)
+	}
 
 	t.Logf("结果：%s\n", hc.ToBytes())
 }
@@ -111,16 +121,14 @@ func Test3(t *testing.T) {
 		originalBody := map[string]any{"username": "admin", "password": "secret123"}
 
 		// 创建 HTTPClient 并应用加密
-		hc := httpClient.APP.HTTPClient.New(
+		hc, err := httpClient.New(
 			httpClient.URL("http://127.0.0.1:8080/api/login"),
 			httpClient.Method(http.MethodPost),
 			httpClient.JSON(originalBody),
 			httpClient.Encrypt(aesCipher),
 		)
-
-		// 验证没有错误
-		if err := hc.Error(); err != nil {
-			t.Fatalf("HTTPClient 创建失败: %v", err)
+		if err != nil {
+			t.Fatalf("初始化 HTTP 客户端失败：%v", err)
 		}
 
 		// 验证加密后的请求体
@@ -164,12 +172,15 @@ func Test3(t *testing.T) {
 			t.Fatalf("创建 AES GCM 加密器失败: %v", err)
 		}
 
-		hc := httpClient.APP.HTTPClient.New(
+		hc, err := httpClient.New(
 			httpClient.URL("http://127.0.0.1:8080/api/secure"),
 			httpClient.Method(http.MethodPost),
 			httpClient.JSON(map[string]any{"data": "sensitive information"}),
 			httpClient.Encrypt(aesCipher),
 		)
+		if err != nil {
+			t.Fatalf("初始化 HTTP 客户端失败：%v", err)
+		}
 
 		if err := hc.Error(); err != nil {
 			t.Fatalf("GCM 模式加密失败: %v", err)
@@ -199,15 +210,14 @@ func Test3(t *testing.T) {
 			t.Fatalf("创建 AES CTR 加密器失败: %v", err)
 		}
 
-		hc := httpClient.APP.HTTPClient.New(
+		hc, err := httpClient.New(
 			httpClient.URL("http://127.0.0.1:8080/api/stream"),
 			httpClient.Method(http.MethodPost),
 			httpClient.Plain("This is a large streaming message that needs encryption"),
 			httpClient.Encrypt(aesCipher),
 		)
-
-		if err := hc.Error(); err != nil {
-			t.Fatalf("CTR 模式加密失败: %v", err)
+		if err != nil {
+			t.Fatalf("初始化 HTTP 客户端失败：%v", err)
 		}
 
 		encryptedBody := hc.GetBody()

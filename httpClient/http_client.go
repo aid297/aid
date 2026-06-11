@@ -8,122 +8,439 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 
 	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 
+	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/consts/digitalInfo"
+	"github.com/aid297/aid/v2/debugLogger"
 	"github.com/aid297/aid/v2/operation"
+	"github.com/aid297/aid/v2/secret"
 	"github.com/aid297/aid/v2/str"
 )
 
+var _ HTTPClient = (*HTTPClientImpl)(nil)
+
 type (
-	HTTPClient struct {
-		err               error
-		url               string
-		queries           map[string]any
-		method            string
-		headers           map[string][]any
-		requestBody       io.Reader
-		requestBodyBuffer *bytes.Buffer
-		rateLimit         int64
-		responseBody      []byte
-		timeout           time.Duration
-		transport         *http.Transport
-		cert              []byte
-		rawRequest        *http.Request
-		rawResponse       *http.Response
-		client            *http.Client
-		autoCopy          bool
-		lock              sync.RWMutex
-		// OK           *bool
+	HTTPClient interface {
+		init(method string, attrs ...HTTPClientAttr) (HTTPClient, error)
+		setAttrs(attrs ...HTTPClientAttr) (err error)
+		SetAttrs(attrs ...HTTPClientAttr) (HTTPClient, error)
+		setURL(urls ...any) (err error)
+		setQueries(queries map[string]any) (err error)
+		setQueriesNotEmpty(queries map[string]any) (err error)
+		setQuery(key string, value any) (err error)
+		setMethod(method string) (err error)
+		setHeaders(headers map[string][]any) (err error)
+		setHeader(key string, value any) (err error)
+		appendHeaders(headers map[string][]any) (err error)
+		appendHeader(key string, value any) (err error)
+		setBody(body *bytes.Buffer) (err error)
+		setBodyJSON(body any) (err error)
+		setBodyXML(body any) (err error)
+		setBodyForm(body map[string]any) (err error)
+		setBodyFormData(fields, files map[string]string) (err error)
+		setBodyPlain(body string) (err error)
+		setBodyHTML(body string) (err error)
+		setBodyCSS(body string) (err error)
+		setBodyJavascript(body string) (err error)
+		setBodyBytes(body []byte) (err error)
+		setBodyReadCloser(body io.ReadCloser) (err error)
+		setBodyFile(filename string) (err error)
+		setRateLimit(rate uint64) (err error)
+		setTimeout(timeout time.Duration) (err error)
+		setTransport(transport *http.Transport) (err error)
+		setCert(cert []byte) (err error)
+		setAutoCopy(autoCopy bool) (err error)
+		setEncryptor(symmetricEncryptor secret.Symmetric)
+
+		GetURL() string
+		getURL() string
+		GetQueries() map[string]any
+		getQueries() map[string]any
+		GetMethod() string
+		getMethod() string
+		GetHeaders() map[string][]any
+		getHeaders() map[string][]any
+		GetBody() []byte
+		getBody() []byte
+		GetTimeout() time.Duration
+		getTimeout() time.Duration
+		GetTransport() *http.Transport
+		getTransport() *http.Transport
+		GetCert() []byte
+		getCert() []byte
+		GetRawRequest() *http.Request
+		getRawRequest() *http.Request
+		GetRawResponse() *http.Response
+		getRawResponse() *http.Response
+		GetClient() *http.Client
+		getClient() *http.Client
+		send() HTTPClient
+		OK() error
+		isNeedRetry(condition func(statusCode int, err error) bool) (needRetry bool)
+		SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) (HTTPClient, []error)
+		Send() HTTPClient
+		parseBody()
+		ToJSON(target any, keys ...any) HTTPClient
+		ToXML(target any) HTTPClient
+		ToBytes() []byte
+		ToWriter(writer http.ResponseWriter) HTTPClient
+		Error() error
+		GetStatusCode() int
+		GetStatus() string
 	}
 
-	HTTPClientBuilder struct {
-		attrs []HTTPClientAttributer
+	HTTPClientImpl struct {
+		err                error
+		url                string
+		queries            map[string]any
+		method             string
+		headers            map[string][]any
+		requestBody        io.Reader
+		requestBodyBuffer  *bytes.Buffer
+		rateLimit          uint64
+		responseBody       []byte
+		timeout            time.Duration
+		transport          *http.Transport
+		cert               []byte
+		rawRequest         *http.Request
+		rawResponse        *http.Response
+		client             *http.Client
+		autoCopy           bool
+		lock               sync.RWMutex
+		symmetricEncryptor secret.Symmetric
+		// OK           *bool
 	}
 )
 
-func (*HTTPClient) init(method string, attrs ...HTTPClientAttributer) *HTTPClient {
+func (*HTTPClientImpl) init(method string, attrs ...HTTPClientAttr) (HTTPClient, error) {
 	buffer := bytes.NewBuffer([]byte{})
-	return (&HTTPClient{requestBody: buffer, requestBodyBuffer: buffer}).SetAttrs(Method(method), AppendHeaderValues(map[string][]any{})).SetAttrs(attrs...)
+	return (&HTTPClientImpl{method: method, requestBody: buffer, requestBodyBuffer: buffer, headers: map[string][]any{}}).SetAttrs(attrs...)
 }
 
-func (*HTTPClientBuilder) New(attrs ...HTTPClientAttributer) *HTTPClientBuilder {
-	return &HTTPClientBuilder{attrs: attrs}
+func New(attrs ...HTTPClientAttr) (HTTPClient, error) {
+	return new(HTTPClientImpl).init(http.MethodGet, attrs...)
 }
 
-func (my *HTTPClientBuilder) GetClient() *HTTPClient {
-	return new(HTTPClient).init(http.MethodGet, my.attrs...)
+func GET(attrs ...HTTPClientAttr) (HTTPClient, error) { return New(attrs...) }
+
+func POST(attrs ...HTTPClientAttr) (HTTPClient, error) {
+	return new(HTTPClientImpl).init(http.MethodPost, attrs...)
 }
 
-func (*HTTPClient) New(attrs ...HTTPClientAttributer) *HTTPClient {
-	return new(HTTPClient).init(http.MethodGet, attrs...)
+func PUT(attrs ...HTTPClientAttr) (HTTPClient, error) {
+	return new(HTTPClientImpl).init(http.MethodPut, attrs...)
 }
 
-func (*HTTPClient) GET(attrs ...HTTPClientAttributer) *HTTPClient {
-	return new(HTTPClient).init(http.MethodGet, attrs...)
+func PATCH(attrs ...HTTPClientAttr) (HTTPClient, error) {
+	return new(HTTPClientImpl).init(http.MethodPatch, attrs...)
 }
 
-func (*HTTPClient) POST(attrs ...HTTPClientAttributer) *HTTPClient {
-	return new(HTTPClient).init(http.MethodPost, attrs...)
+func DELETE(attrs ...HTTPClientAttr) (HTTPClient, error) {
+	return new(HTTPClientImpl).init(http.MethodDelete, attrs...)
 }
 
-func (*HTTPClient) PUT(attrs ...HTTPClientAttributer) *HTTPClient {
-	return new(HTTPClient).init(http.MethodPut, attrs...)
+func HEAD(attrs ...HTTPClientAttr) (HTTPClient, error) {
+	return new(HTTPClientImpl).init(http.MethodHead, attrs...)
 }
 
-func (*HTTPClient) PATCH(attrs ...HTTPClientAttributer) *HTTPClient {
-	return new(HTTPClient).init(http.MethodPatch, attrs...)
+func OPTIONS(attrs ...HTTPClientAttr) (HTTPClient, error) {
+	return new(HTTPClientImpl).init(http.MethodOptions, attrs...)
 }
 
-func (*HTTPClient) DELETE(attrs ...HTTPClientAttributer) *HTTPClient {
-	return new(HTTPClient).init(http.MethodDelete, attrs...)
+func TRACE(attrs ...HTTPClientAttr) (HTTPClient, error) {
+	return new(HTTPClientImpl).init(http.MethodTrace, attrs...)
 }
 
-func (*HTTPClient) HEAD(attrs ...HTTPClientAttributer) *HTTPClient {
-	return new(HTTPClient).init(http.MethodHead, attrs...)
-}
-
-func (*HTTPClient) OPTIONS(attrs ...HTTPClientAttributer) *HTTPClient {
-	return new(HTTPClient).init(http.MethodOptions, attrs...)
-}
-
-func (*HTTPClient) TRACE(attrs ...HTTPClientAttributer) *HTTPClient {
-	return new(HTTPClient).init(http.MethodTrace, attrs...)
-}
-
-func (my *HTTPClient) set(attrs ...HTTPClientAttributer) {
+func (my *HTTPClientImpl) setAttrs(attrs ...HTTPClientAttr) (err error) {
 	if len(attrs) > 0 {
 		for _, option := range attrs {
-			option.Register(my)
-			if my.err != nil {
+			if err = option(my); err != nil {
+				return err
+			}
+		}
+	}
+	return
+}
+
+func (my *HTTPClientImpl) SetAttrs(attrs ...HTTPClientAttr) (HTTPClient, error) {
+	my.lock.Lock()
+	defer my.lock.Unlock()
+
+	err := my.setAttrs(attrs...)
+
+	return my, err
+}
+
+func (my *HTTPClientImpl) setURL(urls ...any) (err error) {
+	if len(urls) == 0 {
+	} else if len(urls) == 1 {
+		my.url = cast.ToString(urls[0])
+	} else {
+		my.url = str.APP.Buffer.JoinString(cast.ToStringSlice(urls)...)
+	}
+	return
+}
+
+func (my *HTTPClientImpl) setQueries(queries map[string]any) (err error) {
+	if queries == nil {
+		queries = map[string]any{}
+	}
+
+	maps.Copy(my.queries, queries)
+	return
+}
+
+func (my *HTTPClientImpl) setQueriesNotEmpty(queries map[string]any) (err error) {
+	if queries == nil {
+		queries = map[string]any{}
+	}
+
+	maps.Copy(my.queries, anyMap.New(anyMap.Map(queries)).RemoveEmpty().ToMap())
+	return
+}
+
+func (my *HTTPClientImpl) setQuery(key string, value any) (err error) {
+	my.queries[key] = value
+	return
+}
+
+func (my *HTTPClientImpl) setMethod(method string) (err error) { my.method = method; return }
+
+func (my *HTTPClientImpl) setHeaders(headers map[string][]any) (err error) {
+	my.headers = headers
+	return
+}
+
+func (my *HTTPClientImpl) setHeader(key string, value any) (err error) {
+	my.headers[key] = []any{value}
+	return
+}
+
+func (my *HTTPClientImpl) appendHeaders(headers map[string][]any) (err error) {
+	if len(headers) > 0 {
+		for key := range headers {
+			if _, exists := my.headers[key]; !exists {
+				my.headers[key] = headers[key]
+			} else {
+				my.headers[key] = append(my.headers[key], headers[key]...)
+			}
+		}
+	}
+
+	return
+}
+
+func (my *HTTPClientImpl) appendHeader(key string, value any) (err error) {
+	if _, exists := my.headers[key]; !exists {
+		my.headers[key] = []any{value}
+	} else {
+		my.headers[key] = append(my.headers[key], value)
+	}
+
+	return
+}
+
+func (my *HTTPClientImpl) setBody(body *bytes.Buffer) (err error) {
+
+	my.requestBody = bytes.NewBuffer(nil)
+	my.requestBodyBuffer = bytes.NewBuffer(nil)
+
+	if body != nil {
+		my.requestBody = body
+		my.requestBodyBuffer = body
+	}
+
+	return
+}
+
+func (my *HTTPClientImpl) setBodyJSON(body any) (err error) {
+	var bodies []byte
+	if bodies, err = json.Marshal(body); err != nil {
+		return
+	}
+	my.setBody(bytes.NewBuffer(bodies))
+	my.setHeader("Content-Type", ContentTypeJSON)
+
+	return
+}
+
+func (my *HTTPClientImpl) setBodyXML(body any) (err error) {
+	var bodies []byte
+	if bodies, err = xml.Marshal(body); err != nil {
+		return
+	}
+	my.setBody(bytes.NewBuffer(bodies))
+	my.setHeader("Content-Type", ContentTypeXML)
+
+	return
+}
+
+func (my *HTTPClientImpl) setBodyForm(body map[string]any) (err error) {
+	var bodies []byte
+	params := url.Values{}
+	for k, v := range body {
+		params.Add(k, cast.ToString(v))
+	}
+	bodies = []byte(params.Encode())
+	my.setBody(bytes.NewBuffer(bodies))
+	my.setHeader("Content-Type", ContentTypeXWWWFormURLEncoded)
+
+	return
+}
+
+func (my *HTTPClientImpl) setBodyFormData(fields, files map[string]string) (err error) {
+	var buffer bytes.Buffer
+
+	writer := multipart.NewWriter(&buffer)
+	if len(fields) > 0 {
+		for k, v := range fields {
+			if err = writer.WriteField(k, v); err != nil {
 				return
 			}
 		}
 	}
+
+	if len(files) > 0 {
+		for k, v := range files {
+			var file *os.File
+			fileWriter, _ := writer.CreateFormFile("file", k)
+			if file, err = os.Open(v); err != nil {
+				return
+			}
+			if _, err = io.Copy(fileWriter, file); err != nil {
+				return
+			}
+
+			_ = file.Close()
+		}
+	}
+
+	writer.Close()
+	my.setBody(&buffer)
+	my.headers["Content-Type"] = []any{writer.FormDataContentType()}
+
+	return
 }
 
-func (my *HTTPClient) SetAttrs(attrs ...HTTPClientAttributer) *HTTPClient {
-	my.lock.Lock()
-	defer my.lock.Unlock()
+func (my *HTTPClientImpl) setBodyPlain(body string) (err error) {
+	my.setBody(bytes.NewBuffer([]byte(body)))
+	my.setHeader("Content-Type", ContentTypePlain)
 
-	my.set(attrs...)
-
-	return my
+	return
 }
 
-func (my *HTTPClient) GetURL() string {
+func (my *HTTPClientImpl) setBodyHTML(body string) (err error) {
+	my.setBody(bytes.NewBuffer([]byte(body)))
+	my.setHeader("Content-Type", ContentTypeHTML)
+
+	return
+}
+
+func (my *HTTPClientImpl) setBodyCSS(body string) (err error) {
+	my.setBody(bytes.NewBuffer([]byte(body)))
+	my.setHeader("Content-Type", ContentTypeCSS)
+
+	return
+}
+
+func (my *HTTPClientImpl) setBodyJavascript(body string) (err error) {
+	my.setBody(bytes.NewBuffer([]byte(body)))
+
+	return
+}
+
+func (my *HTTPClientImpl) setBodyBytes(body []byte) (err error) {
+	my.setBody(bytes.NewBuffer(body))
+	return
+}
+
+func (my *HTTPClientImpl) setBodyReadCloser(body io.ReadCloser) (err error) {
+	var a []byte
+
+	if _, err = body.Read(a); err == nil {
+		my.setBody(bytes.NewBuffer(a))
+		return
+	}
+
+	return
+}
+
+func (my *HTTPClientImpl) setBodyFile(filename string) (err error) {
+	var (
+		file      *os.File
+		fileBodis []byte
+		buffer    *bytes.Buffer
+	)
+
+	if file, err = os.Open(filename); err != nil {
+		return
+	}
+	defer func(file *os.File) {
+		if err := file.Close(); err != nil {
+			debugLogger.Error("[HTTP Client] 关闭文件错误: %v", err)
+		}
+	}(file)
+
+	// 获取文件大小
+	stat, _ := file.Stat()
+	size := stat.Size()
+
+	// 创建RequestBodyReader用于读取文件内容
+	if size > 5*digitalInfo.MB {
+		if _, err = io.Copy(buffer, file); err != nil {
+			return
+		}
+	} else {
+		if fileBodis, err = io.ReadAll(file); err != nil {
+			return
+		}
+		buffer = bytes.NewBuffer(fileBodis)
+	}
+
+	my.setBody(buffer)
+
+	return
+}
+
+func (my *HTTPClientImpl) setRateLimit(rate uint64) (err error) { my.rateLimit = max(rate, 0); return }
+
+func (my *HTTPClientImpl) setTimeout(timeout time.Duration) (err error) {
+	my.timeout = max(timeout, 0)
+	return
+}
+
+func (my *HTTPClientImpl) setTransport(transport *http.Transport) (err error) {
+	my.transport = transport
+	return
+}
+
+func (my *HTTPClientImpl) setCert(cert []byte) (err error) { my.cert = cert; return }
+
+func (my *HTTPClientImpl) setAutoCopy(autoCopy bool) (err error) { my.autoCopy = autoCopy; return }
+
+func (my *HTTPClientImpl) setEncryptor(symmetricEncryptor secret.Symmetric) {
+	my.symmetricEncryptor = symmetricEncryptor
+	return
+}
+
+func (my *HTTPClientImpl) GetURL() string {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getURL()
 }
 
-func (my *HTTPClient) getURL() string {
+func (my *HTTPClientImpl) getURL() string {
 	queries := url.Values{}
 	if len(my.queries) > 0 {
 		for k, v := range my.queries {
@@ -138,41 +455,41 @@ func (my *HTTPClient) getURL() string {
 	return my.url
 }
 
-func (my *HTTPClient) GetQueries() map[string]any {
+func (my *HTTPClientImpl) GetQueries() map[string]any {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getQueries()
 }
 
-func (my *HTTPClient) getQueries() map[string]any { return my.queries }
+func (my *HTTPClientImpl) getQueries() map[string]any { return my.queries }
 
-func (my *HTTPClient) GetMethod() string {
+func (my *HTTPClientImpl) GetMethod() string {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getMethod()
 }
 
-func (my *HTTPClient) getMethod() string { return my.method }
+func (my *HTTPClientImpl) getMethod() string { return my.method }
 
-func (my *HTTPClient) GetHeaders() map[string][]any {
+func (my *HTTPClientImpl) GetHeaders() map[string][]any {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getHeaders()
 }
 
-func (my *HTTPClient) getHeaders() map[string][]any { return my.headers }
+func (my *HTTPClientImpl) getHeaders() map[string][]any { return my.headers }
 
-func (my *HTTPClient) GetBody() []byte {
+func (my *HTTPClientImpl) GetBody() []byte {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getBody()
 }
 
-func (my *HTTPClient) getBody() []byte {
+func (my *HTTPClientImpl) getBody() []byte {
 	if my.requestBodyBuffer != nil {
 		return my.requestBodyBuffer.Bytes()
 	}
@@ -183,68 +500,80 @@ func (my *HTTPClient) getBody() []byte {
 	return nil
 }
 
-func (my *HTTPClient) GetTimeout() time.Duration {
+func (my *HTTPClientImpl) GetTimeout() time.Duration {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getTimeout()
 }
 
-func (my *HTTPClient) getTimeout() time.Duration { return my.timeout }
+func (my *HTTPClientImpl) getTimeout() time.Duration { return my.timeout }
 
-func (my *HTTPClient) GetTransport() *http.Transport {
+func (my *HTTPClientImpl) GetTransport() *http.Transport {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getTransport()
 }
 
-func (my *HTTPClient) getTransport() *http.Transport { return my.transport }
+func (my *HTTPClientImpl) getTransport() *http.Transport { return my.transport }
 
-func (my *HTTPClient) GetCert() []byte {
+func (my *HTTPClientImpl) GetCert() []byte {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getCert()
 }
 
-func (my *HTTPClient) getCert() []byte { return my.cert }
+func (my *HTTPClientImpl) getCert() []byte { return my.cert }
 
-func (my *HTTPClient) GetRawRequest() *http.Request {
+func (my *HTTPClientImpl) GetRawRequest() *http.Request {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getRawRequest()
 }
 
-func (my *HTTPClient) getRawRequest() *http.Request { return my.rawRequest }
+func (my *HTTPClientImpl) getRawRequest() *http.Request { return my.rawRequest }
 
-func (my *HTTPClient) GetRawResponse() *http.Response {
+func (my *HTTPClientImpl) GetRawResponse() *http.Response {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getRawResponse()
 }
 
-func (my *HTTPClient) getRawResponse() *http.Response { return my.rawResponse }
+func (my *HTTPClientImpl) getRawResponse() *http.Response { return my.rawResponse }
 
-func (my *HTTPClient) GetClient() *http.Client {
+func (my *HTTPClientImpl) GetClient() *http.Client {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.getClient()
 }
 
-func (my *HTTPClient) getClient() *http.Client { return my.client }
+func (my *HTTPClientImpl) getClient() *http.Client { return my.client }
 
-func (my *HTTPClient) send() *HTTPClient {
+func (my *HTTPClientImpl) send() HTTPClient {
+	var cipherText []byte
 	if my.err != nil {
 		return my
 	}
 
+	if my.symmetricEncryptor != nil { // 加密
+		plain := my.requestBodyBuffer.Bytes()
+		if cipherText, my.err = my.symmetricEncryptor.Encrypt(plain); my.err != nil {
+			return my
+		}
+	}
+
+	if cipherText != nil {
+		my.setBody(bytes.NewBuffer(cipherText))
+	}
+
 	bodyReader := my.requestBody
 	if bodyReader != nil && my.rateLimit > 0 {
-		bodyReader = NewUploadRateReader(bodyReader, my.rateLimit*1024)
+		bodyReader = NewUploadRateReader(bodyReader, my.rateLimit*digitalInfo.KB)
 	}
 
 	if my.rawRequest, my.err = http.NewRequest(my.method, my.getURL(), bodyReader); my.err != nil {
@@ -293,37 +622,8 @@ func (my *HTTPClient) send() *HTTPClient {
 	return my
 }
 
-type rateLimitReader struct {
-	reader io.Reader
-	rate   int64
-}
-
-func NewUploadRateReader(reader io.Reader, rate int64) io.Reader {
-	return &rateLimitReader{reader: reader, rate: rate}
-}
-
-func (r *rateLimitReader) Read(p []byte) (int, error) {
-	if r.rate <= 0 {
-		return r.reader.Read(p)
-	}
-
-	if len(p) > int(r.rate) {
-		p = p[:int(r.rate)]
-	}
-
-	n, err := r.reader.Read(p)
-	if n > 0 {
-		sleep := time.Duration(int64(n)) * time.Second / time.Duration(r.rate)
-		if sleep > 0 {
-			time.Sleep(sleep)
-		}
-	}
-
-	return n, err
-}
-
 // OK 检查响应是否成功，返回布尔值和错误信息
-func (my *HTTPClient) OK() error {
+func (my *HTTPClientImpl) OK() error {
 	if my.err != nil {
 		return my.err
 	}
@@ -343,7 +643,7 @@ func (my *HTTPClient) OK() error {
 	return nil
 }
 
-func (my *HTTPClient) isNeedRetry(condition func(statusCode int, err error) bool) (needRetry bool) {
+func (my *HTTPClientImpl) isNeedRetry(condition func(statusCode int, err error) bool) (needRetry bool) {
 	if condition == nil {
 		needRetry = my.OK() != nil
 	} else {
@@ -354,7 +654,7 @@ func (my *HTTPClient) isNeedRetry(condition func(statusCode int, err error) bool
 	return
 }
 
-func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) (*HTTPClient, []error) {
+func (my *HTTPClientImpl) SendWithRetry(count uint, interval time.Duration, condition func(statusCode int, err error) bool) (HTTPClient, []error) {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
@@ -396,14 +696,14 @@ func (my *HTTPClient) SendWithRetry(count uint, interval time.Duration, conditio
 	return my, wrongs
 }
 
-func (my *HTTPClient) Send() *HTTPClient {
+func (my *HTTPClientImpl) Send() HTTPClient {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
 	return my.send()
 }
 
-func (my *HTTPClient) parseBody() {
+func (my *HTTPClientImpl) parseBody() {
 	var (
 		buffer  = bytes.NewBuffer([]byte{})
 		written int64
@@ -420,7 +720,7 @@ func (my *HTTPClient) parseBody() {
 	}
 
 	// 读取新地响应的主体
-	if my.rawResponse.ContentLength > 1*1024*1024 { // 1MB
+	if my.rawResponse.ContentLength > 5*digitalInfo.MB {
 		if written, my.err = io.Copy(buffer, my.rawResponse.Body); my.err != nil {
 			return
 		}
@@ -438,7 +738,7 @@ func (my *HTTPClient) parseBody() {
 	}
 }
 
-func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
+func (my *HTTPClientImpl) ToJSON(target any, keys ...any) HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 	defer func() {
@@ -467,7 +767,7 @@ func (my *HTTPClient) ToJSON(target any, keys ...any) *HTTPClient {
 	return my
 }
 
-func (my *HTTPClient) ToXML(target any) *HTTPClient {
+func (my *HTTPClientImpl) ToXML(target any) HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 	defer func() {
@@ -493,7 +793,7 @@ func (my *HTTPClient) ToXML(target any) *HTTPClient {
 	return my
 }
 
-func (my *HTTPClient) ToBytes() []byte {
+func (my *HTTPClientImpl) ToBytes() []byte {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 	defer func() {
@@ -517,7 +817,7 @@ func (my *HTTPClient) ToBytes() []byte {
 	return my.responseBody
 }
 
-func (my *HTTPClient) ToWriter(writer http.ResponseWriter) *HTTPClient {
+func (my *HTTPClientImpl) ToWriter(writer http.ResponseWriter) HTTPClient {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 	defer func() {
@@ -534,7 +834,7 @@ func (my *HTTPClient) ToWriter(writer http.ResponseWriter) *HTTPClient {
 	return my
 }
 
-func (my *HTTPClient) Error() error {
+func (my *HTTPClientImpl) Error() error {
 	var err error
 	defer func() { my.err = nil }()
 
@@ -542,10 +842,10 @@ func (my *HTTPClient) Error() error {
 	return err
 }
 
-func (my *HTTPClient) GetStatusCode() int {
+func (my *HTTPClientImpl) GetStatusCode() int {
 	return operation.NewTernary(operation.TrueFn(func() int { return my.GetRawResponse().StatusCode })).GetByValue(my.GetRawResponse() != nil)
 }
 
-func (my *HTTPClient) GetStatus() string {
+func (my *HTTPClientImpl) GetStatus() string {
 	return operation.NewTernary(operation.TrueFn(func() string { return my.GetRawResponse().Status })).GetByValue(my.GetRawResponse() != nil)
 }
