@@ -13,7 +13,7 @@
    )
    
    func main() {
-   	hc,err := httpClient.APP.HTTPClient.New(httpClient.URL("https://www.baidu.com"))
+   	hc,err := httpClient.New(httpClient.URL("https://www.baidu.com"))
     if err != nil{
         panci(err) // 初始化客户端错误
     }
@@ -48,12 +48,11 @@
    func main() {
    	var wrongs []error
    
-   	hc,err := httpClient.APP.HTTPClient.New(
+   	hc,err := httpClient.New(
    		httpClient.URL("https://", "这里", "为了方便", "可以直接", "使用", "可变参数", "的方式", "传入", "URL"),
    		httpClient.Method(http.MethodPost), // 设置访问方式
-   		httpClient.SetHeaderValues(map[string][]any{}). // 设置请求头（如果有同一个 key 则进行值覆盖）
-   			ContentType(httpClient.ContentTypeJSON). // 设置 Content-Type
-   			Authorization("username", "password", "Basic"), // 设置认证
+      httpClient.ContentType(httpClient.ConentTypeJSON), // 设置 Content-Type 
+    httpClient.Authorization("username","password","Basic"),// 设置 认证信息
    	)
     if err != nil{
         // ...
@@ -61,14 +60,13 @@
    
    	// 在这里可以追加或覆盖一些新的配置项，比如：
    	hc.SetAttrs(
-   		httpClient.SetHeaderValue(map[string]any{}). // 设置请求投（如果有同一个 key 则进行值追加）
-   			Accept(httpClient.AcceptJSON), // 设置 Accept
+      Accept(httpClient.AcceptJSON), // 设置 Accept
    		httpClient.Method(http.MethodPut), // 这里可以覆盖之前的属性
    		httpClient.AutoCopy(true),         // 设置自动备份响应体。默认情况下响应体不会自动读取流，所以如果需要在 Send 之后再次读取响应体，就需要设置这个属性为 true，来自动备份响应体内容，以便后续再次读取。
    	)
    
    	// 设置请求体：JSON
-    hc.SetAttrs(JSON(map[string]any{}))
+    hc.SetAttrs(httpClient.JSON(map[string]any{}))
    
    	// 设置 form 表单数据
    	hc.SetAttrs(httpClient.Form(map[string]any{}))
@@ -141,17 +139,18 @@
    			TLSClientConfig:     clientBTLSConfig, // TLS 证书
    		}
    
-   		hc := APP.HTTPClient.New(
-   			URL("http://www", ".baidu", ".com"),
-   			Method(http.MethodGet),
-   			Queries(map[string]any{"name": "张三", "age": 18}),
-   			SetHeaderValue(nil).Authorization("username", "password", "Basic").Accept(AcceptJSON).ContentType(ContentTypeJSON),
-   			SetHeaderValue(nil).ContentType(ContentTypeJSON).Accept(AcceptJSON),
-   			JSON(map[string]any{"李四": 20, "王五": 30, "赵六": 40}),
-   			Timeout(5*time.Minute),
-   			Transport(transport),
-   			Cert(nil),
-   			AutoCopy(false),
+   		hc := httpClient.New(
+   			httpClient.URL("http://www", ".baidu", ".com"),
+   			httpClient.Method(http.MethodGet),
+   			httpClient.Queries(map[string]any{"name": "张三", "age": 18}),
+   			httpClient.Authorization("username", "password", "Basic"),
+        httpClient.Accept(AcceptJSON),
+        httpClient.ContentType(ContentTypeJSON),
+   			httpClient.JSON(map[string]any{"李四": 20, "王五": 30, "赵六": 40}),
+   			httpClient.Timeout(5*time.Minute),
+   			httpClient.Transport(transport),
+   			httpClient.Cert(nil),
+   			httpClient.AutoCopy(false),
    		)
    
    		t.Logf("%+v\n", hc)
@@ -192,7 +191,7 @@ func Test3(t *testing.T) {
 		originalBody := map[string]any{"username": "admin", "password": "secret123"}
 
 		// 创建 HTTPClient 并应用加密
-		hc := httpClient.APP.HTTPClient.New(
+		hc := httpClient.New(
 			httpClient.URL("http://127.0.0.1:8080/api/login"),
 			httpClient.Method(http.MethodPost),
 			httpClient.JSON(originalBody),
@@ -245,7 +244,7 @@ func Test3(t *testing.T) {
 			t.Fatalf("创建 AES GCM 加密器失败: %v", err)
 		}
 
-		hc := httpClient.APP.HTTPClient.New(
+		hc := httpClient.New(
 			httpClient.URL("http://127.0.0.1:8080/api/secure"),
 			httpClient.Method(http.MethodPost),
 			httpClient.JSON(map[string]any{"data": "sensitive information"}),
