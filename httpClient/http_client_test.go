@@ -94,7 +94,7 @@ func Test2(t *testing.T) {
 	if err != nil {
 		t.Fatalf("初始化 HTTP 客户端失败：%v", err)
 	}
-	if err = hc.Send().Error(); err != nil {
+	if err = hc.Send().OK(); err != nil {
 		t.Fatalf("发送 HTTP 请求失败：%v", err)
 	}
 

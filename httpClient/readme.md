@@ -13,9 +13,12 @@
    )
    
    func main() {
-   	hc := httpClient.APP.HTTPClient.New(httpClient.URL("https://www.baidu.com"))
+   	hc,err := httpClient.APP.HTTPClient.New(httpClient.URL("https://www.baidu.com"))
+    if err != nil{
+        panci(err) // 初始化客户端错误
+    }
    	if err := hc.Send().OK(); err != nil {
-   		panic(err)
+   		panic(err) // 发送消息错误
    	}
    
    	res := hc.ToBytes()
@@ -45,13 +48,16 @@
    func main() {
    	var wrongs []error
    
-   	hc := httpClient.APP.HTTPClient.New(
+   	hc,err := httpClient.APP.HTTPClient.New(
    		httpClient.URL("https://", "这里", "为了方便", "可以直接", "使用", "可变参数", "的方式", "传入", "URL"),
    		httpClient.Method(http.MethodPost), // 设置访问方式
    		httpClient.SetHeaderValues(map[string][]any{}). // 设置请求头（如果有同一个 key 则进行值覆盖）
    			ContentType(httpClient.ContentTypeJSON). // 设置 Content-Type
    			Authorization("username", "password", "Basic"), // 设置认证
    	)
+    if err != nil{
+        // ...
+    }
    
    	// 在这里可以追加或覆盖一些新的配置项，比如：
    	hc.SetAttrs(
@@ -62,20 +68,16 @@
    	)
    
    	// 设置请求体：JSON
-   	jsonBody := httpClient.JSON(map[string]any{})
-   	hc.SetAttrs(jsonBody)
+    hc.SetAttrs(JSON(map[string]any{}))
    
    	// 设置 form 表单数据
-   	formBody := httpClient.Form(map[string]any{})
-   	hc.SetAttrs(formBody)
+   	hc.SetAttrs(httpClient.Form(map[string]any{}))
    
    	// 设置 form-data 表单数据
-   	formData := httpClient.FormData(map[string]string{}, map[string]string{})
-   	hc.SetAttrs(formData)
+   	hc.SetAttrs(httpClient.FormData(map[string]string{}, map[string]string{}))
    
    	// 这是一个很有用地请求体，我们可以把用户的请求例如 gin.Context.Request.Body 直接传入这个请求体中
-   	readerBody := httpClient.Reader(nil)
-   	hc.SetAttrs(readerBody)
+   	hc.SetAttrs(httpClient.ReadCloser(nil))
    
    	if err := hc.Send().OK(); err != nil {
    		panic(err)

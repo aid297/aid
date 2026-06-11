@@ -124,7 +124,14 @@ type (
 
 func (*HTTPClientImpl) init(method string, attrs ...HTTPClientAttr) (HTTPClient, error) {
 	buffer := bytes.NewBuffer([]byte{})
-	return (&HTTPClientImpl{method: method, requestBody: buffer, requestBodyBuffer: buffer, headers: map[string][]any{}}).SetAttrs(attrs...)
+	ins := &HTTPClientImpl{method: method, requestBody: buffer, requestBodyBuffer: buffer, headers: map[string][]any{}}
+	if err := ins.setAttrs(TransportDefault()); err != nil {
+		return nil, err
+	}
+	if err := ins.setAttrs(attrs...); err != nil {
+		return nil, err
+	}
+	return ins, nil
 }
 
 func New(attrs ...HTTPClientAttr) (HTTPClient, error) {
