@@ -143,12 +143,7 @@ func (my *RedisPool) Pipe(clientName string, fn func(prefix string, pipe rds.Pip
 		return err
 	}
 
-	if err = fn(prefix, pipeliner); err != nil {
-		return err
-	}
-
-	_, err = pipeliner.Exec(context.Background())
-	return err
+	return fn(prefix, pipeliner)
 }
 
 // Close 关闭链接
