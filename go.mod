@@ -3,6 +3,7 @@ module github.com/aid297/aid/v2
 go 1.23.8
 
 require (
+	github.com/cyberdelia/lzo v1.0.0
 	github.com/dromara/carbon/v2 v2.6.16
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gin-contrib/cors v1.7.6
@@ -15,6 +16,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/json-iterator/go v1.1.12
 	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/pierrec/lz4/v4 v4.1.27
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/viper v1.20.1
@@ -85,7 +87,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.17.9
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
