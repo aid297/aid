@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/compressions"
 	"github.com/aid297/aid/v2/consts/digitalInfo"
 	"github.com/aid297/aid/v2/debugLogger"
 	"github.com/aid297/aid/v2/operation"
@@ -27,9 +28,25 @@ import (
 	"github.com/aid297/aid/v2/str"
 )
 
-var _ HTTPClient = (*HTTPClientImpl)(nil)
+var (
+	_             HTTPClient = (*HTTPClientImpl)(nil)
+	fileSplitSize int64      = 10 * digitalInfo.MB
+)
 
 type (
+	// chunkedFileReader 切块文件读取器，用于大文件并行上传
+	chunkedFileReader struct {
+		file          *os.File
+		fileSize      int64
+		chunkSize     int64
+		numChunks     int
+		offset        int64
+		lock          sync.Mutex
+		encryptor     secret.Symmetric
+		compressor    compressions.Compressor
+		maxGoroutines uint64
+	}
+
 	HTTPClient interface {
 		init(method string, attrs ...HTTPClientAttr) (HTTPClient, error)
 		setAttrs(attrs ...HTTPClientAttr) (err error)
@@ -54,13 +71,14 @@ type (
 		setBodyJavascript(body string) (err error)
 		setBodyBytes(body []byte) (err error)
 		setBodyReadCloser(body io.ReadCloser) (err error)
-		setBodyFile(filename string) (err error)
+		setBodyFile(filename string, goroutineCount uint64) (err error)
 		setRateLimit(rate uint64) (err error)
 		setTimeout(timeout time.Duration) (err error)
 		setTransport(transport *http.Transport) (err error)
 		setCert(cert []byte) (err error)
 		setAutoCopy(autoCopy bool) (err error)
 		setEncryptor(symmetricEncryptor secret.Symmetric)
+		setCompressor(compressor compressions.Compressor)
 
 		GetURL() string
 		getURL() string
@@ -118,7 +136,11 @@ type (
 		autoCopy           bool
 		lock               sync.RWMutex
 		symmetricEncryptor secret.Symmetric
-		// OK           *bool
+		compressor         compressions.Compressor
+		filePath           string
+		fileSize           int64
+		isChunked          bool
+		chunkedReader      *chunkedFileReader
 	}
 )
 
@@ -133,6 +155,9 @@ func (*HTTPClientImpl) init(method string, attrs ...HTTPClientAttr) (HTTPClient,
 	}
 	return ins, nil
 }
+
+// SetDefaultFileSplitSize 设置默认文件切块大小
+func SetDefaultFileSplitSize(chunkSize int64) { fileSplitSize = chunkSize }
 
 func New(attrs ...HTTPClientAttr) (HTTPClient, error) {
 	return new(HTTPClientImpl).init(http.MethodGet, attrs...)
@@ -382,39 +407,47 @@ func (my *HTTPClientImpl) setBodyReadCloser(body io.ReadCloser) (err error) {
 	return
 }
 
-func (my *HTTPClientImpl) setBodyFile(filename string) (err error) {
-	var (
-		file      *os.File
-		fileBodis []byte
-		buffer    *bytes.Buffer
-	)
+func (my *HTTPClientImpl) setBodyFile(filename string, goroutineCount uint64) (err error) {
+	var file *os.File
 
 	if file, err = os.Open(filename); err != nil {
 		return
 	}
-	defer func(file *os.File) {
-		if err := file.Close(); err != nil {
-			debugLogger.Error("[HTTP Client] 关闭文件错误: %v", err)
-		}
-	}(file)
 
 	// 获取文件大小
 	stat, _ := file.Stat()
 	size := stat.Size()
 
-	// 创建RequestBodyReader用于读取文件内容
-	if size > 5*digitalInfo.MB {
-		if _, err = io.Copy(buffer, file); err != nil {
-			return
+	if goroutineCount > 1 && size > fileSplitSize {
+		// 大文件：设置切块读取
+		my.filePath = filename
+		my.fileSize = size
+		my.isChunked = true
+
+		chunkSize := max(size/int64(goroutineCount), 1*digitalInfo.MB) // 每个chunk至少1MB
+
+		my.chunkedReader = &chunkedFileReader{
+			file:          file,
+			fileSize:      size,
+			chunkSize:     chunkSize,
+			numChunks:     int((size + chunkSize - 1) / chunkSize),
+			offset:        0,
+			encryptor:     my.symmetricEncryptor,
+			compressor:    my.compressor,
+			maxGoroutines: goroutineCount,
 		}
 	} else {
-		if fileBodis, err = io.ReadAll(file); err != nil {
-			return
+		// 小文件或不使用切块：直接读取到buffer
+		fileBodis, err := io.ReadAll(file)
+		if err != nil {
+			file.Close()
+			return err
 		}
-		buffer = bytes.NewBuffer(fileBodis)
+		if err = file.Close(); err != nil {
+			debugLogger.Error("[HTTP Client] 关闭文件错误: %v", err)
+		}
+		my.setBody(bytes.NewBuffer(fileBodis))
 	}
-
-	my.setBody(buffer)
 
 	return
 }
@@ -437,7 +470,10 @@ func (my *HTTPClientImpl) setAutoCopy(autoCopy bool) (err error) { my.autoCopy =
 
 func (my *HTTPClientImpl) setEncryptor(symmetricEncryptor secret.Symmetric) {
 	my.symmetricEncryptor = symmetricEncryptor
-	return
+}
+
+func (my *HTTPClientImpl) setCompressor(compressor compressions.Compressor) {
+	my.compressor = compressor
 }
 
 func (my *HTTPClientImpl) GetURL() string {
@@ -562,20 +598,53 @@ func (my *HTTPClientImpl) GetClient() *http.Client {
 func (my *HTTPClientImpl) getClient() *http.Client { return my.client }
 
 func (my *HTTPClientImpl) send() HTTPClient {
-	var cipherText []byte
+	var (
+		cipherText  []byte
+		compressed  []byte
+		processData []byte
+	)
+
 	if my.err != nil {
 		return my
 	}
 
-	if my.symmetricEncryptor != nil { // 加密
-		plain := my.requestBodyBuffer.Bytes()
-		if cipherText, my.err = my.symmetricEncryptor.Encrypt(plain); my.err != nil {
+	// 处理切块大文件上传
+	if my.isChunked && my.chunkedReader != nil {
+		return my.sendChunked()
+	}
+
+	// 获取待处理数据
+	if my.requestBodyBuffer != nil {
+		processData = my.requestBodyBuffer.Bytes()
+	} else if my.requestBody != nil {
+		processData, my.err = io.ReadAll(my.requestBody)
+		if my.err != nil {
+			return my
+		}
+	}
+
+	// 压缩处理（只要设置了 compressor 就自动启用）
+	if my.compressor != nil && len(processData) > 0 {
+		my.compressor.SetData(processData)
+		if compressed, my.err = my.compressor.Encode(); my.err != nil {
+			return my
+		}
+		if len(compressed) > 0 {
+			processData = compressed
+		}
+	}
+
+	// 加密处理
+	if my.symmetricEncryptor != nil && len(processData) > 0 {
+		if cipherText, my.err = my.symmetricEncryptor.Encrypt(processData); my.err != nil {
 			return my
 		}
 	}
 
 	if cipherText != nil {
 		my.setBody(bytes.NewBuffer(cipherText))
+	} else if compressed != nil {
+		my.setBody(bytes.NewBuffer(compressed))
 	}
 
 	bodyReader := my.requestBody
@@ -624,6 +693,136 @@ func (my *HTTPClientImpl) send() HTTPClient {
 	if my.autoCopy {
 		my.parseBody()
 		my.rawResponse.Body = io.NopCloser(bytes.NewBuffer(my.responseBody)) // 还原响应体
+	}
+
+	return my
+}
+
+// sendChunked 切块发送大文件（并行协程）
+func (my *HTTPClientImpl) sendChunked() HTTPClient {
+	if my.chunkedReader == nil {
+		my.err = errors.New("切块读取器未初始化")
+		return my
+	}
+
+	// 使用管道进行并行写入
+	reader, writer := io.Pipe()
+
+	// 启动多个goroutine进行并行读取和发送
+	var wg sync.WaitGroup
+	errChan := make(chan error, my.chunkedReader.numChunks)
+	chunkSize := my.chunkedReader.chunkSize
+	numChunks := my.chunkedReader.numChunks
+
+	for i := range numChunks {
+		wg.Add(1)
+		go func(chunkIndex int) {
+			defer wg.Done()
+
+			offset := int64(chunkIndex) * chunkSize
+			remainSize := my.chunkedReader.fileSize - offset
+			currentChunkSize := min(remainSize, chunkSize)
+
+			// 读取文件块
+			chunkData := make([]byte, currentChunkSize)
+			my.chunkedReader.lock.Lock()
+			_, err := my.chunkedReader.file.ReadAt(chunkData, offset)
+			my.chunkedReader.lock.Unlock()
+			if err != nil && err != io.EOF {
+				errChan <- fmt.Errorf("读取文件块 %d 失败: %w", chunkIndex, err)
+				return
+			}
+
+			// 压缩处理（只要设置了 compressor 就自动启用）
+			if my.chunkedReader.compressor != nil {
+				my.chunkedReader.compressor.SetData(chunkData)
+				compressed, err := my.chunkedReader.compressor.Encode()
+				if err != nil {
+					errChan <- fmt.Errorf("压缩块 %d 失败: %w", chunkIndex, err)
+					return
+				}
+				chunkData = compressed
+			}
+
+			// 加密处理
+			if my.chunkedReader.encryptor != nil {
+				encrypted, err := my.chunkedReader.encryptor.Encrypt(chunkData)
+				if err != nil {
+					errChan <- fmt.Errorf("加密块 %d 失败: %w", chunkIndex, err)
+					return
+				}
+				chunkData = encrypted
+			}
+
+			// 写入管道
+			_, err = writer.Write(chunkData)
+			if err != nil {
+				errChan <- fmt.Errorf("写入块 %d 失败: %w", chunkIndex, err)
+				return
+			}
+		}(i)
+	}
+
+	// 关闭writer（所有goroutine完成写入后）
+	go func() {
+		wg.Wait()
+		writer.Close()
+	}()
+
+	// 创建HTTP请求，使用管道作为body
+	if my.rawRequest, my.err = http.NewRequest(my.method, my.getURL(), reader); my.err != nil {
+		return my
+	}
+
+	for key, values := range my.headers {
+		v := make([]string, 0, len(values))
+		for idx := range values {
+			v = append(v, cast.ToString(values[idx]))
+		}
+		my.rawRequest.Header[key] = append(my.rawRequest.Header[key], v...)
+	}
+
+	// 设置文件相关header
+	my.rawRequest.Header.Set("X-File-Size", cast.ToString(my.chunkedReader.fileSize))
+	my.rawRequest.Header.Set("X-Chunk-Count", cast.ToString(numChunks))
+	my.rawRequest.Header.Set("X-Chunk-Size", cast.ToString(chunkSize))
+
+	if len(my.cert) > 0 {
+		certPool := x509.NewCertPool()
+		if !certPool.AppendCertsFromPEM(my.cert) {
+			my.err = errors.New("生成TLS证书失败")
+			return my
+		}
+
+		my.transport.TLSClientConfig = &tls.Config{RootCAs: certPool}
+	}
+
+	my.client = &http.Client{}
+
+	if my.transport != nil {
+		my.client.Transport = my.transport
+	}
+
+	if my.timeout > 0 {
+		my.client.Timeout = my.timeout
+	}
+
+	// 发送请求
+	if my.rawResponse, my.err = my.client.Do(my.rawRequest); my.err != nil {
+		return my
+	}
+
+	// 检查是否有错误
+	select {
+	case err := <-errChan:
+		my.err = err
+		return my
+	default:
+	}
+
+	if my.autoCopy {
+		my.parseBody()
+		my.rawResponse.Body = io.NopCloser(bytes.NewBuffer(my.responseBody))
 	}
 
 	return my
@@ -727,7 +926,7 @@ func (my *HTTPClientImpl) parseBody() {
 	}
 
 	// 读取新地响应的主体
-	if my.rawResponse.ContentLength > 5*digitalInfo.MB {
+	if my.rawResponse.ContentLength > fileSplitSize {
 		if written, my.err = io.Copy(buffer, my.rawResponse.Body); my.err != nil {
 			return
 		}

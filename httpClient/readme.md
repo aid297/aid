@@ -296,7 +296,104 @@ func Test3(t *testing.T) {
 		}
 
 		t.Logf("✓ CTR 模式加密成功")
-		t.Logf("  加密后大小: %d 字节 (包含 nonce 16 字节)", len(encryptedBody))
-	})
+	t.Logf("  加密后大小: %d 字节 (包含 nonce 16 字节)", len(encryptedBody))
+})
+```
+---
+
+5. 文件上传
+---
+```go
+package main
+
+import (
+	"github.com/aid297/aid/v2/compressions/zlib"
+	"github.com/aid297/aid/v2/httpClient"
+	"github.com/aid297/aid/v2/secret/symmetric/aes"
+)
+
+func main() {
+	// 普通文件上传（不使用切块）
+	hc, err := httpClient.New(
+		httpClient.URL("http://127.0.0.1:8080/api/upload"),
+		httpClient.Method(http.MethodPost),
+		httpClient.File("path/to/file.txt", 0), // goroutineCount = 0，不使用切块
+	)
+	if err != nil {
+		panic(err)
+	}
+	hc.Send()
+
+	// 大文件切块上传（4个协程并行）
+	hc, err = httpClient.New(
+		httpClient.URL("http://127.0.0.1:8080/api/upload"),
+		httpClient.Method(http.MethodPost),
+		httpClient.File("path/to/large_file.zip", 4), // goroutineCount = 4，使用4个协程切块上传
+	)
+	if err != nil {
+		panic(err)
+	}
+	hc.Send()
+
+	// 文件上传 + 压缩
+	compressor, _ := zlib.New()
+	hc, err = httpClient.New(
+		httpClient.URL("http://127.0.0.1:8080/api/upload"),
+		httpClient.Method(http.MethodPost),
+		httpClient.File("path/to/file.txt", 0),
+		httpClient.Compressor(compressor), // 启用压缩
+	)
+	if err != nil {
+		panic(err)
+	}
+	hc.Send()
+
+	// 文件上传 + 加密
+	key := []byte{}
+	iv := []byte{}
+	aesCipher, _ := aes.New(
+		aes.RandKey(&key),
+		aes.RandIV(&iv),
+		aes.AlgorithmCBC(),
+	)
+	hc, err = httpClient.New(
+		httpClient.URL("http://127.0.0.1:8080/api/upload"),
+		httpClient.Method(http.MethodPost),
+		httpClient.File("path/to/file.txt", 0),
+		httpClient.Encrypt(aesCipher), // 启用加密
+	)
+	if err != nil {
+		panic(err)
+	}
+	hc.Send()
+
+	// 完整配置：大文件切块上传 + 压缩 + 加密
+	hc, err = httpClient.New(
+		httpClient.URL("http://127.0.0.1:8080/api/upload"),
+		httpClient.Method(http.MethodPost),
+		httpClient.File("path/to/large_file.zip", 4),    // 4个协程切块上传
+		httpClient.Compressor(compressor),              // 启用压缩
+		httpClient.Encrypt(aesCipher),                  // 启用加密
+	)
+	if err != nil {
+		panic(err)
+	}
+	hc.Send()
 }
 ```
+
+**File 函数参数说明**：
+- `filename`: 文件路径
+- `goroutineCount`: 协程数（0 或 1 = 不使用切块，> 1 = 使用切块并行上传）
+
+**处理流程**：
+1. **不使用切块**（goroutineCount = 0 或 1）：直接读取整个文件到内存，然后根据配置进行压缩和/或加密
+2. **使用切块**（goroutineCount > 1）：将文件分成多个块，使用指定数量的协程并行读取和处理每个块，然后合并发送
+
+**注意事项**：
+- 压缩和加密会按顺序应用：先压缩，后加密
+- 切块模式下，每个块会独立进行压缩和加密处理
+- 切块模式会自动设置以下请求头：
+  - `X-File-Size`: 文件总大小
+  - `X-Chunk-Count`: 块总数
+  - `X-Chunk-Size`: 每块大小

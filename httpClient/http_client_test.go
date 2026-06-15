@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aid297/aid/v2/compressions/zlib"
+	"github.com/aid297/aid/v2/consts/digitalInfo"
 	"github.com/aid297/aid/v2/httpClient"
 	"github.com/aid297/aid/v2/secret/symmetric/aes"
 )
@@ -227,5 +229,209 @@ func Test3(t *testing.T) {
 
 		t.Logf("✓ CTR 模式加密成功")
 		t.Logf("  加密后大小: %d 字节 (包含 nonce 16 字节)", len(encryptedBody))
+	})
+}
+
+func Test4(t *testing.T) {
+	t.Run("file upload without chunking", func(t *testing.T) {
+		// 创建临时测试文件
+		tempFile, err := os.CreateTemp("", "test_*.txt")
+		if err != nil {
+			t.Fatalf("创建临时文件失败: %v", err)
+		}
+		tempFileName := tempFile.Name()
+		defer os.Remove(tempFileName)
+
+		testContent := "This is a test file content for HTTP client file upload"
+		if _, err = tempFile.WriteString(testContent); err != nil {
+			t.Fatalf("写入临时文件失败: %v", err)
+		}
+		tempFile.Close()
+
+		// 不使用切块模式（goroutineCount = 0）
+		hc, err := httpClient.New(
+			httpClient.URL("http://127.0.0.1:8080/api/upload"),
+			httpClient.Method(http.MethodPost),
+			httpClient.File(tempFileName, 0), // 不使用切块
+		)
+		if err != nil {
+			t.Fatalf("初始化 HTTP 客户端失败：%v", err)
+		}
+
+		// 验证请求体不为空
+		body := hc.GetBody()
+		if len(body) == 0 {
+			t.Fatal("文件内容未被读取")
+		}
+
+		t.Logf("✓ 普通文件上传成功")
+		t.Logf("  文件大小: %d 字节", len(body))
+	})
+
+	t.Run("file upload with chunking", func(t *testing.T) {
+		// 创建临时测试文件（模拟大文件）
+		tempFile, err := os.CreateTemp("", "test_chunk_*.dat")
+		if err != nil {
+			t.Fatalf("创建临时文件失败: %v", err)
+		}
+		tempFileName := tempFile.Name()
+		defer os.Remove(tempFileName)
+
+		// 写入足够大的内容来测试切块
+		largeContent := make([]byte, 6*digitalInfo.MB) // 6MB
+		for i := range largeContent {
+			largeContent[i] = byte(i % 256)
+		}
+		if _, err = tempFile.Write(largeContent); err != nil {
+			t.Fatalf("写入临时文件失败: %v", err)
+		}
+		tempFile.Close()
+
+		// 可以通过 SetDefaultFileSplitSize 来设置默认的切块大小
+		httpClient.SetDefaultFileSplitSize(2 * digitalInfo.MB)
+
+		// 使用切块模式（4个协程）
+		_, err = httpClient.New(
+			httpClient.URL("http://127.0.0.1:8080/api/upload"),
+			httpClient.Method(http.MethodPost),
+			httpClient.File(tempFileName, 4), // 使用4个协程切块上传
+		)
+		if err != nil {
+			t.Fatalf("初始化 HTTP 客户端失败：%v", err)
+		}
+
+		t.Logf("✓ 切块文件上传配置成功")
+		t.Logf("  文件大小: %d 字节", len(largeContent))
+		t.Logf("  协程数: 4")
+	})
+
+	t.Run("file upload with compression", func(t *testing.T) {
+		tempFile, err := os.CreateTemp("", "test_compress_*.txt")
+		if err != nil {
+			t.Fatalf("创建临时文件失败: %v", err)
+		}
+		tempFileName := tempFile.Name()
+		defer os.Remove(tempFileName)
+
+		testContent := "This is a test file for compression. Compression is useful for large text files."
+		if _, err = tempFile.WriteString(testContent); err != nil {
+			t.Fatalf("写入临时文件失败: %v", err)
+		}
+		tempFile.Close()
+
+		// 创建压缩器
+		compressor, err := zlib.New()
+		if err != nil {
+			t.Fatalf("创建压缩器失败: %v", err)
+		}
+
+		hc, err := httpClient.New(
+			httpClient.URL("http://127.0.0.1:8080/api/upload"),
+			httpClient.Method(http.MethodPost),
+			httpClient.File(tempFileName, 0),
+			httpClient.Compressor(compressor), // 启用压缩
+		)
+		if err != nil {
+			t.Fatalf("初始化 HTTP 客户端失败：%v", err)
+		}
+
+		compressedBody := hc.GetBody()
+		t.Logf("✓ 文件上传+压缩成功")
+		t.Logf("  原始大小: %d 字节", len(testContent))
+		t.Logf("  压缩后大小: %d 字节", len(compressedBody))
+	})
+
+	t.Run("file upload with encryption", func(t *testing.T) {
+		tempFile, err := os.CreateTemp("", "test_encrypt_*.txt")
+		if err != nil {
+			t.Fatalf("创建临时文件失败: %v", err)
+		}
+		tempFileName := tempFile.Name()
+		defer os.Remove(tempFileName)
+
+		testContent := "Sensitive data that needs encryption"
+		if _, err = tempFile.WriteString(testContent); err != nil {
+			t.Fatalf("写入临时文件失败: %v", err)
+		}
+		tempFile.Close()
+
+		// 创建 AES 加密器
+		key := []byte{}
+		iv := []byte{}
+		aesCipher, err := aes.New(
+			aes.RandKey(&key),
+			aes.RandIV(&iv),
+			aes.AlgorithmCBC(),
+		)
+		if err != nil {
+			t.Fatalf("创建 AES 加密器失败: %v", err)
+		}
+
+		hc, err := httpClient.New(
+			httpClient.URL("http://127.0.0.1:8080/api/upload"),
+			httpClient.Method(http.MethodPost),
+			httpClient.File(tempFileName, 0),
+			httpClient.Encrypt(aesCipher), // 启用加密
+		)
+		if err != nil {
+			t.Fatalf("初始化 HTTP 客户端失败：%v", err)
+		}
+
+		encryptedBody := hc.GetBody()
+		t.Logf("✓ 文件上传+加密成功")
+		t.Logf("  原始大小: %d 字节", len(testContent))
+		t.Logf("  加密后大小: %d 字节", len(encryptedBody))
+	})
+
+	t.Run("file upload with chunking, compression and encryption", func(t *testing.T) {
+		tempFile, err := os.CreateTemp("", "test_full_*.dat")
+		if err != nil {
+			t.Fatalf("创建临时文件失败: %v", err)
+		}
+		tempFileName := tempFile.Name()
+		defer os.Remove(tempFileName)
+
+		largeContent := make([]byte, 7*digitalInfo.MB) // 7MB
+		for i := range largeContent {
+			largeContent[i] = byte(i % 256)
+		}
+		if _, err = tempFile.Write(largeContent); err != nil {
+			t.Fatalf("写入临时文件失败: %v", err)
+		}
+		tempFile.Close()
+
+		// 创建压缩器和加密器
+		compressor, err := zlib.New()
+		if err != nil {
+			t.Fatalf("创建压缩器失败: %v", err)
+		}
+
+		key := []byte{}
+		iv := []byte{}
+		aesCipher, err := aes.New(
+			aes.RandKey(&key),
+			aes.RandIV(&iv),
+			aes.AlgorithmCBC(),
+		)
+		if err != nil {
+			t.Fatalf("创建 AES 加密器失败: %v", err)
+		}
+
+		_, err = httpClient.New(
+			httpClient.URL("http://127.0.0.1:8080/api/upload"),
+			httpClient.Method(http.MethodPost),
+			httpClient.File(tempFileName, 4),  // 4个协程切块上传
+			httpClient.Compressor(compressor), // 启用压缩
+			httpClient.Encrypt(aesCipher),     // 启用加密
+		)
+		if err != nil {
+			t.Fatalf("初始化 HTTP 客户端失败：%v", err)
+		}
+
+		t.Logf("✓ 完整配置文件上传成功")
+		t.Logf("  文件大小: %d 字节", len(largeContent))
+		t.Logf("  协程数: 4")
+		t.Logf("  启用压缩: 是")
+		t.Logf("  启用加密: 是")
 	})
 }

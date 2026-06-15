@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aid297/aid/v2/compressions"
 	"github.com/aid297/aid/v2/secret"
 	"github.com/aid297/aid/v2/str"
 )
@@ -109,8 +110,8 @@ func ReadCloser(body io.ReadCloser) HTTPClientAttr {
 	return func(hc HTTPClient) (err error) { hc.setBodyReadCloser(body); return }
 }
 
-func File(filename string) HTTPClientAttr {
-	return func(hc HTTPClient) (err error) { hc.setBodyFile(filename); return }
+func File(filename string, goroutineCount uint64) HTTPClientAttr {
+	return func(hc HTTPClient) (err error) { return hc.setBodyFile(filename, goroutineCount) }
 }
 
 func RateLimit(rate uint64) HTTPClientAttr {
@@ -144,4 +145,8 @@ func AutoCopy(autoCopy bool) HTTPClientAttr {
 
 func Encrypt(symmetricEncryptor secret.Symmetric) HTTPClientAttr {
 	return func(hc HTTPClient) (err error) { hc.setEncryptor(symmetricEncryptor); return }
+}
+
+func Compressor(compressor compressions.Compressor) HTTPClientAttr {
+	return func(hc HTTPClient) (err error) { hc.setCompressor(compressor); return }
 }
