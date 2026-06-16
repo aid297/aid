@@ -29,7 +29,7 @@ func main() {
 		log.Fatalln("参数不足，至少需要一个参数")
 	}
 
-	switch args[1] {
+	switch args[0] {
 	case "push":
 		err := exec.Command("git", "add", "--all").Run()
 		if err != nil {
