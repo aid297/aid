@@ -1,6 +1,8 @@
 package gormPool
 
 import (
+	"fmt"
+
 	"gorm.io/gorm"
 
 	"github.com/aid297/aid/v2/str"
@@ -44,6 +46,46 @@ func ToModel[model Modeler](db *gorm.DB, attrs ...ModelAttr) *gorm.DB {
 
 func ToFinder[model Modeler](db *gorm.DB, attrs ...ModelAttr) Finder {
 	return NewFinder(ToModel[model](db, attrs...))
+}
+
+func SaveOrCreate[model Modeler](tx *gorm.DB, data Modeler, query any, args ...any) (err error) {
+	var count int64
+
+	if err = tx.Where(query, args...).Limit(1).Count(&count).Error; err != nil {
+		return fmt.Errorf("查询待更新数据存在失败: %w", err)
+	}
+
+	if count != 0 {
+		if err = tx.Where(query, args...).Save(data).Error; err != nil {
+			return fmt.Errorf("更新数据失败: %w", err)
+		}
+	} else {
+		if err = tx.Table(data.TableName()).Create(data).Error; err != nil {
+			return fmt.Errorf("创建数据失败: %w", err)
+		}
+	}
+
+	return
+}
+
+func UpdatesOrCreate[model Modeler](tx *gorm.DB, data Modeler, updates any, query any, args ...any) (err error) {
+	var count int64
+
+	if err = tx.Where(query, args...).Limit(1).Count(&count).Error; err != nil {
+		return fmt.Errorf("查询待更新数据存在失败: %w", err)
+	}
+
+	if count != 0 {
+		if err = tx.Where(query, args...).Updates(updates).Error; err != nil {
+			return fmt.Errorf("更新数据失败: %w", err)
+		}
+	} else {
+		if err = tx.Table(data.TableName()).Create(data).Error; err != nil {
+			return fmt.Errorf("创建数据失败: %w", err)
+		}
+	}
+
+	return
 }
 
 func Table(table string) AttrTable { return AttrTable{table: table} }
