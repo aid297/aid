@@ -48,7 +48,7 @@ func ToFinder[model Modeler](db *gorm.DB, attrs ...ModelAttr) Finder {
 	return NewFinder(ToModel[model](db, attrs...))
 }
 
-func SaveOrCreate[model Modeler](tx *gorm.DB, data Modeler, query any, args ...any) (err error) {
+func SaveOrCreate(tx *gorm.DB, data Modeler, query any, args ...any) (err error) {
 	var count int64
 
 	if err = tx.Where(query, args...).Limit(1).Count(&count).Error; err != nil {
@@ -68,7 +68,7 @@ func SaveOrCreate[model Modeler](tx *gorm.DB, data Modeler, query any, args ...a
 	return
 }
 
-func UpdatesOrCreate[model Modeler](tx *gorm.DB, data Modeler, updates any, query any, args ...any) (err error) {
+func UpdatesOrCreate(tx *gorm.DB, data Modeler, updates any, query any, args ...any) (err error) {
 	var count int64
 
 	if err = tx.Where(query, args...).Limit(1).Count(&count).Error; err != nil {
