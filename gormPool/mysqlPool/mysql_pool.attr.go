@@ -30,3 +30,6 @@ func MaxIdleConnections(maxIdleConnections int) MySQLPoolAttr {
 func MaxOpenConnections(maxOpenConnections int) MySQLPoolAttr {
 	return func(mysqlPool MySQLPool) { mysqlPool.SetMaxOpenConnections(maxOpenConnections) }
 }
+func CostomDSNFormat(defaultDSNFormat string) MySQLPoolAttr {
+	return func(mysqlPool MySQLPool) { mysqlPool.SetCostomDSNFormat(defaultDSNFormat) }
+}

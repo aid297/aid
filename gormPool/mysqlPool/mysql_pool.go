@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aid297/aid/v2/gormPool"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
+
+	"github.com/aid297/aid/v2/gormPool"
 )
 
 type (
@@ -26,6 +27,7 @@ type (
 		SetMaxLifetime(maxLifetime int)
 		SetMaxIdleConnections(maxIdleConnections int)
 		SetMaxOpenConnections(maxOpenConnections int)
+		SetCostomDSNFormat(costomDSNFormat string)
 	}
 
 	MySQLPoolImpl struct {
@@ -43,12 +45,13 @@ type (
 		maxLifetime        int
 		maxIdleConnections int
 		maxOpenConnections int
+		costomDSNFormat    string
 	}
 )
 
 var (
 	_              MySQLPool = (*MySQLPoolImpl)(nil)
-	mysqlDSNFormat           = "%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local"
+	mysqlDSNFormat           = "%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True"
 )
 
 func New(database, charset string, rws bool, attrs ...MySQLPoolAttr) (MySQLPool, error) {
@@ -71,7 +74,7 @@ func New(database, charset string, rws bool, attrs ...MySQLPoolAttr) (MySQLPool,
 
 	// 配置主库
 	ins.mainDsn = &gormPool.DSN{Name: "main", Content: fmt.Sprintf(
-		mysqlDSNFormat,
+		mysqlDSNFormat+ins.costomDSNFormat,
 		ins.username, ins.password, ins.host, ins.port, ins.database, ins.charset,
 	)}
 
@@ -135,6 +138,9 @@ func (my *MySQLPoolImpl) SetMaxIdleConnections(maxIdleConnections int) {
 func (my *MySQLPoolImpl) SetMaxOpenConnections(maxOpenConnections int) {
 	my.maxOpenConnections = maxOpenConnections
 }
+func (my *MySQLPoolImpl) SetCostomDSNFormat(costomDSNFormat string) {
+	my.costomDSNFormat = costomDSNFormat
+}
 
 // GetConn 获取主数据库链接
 func (my *MySQLPoolImpl) GetConn() *gorm.DB { my.getRws(); return my.mainConn }
@@ -154,7 +160,7 @@ func (my *MySQLPoolImpl) getRws() *gorm.DB {
 			sources = append(sources, &gormPool.DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
-					mysqlDSNFormat,
+					mysqlDSNFormat+my.costomDSNFormat,
 					item.Username,
 					item.Password,
 					item.Host,
@@ -173,7 +179,7 @@ func (my *MySQLPoolImpl) getRws() *gorm.DB {
 			replicas = append(replicas, &gormPool.DSN{
 				Name: idx,
 				Content: fmt.Sprintf(
-					mysqlDSNFormat,
+					mysqlDSNFormat+my.costomDSNFormat,
 					item.Username,
 					item.Password,
 					item.Host,
