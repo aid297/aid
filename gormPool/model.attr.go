@@ -48,6 +48,12 @@ func ToFinder[model Modeler](db *gorm.DB, attrs ...ModelAttr) Finder {
 	return NewFinder(ToModel[model](db, attrs...))
 }
 
+func Exist(tx *gorm.DB, query any, args ...any) (exist bool, err error) {
+	var count int64
+	err = tx.Where(query, args...).Limit(1).Count(&count).Error
+	return count != 0, err
+}
+
 func SaveOrCreate(tx *gorm.DB, data Modeler, query any, args ...any) (err error) {
 	var count int64
 
