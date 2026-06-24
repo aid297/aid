@@ -20,12 +20,12 @@ func (my FieldInfo) checkUint() FieldInfo {
 	)
 
 	if my.Kind != reflect.Uint {
-		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：正整数", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：正整数", my.getName(), ErrInvalidType))
 		return my
 	}
 
 	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrRequired)}
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
 		return my
 	}
 
@@ -36,11 +36,11 @@ func (my FieldInfo) checkUint() FieldInfo {
 			if min, include = getRuleUintMin(rule); min != nil {
 				if include {
 					if !(cast.ToUint(value) >= *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
 					}
 				} else {
 					if !(cast.ToUint(value) > *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
@@ -48,35 +48,35 @@ func (my FieldInfo) checkUint() FieldInfo {
 			if max, include = getRuleUintMax(rule); max != nil {
 				if include {
 					if !(cast.ToUint(value) <= *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
 					}
 				} else {
 					if !(cast.ToUint(value) < *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "size") {
 			if size, eq = getRuleUintSize(rule); size != nil {
 				if eq {
 					if !(cast.ToUint(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToUint(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -109,12 +109,12 @@ func (my FieldInfo) checkUint8() FieldInfo {
 	)
 
 	if my.Kind != reflect.Uint8 {
-		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：正整数#8位", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：正整数#8位", my.getName(), ErrInvalidType))
 		return my
 	}
 
 	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrRequired)}
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
 		return my
 	}
 
@@ -125,11 +125,11 @@ func (my FieldInfo) checkUint8() FieldInfo {
 			if min, include = getRuleUintMin(rule); min != nil {
 				if include {
 					if !(cast.ToUint(value) >= *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
 					}
 				} else {
 					if !(cast.ToUint(value) > *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
@@ -137,35 +137,35 @@ func (my FieldInfo) checkUint8() FieldInfo {
 			if max, include = getRuleUintMax(rule); max != nil {
 				if include {
 					if !(cast.ToUint(value) <= *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
 					}
 				} else {
 					if !(cast.ToUint(value) < *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "size") {
 			if size, eq = getRuleUintSize(rule); size != nil {
 				if eq {
 					if !(cast.ToUint(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToUint(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -198,12 +198,12 @@ func (my FieldInfo) checkUint16() FieldInfo {
 	)
 
 	if my.Kind != reflect.Uint16 {
-		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：正整数#16位", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：正整数#16位", my.getName(), ErrInvalidType))
 		return my
 	}
 
 	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrRequired)}
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
 		return my
 	}
 
@@ -214,11 +214,11 @@ func (my FieldInfo) checkUint16() FieldInfo {
 			if min, include = getRuleUintMin(rule); min != nil {
 				if include {
 					if !(cast.ToUint(value) >= *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
 					}
 				} else {
 					if !(cast.ToUint(value) > *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
@@ -226,35 +226,35 @@ func (my FieldInfo) checkUint16() FieldInfo {
 			if max, include = getRuleUintMax(rule); max != nil {
 				if include {
 					if !(cast.ToUint(value) <= *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
 					}
 				} else {
 					if !(cast.ToUint(value) < *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "size") {
 			if size, eq = getRuleUintSize(rule); size != nil {
 				if eq {
 					if !(cast.ToUint(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToUint(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -287,12 +287,12 @@ func (my FieldInfo) checkUint32() FieldInfo {
 	)
 
 	if my.Kind != reflect.Uint32 {
-		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：正整数#32位", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：正整数#32位", my.getName(), ErrInvalidType))
 		return my
 	}
 
 	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrRequired)}
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
 		return my
 	}
 
@@ -303,11 +303,11 @@ func (my FieldInfo) checkUint32() FieldInfo {
 			if min, include = getRuleUintMin(rule); min != nil {
 				if include {
 					if !(cast.ToUint(value) >= *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
 					}
 				} else {
 					if !(cast.ToUint(value) > *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
@@ -315,35 +315,35 @@ func (my FieldInfo) checkUint32() FieldInfo {
 			if max, include = getRuleUintMax(rule); max != nil {
 				if include {
 					if !(cast.ToUint(value) <= *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
 					}
 				} else {
 					if !(cast.ToUint(value) < *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "size") {
 			if size, eq = getRuleUintSize(rule); size != nil {
 				if eq {
 					if !(cast.ToUint(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToUint(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -376,12 +376,12 @@ func (my FieldInfo) checkUint64() FieldInfo {
 	)
 
 	if my.Kind != reflect.Uint64 {
-		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：正整数#64位", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：正整数#64位", my.getName(), ErrInvalidType))
 		return my
 	}
 
 	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrRequired)}
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
 		return my
 	}
 
@@ -392,11 +392,11 @@ func (my FieldInfo) checkUint64() FieldInfo {
 			if min, include = getRuleUintMin(rule); min != nil {
 				if include {
 					if !(cast.ToUint(value) >= *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
 					}
 				} else {
 					if !(cast.ToUint(value) > *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
@@ -404,35 +404,35 @@ func (my FieldInfo) checkUint64() FieldInfo {
 			if max, include = getRuleUintMax(rule); max != nil {
 				if include {
 					if !(cast.ToUint(value) <= *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
 					}
 				} else {
 					if !(cast.ToUint(value) < *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "size") {
 			if size, eq = getRuleUintSize(rule); size != nil {
 				if eq {
 					if !(cast.ToUint(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToUint(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}

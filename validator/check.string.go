@@ -48,22 +48,22 @@ func (my FieldInfo) checkString() FieldInfo {
 	)
 
 	if my.Kind != reflect.String {
-		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：字符串", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：字符串", my.getName(), ErrInvalidType))
 		return my
 	}
 
 	if getRuleRequired(my.VRuleTags) {
 		if my.IsPtr && (my.IsNil || my.IsZero) {
-			my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrRequired)}
+			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
 			return my
 		} else if !my.IsPtr && my.IsZero {
-			my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrNotEmpty)}
+			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrNotEmpty)}
 			return my
 		}
 	}
 
 	if value, ok = my.Value.(string); !ok {
-		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：字符串", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：字符串", my.getName(), ErrInvalidType))
 		return my
 	}
 
@@ -72,11 +72,11 @@ func (my FieldInfo) checkString() FieldInfo {
 			if min, include = getRuleIntMin(rule); min != nil {
 				if include {
 					if !(utf8.RuneCountInString(value) >= *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
 					}
 				} else {
 					if !(utf8.RuneCountInString(value) > *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
@@ -84,35 +84,35 @@ func (my FieldInfo) checkString() FieldInfo {
 			if max, include = getRuleIntMax(rule); max != nil {
 				if include {
 					if !(utf8.RuneCountInString(value) <= *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
 					}
 				} else {
 					if !(utf8.RuneCountInString(value) < *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, value)
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, value)
 			}
 		} else if strings.HasPrefix(rule, "size") {
 			if size, eq = getRuleIntSize(rule); size != nil {
 				if eq {
 					if !(len(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(len(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -121,20 +121,20 @@ func (my FieldInfo) checkString() FieldInfo {
 			if strings.HasPrefix(rule, "in") {
 				if in = getRuleIn(rule); len(in) > 0 {
 					anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, value)
 				}
 			}
 			if strings.HasPrefix(rule, "not-in") {
 				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 					anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 					}, value)
 				}
 			}
 			if len(in) == 0 && len(notIn) == 0 {
 				anySlice.New(anySlice.List(def)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, def))
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, def))
 				}, value)
 			}
 		} else if rule == "datetime" {
@@ -146,15 +146,15 @@ func (my FieldInfo) checkString() FieldInfo {
 				}
 			})
 			if !ok {
-				my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w", my.getName(), ErrInvalidFormat))
+				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w", my.getName(), ErrInvalidFormat))
 			}
 		} else if rule == "date" {
 			if !regexp.MustCompile(patternsForTimeString["DateOnly"]).MatchString(value) {
-				my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w", my.getName(), ErrInvalidFormat))
+				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w", my.getName(), ErrInvalidFormat))
 			}
 		} else if rule == "time" {
 			if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
-				my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w", my.getName(), ErrInvalidFormat))
+				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w", my.getName(), ErrInvalidFormat))
 			}
 		} else if strings.HasPrefix(rule, "ex") {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {

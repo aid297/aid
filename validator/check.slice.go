@@ -16,7 +16,7 @@ func (my FieldInfo) checkSlice() FieldInfo {
 	)
 
 	if my.Kind != reflect.Slice && my.Kind != reflect.Array {
-		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：切片或数组", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：切片或数组", my.getName(), ErrInvalidType))
 		return my
 	}
 
@@ -24,12 +24,12 @@ func (my FieldInfo) checkSlice() FieldInfo {
 		if my.IsPtr && (my.IsNil || my.RefValue.Len() == 0) {
 			l := my.RefValue.Len()
 			println(l)
-			my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrRequired)}
+			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
 			return my
 		} else if !my.IsPtr && my.RefValue.Len() == 0 {
 			l := my.RefValue.Len()
 			println(l)
-			my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrNotEmpty)}
+			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrNotEmpty)}
 			return my
 		}
 	}
@@ -39,11 +39,11 @@ func (my FieldInfo) checkSlice() FieldInfo {
 			if min, include = getRuleIntMin(rule); min != nil {
 				if include {
 					if !(my.RefValue.Len() >= *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
 					}
 				} else {
 					if !(my.RefValue.Len() > *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
@@ -51,11 +51,11 @@ func (my FieldInfo) checkSlice() FieldInfo {
 			if max, include = getRuleIntMax(rule); max != nil {
 				if include {
 					if !(my.RefValue.Len() <= *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
 					}
 				} else {
 					if !(my.RefValue.Len() < *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
@@ -63,11 +63,11 @@ func (my FieldInfo) checkSlice() FieldInfo {
 			if size, eq = getRuleIntSize(rule); size != nil {
 				if eq {
 					if !(my.RefValue.Len() == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(my.RefValue.Len() != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
