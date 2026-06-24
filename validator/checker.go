@@ -42,19 +42,20 @@ func (my *Check) Invalid() bool { return len(my.wrongs) > 0 }
 func (my *Check) OK() bool { return len(my.wrongs) == 0 }
 
 func (my *Check) Error() error {
-	return operation.NewTernary(
-		operation.TrueFn(func() error { return errors.New(my.ErrorToString("")) }),
-	).
-		GetByValue(len(my.wrongs) > 0)
+	return operation.NewTernary(operation.TrueFn(func() error { return errors.New(my.ErrorToString("")) })).GetByValue(len(my.wrongs) > 0)
 }
 
 func (my *Check) ErrorToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
-		ret = anySlice.FillFunc(my.wrongs, func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) }).
+		ret = anySlice.FillFunc(
+			my.wrongs,
+			func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) },
+		).
 			JoinNotEmpty(operation.NewTernary(
 				operation.TrueValue(limit),
 				operation.FalseValue(my.defaultLimit),
-			).GetByValue(limit != ""))
+			).GetByValue(limit != ""),
+			)
 	}
 
 	return
@@ -163,7 +164,7 @@ func callExCheckFn(fn any, data any) error {
 	if first.IsNil() {
 		return nil
 	}
-	errIface := reflect.TypeOf((*error)(nil)).Elem()
+	errIface := reflect.TypeFor[error]()
 	if !first.Type().Implements(errIface) {
 		return fmt.Errorf(
 			"callback first return does not implement error: %s",
@@ -179,7 +180,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 
 	var infos []FieldInfo
 
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		v = v.Elem()
 		t = v.Type()
 	}

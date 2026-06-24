@@ -20,12 +20,12 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 	)
 
 	if my.Kind != reflect.Float32 {
-		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：小数#32位", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：小数#32位", my.getName(), ErrInvalidType))
 		return my
 	}
 
 	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
+		my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrRequired)}
 		return my
 	}
 
@@ -36,11 +36,11 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 			if min, include = getRuleFloatMin(rule); min != nil {
 				if include {
 					if !(cast.ToFloat64(value) >= *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %f", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：>= %f", my.getName(), ErrInvalidLength, *min))
 					}
 				} else {
 					if !(cast.ToFloat64(value) > *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：> %f", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：> %f", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
@@ -48,35 +48,35 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 			if max, include = getRuleFloatMax(rule); max != nil {
 				if include {
 					if !(cast.ToFloat64(value) <= *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %f", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：<= %f", my.getName(), ErrInvalidLength, *max))
 					}
 				} else {
 					if !(cast.ToFloat64(value) < *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：< %f", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：< %f", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "size") {
 			if size, eq = getRuleFloatSize(rule); size != nil {
 				if eq {
 					if !(cast.ToFloat64(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToFloat64(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -109,12 +109,12 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 	)
 
 	if my.Kind != reflect.Float64 {
-		my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：小数#64位", my.getName(), ErrInvalidType))
+		my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：小数#64位", my.getName(), ErrInvalidType))
 		return my
 	}
 
 	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
-		my.wrongs = []error{fmt.Errorf("[%s] %w", my.getName(), ErrRequired)}
+		my.wrongs = []error{fmt.Errorf("「%s」 %w", my.getName(), ErrRequired)}
 		return my
 	}
 
@@ -125,11 +125,11 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 			if min, include = getRuleFloatMin(rule); min != nil {
 				if include {
 					if !(cast.ToFloat64(value) >= *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：>= %f", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：>= %f", my.getName(), ErrInvalidLength, *min))
 					}
 				} else {
 					if !(cast.ToFloat64(value) > *min) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：> %f", my.getName(), ErrInvalidLength, *min))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：> %f", my.getName(), ErrInvalidLength, *min))
 					}
 				}
 			}
@@ -137,35 +137,35 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 			if max, include = getRuleFloatMax(rule); max != nil {
 				if include {
 					if !(cast.ToFloat64(value) <= *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：<= %f", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：<= %f", my.getName(), ErrInvalidLength, *max))
 					}
 				} else {
 					if !(cast.ToFloat64(value) < *max) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：< %f", my.getName(), ErrInvalidLength, *max))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：< %f", my.getName(), ErrInvalidLength, *max))
 					}
 				}
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlice.NewList(notIn).IfIn(func(_ anySlice.AnySlicer[string]) {
-					my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+					my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "size") {
 			if size, eq = getRuleFloatSize(rule); size != nil {
 				if eq {
 					if !(cast.ToFloat64(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToFloat64(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("[%s] %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("「%s」 %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
