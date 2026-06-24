@@ -61,3 +61,16 @@ func WhatVolumeIsIt(origin string) (float64, error) {
 
 	return num * unit, nil
 }
+
+func WhatVolumeIsItDefault(origin string, def float64) float64 {
+	if !IsValidVolumeFormat(origin) {
+		return def
+	}
+
+	vol, err := WhatVolumeIsIt(origin)
+	if err != nil {
+		return def
+	}
+
+	return vol
+}

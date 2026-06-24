@@ -48,3 +48,16 @@ func WhatTimeIsIt(origin string) (time.Duration, error) {
 
 	return time.Duration(num) * unit, nil
 }
+
+func WhatTimeIsItDefault(origin string, def time.Duration) time.Duration {
+	if !IsValidTimeFormat(origin) {
+		return def
+	}
+
+	dur, err := WhatTimeIsIt(origin)
+	if err != nil {
+		return def
+	}
+
+	return dur
+}
