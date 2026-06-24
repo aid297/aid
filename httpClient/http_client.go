@@ -21,7 +21,7 @@ import (
 
 	"github.com/aid297/aid/v2/anyMap"
 	"github.com/aid297/aid/v2/compressions"
-	"github.com/aid297/aid/v2/consts/digitalInfo"
+	"github.com/aid297/aid/v2/consts/volumenInfo"
 	"github.com/aid297/aid/v2/debugLogger"
 	"github.com/aid297/aid/v2/operation"
 	"github.com/aid297/aid/v2/secret"
@@ -30,7 +30,7 @@ import (
 
 var (
 	_             HTTPClient = (*HTTPClientImpl)(nil)
-	fileSplitSize int64      = 10 * digitalInfo.MB
+	fileSplitSize int64      = 10 * volumenInfo.MB
 )
 
 type (
@@ -424,7 +424,7 @@ func (my *HTTPClientImpl) setBodyFile(filename string, goroutineCount uint64) (e
 		my.fileSize = size
 		my.isChunked = true
 
-		chunkSize := max(size/int64(goroutineCount), 1*digitalInfo.MB) // 每个chunk至少1MB
+		chunkSize := max(size/int64(goroutineCount), 1*volumenInfo.MB) // 每个chunk至少1MB
 
 		my.chunkedReader = &chunkedFileReader{
 			file:          file,
@@ -649,7 +649,7 @@ func (my *HTTPClientImpl) send() HTTPClient {
 
 	bodyReader := my.requestBody
 	if bodyReader != nil && my.rateLimit > 0 {
-		bodyReader = NewUploadRateReader(bodyReader, my.rateLimit*digitalInfo.KB)
+		bodyReader = NewUploadRateReader(bodyReader, my.rateLimit*volumenInfo.KB)
 	}
 
 	if my.rawRequest, my.err = http.NewRequest(my.method, my.getURL(), bodyReader); my.err != nil {

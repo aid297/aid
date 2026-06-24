@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/aid297/aid/v2/compressions/zlib"
-	"github.com/aid297/aid/v2/consts/digitalInfo"
+	"github.com/aid297/aid/v2/consts/volumenInfo"
 	"github.com/aid297/aid/v2/httpClient"
 	"github.com/aid297/aid/v2/secret/symmetric/aes"
 )
@@ -278,7 +278,7 @@ func Test4(t *testing.T) {
 		defer os.Remove(tempFileName)
 
 		// 写入足够大的内容来测试切块
-		largeContent := make([]byte, 6*digitalInfo.MB) // 6MB
+		largeContent := make([]byte, 6*volumenInfo.MB) // 6MB
 		for i := range largeContent {
 			largeContent[i] = byte(i % 256)
 		}
@@ -288,7 +288,7 @@ func Test4(t *testing.T) {
 		tempFile.Close()
 
 		// 可以通过 SetDefaultFileSplitSize 来设置默认的切块大小
-		httpClient.SetDefaultFileSplitSize(2 * digitalInfo.MB)
+		httpClient.SetDefaultFileSplitSize(2 * volumenInfo.MB)
 
 		// 使用切块模式（4个协程）
 		_, err = httpClient.New(
@@ -391,7 +391,7 @@ func Test4(t *testing.T) {
 		tempFileName := tempFile.Name()
 		defer os.Remove(tempFileName)
 
-		largeContent := make([]byte, 7*digitalInfo.MB) // 7MB
+		largeContent := make([]byte, 7*volumenInfo.MB) // 7MB
 		for i := range largeContent {
 			largeContent[i] = byte(i % 256)
 		}

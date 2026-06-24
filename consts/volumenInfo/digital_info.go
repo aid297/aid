@@ -1,4 +1,4 @@
-package digitalInfo
+package volumenInfo
 
 const (
 	KB = 1024
