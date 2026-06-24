@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/aid297/aid/v2/anySlice"
-	"github.com/aid297/aid/v2/ptr"
+	"github.com/aid297/aid/v2/points"
 )
 
 // func (my FieldInfo) getRuleType(rules anyArrayV2.AnyArray[string]) (targetType string) {
@@ -55,7 +55,7 @@ func getRuleExFnNames(rule string) (exFnNames []string) {
 func getRuleUintSize(rule string) (size *uint, eq bool) {
 	var s *int
 	s, eq = getRuleIntSize(rule)
-	size = ptr.New(uint(*s))
+	size = points.New(uint(*s))
 	return
 }
 
@@ -66,13 +66,13 @@ func getRuleIntSize(rule string) (size *int, eq bool) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "size="); ok {
-		size = ptr.New(cast.ToInt(value))
+		size = points.New(cast.ToInt(value))
 		eq = true
 		return
 	}
 
 	if value, ok = strings.CutPrefix(rule, "size!="); ok {
-		size = ptr.New(cast.ToInt(value))
+		size = points.New(cast.ToInt(value))
 		eq = false
 		return
 	}
@@ -87,13 +87,13 @@ func getRuleFloatSize(rule string) (size *float64, eq bool) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "size="); ok {
-		size = ptr.New(cast.ToFloat64(value))
+		size = points.New(cast.ToFloat64(value))
 		eq = true
 		return
 	}
 
 	if value, ok = strings.CutPrefix(rule, "size!="); ok {
-		size = ptr.New(cast.ToFloat64(value))
+		size = points.New(cast.ToFloat64(value))
 		eq = false
 		return
 	}
@@ -104,14 +104,14 @@ func getRuleFloatSize(rule string) (size *float64, eq bool) {
 func getRuleUintMin(rule string) (size *uint, include bool) {
 	var s *int
 	s, include = getRuleIntMin(rule)
-	size = ptr.New(uint(*s))
+	size = points.New(uint(*s))
 	return
 }
 
 func getRuleUintMax(rule string) (size *uint, include bool) {
 	var s *int
 	s, include = getRuleIntMax(rule)
-	size = ptr.New(uint(*s))
+	size = points.New(uint(*s))
 	return
 }
 
@@ -122,12 +122,12 @@ func getRuleIntMin(rule string) (size *int, include bool) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "min>="); ok {
-		size = ptr.New(cast.ToInt(value))
+		size = points.New(cast.ToInt(value))
 		include = true
 		return
 	}
 	if value, ok = strings.CutPrefix(rule, "min>"); ok {
-		size = ptr.New(cast.ToInt(value))
+		size = points.New(cast.ToInt(value))
 		return
 	}
 
@@ -141,12 +141,12 @@ func getRuleIntMax(rule string) (size *int, include bool) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "max<="); ok {
-		size = ptr.New(cast.ToInt(value))
+		size = points.New(cast.ToInt(value))
 		include = true
 		return
 	}
 	if value, ok = strings.CutPrefix(rule, "max<"); ok {
-		size = ptr.New(cast.ToInt(value))
+		size = points.New(cast.ToInt(value))
 		include = false
 		return
 	}
@@ -161,12 +161,12 @@ func getRuleFloatMin(rule string) (size *float64, include bool) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "min>="); ok {
-		size = ptr.New(cast.ToFloat64(value))
+		size = points.New(cast.ToFloat64(value))
 		include = true
 		return
 	}
 	if value, ok = strings.CutPrefix(rule, "min>"); ok {
-		size = ptr.New(cast.ToFloat64(value))
+		size = points.New(cast.ToFloat64(value))
 		include = false
 		return
 	}
@@ -181,12 +181,12 @@ func getRuleFloatMax(rule string) (size *float64, include bool) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "max<="); ok {
-		size = ptr.New(cast.ToFloat64(value))
+		size = points.New(cast.ToFloat64(value))
 		include = true
 		return
 	}
 	if value, ok = strings.CutPrefix(rule, "max<"); ok {
-		size = ptr.New(cast.ToFloat64(value))
+		size = points.New(cast.ToFloat64(value))
 		include = false
 		return
 	}
@@ -227,12 +227,12 @@ func getRuleTimeMin(rule string) (t *time.Time, include bool) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "min>="); ok {
-		t = ptr.New(cast.ToTime(value))
+		t = points.New(cast.ToTime(value))
 		include = true
 		return
 	}
 	if value, ok = strings.CutPrefix(rule, "min>"); ok {
-		t = ptr.New(cast.ToTime(value))
+		t = points.New(cast.ToTime(value))
 		include = false
 		return
 	}
@@ -247,12 +247,12 @@ func getRuleTimeMax(rule string) (t *time.Time, include bool) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "max<="); ok {
-		t = ptr.New(cast.ToTime(value))
+		t = points.New(cast.ToTime(value))
 		include = true
 		return
 	}
 	if value, ok = strings.CutPrefix(rule, "max<"); ok {
-		t = ptr.New(cast.ToTime(value))
+		t = points.New(cast.ToTime(value))
 		include = false
 		return
 	}

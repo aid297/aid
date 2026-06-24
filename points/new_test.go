@@ -1,4 +1,4 @@
-package ptr
+package points
 
 import (
 	"testing"
