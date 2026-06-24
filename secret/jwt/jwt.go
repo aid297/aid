@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -98,13 +99,13 @@ func (j *JWT) Generate(claims *Claims) (string, error) {
 	payloadBase64 := base64.RawURLEncoding.EncodeToString(payloadBytes)
 
 	// 签名
-	signInput := headerBase64 + "." + payloadBase64
+	signInput := fmt.Sprintf("%s.%s", headerBase64, payloadBase64)
 	signature, err := j.asymm.Sign([]byte(signInput))
 	if err != nil {
 		return "", err
 	}
 
-	return signInput + "." + signature, nil
+	return fmt.Sprintf("%s.%s", signInput, signature), nil
 }
 
 // Verify 验证 JWT token

@@ -229,7 +229,7 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 		return logLevel >= ins.Level
 	})
 	core := zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, levelEnabler)
-	return zap.New(core), nil
+	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(0)), nil
 }
 
 func (my *ZapLog) SetAttrs(attrs ...ZapLogAttr) (err error) {
