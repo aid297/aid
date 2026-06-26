@@ -15,7 +15,7 @@ var (
 		"m": time.Minute,
 		"h": time.Hour,
 		"d": time.Hour * 24,
-		"w": time.Hour * 24 * 7,
+		"w": time.Hour * 168, // (7*24)
 	}
 
 	// timeRegexp 匹配: 任意正整数 + s/m/h/d/w

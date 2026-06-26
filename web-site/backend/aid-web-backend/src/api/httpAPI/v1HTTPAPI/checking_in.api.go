@@ -37,7 +37,8 @@ func (*CheckingInAPI) Cal(c *gin.Context) {
 		monthly      map[string]map[string]string
 	)
 
-	if form, checker = validator.WithGin[request.CheckingInCalRequest](c, func(form *request.CheckingInCalRequest) (err error) {
+	if form, checker = validator.WithGin[request.CheckingInCalRequest](c, func(origin any) (err error) {
+		form := origin.(*request.CheckingInCalRequest)
 		if repeat := anySlice.NewList(form.ForceWorkdays).Intersection(anySlice.NewList(form.ForceAnnualLeaves)).Intersection(anySlice.NewList(form.Holidays2)).Intersection(anySlice.NewList(form.Holidays3)).RemoveEmpty().ToSlice(); len(repeat) > 0 {
 			return errors.New("调休、年薪日、双薪日、三薪日存在重复内容")
 		}

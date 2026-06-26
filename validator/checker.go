@@ -21,7 +21,7 @@ type (
 		ErrorToString(limit string) (ret string)
 		Invalid() bool
 		OK() bool
-		Validate(exCheckFns ...any) Checker
+		Validate(exCheckFns ...ExCheckFn) Checker
 	}
 
 	// Check 验证器
@@ -30,6 +30,8 @@ type (
 		wrongs       []error
 		defaultLimit string
 	}
+
+	ExCheckFn func(origin any) (err error)
 )
 
 func NewCheck(data any) Checker { return &Check{data: data, defaultLimit: "<br />"} }
@@ -61,7 +63,7 @@ func (my *Check) ErrorToString(limit string) (ret string) {
 	return
 }
 
-func (my *Check) Validate(exCheckFns ...any) Checker {
+func (my *Check) Validate(exCheckFns ...ExCheckFn) Checker {
 	fieldInfos := getStructFieldInfos(my.data, "")
 	for _, fieldInfo := range fieldInfos {
 		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
@@ -80,7 +82,7 @@ func (my *Check) Validate(exCheckFns ...any) Checker {
 	return my
 }
 
-func WithGin[T any](c *gin.Context, exCheckFns ...any) (form T, checker Checker) {
+func WithGin[T any](c *gin.Context, exCheckFns ...ExCheckFn) (form T, checker Checker) {
 	form = *new(T)
 
 	if c == nil || c.Request == nil {
@@ -103,7 +105,7 @@ func WithGin[T any](c *gin.Context, exCheckFns ...any) (form T, checker Checker)
 	return form, OnceValidator().Checker(&form).Validate(exCheckFns...)
 }
 
-func WithFiber[T any](c *fiber.Ctx, exCheckFns ...any) (form T, checker Checker) {
+func WithFiber[T any](c *fiber.Ctx, exCheckFns ...ExCheckFn) (form T, checker Checker) {
 	form = *new(T)
 
 	if err := c.BodyParser(&form); err != nil {
@@ -114,7 +116,7 @@ func WithFiber[T any](c *fiber.Ctx, exCheckFns ...any) (form T, checker Checker)
 	return form, OnceValidator().Checker(&form).Validate(exCheckFns...)
 }
 
-func callExCheckFn(fn any, data any) error {
+func callExCheckFn(fn ExCheckFn, data any) error {
 	if fn == nil {
 		return fmt.Errorf("callback is nil")
 	}
@@ -139,11 +141,11 @@ func callExCheckFn(fn any, data any) error {
 		// If direct assignable, OK. Otherwise try to adapt:
 		if !dv.Type().AssignableTo(argType) {
 			// If function expects a pointer and we have a non-pointer of compatible element, take address.
-			if argType.Kind() == reflect.Ptr && dv.Type().AssignableTo(argType.Elem()) {
+			if argType.Kind() == reflect.Pointer && dv.Type().AssignableTo(argType.Elem()) {
 				addr := reflect.New(dv.Type())
 				addr.Elem().Set(dv)
 				dv = addr
-			} else if dv.Kind() == reflect.Ptr && dv.Type().Elem().AssignableTo(argType) {
+			} else if dv.Kind() == reflect.Pointer && dv.Type().Elem().AssignableTo(argType) {
 				// If we have a pointer but function expects a value, dereference
 				dv = dv.Elem()
 			} else if dv.CanAddr() && dv.Addr().Type().AssignableTo(argType) {

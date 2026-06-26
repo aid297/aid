@@ -16,7 +16,7 @@ func OnceValidator() *Validator {
 	return validatorExIns
 }
 
-func (*Validator) RegisterExFn(key string, fn func(any) (err error)) *Validator {
+func (*Validator) RegisterExFn(key string, fn ExCheckFn) *Validator {
 	validatorExIns.data[key] = fn
 	return validatorExIns
 }
