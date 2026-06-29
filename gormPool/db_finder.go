@@ -433,6 +433,11 @@ func (my *FinderImpl) FindUseCondition(finderCondition *FinderCondition, page, s
 
 // FindOnlyCondition  自动填充查询条件并查询：使用FinderCondition
 func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret any) Finder {
+	if finderCondition == nil {
+		my.db.Find(ret)
+		return my.finderNext()
+	}
+
 	return my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.Limit).Find(ret).finderNext()
 }
 
