@@ -365,7 +365,7 @@ func (my *FinderImpl) QueryUseCondition(finderCondition *FinderCondition) Finder
 	if len(finderCondition.Queries) > 0 {
 		for idx := range finderCondition.Queries {
 			for _, condition := range finderCondition.Queries[idx].Conditions {
-				if condition.Key != "" {
+				if condition.Key != "" && len(condition.Values) > 0 {
 					switch condition.Operator {
 					case "=", ">", "<", "!=", "<=", ">=", "<>":
 						// {key:"fieldName", operator:"=", values:["value"]}
