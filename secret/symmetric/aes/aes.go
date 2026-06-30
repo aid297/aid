@@ -182,7 +182,7 @@ func (my *AES) EncryptBase64(plainText []byte) (string, error) {
 
 // DecryptBase64 解密：通过 base64 编码的密文
 func (my *AES) DecryptBase64(cipherBase64 string) ([]byte, error) {
-	cipherText, err := base64.StdEncoding.DecodeString(cipherBase64)
+	cipherText, err := base64.StdEncoding.DecodeString(secret.PaddingBase64(cipherBase64))
 	if err != nil {
 		return nil, fmt.Errorf("base64解码错误：%w", err)
 	}

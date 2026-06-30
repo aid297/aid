@@ -146,7 +146,7 @@ func (my *RSA) Decrypt(cipherBase64 string) ([]byte, error) {
 		chunk      []byte
 	)
 
-	if cipherText, err = base64.StdEncoding.DecodeString(cipherBase64); err != nil {
+	if cipherText, err = base64.StdEncoding.DecodeString(secret.PaddingBase64(cipherBase64)); err != nil {
 		return nil, err
 	}
 
