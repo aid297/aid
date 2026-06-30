@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/xuri/excelize/v2"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 )
 
 type (
@@ -22,7 +22,7 @@ type (
 		GetContent() any
 		GetContentType() CellContentType
 		GetFont() CellFontOpt
-		GetBorder() anySlice.AnySlicer[excelize.Border]
+		GetBorder() anySlices.AnySlicer[excelize.Border]
 		GetAlignment() CellAlignmentOpt
 	}
 
@@ -161,11 +161,11 @@ func (my *Cell) GetFont() CellFontOpt {
 }
 
 // GetBorder 获取边框属性
-func (my *Cell) GetBorder() anySlice.AnySlicer[excelize.Border] {
+func (my *Cell) GetBorder() anySlices.AnySlicer[excelize.Border] {
 	my.mu.RLock()
 	defer my.mu.RUnlock()
 
-	borders := anySlice.New(anySlice.Cap[excelize.Border](6))
+	borders := anySlices.New(anySlices.Cap[excelize.Border](6))
 
 	if my.borderRGB.Top != "" && my.borderStyle.Top > 0 {
 		borders.Append(

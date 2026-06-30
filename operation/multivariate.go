@@ -1,6 +1,6 @@
 package operation
 
-import "github.com/aid297/aid/v2/anySlice"
+import "github.com/aid297/aid/v2/anySlices"
 
 type (
 	Multivariater[T any] interface {
@@ -10,14 +10,14 @@ type (
 	}
 
 	Multivariate[T any] struct {
-		Items   anySlice.AnySlicer[MultivariateAttr[T]]
+		Items   anySlices.AnySlicer[MultivariateAttr[T]]
 		Default MultivariateAttr[T]
 	}
 )
 
 // NewMultivariate 实例化：多元运算
 func NewMultivariate[T any]() *Multivariate[T] {
-	return &Multivariate[T]{Items: anySlice.New[MultivariateAttr[T]]()}
+	return &Multivariate[T]{Items: anySlices.New[MultivariateAttr[T]]()}
 }
 
 // Append 添加优先级项

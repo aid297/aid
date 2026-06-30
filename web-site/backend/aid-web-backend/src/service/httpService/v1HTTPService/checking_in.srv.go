@@ -7,7 +7,7 @@ import (
 
 	"github.com/dromara/carbon/v2"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 	"github.com/aid297/aid/v2/excel/excelV3/excelReader"
 	"github.com/aid297/aid/v2/operation"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
@@ -126,13 +126,13 @@ func getStandardDateKind(
 	holidays3 []string,
 ) StandardDateKind {
 	switch {
-	case anySlice.NewList(forceWorkdays).In(c.ToDateString()): // 调休
+	case anySlices.NewList(forceWorkdays).In(c.ToDateString()): // 调休
 		return FORCE_WORKDAY
-	case anySlice.NewList(forceAnnualLeave).In(c.ToDateString()): // 强制年假休休
+	case anySlices.NewList(forceAnnualLeave).In(c.ToDateString()): // 强制年假休休
 		return FORCE_ANNUAL_LEAVE
-	case anySlice.NewList(holidays2).In(c.ToDateString()): // 双薪
+	case anySlices.NewList(holidays2).In(c.ToDateString()): // 双薪
 		return HOLIDAY2
-	case anySlice.NewList(holidays3).In(c.ToDateString()): // 三薪
+	case anySlices.NewList(holidays3).In(c.ToDateString()): // 三薪
 		return HOLIDAY3
 	case c.IsWeekend(): // 周末
 		return WEEKEND

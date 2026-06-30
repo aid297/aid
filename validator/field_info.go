@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 )
 
 type (
@@ -15,12 +15,12 @@ type (
 		RefValue  reflect.Value
 		Kind      reflect.Kind
 		Type      reflect.Type
-		IsPtr     bool                       // 是否是指针
-		IsNil     bool                       // 是否为空指针
-		IsZero    bool                       // 是否是零值
-		Required  bool                       // 是否必填
-		VRuleTags anySlice.AnySlicer[string] // v-rule tag 的值
-		VNameTags anySlice.AnySlicer[string] // v-name tag 的值
+		IsPtr     bool                        // 是否是指针
+		IsNil     bool                        // 是否为空指针
+		IsZero    bool                        // 是否是零值
+		Required  bool                        // 是否必填
+		VRuleTags anySlices.AnySlicer[string] // v-rule tag 的值
+		VNameTags anySlices.AnySlicer[string] // v-name tag 的值
 		wrongs    []error
 	}
 

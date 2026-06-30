@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 	"github.com/spf13/cast"
 )
 
@@ -58,13 +58,13 @@ func (my FieldInfo) checkUint() FieldInfo {
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
-				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
-				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
@@ -147,13 +147,13 @@ func (my FieldInfo) checkUint8() FieldInfo {
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
-				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
-				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
@@ -236,13 +236,13 @@ func (my FieldInfo) checkUint16() FieldInfo {
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
-				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
-				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
@@ -325,13 +325,13 @@ func (my FieldInfo) checkUint32() FieldInfo {
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
-				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
-				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}
@@ -414,13 +414,13 @@ func (my FieldInfo) checkUint64() FieldInfo {
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
-				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
-				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, cast.ToString(value))
 			}

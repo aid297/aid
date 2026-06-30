@@ -7,20 +7,20 @@ import (
 	"github.com/go-gota/gota/series"
 	"github.com/xuri/excelize/v2"
 
-	"github.com/aid297/aid/v2/anyMap"
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anyMaps"
+	"github.com/aid297/aid/v2/anySlices"
 )
 
 // Reader Excel读取器
 type Reader struct {
 	Err         error
-	data        anyMap.AnyMapper[uint64, anySlice.AnySlicer[string]]
+	data        anyMaps.AnyMapper[uint64, anySlices.AnySlicer[string]]
 	excel       *excelize.File
 	sheetName   string
 	originalRow int
 	finishedRow int
 	titleRow    int
-	titles      anySlice.AnySlicer[string]
+	titles      anySlices.AnySlicer[string]
 }
 
 var ReaderApp Reader
@@ -31,7 +31,7 @@ func (*Reader) New() *Reader { return NewReader() }
 //
 //go:fix 推荐使用New方法
 func NewReader() *Reader {
-	return &Reader{data: anyMap.New[uint64, anySlice.AnySlicer[string]]()}
+	return &Reader{data: anyMaps.New[uint64, anySlices.AnySlicer[string]]()}
 }
 
 // AutoRead 自动读取（默认第一行是表头，从第二行开始，默认Sheet名称为：Sheet1）
@@ -57,14 +57,14 @@ func (my *Reader) AutoReadBySheetName(sheetName string, filename ...any) *Reader
 }
 
 // Data 获取数据：有序字典
-func (my *Reader) Data() anyMap.AnyMapper[uint64, anySlice.AnySlicer[string]] { return my.data }
+func (my *Reader) Data() anyMaps.AnyMapper[uint64, anySlices.AnySlicer[string]] { return my.data }
 
 // DataWithTitle 获取数据：带有title的有序字典
-func (my *Reader) DataWithTitle() (anyMap.AnyMapper[uint64, anyMap.AnyMapper[string, string]], error) {
-	newDict := anyMap.New[uint64, anyMap.AnyMapper[string, string]]()
+func (my *Reader) DataWithTitle() (anyMaps.AnyMapper[uint64, anyMaps.AnyMapper[string, string]], error) {
+	newDict := anyMaps.New[uint64, anyMaps.AnyMapper[string, string]]()
 
 	for idx, value := range my.data.ToMap() {
-		newDict.SetDatum(idx, anyMap.Zip(my.titles.ToSlice(), value.ToSlice()))
+		newDict.SetDatum(idx, anyMaps.Zip(my.titles.ToSlice(), value.ToSlice()))
 	}
 
 	return newDict, nil
@@ -72,7 +72,7 @@ func (my *Reader) DataWithTitle() (anyMap.AnyMapper[uint64, anyMap.AnyMapper[str
 
 // SetDataByRow 设置单行数据
 func (my *Reader) SetDataByRow(rowNumber uint64, data []string) *Reader {
-	my.data.SetDatum(rowNumber, anySlice.New(anySlice.List(data)))
+	my.data.SetDatum(rowNumber, anySlices.New(anySlices.List(data)))
 
 	return my
 }
@@ -118,7 +118,7 @@ func (my *Reader) SetTitleRow(titleRow int) *Reader {
 }
 
 // GetTitle 获取表头
-func (my *Reader) GetTitle() anySlice.AnySlicer[string] { return my.titles }
+func (my *Reader) GetTitle() anySlices.AnySlicer[string] { return my.titles }
 
 // SetTitle 设置表头
 func (my *Reader) SetTitle(titles []string) *Reader {
@@ -126,7 +126,7 @@ func (my *Reader) SetTitle(titles []string) *Reader {
 		my.Err = ReadErr.New("表头不能为空")
 		return my
 	}
-	my.titles = anySlice.New(anySlice.List(titles))
+	my.titles = anySlices.New(anySlices.List(titles))
 
 	return my
 }
@@ -152,7 +152,7 @@ func (my *Reader) OpenFile(filename ...any) *Reader {
 
 	my.SetTitleRow(1)
 	my.SetOriginalRow(2)
-	my.data = anyMap.New[uint64, anySlice.AnySlicer[string]]()
+	my.data = anyMaps.New[uint64, anySlices.AnySlicer[string]]()
 
 	return my
 }

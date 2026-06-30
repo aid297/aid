@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 type (
@@ -24,7 +24,7 @@ type (
 	// MapLock 字典锁：一个锁的集合
 	MapLock struct {
 		lock  sync.RWMutex
-		locks anyMap.AnyMapper[string, *itemLock]
+		locks anyMaps.AnyMapper[string, *itemLock]
 	}
 
 	// 锁项：一个集合锁中的每一项，包含：锁状态、锁值、超时时间、定时器
@@ -43,10 +43,10 @@ var (
 
 func (*MapLock) implMapLocker() {}
 
-func (*MapLock) New() MapLocker { return &MapLock{locks: anyMap.New[string, *itemLock]()} }
+func (*MapLock) New() MapLocker { return &MapLock{locks: anyMaps.New[string, *itemLock]()} }
 
 func (*MapLock) Once() MapLocker {
-	onceMapLock.Do(func() { mapLockIns = &MapLock{locks: anyMap.New[string, *itemLock]()} })
+	onceMapLock.Do(func() { mapLockIns = &MapLock{locks: anyMaps.New[string, *itemLock]()} })
 
 	return mapLockIns
 }

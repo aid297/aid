@@ -8,13 +8,13 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 type (
 	ServerPool struct {
-		connections             anyMap.AnyMapper[string, *Server]
-		addrToAuth              anyMap.AnyMapper[string, string]
+		connections             anyMaps.AnyMapper[string, *Server]
+		addrToAuth              anyMaps.AnyMapper[string, string]
 		onConnectionFail        serverConnectionFailFn
 		onConnectionSuccess     serverConnectionSuccessFn
 		onSendMessageSuccess    serverSendMessageSuccessFn
@@ -35,8 +35,8 @@ var (
 func (*ServerPool) Once(attrs ...ServerCallbackAttributer) *ServerPool {
 	serverPoolOnce.Do(func() {
 		serverPool = &ServerPool{
-			connections: anyMap.New[string, *Server](),
-			addrToAuth:  anyMap.New[string, string](),
+			connections: anyMaps.New[string, *Server](),
+			addrToAuth:  anyMaps.New[string, string](),
 		}
 	})
 
@@ -55,8 +55,8 @@ func (*ServerPool) Once(attrs ...ServerCallbackAttributer) *ServerPool {
 func OnceServer(serverCallbackConfig ServerCallbackConfig) *ServerPool {
 	serverPoolOnce.Do(func() {
 		serverPool = &ServerPool{
-			connections:             anyMap.New[string, *Server](),
-			addrToAuth:              anyMap.New[string, string](),
+			connections:             anyMaps.New[string, *Server](),
+			addrToAuth:              anyMaps.New[string, string](),
 			onConnectionFail:        serverCallbackConfig.OnConnectionFail,
 			onConnectionSuccess:     serverCallbackConfig.OnConnectionSuccess,
 			onSendMessageSuccess:    serverCallbackConfig.OnSendMessageSuccess,

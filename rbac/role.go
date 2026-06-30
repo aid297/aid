@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 	"github.com/aid297/aid/v2/str"
 )
 
@@ -108,7 +108,7 @@ func (my Role) GetDotsByUUID(edgeUUID uuid.UUID) (permissions []Permission, err 
 		return
 	}
 
-	if err = APP.Permission.DB().Where("uuid in (?)", anySlice.FillFunc(groups, func(_ int, group *Group) string { return group.PermissionUUID }).ToSlice()).Find(&permissions).Error; err != nil {
+	if err = APP.Permission.DB().Where("uuid in (?)", anySlices.FillFunc(groups, func(_ int, group *Group) string { return group.PermissionUUID }).ToSlice()).Find(&permissions).Error; err != nil {
 		return
 	}
 
@@ -121,7 +121,7 @@ func (my Role) GetDotsByUUIDs(edgeUUIDs []uuid.UUID) (permissions []Permission, 
 		return
 	}
 
-	if err = APP.Permission.DB().Where("uuid in (?)", anySlice.FillFunc(groups, func(_ int, group *Group) string { return group.PermissionUUID }).ToSlice()).Find(&permissions).Error; err != nil {
+	if err = APP.Permission.DB().Where("uuid in (?)", anySlices.FillFunc(groups, func(_ int, group *Group) string { return group.PermissionUUID }).ToSlice()).Find(&permissions).Error; err != nil {
 		return
 	}
 

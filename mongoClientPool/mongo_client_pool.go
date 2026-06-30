@@ -4,11 +4,11 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 type MongoClientPool struct {
-	clients anyMap.AnyMapper[string, *MongoClient]
+	clients anyMaps.AnyMapper[string, *MongoClient]
 }
 
 var (
@@ -18,7 +18,7 @@ var (
 
 // Once 单例化：mongodb连接池
 func (*MongoClientPool) Once() *MongoClientPool {
-	mongoPoolOnce.Do(func() { mongoClientPool = &MongoClientPool{clients: anyMap.New[string, *MongoClient]()} })
+	mongoPoolOnce.Do(func() { mongoClientPool = &MongoClientPool{clients: anyMaps.New[string, *MongoClient]()} })
 	return mongoClientPool
 }
 

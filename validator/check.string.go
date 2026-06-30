@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/aid297/aid/v2/anyMap"
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anyMaps"
+	"github.com/aid297/aid/v2/anySlices"
 )
 
 var (
@@ -94,13 +94,13 @@ func (my FieldInfo) checkString() FieldInfo {
 			}
 		} else if strings.HasPrefix(rule, "in") {
 			if in = getRuleIn(rule); len(in) > 0 {
-				anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, value)
 			}
 		} else if strings.HasPrefix(rule, "not-in") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
-				anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 				}, value)
 			}
@@ -120,26 +120,26 @@ func (my FieldInfo) checkString() FieldInfo {
 			var def = []string{"true", "True", "t", "yes", "on", "ok", "1", "false", "False", "f", "off", "no", "0"}
 			if strings.HasPrefix(rule, "in") {
 				if in = getRuleIn(rule); len(in) > 0 {
-					anySlice.New(anySlice.List(in)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
+					anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, value)
 				}
 			}
 			if strings.HasPrefix(rule, "not-in") {
 				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
-					anySlice.New(anySlice.List(notIn)).IfIn(func(_ anySlice.AnySlicer[string]) {
+					anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
 					}, value)
 				}
 			}
 			if len(in) == 0 && len(notIn) == 0 {
-				anySlice.New(anySlice.List(def)).IfNotIn(func(_ anySlice.AnySlicer[string]) {
+				anySlices.New(anySlices.List(def)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, def))
 				}, value)
 			}
 		} else if rule == "datetime" {
 			ok := false
-			anyMap.New(anyMap.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
+			anyMaps.New(anyMaps.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
 				if regexp.MustCompile(value).MatchString(value) {
 					ok = true
 					return

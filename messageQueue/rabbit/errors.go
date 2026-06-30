@@ -3,7 +3,7 @@ package rabbit
 import (
 	"reflect"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 	"github.com/aid297/aid/v2/myError"
 )
 
@@ -26,10 +26,10 @@ var (
 )
 
 func (*ConnRabbitError) New(msg string) myError.IMyError {
-	return &ConnRabbitError{myError.MyError{Msg: anySlice.New(anySlice.Items("链接rabbit-mq错误", msg)).JoinNotEmpty("：")}}
+	return &ConnRabbitError{myError.MyError{Msg: anySlices.New(anySlices.Items("链接rabbit-mq错误", msg)).JoinNotEmpty("：")}}
 }
 func (*ConnRabbitError) Wrap(err error) myError.IMyError {
-	return &ConnRabbitError{myError.MyError{Msg: anySlice.New(anySlice.Items("链接rabbit-mq错误", err.Error())).JoinNotEmpty("：")}}
+	return &ConnRabbitError{myError.MyError{Msg: anySlices.New(anySlices.Items("链接rabbit-mq错误", err.Error())).JoinNotEmpty("：")}}
 }
 
 func (*ConnRabbitError) Panic() myError.IMyError {
@@ -41,10 +41,10 @@ func (my *ConnRabbitError) Error() string { return my.Msg }
 func (my *ConnRabbitError) Is(target error) bool { return reflect.DeepEqual(target, my) }
 
 func (*NewChannelError) New(msg string) myError.IMyError {
-	return &NewChannelError{myError.MyError{Msg: anySlice.New(anySlice.Items("创建channel错误", msg)).JoinNotEmpty("：")}}
+	return &NewChannelError{myError.MyError{Msg: anySlices.New(anySlices.Items("创建channel错误", msg)).JoinNotEmpty("：")}}
 }
 func (*NewChannelError) Wrap(err error) myError.IMyError {
-	return &NewChannelError{myError.MyError{Msg: anySlice.New(anySlice.Items("创建channel错误", err.Error())).JoinNotEmpty("：")}}
+	return &NewChannelError{myError.MyError{Msg: anySlices.New(anySlices.Items("创建channel错误", err.Error())).JoinNotEmpty("：")}}
 }
 
 func (*NewChannelError) Panic() myError.IMyError {
@@ -56,10 +56,10 @@ func (my *NewChannelError) Error() string { return my.Msg }
 func (my *NewChannelError) Is(target error) bool { return reflect.DeepEqual(target, my) }
 
 func (*NewQueueError) New(msg string) myError.IMyError {
-	return &NewQueueError{myError.MyError{Msg: anySlice.New(anySlice.Items("创建队列错误", msg)).JoinNotEmpty("：")}}
+	return &NewQueueError{myError.MyError{Msg: anySlices.New(anySlices.Items("创建队列错误", msg)).JoinNotEmpty("：")}}
 }
 func (*NewQueueError) Wrap(err error) myError.IMyError {
-	return &NewQueueError{myError.MyError{Msg: anySlice.New(anySlice.Items("创建队列错误", err.Error())).JoinNotEmpty("：")}}
+	return &NewQueueError{myError.MyError{Msg: anySlices.New(anySlices.Items("创建队列错误", err.Error())).JoinNotEmpty("：")}}
 }
 
 func (*NewQueueError) Panic() myError.IMyError {
@@ -71,10 +71,10 @@ func (my *NewQueueError) Error() string { return my.Msg }
 func (my *NewQueueError) Is(target error) bool { return reflect.DeepEqual(target, my) }
 
 func (*QueueNotExistError) New(msg string) myError.IMyError {
-	return &QueueNotExistError{myError.MyError{Msg: anySlice.New(anySlice.Items("队列不存在", msg)).JoinNotEmpty("：")}}
+	return &QueueNotExistError{myError.MyError{Msg: anySlices.New(anySlices.Items("队列不存在", msg)).JoinNotEmpty("：")}}
 }
 func (*QueueNotExistError) Wrap(err error) myError.IMyError {
-	return &QueueNotExistError{myError.MyError{Msg: anySlice.New(anySlice.Items("队列不存在", err.Error())).JoinNotEmpty("：")}}
+	return &QueueNotExistError{myError.MyError{Msg: anySlices.New(anySlices.Items("队列不存在", err.Error())).JoinNotEmpty("：")}}
 }
 
 func (*QueueNotExistError) Panic() myError.IMyError {
@@ -86,10 +86,10 @@ func (my *QueueNotExistError) Error() string { return my.Msg }
 func (my *QueueNotExistError) Is(target error) bool { return reflect.DeepEqual(target, my) }
 
 func (*PublishMessageError) New(msg string) myError.IMyError {
-	return &PublishMessageError{myError.MyError{Msg: anySlice.New(anySlice.Items("生产消息错误", msg)).JoinNotEmpty("：")}}
+	return &PublishMessageError{myError.MyError{Msg: anySlices.New(anySlices.Items("生产消息错误", msg)).JoinNotEmpty("：")}}
 }
 func (*PublishMessageError) Wrap(err error) myError.IMyError {
-	return &PublishMessageError{myError.MyError{Msg: anySlice.New(anySlice.Items("生产消息错误", err.Error())).JoinNotEmpty("：")}}
+	return &PublishMessageError{myError.MyError{Msg: anySlices.New(anySlices.Items("生产消息错误", err.Error())).JoinNotEmpty("：")}}
 }
 
 func (*PublishMessageError) Panic() myError.IMyError {
@@ -101,10 +101,10 @@ func (my *PublishMessageError) Error() string { return my.Msg }
 func (my *PublishMessageError) Is(target error) bool { return reflect.DeepEqual(target, my) }
 
 func (*RegisterConsumerError) New(msg string) myError.IMyError {
-	return &RegisterConsumerError{myError.MyError{Msg: anySlice.New(anySlice.Items("注册消费者错误", msg)).JoinNotEmpty("：")}}
+	return &RegisterConsumerError{myError.MyError{Msg: anySlices.New(anySlices.Items("注册消费者错误", msg)).JoinNotEmpty("：")}}
 }
 func (*RegisterConsumerError) Wrap(err error) myError.IMyError {
-	return &RegisterConsumerError{myError.MyError{Msg: anySlice.New(anySlice.Items("注册消费者错误", err.Error())).JoinNotEmpty("：")}}
+	return &RegisterConsumerError{myError.MyError{Msg: anySlices.New(anySlices.Items("注册消费者错误", err.Error())).JoinNotEmpty("：")}}
 }
 
 func (*RegisterConsumerError) Panic() myError.IMyError {

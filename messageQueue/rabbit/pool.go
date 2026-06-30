@@ -3,12 +3,12 @@ package rabbit
 import (
 	"sync"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 type (
 	Pool struct {
-		rabbitConns anyMap.AnyMapper[string, *Rabbit]
+		rabbitConns anyMaps.AnyMapper[string, *Rabbit]
 	}
 )
 
@@ -20,7 +20,7 @@ var (
 // Once 单例化：rabbit-mq连接池
 func (*Pool) Once() *Pool {
 	poolOnce.Do(func() {
-		poolIns = &Pool{rabbitConns: anyMap.New[string, *Rabbit]()}
+		poolIns = &Pool{rabbitConns: anyMaps.New[string, *Rabbit]()}
 	})
 
 	return poolIns

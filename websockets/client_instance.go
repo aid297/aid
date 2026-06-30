@@ -1,12 +1,12 @@
 package websockets
 
 import (
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 type ClientInstance struct {
 	name        string
-	connections anyMap.AnyMapper[string, *Client]
+	connections anyMaps.AnyMapper[string, *Client]
 }
 
 var ClientInstanceApp ClientInstance
@@ -18,7 +18,7 @@ func (*ClientInstance) New(name string) *ClientInstance { return NewClientInstan
 //
 //go:fix 推荐使用：New方法
 func NewClientInstance(name string) *ClientInstance {
-	return &ClientInstance{name: name, connections: anyMap.New[string, *Client]()}
+	return &ClientInstance{name: name, connections: anyMaps.New[string, *Client]()}
 }
 
 // Append 增加客户端

@@ -10,7 +10,7 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 	"github.com/aid297/aid/v2/operation"
 	"github.com/aid297/aid/v2/str"
 )
@@ -228,7 +228,7 @@ func (my *Write) setCellStyle(cell ICell) {
 	var (
 		err           error
 		style         int
-		cellBorders   anySlice.AnySlicer[excelize.Border]
+		cellBorders   anySlices.AnySlicer[excelize.Border]
 		fill          excelize.Fill
 		cellFont      CellFontOpt
 		cellAlignment CellAlignmentOpt

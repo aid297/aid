@@ -19,7 +19,7 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 	"github.com/aid297/aid/v2/compressions"
 	"github.com/aid297/aid/v2/consts/volumeInfo"
 	"github.com/aid297/aid/v2/debugLogger"
@@ -237,7 +237,7 @@ func (my *HTTPClientImpl) setQueriesNotEmpty(queries map[string]any) (err error)
 		queries = map[string]any{}
 	}
 
-	maps.Copy(my.queries, anyMap.New(anyMap.Map(queries)).RemoveEmpty().ToMap())
+	maps.Copy(my.queries, anyMaps.New(anyMaps.Map(queries)).RemoveEmpty().ToMap())
 	return
 }
 

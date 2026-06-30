@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 	"github.com/aid297/aid/v2/points"
 )
 
@@ -36,7 +36,7 @@ import (
 // 	return
 // }
 
-func getRuleRequired(rules anySlice.AnySlicer[string]) bool { return rules.In("required") }
+func getRuleRequired(rules anySlices.AnySlicer[string]) bool { return rules.In("required") }
 
 func getRuleExFnNames(rule string) (exFnNames []string) {
 	var (

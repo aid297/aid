@@ -1,13 +1,13 @@
-package anyMap
+package anyMaps
 
 import (
 	"fmt"
 	"reflect"
 	"sync"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/bytedance/sonic"
 
-	jsonIter "github.com/json-iterator/go"
+	"github.com/aid297/aid/v2/anySlices"
 )
 
 type (
@@ -16,9 +16,9 @@ type (
 		SetData(data map[K]V) AnyMapper[K, V]
 		SetDatum(k K, v V) AnyMapper[K, V]
 		SetDataCap(cap int) AnyMapper[K, V]
-		SetKeys(keys anySlice.AnySlicer[K]) AnyMapper[K, V]
+		SetKeys(keys anySlices.AnySlicer[K]) AnyMapper[K, V]
 		AppendKey(k K) AnyMapper[K, V]
-		SetValues(values anySlice.AnySlicer[V]) AnyMapper[K, V]
+		SetValues(values anySlices.AnySlicer[V]) AnyMapper[K, V]
 		AppendValue(v V) AnyMapper[K, V]
 		Lock() AnyMapper[K, V]
 		Unlock() AnyMapper[K, V]
@@ -27,22 +27,22 @@ type (
 		Copy() AnyMapper[K, V]
 		ToString() string
 		ToMap() map[K]V
-		ToOrderlyMap() anySlice.AnySlicer[AnyMapOrderlyItem[K, V]]
+		ToOrderlyMap() anySlices.AnySlicer[AnyMapOrderlyItem[K, V]]
 		IsEmpty() bool
 		IsNotEmpty() bool
 		Has(key K) bool
 		SetValue(k K, v V) AnyMapper[K, V]
 		GetValueByKey(key K) (V, bool)
-		GetValuesByKeys(keys ...K) anySlice.AnySlicer[V]
+		GetValuesByKeys(keys ...K) anySlices.AnySlicer[V]
 		GetKeyByValue(value V) (K, bool)
-		GetKeysByValues(values ...V) anySlice.AnySlicer[K]
+		GetKeysByValues(values ...V) anySlices.AnySlicer[K]
 		HasKey(key K) bool
 		HasKeys(keys ...K) bool
 		HasValue(value V) bool
 		HasValues(values ...V) bool
 		HasKeyDefault(key K, existFn func(v V) V, notExistFn func() V) AnyMapper[K, V]
-		GetKeys() anySlice.AnySlicer[K]
-		GetValues() anySlice.AnySlicer[V]
+		GetKeys() anySlices.AnySlicer[K]
+		GetValues() anySlices.AnySlicer[V]
 		Length() int
 		LengthNotEmpty() int
 		Filter(fn func(item V) bool) AnyMapper[K, V]
@@ -68,8 +68,8 @@ type (
 
 	AnyMap[K comparable, V any] struct {
 		data   map[K]V
-		keys   anySlice.AnySlicer[K]
-		values anySlice.AnySlicer[V]
+		keys   anySlices.AnySlicer[K]
+		values anySlices.AnySlicer[V]
 		mu     sync.RWMutex
 	}
 
@@ -81,7 +81,7 @@ type (
 
 // New 创建一个 AnyMap 实例
 func New[K comparable, V any](attrs ...AnyMapperAttr[K, V]) AnyMapper[K, V] {
-	return (&AnyMap[K, V]{mu: sync.RWMutex{}, data: make(map[K]V), keys: anySlice.New[K](), values: anySlice.New[V]()}).SetAttrs(attrs...)
+	return (&AnyMap[K, V]{mu: sync.RWMutex{}, data: make(map[K]V), keys: anySlices.New[K](), values: anySlices.New[V]()}).SetAttrs(attrs...)
 }
 
 // SetAttrs 设置属性
@@ -121,7 +121,7 @@ func (my *AnyMap[K, V]) SetDataCap(cap int) AnyMapper[K, V] {
 }
 
 // SetKeys 设置字典的键列表
-func (my *AnyMap[K, V]) SetKeys(keys anySlice.AnySlicer[K]) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) SetKeys(keys anySlices.AnySlicer[K]) AnyMapper[K, V] {
 	my.keys = keys
 	return my
 }
@@ -133,7 +133,7 @@ func (my *AnyMap[K, V]) AppendKey(k K) AnyMapper[K, V] {
 }
 
 // SetValues 设置字典的值列表
-func (my *AnyMap[K, V]) SetValues(values anySlice.AnySlicer[V]) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) SetValues(values anySlices.AnySlicer[V]) AnyMapper[K, V] {
 	my.values = values
 	return my
 }
@@ -170,8 +170,8 @@ func (my *AnyMap[K, V]) ToString() string { return fmt.Sprintf("%v", my.data) }
 
 func (my *AnyMap[K, V]) ToMap() map[K]V { return my.data }
 
-func (my *AnyMap[K, V]) ToOrderlyMap() anySlice.AnySlicer[AnyMapOrderlyItem[K, V]] {
-	res := anySlice.New(anySlice.Cap[AnyMapOrderlyItem[K, V]](len(my.data)))
+func (my *AnyMap[K, V]) ToOrderlyMap() anySlices.AnySlicer[AnyMapOrderlyItem[K, V]] {
+	res := anySlices.New(anySlices.Cap[AnyMapOrderlyItem[K, V]](len(my.data)))
 
 	if my.Length() == 0 {
 		return res
@@ -213,8 +213,8 @@ func (my *AnyMap[K, V]) GetValueByKey(key K) (V, bool) {
 	return v, ok
 }
 
-func (my *AnyMap[K, V]) GetValuesByKeys(keys ...K) anySlice.AnySlicer[V] {
-	res := anySlice.New(anySlice.Cap[V](len(keys)))
+func (my *AnyMap[K, V]) GetValuesByKeys(keys ...K) anySlices.AnySlicer[V] {
+	res := anySlices.New(anySlices.Cap[V](len(keys)))
 
 	for idx := range keys {
 		if my.keys.In(keys[idx]) {
@@ -235,8 +235,8 @@ func (my *AnyMap[K, V]) GetKeyByValue(value V) (K, bool) {
 	return k, false
 }
 
-func (my *AnyMap[K, V]) GetKeysByValues(values ...V) anySlice.AnySlicer[K] {
-	res := anySlice.New(anySlice.Cap[K](len(values)))
+func (my *AnyMap[K, V]) GetKeysByValues(values ...V) anySlices.AnySlicer[K] {
+	res := anySlices.New(anySlices.Cap[K](len(values)))
 
 	for idx := range values {
 		if k, ok := my.GetKeyByValue(values[idx]); ok {
@@ -268,9 +268,9 @@ func (my *AnyMap[K, V]) HasKeyDefault(key K, existFn func(v V) V, notExistFn fun
 	return my.SetValue(key, notExistFn())
 }
 
-func (my *AnyMap[K, V]) GetKeys() anySlice.AnySlicer[K] { return my.keys }
+func (my *AnyMap[K, V]) GetKeys() anySlices.AnySlicer[K] { return my.keys }
 
-func (my *AnyMap[K, V]) GetValues() anySlice.AnySlicer[V] { return my.values }
+func (my *AnyMap[K, V]) GetValues() anySlices.AnySlicer[V] { return my.values }
 
 func (my *AnyMap[K, V]) Length() int { return len(my.data) }
 
@@ -408,10 +408,10 @@ func (my *AnyMap[K, V]) Clean() AnyMapper[K, V] {
 }
 
 // MarshalJSON 实现接口：json序列化
-func (my *AnyMap[K, V]) MarshalJSON() ([]byte, error) { return jsonIter.Marshal(&my.data) }
+func (my *AnyMap[K, V]) MarshalJSON() ([]byte, error) { return sonic.Marshal(&my.data) }
 
 // UnmarshalJSON 实现接口：json反序列化
-func (my *AnyMap[K, V]) UnmarshalJSON(data []byte) error { return jsonIter.Unmarshal(data, &my.data) }
+func (my *AnyMap[K, V]) UnmarshalJSON(data []byte) error { return sonic.Unmarshal(data, &my.data) }
 
 // Cast 转换所有值并创建新 AsnyMapper
 func Cast[K comparable, SRC, DST any](src AnyMapper[K, SRC], fn func(key K, value SRC) DST) AnyMapper[K, DST] {
@@ -439,10 +439,10 @@ func Zip[K comparable, V any](keys []K, values []V) AnyMapper[K, V] {
 func StructToOther[K any, V any](src K) (ret V, err error) {
 	var b []byte
 
-	if b, err = jsonIter.Marshal(src); err != nil {
+	if b, err = sonic.Marshal(src); err != nil {
 		return
 	}
 
-	err = jsonIter.Unmarshal(b, &ret)
+	err = sonic.Unmarshal(b, &ret)
 	return
 }

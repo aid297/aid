@@ -1,15 +1,15 @@
-package anyMap
+package anyMaps
 
 import (
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 )
 
 type AnyMapperAttr[K comparable, V any] func(am AnyMapper[K, V])
 
 func Map[K comparable, V any](dict map[K]V) AnyMapperAttr[K, V] {
 	return func(am AnyMapper[K, V]) {
-		am.SetKeys(anySlice.New(anySlice.Cap[K](len(dict))))
-		am.SetValues(anySlice.New(anySlice.Cap[V](len(dict))))
+		am.SetKeys(anySlices.New(anySlices.Cap[K](len(dict))))
+		am.SetValues(anySlices.New(anySlices.Cap[V](len(dict))))
 		for idx := range dict {
 			am.SetDatum(idx, dict[idx])
 		}
@@ -19,7 +19,7 @@ func Map[K comparable, V any](dict map[K]V) AnyMapperAttr[K, V] {
 func Cap[K comparable, V any](cap int) AnyMapperAttr[K, V] {
 	return func(am AnyMapper[K, V]) {
 		am.SetDataCap(cap)
-		am.SetKeys(anySlice.New(anySlice.Cap[K](cap)))
-		am.SetValues(anySlice.New(anySlice.Cap[V](cap)))
+		am.SetKeys(anySlices.New(anySlices.Cap[K](cap)))
+		am.SetValues(anySlices.New(anySlices.Cap[V](cap)))
 	}
 }

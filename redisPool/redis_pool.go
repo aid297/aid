@@ -9,7 +9,7 @@ import (
 
 	rds "github.com/redis/go-redis/v9"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 )
 
 type (
@@ -19,7 +19,7 @@ type (
 		username     string
 		password     string
 		prefix       string
-		pools        anySlice.AnySlicer[redisPoolSetting]
+		pools        anySlices.AnySlicer[redisPoolSetting]
 	}
 
 	redisClient struct {
@@ -39,7 +39,7 @@ func New(addr, appName string, attrs ...RedisPoolAttr) *RedisPool {
 		addr:         addr,
 		prefix:       appName,
 		redisClients: sync.Map{},
-		pools:        anySlice.New[redisPoolSetting](),
+		pools:        anySlices.New[redisPoolSetting](),
 	}
 
 	if len(attrs) > 0 {

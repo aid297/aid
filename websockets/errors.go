@@ -3,7 +3,7 @@ package websockets
 import (
 	"reflect"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 
 	"github.com/aid297/aid/v2/myError"
 )
@@ -37,11 +37,11 @@ var (
 )
 
 func (*WebsocketConnOption) New(msg string) myError.IMyError {
-	return &WebsocketConnOption{myError.MyError{Msg: anySlice.NewItems("websocket连接参数错误", msg).JoinNotEmpty("：")}}
+	return &WebsocketConnOption{myError.MyError{Msg: anySlices.NewItems("websocket连接参数错误", msg).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketConnOption) Wrap(err error) myError.IMyError {
-	return &WebsocketConnOption{myError.MyError{Msg: anySlice.NewItems("websocket链接参数错误", err.Error()).JoinNotEmpty("：")}}
+	return &WebsocketConnOption{myError.MyError{Msg: anySlices.NewItems("websocket链接参数错误", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketConnOption) Panic() myError.IMyError {
@@ -55,11 +55,11 @@ func (*WebsocketConnOption) Is(target error) bool {
 }
 
 func (*SyncMessageTimeout) New(msg string) myError.IMyError {
-	return &SyncMessageTimeout{myError.MyError{Msg: anySlice.NewItems("消息同步超时", msg).JoinNotEmpty("：")}}
+	return &SyncMessageTimeout{myError.MyError{Msg: anySlices.NewItems("消息同步超时", msg).JoinNotEmpty("：")}}
 }
 
 func (*SyncMessageTimeout) Wrap(err error) myError.IMyError {
-	return &SyncMessageTimeout{myError.MyError{Msg: anySlice.NewItems("同步消息", err.Error()).JoinNotEmpty("：")}}
+	return &SyncMessageTimeout{myError.MyError{Msg: anySlices.NewItems("同步消息", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*SyncMessageTimeout) Panic() myError.IMyError {
@@ -73,11 +73,11 @@ func (*SyncMessageTimeout) Is(target error) bool {
 }
 
 func (*WebsocketOffline) New(msg string) myError.IMyError {
-	return &WebsocketOffline{myError.MyError{Msg: anySlice.NewItems("连接不在线", msg).JoinNotEmpty("：")}}
+	return &WebsocketOffline{myError.MyError{Msg: anySlices.NewItems("连接不在线", msg).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketOffline) Wrap(err error) myError.IMyError {
-	return &WebsocketOffline{myError.MyError{Msg: anySlice.NewItems("连接不在线", err.Error()).JoinNotEmpty("：")}}
+	return &WebsocketOffline{myError.MyError{Msg: anySlices.NewItems("连接不在线", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketOffline) Panic() myError.IMyError {
@@ -91,11 +91,11 @@ func (*WebsocketOffline) Is(target error) bool {
 }
 
 func (*AsyncMessageCallbackEmpty) New(msg string) myError.IMyError {
-	return &AsyncMessageCallbackEmpty{myError.MyError{Msg: anySlice.NewItems("异步消息回调不能为空", msg).JoinNotEmpty("：")}}
+	return &AsyncMessageCallbackEmpty{myError.MyError{Msg: anySlices.NewItems("异步消息回调不能为空", msg).JoinNotEmpty("：")}}
 }
 
 func (*AsyncMessageCallbackEmpty) Wrap(err error) myError.IMyError {
-	return &AsyncMessageCallbackEmpty{myError.MyError{Msg: anySlice.NewItems("异步消息回调不能为空", err.Error()).JoinNotEmpty("：")}}
+	return &AsyncMessageCallbackEmpty{myError.MyError{Msg: anySlices.NewItems("异步消息回调不能为空", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*AsyncMessageCallbackEmpty) Panic() myError.IMyError {
@@ -109,11 +109,11 @@ func (*AsyncMessageCallbackEmpty) Is(target error) bool {
 }
 
 func (*AsyncMessageTimeout) New(msg string) myError.IMyError {
-	return &AsyncMessageTimeout{myError.MyError{Msg: anySlice.NewItems("异步消息回调超时必须大于0", msg).JoinNotEmpty("：")}}
+	return &AsyncMessageTimeout{myError.MyError{Msg: anySlices.NewItems("异步消息回调超时必须大于0", msg).JoinNotEmpty("：")}}
 }
 
 func (*AsyncMessageTimeout) Wrap(err error) myError.IMyError {
-	return &AsyncMessageTimeout{myError.MyError{Msg: anySlice.NewItems("异步消息回调超时必须大于0", err.Error()).JoinNotEmpty("：")}}
+	return &AsyncMessageTimeout{myError.MyError{Msg: anySlices.NewItems("异步消息回调超时必须大于0", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*AsyncMessageTimeout) Panic() myError.IMyError {
@@ -127,11 +127,11 @@ func (*AsyncMessageTimeout) Is(target error) bool {
 }
 
 func (*WebsocketClientExist) New(msg string) myError.IMyError {
-	return &WebsocketClientExist{myError.MyError{Msg: anySlice.NewItems("websocket客户端已存在", msg).JoinNotEmpty("：")}}
+	return &WebsocketClientExist{myError.MyError{Msg: anySlices.NewItems("websocket客户端已存在", msg).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketClientExist) Wrap(err error) myError.IMyError {
-	return &WebsocketClientExist{myError.MyError{Msg: anySlice.NewItems("websocket客户端已经存在", err.Error()).JoinNotEmpty("：")}}
+	return &WebsocketClientExist{myError.MyError{Msg: anySlices.NewItems("websocket客户端已经存在", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketClientExist) Panic() myError.IMyError {
@@ -145,11 +145,11 @@ func (*WebsocketClientExist) Is(target error) bool {
 }
 
 func (*WebsocketClientNotExist) New(msg string) myError.IMyError {
-	return &WebsocketClientNotExist{myError.MyError{Msg: anySlice.NewItems("websocket客户端不存在", msg).JoinNotEmpty("：")}}
+	return &WebsocketClientNotExist{myError.MyError{Msg: anySlices.NewItems("websocket客户端不存在", msg).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketClientNotExist) Wrap(err error) myError.IMyError {
-	return &WebsocketClientNotExist{myError.MyError{Msg: anySlice.NewItems("websocket客户端不存在", err.Error()).JoinNotEmpty("：")}}
+	return &WebsocketClientNotExist{myError.MyError{Msg: anySlices.NewItems("websocket客户端不存在", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketClientNotExist) Panic() myError.IMyError {
@@ -163,11 +163,11 @@ func (*WebsocketClientNotExist) Is(target error) bool {
 }
 
 func (*WebsocketServerConnConditionFuncEmpty) New(msg string) myError.IMyError {
-	return &WebsocketServerConnConditionFuncEmpty{myError.MyError{Msg: anySlice.NewItems("websocket服务端连接函数不能为空", msg).JoinNotEmpty("：")}}
+	return &WebsocketServerConnConditionFuncEmpty{myError.MyError{Msg: anySlices.NewItems("websocket服务端连接函数不能为空", msg).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketServerConnConditionFuncEmpty) Wrap(err error) myError.IMyError {
-	return &WebsocketServerConnConditionFuncEmpty{myError.MyError{Msg: anySlice.NewItems("websocket服务端函数不能为空", err.Error()).JoinNotEmpty("：")}}
+	return &WebsocketServerConnConditionFuncEmpty{myError.MyError{Msg: anySlices.NewItems("websocket服务端函数不能为空", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketServerConnConditionFuncEmpty) Panic() myError.IMyError {
@@ -181,11 +181,11 @@ func (*WebsocketServerConnConditionFuncEmpty) Is(target error) bool {
 }
 
 func (*WebsocketServerConnTagEmpty) New(msg string) myError.IMyError {
-	return &WebsocketServerConnTagEmpty{myError.MyError{Msg: anySlice.NewItems("websocket服务端连接标识不能为空", msg).JoinNotEmpty("：")}}
+	return &WebsocketServerConnTagEmpty{myError.MyError{Msg: anySlices.NewItems("websocket服务端连接标识不能为空", msg).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketServerConnTagEmpty) Wrap(err error) myError.IMyError {
-	return &WebsocketServerConnTagEmpty{myError.MyError{Msg: anySlice.NewItems("websocket服务端连接标识不能为空", err.Error()).JoinNotEmpty("：")}}
+	return &WebsocketServerConnTagEmpty{myError.MyError{Msg: anySlices.NewItems("websocket服务端连接标识不能为空", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketServerConnTagEmpty) Panic() myError.IMyError {
@@ -199,11 +199,11 @@ func (*WebsocketServerConnTagEmpty) Is(target error) bool {
 }
 
 func (*WebsocketServerConnTagExist) New(msg string) myError.IMyError {
-	return &WebsocketServerConnTagExist{myError.MyError{Msg: anySlice.NewItems("websocket服务端连接标识重复", msg).JoinNotEmpty("：")}}
+	return &WebsocketServerConnTagExist{myError.MyError{Msg: anySlices.NewItems("websocket服务端连接标识重复", msg).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketServerConnTagExist) Wrap(err error) myError.IMyError {
-	return &WebsocketServerConnTagExist{myError.MyError{Msg: anySlice.NewItems("websocket服务端连接标识重复", err.Error()).JoinNotEmpty("：")}}
+	return &WebsocketServerConnTagExist{myError.MyError{Msg: anySlices.NewItems("websocket服务端连接标识重复", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketServerConnTagExist) Panic() myError.IMyError {
@@ -217,11 +217,11 @@ func (*WebsocketServerConnTagExist) Is(target error) bool {
 }
 
 func (*WebsocketServerOnReceiveMessageSuccessCallbackEmpty) New(msg string) myError.IMyError {
-	return &WebsocketServerOnReceiveMessageSuccessCallbackEmpty{myError.MyError{Msg: anySlice.NewItems("websocket服务端接收消息成功回调不能为空", msg).JoinNotEmpty("：")}}
+	return &WebsocketServerOnReceiveMessageSuccessCallbackEmpty{myError.MyError{Msg: anySlices.NewItems("websocket服务端接收消息成功回调不能为空", msg).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketServerOnReceiveMessageSuccessCallbackEmpty) Wrap(err error) myError.IMyError {
-	return &WebsocketServerOnReceiveMessageSuccessCallbackEmpty{myError.MyError{Msg: anySlice.NewItems("websocket服务端接收消息成功回调不能为空", err.Error()).JoinNotEmpty("：")}}
+	return &WebsocketServerOnReceiveMessageSuccessCallbackEmpty{myError.MyError{Msg: anySlices.NewItems("websocket服务端接收消息成功回调不能为空", err.Error()).JoinNotEmpty("：")}}
 }
 
 func (*WebsocketServerOnReceiveMessageSuccessCallbackEmpty) Panic() myError.IMyError {

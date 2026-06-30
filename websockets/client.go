@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 
 	"github.com/gorilla/websocket"
 )
@@ -19,7 +19,7 @@ type (
 		status                          WebsocketConnStatus
 		closeChan                       chan struct{}
 		receiveMessageChan              chan []byte
-		asyncReceiveCallbackDict        anyMap.AnyMapper[string, clientCallbackFn]
+		asyncReceiveCallbackDict        anyMaps.AnyMapper[string, clientCallbackFn]
 		syncMessageTimeout              time.Duration
 		heart                           *time.Ticker
 		heartCallback                   clientHeartFn
@@ -51,7 +51,7 @@ func NewClient(
 		status:                          Offline,
 		closeChan:                       make(chan struct{}, 1),
 		receiveMessageChan:              make(chan []byte, 1),
-		asyncReceiveCallbackDict:        anyMap.New[string, clientCallbackFn](),
+		asyncReceiveCallbackDict:        anyMaps.New[string, clientCallbackFn](),
 		syncMessageTimeout:              5 * time.Second,
 		onConnSuccessCallback:           clientCallbackConfig.OnConnSuccessCallback,
 		onConnFailCallback:              clientCallbackConfig.OnConnFailCallback,

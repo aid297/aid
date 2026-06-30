@@ -1,4 +1,4 @@
-package anySlice
+package anySlices
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	jsonIter "github.com/json-iterator/go"
+	"github.com/bytedance/sonic"
 	"github.com/spf13/cast"
 )
 
@@ -617,10 +617,10 @@ func (my *AnyArray[T]) Clean() AnySlicer[T] {
 }
 
 // MarshalJSON 实现接口：json序列化
-func (my *AnyArray[T]) MarshalJSON() ([]byte, error) { return jsonIter.Marshal(&my.data) }
+func (my *AnyArray[T]) MarshalJSON() ([]byte, error) { return sonic.Marshal(&my.data) }
 
 // UnmarshalJSON 实现接口：json反序列化
-func (my *AnyArray[T]) UnmarshalJSON(data []byte) error { return jsonIter.Unmarshal(data, &my.data) }
+func (my *AnyArray[T]) UnmarshalJSON(data []byte) error { return sonic.Unmarshal(data, &my.data) }
 
 func (my *AnyArray[T]) Copy() AnySlicer[T] { return NewList(my.data) }
 

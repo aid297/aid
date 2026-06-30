@@ -6,18 +6,18 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 // ClientIns websocket 客户端链接实例
 type ClientIns struct {
 	Name    string
-	Clients anyMap.AnyMapper[string, *Client]
+	Clients anyMaps.AnyMapper[string, *Client]
 }
 
 // New 实例化：websocket客户端实例
 func (*ClientIns) New(insName string) *ClientIns {
-	return &ClientIns{Name: insName, Clients: anyMap.New[string, *Client]()}
+	return &ClientIns{Name: insName, Clients: anyMaps.New[string, *Client]()}
 }
 
 // GetClient 获取websocket客户端链接

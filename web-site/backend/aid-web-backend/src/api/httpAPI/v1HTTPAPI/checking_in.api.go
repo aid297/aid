@@ -9,7 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 	"github.com/aid297/aid/v2/consts/volumeInfo"
 	"github.com/aid297/aid/v2/excel/excelV3/excelReader"
 	"github.com/aid297/aid/v2/filesystem"
@@ -39,7 +39,7 @@ func (*CheckingInAPI) Cal(c *gin.Context) {
 
 	if form, checker = validator.WithGin[request.CheckingInCalRequest](c, func(origin any) (err error) {
 		form := origin.(*request.CheckingInCalRequest)
-		if repeat := anySlice.NewList(form.ForceWorkdays).Intersection(anySlice.NewList(form.ForceAnnualLeaves)).Intersection(anySlice.NewList(form.Holidays2)).Intersection(anySlice.NewList(form.Holidays3)).RemoveEmpty().ToSlice(); len(repeat) > 0 {
+		if repeat := anySlices.NewList(form.ForceWorkdays).Intersection(anySlices.NewList(form.ForceAnnualLeaves)).Intersection(anySlices.NewList(form.Holidays2)).Intersection(anySlices.NewList(form.Holidays3)).RemoveEmpty().ToSlice(); len(repeat) > 0 {
 			return errors.New("调休、年薪日、双薪日、三薪日存在重复内容")
 		}
 		return

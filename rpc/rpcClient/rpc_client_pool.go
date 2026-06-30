@@ -3,12 +3,12 @@ package rpcClient
 import (
 	"sync"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 type Pool struct {
 	err  error
-	pool anyMap.AnyMapper[string, *Client]
+	pool anyMaps.AnyMapper[string, *Client]
 	lock sync.RWMutex
 }
 
@@ -18,7 +18,7 @@ var (
 )
 
 func (*Pool) Once() *Pool {
-	poolOnce.Do(func() { poolIns = &Pool{pool: anyMap.New[string, *Client]()} })
+	poolOnce.Do(func() { poolIns = &Pool{pool: anyMaps.New[string, *Client]()} })
 	return poolIns
 }
 func (*Pool) Error() error { return poolIns.err }

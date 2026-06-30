@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 type (
@@ -15,7 +15,7 @@ type (
 		onSendMsgWrong    func(insName, clientName string, err error)
 		onCloseWrong      func(insName, clientName string, err error)
 		onReceiveMsgWrong func(insName, clientName string, prototypeMsg []byte, err error)
-		clientInsList     anyMap.AnyMapper[string, *ClientIns]
+		clientInsList     anyMaps.AnyMapper[string, *ClientIns]
 		Error             error
 	}
 )
@@ -23,7 +23,7 @@ type (
 func (*ClientPool) Once() *ClientPool {
 	clientPoolOnce.Do(func() {
 		clientPoolIns = &ClientPool{}
-		clientPoolIns.clientInsList = anyMap.New[string, *ClientIns]()
+		clientPoolIns.clientInsList = anyMaps.New[string, *ClientIns]()
 	})
 
 	return clientPoolIns

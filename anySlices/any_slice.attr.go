@@ -1,4 +1,4 @@
-package anySlice
+package anySlices
 
 type AnySlicerAttr[T any] func(as AnySlicer[T])
 

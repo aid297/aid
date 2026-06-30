@@ -3,11 +3,11 @@ package websockets
 import (
 	"sync"
 
-	"github.com/aid297/aid/v2/anyMap"
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 type ClientInstancePool struct {
-	pool anyMap.AnyMapper[string, *ClientInstance]
+	pool anyMaps.AnyMapper[string, *ClientInstance]
 }
 
 var (
@@ -22,7 +22,7 @@ func (*Client) Once() *ClientInstancePool { return OnceClientInstancePool() }
 //
 //go:fix 推荐使用：Once方法
 func OnceClientInstancePool() *ClientInstancePool {
-	clientInstancePoolOnce.Do(func() { clientInstancePool = &ClientInstancePool{pool: anyMap.New[string, *ClientInstance]()} })
+	clientInstancePoolOnce.Do(func() { clientInstancePool = &ClientInstancePool{pool: anyMaps.New[string, *ClientInstance]()} })
 
 	return clientInstancePool
 }

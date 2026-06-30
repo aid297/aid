@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 	"github.com/aid297/aid/v2/operation"
 )
 
@@ -49,7 +49,7 @@ func (my *Check) Error() error {
 
 func (my *Check) ErrorToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
-		ret = anySlice.FillFunc(
+		ret = anySlices.FillFunc(
 			my.wrongs,
 			func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) },
 		).
@@ -245,8 +245,8 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 					IsPtr:     isPtr,
 					IsNil:     isNil,
 					IsZero:    fieldValue.IsZero(),
-					VRuleTags: anySlice.NewList(strings.Split(vRuleTag, ")(")),
-					VNameTags: anySlice.NewItems(parentName, vNameTag).RemoveEmpty(),
+					VRuleTags: anySlices.NewList(strings.Split(vRuleTag, ")(")),
+					VNameTags: anySlices.NewItems(parentName, vNameTag).RemoveEmpty(),
 				})
 
 				// 检查数组/切片的元素类型是否是基础类型
@@ -297,8 +297,8 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 					IsPtr:     isPtr,
 					IsNil:     isNil,
 					IsZero:    fieldValue.IsZero(),
-					VRuleTags: anySlice.NewList(strings.Split(vRuleTag, ")(")),
-					VNameTags: anySlice.NewItems(parentName, vNameTag).RemoveEmpty(),
+					VRuleTags: anySlices.NewList(strings.Split(vRuleTag, ")(")),
+					VNameTags: anySlices.NewItems(parentName, vNameTag).RemoveEmpty(),
 				})
 			}
 		}

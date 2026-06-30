@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/aid297/aid/v2/anyMap"
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anyMaps"
+	"github.com/aid297/aid/v2/anySlices"
 
 	"github.com/gorilla/websocket"
 )
@@ -23,12 +23,12 @@ type (
 		onCloseConnWrong  func(*websocket.Conn, error)
 		onSendMsgWrong    func(*websocket.Conn, error)
 		onPing            func(*websocket.Conn)
-		serverInsList     anyMap.AnyMapper[string, *ServerIns]
-		router            anyMap.AnyMapper[string, func(ws *websocket.Conn)]
+		serverInsList     anyMaps.AnyMapper[string, *ServerIns]
+		router            anyMaps.AnyMapper[string, func(ws *websocket.Conn)]
 	}
 
 	// ServerIns websocket服务端实例
-	ServerIns struct{ Connections anySlice.AnySlicer[*Server] }
+	ServerIns struct{ Connections anySlices.AnySlicer[*Server] }
 
 	// Server websocket服务端链接
 	Server struct {
@@ -47,8 +47,8 @@ var (
 func (*ServerPool) Once() *ServerPool {
 	serverPoolOnce.Do(func() {
 		serverPoolIns = &ServerPool{}
-		serverPoolIns.serverInsList = anyMap.New[string, *ServerIns]()
-		serverPoolIns.router = anyMap.New[string, func(*websocket.Conn)]()
+		serverPoolIns.serverInsList = anyMaps.New[string, *ServerIns]()
+		serverPoolIns.router = anyMaps.New[string, func(*websocket.Conn)]()
 	})
 
 	return serverPoolIns
@@ -56,7 +56,7 @@ func (*ServerPool) Once() *ServerPool {
 
 // New 实例化：链接切片
 func (*ServerIns) New() *ServerIns {
-	return &ServerIns{Connections: anySlice.New[*Server]()}
+	return &ServerIns{Connections: anySlices.New[*Server]()}
 }
 
 // SetOnConnect 设置回调：链接成功后
@@ -210,7 +210,7 @@ func (*ServerPool) SendMsgByWsConn(ws *websocket.Conn, message []byte) error {
 }
 
 // SendMsgByWsManyConn 通过链接切片发送消息
-func (*ServerPool) SendMsgByWsManyConn(servers anySlice.AnySlicer[*Server], message []byte) {
+func (*ServerPool) SendMsgByWsManyConn(servers anySlices.AnySlicer[*Server], message []byte) {
 	if servers.Length() > 0 {
 		for _, server := range servers.ToSlice() {
 			if server != nil {

@@ -8,7 +8,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	jsonIter "github.com/json-iterator/go"
 
-	"github.com/aid297/aid/v2/anySlice"
+	"github.com/aid297/aid/v2/anySlices"
 	"github.com/aid297/aid/v2/filesystem"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
@@ -19,7 +19,7 @@ type MessageBoardService struct{}
 
 func (*MessageBoardService) getDirectionFile() (
 	directionFile filesystem.Filesystem,
-	directionFileSlice anySlice.AnySlicer[string],
+	directionFileSlice anySlices.AnySlicer[string],
 	err error,
 ) {
 	var (
@@ -44,7 +44,7 @@ func (*MessageBoardService) getDirectionFile() (
 		if err = directionFile.Write([]byte{'[', ']'}, filesystem.Mode(0755), filesystem.Flag(os.O_WRONLY|os.O_TRUNC|os.O_CREATE)).GetError(); err != nil {
 			return nil, nil, fmt.Errorf("创建目录文件失败：%w", err)
 		}
-		return directionFile, anySlice.New[string](), nil
+		return directionFile, anySlices.New[string](), nil
 	}
 
 	if directionFileJSON, err = directionFile.Read(); err != nil {
@@ -55,7 +55,7 @@ func (*MessageBoardService) getDirectionFile() (
 		return
 	}
 
-	directionFileSlice = anySlice.NewList(directionFileContent)
+	directionFileSlice = anySlices.NewList(directionFileContent)
 
 	return
 }
@@ -63,7 +63,7 @@ func (*MessageBoardService) getDirectionFile() (
 // List 留言板服务：获取信息列表
 func (*MessageBoardService) List() (messages []map[string]string, err error) {
 	var (
-		directionFileSlice anySlice.AnySlicer[string]
+		directionFileSlice anySlices.AnySlicer[string]
 		messageFile        filesystem.Filesystem
 		messageFileContent []byte
 		messageContent     map[string]string
@@ -102,7 +102,7 @@ func (*MessageBoardService) Store(form *request.MessageBoardStoreRequest) (err e
 	var (
 		directionFile      filesystem.Filesystem
 		directionFileJSON  []byte
-		directionFileSlice anySlice.AnySlicer[string]
+		directionFileSlice anySlices.AnySlicer[string]
 		newUUID            = uuid.Must(uuid.NewV7())
 		messageFile        filesystem.Filesystem
 		messageFileContent []byte
@@ -140,7 +140,7 @@ func (*MessageBoardService) Destroy(form *request.MessageBoardDestroyRequest) (e
 	var (
 		directionFile      filesystem.Filesystem
 		directionFileJSON  []byte
-		directionFileSlice anySlice.AnySlicer[string]
+		directionFileSlice anySlices.AnySlicer[string]
 		idx                int
 	)
 
