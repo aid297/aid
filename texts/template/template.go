@@ -15,11 +15,12 @@ var (
 type (
 	Templater interface {
 		New(content string, attrs ...TemplateAttr) Templater
-		rander() Templater
 		Error() error
 		String() string
 		Bytes() []byte
 		Content() string
+		setS(s any)
+		render() Templater
 		extractTemplateVars() (map[string]string, error)
 	}
 
@@ -50,10 +51,17 @@ func (my *Template) New(content string, attrs ...TemplateAttr) Templater {
 		attrs[idx](ins)
 	}
 
-	return ins.rander()
+	return ins.render()
 }
 
-func (my *Template) rander() Templater {
+func (my *Template) Error() error    { return my.err }
+func (my *Template) String() string  { return my.ret }
+func (my *Template) Bytes() []byte   { return []byte(my.ret) }
+func (my *Template) Content() string { return my.content }
+
+func (my *Template) setS(s any) { my.s = s }
+
+func (my *Template) render() Templater {
 	vars, err := my.extractTemplateVars()
 	if err != nil {
 		my.err = fmt.Errorf("提取模板变量失败：%w", err)
@@ -69,11 +77,6 @@ func (my *Template) rander() Templater {
 
 	return my
 }
-
-func (my *Template) Error() error    { return my.err }
-func (my *Template) String() string  { return my.ret }
-func (my *Template) Bytes() []byte   { return []byte(my.ret) }
-func (my *Template) Content() string { return my.content }
 
 // extractTemplateVars 通过反射提取结构体或 map 中的模板变量及其值
 func (my *Template) extractTemplateVars() (map[string]string, error) {
