@@ -23,6 +23,7 @@ type (
 		BabelToSnake() string
 		Pluralize() string
 	}
+
 	TransferImpl struct{ original string }
 )
 

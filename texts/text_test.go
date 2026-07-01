@@ -14,6 +14,6 @@ func Test1(t *testing.T) {
 
 	a := &A{Name: "A"}
 
-	t.Logf("%v", texts.Templater.New("{{name}}", template.Struct(a)).String())
+	t.Logf("%v", texts.Templater.New("11{{name}}22", template.Struct(a)).String())
 
 }

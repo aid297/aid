@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	Buffer         buffer.BufferImpl
-	HTMLWriter     html.HTML
-	MarkdownWriter markdown.Markdown
-	Templater      template.Template
-	Transfer       transfer.TransferImpl
+	Buffer         buffer.Buffer           = (*buffer.BufferImpl)(nil)
+	HTMLWriter     html.HTMLWriter         = (*html.HTML)(nil)
+	MarkdownWriter markdown.MarkdownWriter = (*markdown.Markdown)(nil)
+	Templater      template.Templater      = (*template.Template)(nil)
+	Transfer       transfer.Transfer       = (*transfer.TransferImpl)(nil)
 )

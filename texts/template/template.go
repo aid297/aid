@@ -6,10 +6,6 @@ import (
 	"strings"
 )
 
-var (
-	_ Templater = (*Template)(nil)
-)
-
 // Template 基于 struct tag 的模板渲染
 // 通过 `template:"name"` 标签定义模板变量，自动将模板中的 {{name}} 替换为字段值
 type (

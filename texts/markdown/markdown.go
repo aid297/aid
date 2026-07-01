@@ -10,6 +10,7 @@ type (
 		Set(options ...MarkdownAttr) MarkdownWriter
 		End() string
 	}
+
 	Markdown struct{ buffer buffer.Buffer }
 )
 
