@@ -6,13 +6,13 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/aid297/aid/v2/gormPool"
-	"github.com/aid297/aid/v2/gormPool/mysqlPool"
+	"github.com/aid297/aid/v2/gormPools"
+	"github.com/aid297/aid/v2/gormPools/mysqlPool"
 	"github.com/aid297/aid/v2/rbac"
 )
 
 func init() {
-	dbSetting, err := gormPool.APP.DBSetting.New("./db.yaml")
+	dbSetting, err := gormPools.APP.DBSetting.New("./db.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}

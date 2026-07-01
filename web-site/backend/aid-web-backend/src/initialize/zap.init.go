@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	zapLog "github.com/aid297/aid/v2/log"
+	"github.com/aid297/aid/v2/logs"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
 )
 
@@ -25,13 +25,13 @@ func (*ZapInitialize) Boot() {
 		}
 	)
 
-	if global.LOG, err = zapLog.NewZapLog(
-		zapLog.Level(zapLevels[global.CONFIG.Log.Zap.Level]),
-		zapLog.EncoderType(zapLog.ZapLogEncoderType(global.CONFIG.Log.Zap.EncoderType)),
-		zapLog.InConsole(global.CONFIG.System.Debug || global.CONFIG.Log.Zap.InConsole),
-		zapLog.MaxSize(global.CONFIG.Log.Zap.MaxSize),
-		zapLog.MaxDay(global.CONFIG.Log.Zap.MaxDay),
-		zapLog.Filename(global.CONFIG.Log.Zap.Filename),
+	if global.LOG, err = logs.NewZapLog(
+		logs.Level(zapLevels[global.CONFIG.Log.Zap.Level]),
+		logs.EncoderType(logs.ZapLogEncoderType(global.CONFIG.Log.Zap.EncoderType)),
+		logs.InConsole(global.CONFIG.System.Debug || global.CONFIG.Log.Zap.InConsole),
+		logs.MaxSize(global.CONFIG.Log.Zap.MaxSize),
+		logs.MaxDay(global.CONFIG.Log.Zap.MaxDay),
+		logs.Filename(global.CONFIG.Log.Zap.Filename),
 	); err != nil {
 		log.Fatalf("【启动日志失败】 %s", err.Error())
 	}

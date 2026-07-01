@@ -31,7 +31,7 @@ go.work
 **/.DS_Store
 **/**/.DS_Store
 __debug*
-*/**/daemon.log
+*/**/daemons.log
 
 # simpleDB test/runtime temp data
 simpleDB/**/var/

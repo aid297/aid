@@ -3,25 +3,23 @@ package main
 import (
 	"flag"
 	"log"
-	"strings"
-
 	"os"
-
-	"github.com/aid297/aid/v2/debugLogger"
-	"github.com/aid297/aid/v2/operation"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/command"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/initialize"
+	"strings"
 
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/daemon"
+	"github.com/aid297/aid/v2/daemons"
+	"github.com/aid297/aid/v2/debugLogs"
+	"github.com/aid297/aid/v2/operations"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/command"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/initialize"
 )
 
 type ConsoleArgs struct {
 	cmdAPP     string
 	configPath string
-	daemonStr  string
+	daemonsStr string
 	cmdParams  []string
 }
 
@@ -29,11 +27,11 @@ func parseArgs() ConsoleArgs {
 	var (
 		originalCmd, cmdAPP, configPath string
 		cmdParams, originalCmds         = make([]string, 0), make([]string, 0)
-		daemonStr                       string
+		daemonsStr                      string
 	)
 	flag.StringVar(&configPath, "C", "", "配置文件路径") // 默认配置文件路径：终端命令(C) > 环境变量(AID-BACKEND-CONFIG) > 默认值(config.yaml)
 	flag.StringVar(&originalCmd, "M", "", "命令终端参数")
-	flag.StringVar(&daemonStr, "D", "", "是否开启守护进程")
+	flag.StringVar(&daemonsStr, "D", "", "是否开启守护进程")
 	flag.Parse()
 
 	if originalCmd != "" {
@@ -42,16 +40,16 @@ func parseArgs() ConsoleArgs {
 		cmdParams = originalCmds[1:]
 	}
 
-	_, configPath = operation.NewMultivariate[string]().
-		Append(operation.MultivariateAttr[string]{Item: configPath, HitFunc: func(_ int, item string) { debugLogger.Print("使用终端参数：%s读取配置", item) }}).
-		Append(operation.MultivariateAttr[string]{Item: os.Getenv("AID-BACKEND-CONFIG"), HitFunc: func(idx int, item string) { debugLogger.Print("使用环境变量：%s读取配置", item) }}).
-		SetDefault(operation.MultivariateAttr[string]{Item: "config.yaml", HitFunc: func(idx int, item string) { debugLogger.Print("使用默认参数：%s读取配置", item) }}).
+	_, configPath = operations.NewMultivariate[string]().
+		Append(operations.MultivariateAttr[string]{Item: configPath, HitFunc: func(_ int, item string) { debugLogs.Print("使用终端参数：%s读取配置", item) }}).
+		Append(operations.MultivariateAttr[string]{Item: os.Getenv("AID-BACKEND-CONFIG"), HitFunc: func(idx int, item string) { debugLogs.Print("使用环境变量：%s读取配置", item) }}).
+		SetDefault(operations.MultivariateAttr[string]{Item: "config.yaml", HitFunc: func(idx int, item string) { debugLogs.Print("使用默认参数：%s读取配置", item) }}).
 		Finally(func(item string) bool { return item != "" })
 
 	return ConsoleArgs{
 		cmdAPP:     cmdAPP,
 		configPath: configPath,
-		daemonStr:  daemonStr,
+		daemonsStr: daemonsStr,
 		cmdParams:  cmdParams,
 	}
 }
@@ -75,9 +73,9 @@ func main() {
 
 // launch 启动程序
 func launch(consoleArgs ConsoleArgs) {
-	// 守护进程是否开启：终端命令(D) | 配置文件(system.daemon)
-	if cast.ToBool(consoleArgs.daemonStr) || global.CONFIG.System.Daemon {
-		daemon.OnceDaemon().
+	// 守护进程是否开启：终端命令(D) | 配置文件(system.daemons)
+	if cast.ToBool(consoleArgs.daemonsStr) || global.CONFIG.System.Daemon {
+		daemons.OnceDaemon().
 			SetTitle("启动程序").
 			SetLog(global.CONFIG.Log.Daemon.Dir, global.CONFIG.Log.Daemon.Filename).
 			SetLogEnable(true).

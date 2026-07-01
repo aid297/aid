@@ -18,7 +18,7 @@ type (
 	HealthSystem struct {
 		Debug    bool   `json:"debug" yaml:"debug" toml:"debug"`
 		Version  string `json:"version" yaml:"version" toml:"version"`
-		Daemon   bool   `json:"daemon" yaml:"daemon" toml:"daemon"`
+		Daemon   bool   `json:"daemons" yaml:"daemons" toml:"daemons"`
 		Timezone int    `json:"timezone" yaml:"timezone" toml:"timezone"`
 	}
 

@@ -2,7 +2,7 @@
     "system": {
         "debug": true,
         "version": "v1.0.0",
-        "daemon": false,
+        "daemons": false,
         "timezone": 8
     },
     "web-service": {
@@ -17,9 +17,9 @@
         "frontend-enter-page": "resource/html/spa/index.html"
     },
     "log": {
-        "daemon": {
+        "daemons": {
             "dir": "storage/runtime/log",
-            "filename": "daemon.log"
+            "filename": "daemons.log"
         },
         "zap": {
             "level": "debug",

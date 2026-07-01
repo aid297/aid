@@ -725,14 +725,14 @@
     	. "fmt"
     
     	"github.com/aid297/aid/v2/anySlice"
-    	"github.com/aid297/aid/v2/operation"
+    	"github.com/aid297/aid/v2/operations"
     )
     
     func main() {
     	a1 := anySlices.Cast[int, string](
     		anySlices.NewItems(40, 50, 60, 70, 80),
     		func(value int) string {
-    			return operation.NewTernary(operation.TrueValue("及格"), operation.FalseValue("不及格")).GetByValue(value >= 60)
+    			return operations.NewTernary(operations.TrueValue("及格"), operations.FalseValue("不及格")).GetByValue(value >= 60)
     		},
     	).ToString()
     	Println(a1) // [不及格 不及格 及格 及格 及格]

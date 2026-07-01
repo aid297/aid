@@ -6,16 +6,16 @@
    
    import (
    	`log`
-   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/gormPools`
    	`github.com/aid297/aid/v2/rbac`
    )
    
    func init() {
-   	dbSetting, err := gormPool.APP.DBSetting.New("./db.yaml")
+   	dbSetting, err := gormPools.APP.DBSetting.New("./db.yaml")
    	if err != nil {
    		log.Fatal(err)
    	}
-   	pool := gormPool.MySqlPoolApp.Once(dbSetting)
+   	pool := gormPools.MySqlPoolApp.Once(dbSetting)
    	db := pool.GetConn()
    
    	tr := rbac.APP.Edge.Once(rbac.TablePrefix("my_rbac"), rbac.DB(db))
@@ -42,16 +42,16 @@
    
    import (
    	`log`
-   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/gormPools`
    	`github.com/aid297/aid/v2/rbac`
    )
    
    func init() {
-   	dbSetting, err := gormPool.APP.DBSetting.New("./db.yaml")
+   	dbSetting, err := gormPools.APP.DBSetting.New("./db.yaml")
    	if err != nil {
    		log.Fatal(err)
    	}
-   	pool := gormPool.MySqlPoolApp.Once(dbSetting)
+   	pool := gormPools.MySqlPoolApp.Once(dbSetting)
    	db := pool.GetConn()
    
    	tr := rbac.APP.Edge.Once(rbac.TablePrefix("my_rbac"), rbac.DB(db))
@@ -74,16 +74,16 @@
    
    import (
    	`log`
-   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/gormPools`
    	`github.com/aid297/aid/v2/rbac`
    )
    
    func init() {
-   	dbSetting, err := gormPool.APP.DBSetting.New("./db.yaml")
+   	dbSetting, err := gormPools.APP.DBSetting.New("./db.yaml")
    	if err != nil {
    		log.Fatal(err)
    	}
-   	pool := gormPool.MySqlPoolApp.Once(dbSetting)
+   	pool := gormPools.MySqlPoolApp.Once(dbSetting)
    	db := pool.GetConn()
    
    	tr := rbac.APP.Edge.Once(rbac.TablePrefix("my_rbac"), rbac.DB(db))
@@ -116,17 +116,17 @@
    
    import (
    	`log`
-   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/gormPools`
    	`github.com/aid297/aid/v2/rbac`
    	`github.com/gofrs/uuid/v5`
    )
    
    func init() {
-   	dbSetting, err := gormPool.APP.DBSetting.New("./db.yaml")
+   	dbSetting, err := gormPools.APP.DBSetting.New("./db.yaml")
    	if err != nil {
    		log.Fatal(err)
    	}
-   	pool := gormPool.MySqlPoolApp.Once(dbSetting)
+   	pool := gormPools.MySqlPoolApp.Once(dbSetting)
    	db := pool.GetConn()
    
    	tr := rbac.APP.Edge.Once(rbac.TablePrefix("my_rbac"), rbac.DB(db))
@@ -166,17 +166,17 @@
    import (
    	`log`
    
-   	`github.com/aid297/aid/v2/gormPool`
+   	`github.com/aid297/aid/v2/gormPools`
    	`github.com/aid297/aid/v2/rbac`
    	`github.com/google/uuid`
    )
    
    func init() {
-   	dbSetting, err := gormPool.APP.DBSetting.New("./db.yaml")
+   	dbSetting, err := gormPools.APP.DBSetting.New("./db.yaml")
    	if err != nil {
    		log.Fatal(err)
    	}
-   	pool := gormPool.MySqlPoolApp.Once(dbSetting)
+   	pool := gormPools.MySqlPoolApp.Once(dbSetting)
    	db := pool.GetConn()
    
    	tr := rbac.APP.Edge.Once(rbac.TablePrefix("my_rbac"), rbac.DB(db))

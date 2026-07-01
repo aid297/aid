@@ -1,7 +1,7 @@
 system:
   debug: true
   version: v1.0.0
-  daemon: false
+  daemons: false
   timezone: 8
 web-service:
   port: "19900"
@@ -12,9 +12,9 @@ web-service:
   - url: /manager
     dir: resource/html/manager
 log:
-  daemon: 
+  daemons:
     dir: storage/runtime/log
-    filename: daemon.log
+    filename: daemons.log
   zap:
     level: debug
     encoder-type: console
@@ -25,7 +25,7 @@ log:
     max-day: 10
 rezip:
   out-dir: storage/runtime/rezip
-file-manager: 
+file-manager:
   port: "19901"
   dir: storage/runtime/file-manager
 message-board:

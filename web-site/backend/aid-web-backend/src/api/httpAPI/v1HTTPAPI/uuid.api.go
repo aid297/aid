@@ -1,15 +1,15 @@
 package v1HTTPAPI
 
 import (
-	"github.com/aid297/aid/v2/validator"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+
+	"github.com/aid297/aid/v2/validations"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/response"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/service/httpService/v1HTTPService"
-
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 type UUIDAPI struct{}
@@ -21,11 +21,11 @@ func (*UUIDAPI) Generate(c *gin.Context) {
 		title   = "批量生成uuid"
 		err     error
 		form    request.UUIDGenerateRequest
-		checker validator.Checker
+		checker validations.Checker
 		uuids   []response.UUIDResponse
 	)
 
-	if form, checker = validator.WithGin[request.UUIDGenerateRequest](c); !checker.OK() {
+	if form, checker = validations.WithGin[request.UUIDGenerateRequest](c); !checker.OK() {
 		global.LOG.Error(title, zap.Any(global.ST_BIND_FORM, checker.Errors()))
 		httpModule.NewForbidden(httpModule.Content(checker.Errors()), httpModule.Errorf(global.FE_IVALIDED_FORM, checker.Error())).WithAccept(c)
 		return

@@ -9,7 +9,7 @@ import (
 	jsonIter "github.com/json-iterator/go"
 
 	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/filesystem"
+	"github.com/aid297/aid/v2/filesystems"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 )
@@ -18,12 +18,12 @@ import (
 type MessageBoardService struct{}
 
 func (*MessageBoardService) getDirectionFile() (
-	directionFile filesystem.Filesystem,
+	directionFile filesystems.Filesystem,
 	directionFileSlice anySlices.AnySlicer[string],
 	err error,
 ) {
 	var (
-		directionDir         = filesystem.NewDir(filesystem.Rel(global.CONFIG.MessageBoard.Dir))
+		directionDir         = filesystems.NewDir(filesystems.Rel(global.CONFIG.MessageBoard.Dir))
 		directionFileJSON    []byte
 		directionFileContent []string
 	)
@@ -34,14 +34,14 @@ func (*MessageBoardService) getDirectionFile() (
 		}
 	}
 
-	directionFile = filesystem.NewFile(filesystem.Rel(global.CONFIG.MessageBoard.Dir, "direction.json"))
+	directionFile = filesystems.NewFile(filesystems.Rel(global.CONFIG.MessageBoard.Dir, "direction.json"))
 
 	if !directionDir.GetExist() {
 		return nil, nil, nil
 	}
 
 	if !directionFile.GetExist() {
-		if err = directionFile.Write([]byte{'[', ']'}, filesystem.Mode(0755), filesystem.Flag(os.O_WRONLY|os.O_TRUNC|os.O_CREATE)).GetError(); err != nil {
+		if err = directionFile.Write([]byte{'[', ']'}, filesystems.Mode(0755), filesystems.Flag(os.O_WRONLY|os.O_TRUNC|os.O_CREATE)).GetError(); err != nil {
 			return nil, nil, fmt.Errorf("创建目录文件失败：%w", err)
 		}
 		return directionFile, anySlices.New[string](), nil
@@ -64,7 +64,7 @@ func (*MessageBoardService) getDirectionFile() (
 func (*MessageBoardService) List() (messages []map[string]string, err error) {
 	var (
 		directionFileSlice anySlices.AnySlicer[string]
-		messageFile        filesystem.Filesystem
+		messageFile        filesystems.Filesystem
 		messageFileContent []byte
 		messageContent     map[string]string
 	)
@@ -75,7 +75,7 @@ func (*MessageBoardService) List() (messages []map[string]string, err error) {
 
 	messages = make([]map[string]string, directionFileSlice.LengthNotEmpty())
 	directionFileSlice.Each(func(idx int, item string) (isBreak bool) {
-		messageFile = filesystem.NewFile(filesystem.Rel(global.CONFIG.MessageBoard.Dir, item))
+		messageFile = filesystems.NewFile(filesystems.Rel(global.CONFIG.MessageBoard.Dir, item))
 		if !messageFile.GetExist() {
 			return
 		}
@@ -100,11 +100,11 @@ func (*MessageBoardService) List() (messages []map[string]string, err error) {
 // Store 留言板服务：保存信息
 func (*MessageBoardService) Store(form *request.MessageBoardStoreRequest) (err error) {
 	var (
-		directionFile      filesystem.Filesystem
+		directionFile      filesystems.Filesystem
 		directionFileJSON  []byte
 		directionFileSlice anySlices.AnySlicer[string]
 		newUUID            = uuid.Must(uuid.NewV7())
-		messageFile        filesystem.Filesystem
+		messageFile        filesystems.Filesystem
 		messageFileContent []byte
 	)
 
@@ -118,17 +118,17 @@ func (*MessageBoardService) Store(form *request.MessageBoardStoreRequest) (err e
 		return
 	}
 
-	if err = directionFile.Write(directionFileJSON, filesystem.Flag(os.O_CREATE|os.O_WRONLY), filesystem.Mode(0755)).GetError(); err != nil {
+	if err = directionFile.Write(directionFileJSON, filesystems.Flag(os.O_CREATE|os.O_WRONLY), filesystems.Mode(0755)).GetError(); err != nil {
 		return
 	}
 
-	messageFile = filesystem.NewFile(filesystem.Abs(directionFile.GetBasePath(), newUUID.String()))
+	messageFile = filesystems.NewFile(filesystems.Abs(directionFile.GetBasePath(), newUUID.String()))
 
 	if messageFileContent, err = jsonIter.Marshal(map[string]string{"id": newUUID.String(), "content": form.Content}); err != nil {
 		return
 	}
 
-	if err = messageFile.Write(messageFileContent, filesystem.Flag(os.O_CREATE|os.O_WRONLY), filesystem.Mode(0755)).GetError(); err != nil {
+	if err = messageFile.Write(messageFileContent, filesystems.Flag(os.O_CREATE|os.O_WRONLY), filesystems.Mode(0755)).GetError(); err != nil {
 		return
 	}
 
@@ -138,7 +138,7 @@ func (*MessageBoardService) Store(form *request.MessageBoardStoreRequest) (err e
 // Destroy 留言板服务：删除信息
 func (*MessageBoardService) Destroy(form *request.MessageBoardDestroyRequest) (err error) {
 	var (
-		directionFile      filesystem.Filesystem
+		directionFile      filesystems.Filesystem
 		directionFileJSON  []byte
 		directionFileSlice anySlices.AnySlicer[string]
 		idx                int
@@ -158,11 +158,11 @@ func (*MessageBoardService) Destroy(form *request.MessageBoardDestroyRequest) (e
 		return
 	}
 
-	if err = directionFile.Write(directionFileJSON, filesystem.Flag(os.O_WRONLY|os.O_TRUNC|os.O_CREATE), filesystem.Mode(0755)).GetError(); err != nil {
+	if err = directionFile.Write(directionFileJSON, filesystems.Flag(os.O_WRONLY|os.O_TRUNC|os.O_CREATE), filesystems.Mode(0755)).GetError(); err != nil {
 		return
 	}
 
-	messageFile := filesystem.NewFile(filesystem.Abs(directionFile.GetBasePath(), form.ID))
+	messageFile := filesystems.NewFile(filesystems.Abs(directionFile.GetBasePath(), form.ID))
 	if err = messageFile.Remove().GetError(); err != nil {
 		return
 	}

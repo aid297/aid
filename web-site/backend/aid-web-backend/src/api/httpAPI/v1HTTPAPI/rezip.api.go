@@ -7,13 +7,12 @@ import (
 	"mime/multipart"
 	"os"
 
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule"
-
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/v2/filesystem"
+	"github.com/aid297/aid/v2/filesystems"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule"
 )
 
 type RezipAPI struct{}
@@ -106,7 +105,7 @@ func (*RezipAPI) Upload(c *gin.Context) {
 		return
 	}
 
-	fs := filesystem.NewFile(filesystem.Rel(global.CONFIG.Rezip.OutDir, "repacked.zip"))
+	fs := filesystems.NewFile(filesystems.Rel(global.CONFIG.Rezip.OutDir, "repacked.zip"))
 	global.LOG.Info(title, zap.String("保存路径", fs.GetFullPath()))
 	if err = os.MkdirAll(fs.GetBasePath(), os.ModePerm); err != nil {
 		global.LOG.Error(title, zap.Errors("创建目录", []error{err}))

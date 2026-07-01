@@ -1,7 +1,7 @@
 [system]
 debug = true
 version = "v1.0.0"
-daemon = false
+daemons = false
 timezone = 8
 
 [web-service]
@@ -13,9 +13,9 @@ frontend-enter-page = "resource/html/spa/index.html"
 url = "/page"
 dir = "resource/html/spa"
 
-[log.daemon]
+[log.daemons]
 dir = "storage/runtime/log"
-filename = "daemon.log"
+filename = "daemons.log"
 
 [log.zap]
 level = "debug"

@@ -1,6 +1,6 @@
 package command
 
-import "github.com/aid297/aid/v2/debugLogger"
+import "github.com/aid297/aid/v2/debugLogs"
 
 type HelpCommand struct{}
 
@@ -17,7 +17,7 @@ var helpTexts = []string{
 	`    1.3. -D`,
 	`        是否必填：可选`,
 	`        含义：是否以守护进程方式启动程序`,
-	`        配置方法：1、命令行参数：-D=true|false。2、配置文件 system.daemon 字段指定 true|false。3、默认值：false`,
+	`        配置方法：1、命令行参数：-D=true|false。2、配置文件 system.daemons 字段指定 true|false。3、默认值：false`,
 	`        优先级：命令行参数 > 配置文件 > 默认值(false)`,
 	`2. 配置参数说明：`,
 	`    2.1. system.debug`,
@@ -29,6 +29,6 @@ var helpTexts = []string{
 
 func (HelpCommand) Launch() {
 	for idx := range helpTexts {
-		debugLogger.Print(helpTexts[idx])
+		debugLogs.Print(helpTexts[idx])
 	}
 }

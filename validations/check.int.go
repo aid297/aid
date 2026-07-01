@@ -1,0 +1,454 @@
+package validations
+
+import (
+	"fmt"
+	"reflect"
+	"strings"
+
+	"github.com/spf13/cast"
+
+	"github.com/aid297/aid/v2/anySlices"
+)
+
+// checkInt 检查整数，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+func (my FieldInfo) checkInt() FieldInfo {
+	var (
+		min, max, size *int
+		include, eq    bool
+		in             []string
+		notIn          []string
+		value          int
+	)
+
+	if my.Kind != reflect.Int {
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』%w 期望：整数", my.getName(), ErrInvalidType))
+		return my
+	}
+
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
+		return my
+	}
+
+	value, _ = my.Value.(int)
+
+	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
+		if strings.HasPrefix(rule, "min") {
+			if min, include = getRuleIntMin(rule); min != nil {
+				if include {
+					if !(value >= *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+					}
+				} else {
+					if !(value > *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "max") {
+			if max, include = getRuleIntMax(rule); max != nil {
+				if include {
+					if !(value <= *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+					}
+				} else {
+					if !(value < *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "in") {
+			if in = getRuleIn(rule); len(in) > 0 {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "not-in") {
+			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "size") {
+			if size, eq = getRuleIntSize(rule); size != nil {
+				if eq {
+					if !(cast.ToInt(value) == *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				} else {
+					if !(cast.ToInt(value) != *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "ex") {
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
+						}
+					}
+				}
+			}
+		}
+
+		return
+	})
+
+	return my
+}
+
+// checkInt8 检查整数#8位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+func (my FieldInfo) checkInt8() FieldInfo {
+	var (
+		min, max, size *int
+		include, eq    bool
+		in             []string
+		notIn          []string
+		value          int8
+	)
+
+	if my.Kind != reflect.Int8 {
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：小数#32位", my.getName(), ErrInvalidType))
+		return my
+	}
+
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
+		return my
+	}
+
+	value, _ = my.Value.(int8)
+
+	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
+		if strings.HasPrefix(rule, "min") {
+			if min, include = getRuleIntMin(rule); min != nil {
+				if include {
+					if !(cast.ToInt(value) >= *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+					}
+				} else {
+					if !(cast.ToInt(value) > *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "max") {
+			if max, include = getRuleIntMax(rule); max != nil {
+				if include {
+					if !(cast.ToInt(value) <= *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+					}
+				} else {
+					if !(cast.ToInt(value) < *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "in") {
+			if in = getRuleIn(rule); len(in) > 0 {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "not-in") {
+			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "size") {
+			if size, eq = getRuleIntSize(rule); size != nil {
+				if eq {
+					if !(cast.ToInt(value) == *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				} else {
+					if !(cast.ToInt(value) != *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "ex") {
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
+						}
+					}
+				}
+			}
+		}
+
+		return
+	})
+
+	return my
+}
+
+// checkInt16 检查整数#16位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+func (my FieldInfo) checkInt16() FieldInfo {
+	var (
+		min, max, size *int
+		include, eq    bool
+		in             []string
+		notIn          []string
+		value          int16
+	)
+	if my.Kind != reflect.Int16 {
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：整数#16位", my.getName(), ErrInvalidType))
+		return my
+	}
+
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
+		return my
+	}
+
+	value, _ = my.Value.(int16)
+
+	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
+		if strings.HasPrefix(rule, "min") {
+			if min, include = getRuleIntMin(rule); min != nil {
+				if include {
+					if !(cast.ToInt(value) >= *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+					}
+				} else {
+					if !(cast.ToInt(value) > *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "max") {
+			if max, include = getRuleIntMax(rule); max != nil {
+				if include {
+					if !(cast.ToInt(value) <= *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+					}
+				} else {
+					if !(cast.ToInt(value) < *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "in") {
+			if in = getRuleIn(rule); len(in) > 0 {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "not-in") {
+			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "size") {
+			if size, eq = getRuleIntSize(rule); size != nil {
+				if eq {
+					if !(cast.ToInt(value) == *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				} else {
+					if !(cast.ToInt(value) != *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "ex") {
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
+						}
+					}
+				}
+			}
+		}
+		return
+	})
+
+	return my
+}
+
+// checkInt32 检查整数#32位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+func (my FieldInfo) checkInt32() FieldInfo {
+	var (
+		min, max, size *int
+		include, eq    bool
+		in             []string
+		notIn          []string
+		value          int32
+	)
+
+	if my.Kind != reflect.Int32 {
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：整数#32位", my.getName(), ErrInvalidType))
+		return my
+	}
+
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
+		return my
+	}
+
+	value, _ = my.Value.(int32)
+
+	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
+		if strings.HasPrefix(rule, "min") {
+			if min, include = getRuleIntMin(rule); min != nil {
+				if include {
+					if !(cast.ToInt(value) >= *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+					}
+				} else {
+					if !(cast.ToInt(value) > *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "max") {
+			if max, include = getRuleIntMax(rule); max != nil {
+				if include {
+					if !(cast.ToInt(value) <= *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+					}
+				} else {
+					if !(cast.ToInt(value) < *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "in") {
+			if in = getRuleIn(rule); len(in) > 0 {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "not-in") {
+			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "size") {
+			if size, eq = getRuleIntSize(rule); size != nil {
+				if eq {
+					if !(cast.ToInt(value) == *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				} else {
+					if !(cast.ToInt(value) != *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "ex") {
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
+						}
+					}
+				}
+			}
+		}
+
+		return
+	})
+
+	return my
+}
+
+// checkInt64 检查整数#64位，支持：required、not-empty、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+func (my FieldInfo) checkInt64() FieldInfo {
+	var (
+		min, max, size *int
+		include, eq    bool
+		in             []string
+		notIn          []string
+		value          int64
+	)
+
+	if my.Kind != reflect.Int64 {
+		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：整数#64位", my.getName(), ErrInvalidType))
+		return my
+	}
+
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
+		return my
+	}
+
+	value, _ = my.Value.(int64)
+
+	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
+		if strings.HasPrefix(rule, "min") {
+			if min, include = getRuleIntMin(rule); min != nil {
+				if include {
+					if !(cast.ToInt(value) >= *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %d", my.getName(), ErrInvalidLength, *min))
+					}
+				} else {
+					if !(cast.ToInt(value) > *min) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %d", my.getName(), ErrInvalidLength, *min))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "max") {
+			if max, include = getRuleIntMax(rule); max != nil {
+				if include {
+					if !(cast.ToInt(value) <= *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %d", my.getName(), ErrInvalidLength, *max))
+					}
+				} else {
+					if !(cast.ToInt(value) < *max) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %d", my.getName(), ErrInvalidLength, *max))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "in") {
+			if in = getRuleIn(rule); len(in) > 0 {
+				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "not-in") {
+			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
+				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
+				}, cast.ToString(value))
+			}
+		} else if strings.HasPrefix(rule, "size") {
+			if size, eq = getRuleIntSize(rule); size != nil {
+				if eq {
+					if !(cast.ToInt(value) == *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				} else {
+					if !(cast.ToInt(value) != *size) {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "ex") {
+			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
+				for idx2 := range exFnNames {
+					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
+						if err := fn(value); err != nil {
+							my.wrongs = append(my.wrongs, err)
+						}
+					}
+				}
+			}
+		}
+
+		return
+	})
+
+	return my
+}

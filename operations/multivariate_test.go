@@ -1,0 +1,28 @@
+package operations
+
+import (
+	"testing"
+
+	"github.com/aid297/aid/v2/debugLogs"
+)
+
+func Test1(t *testing.T) {
+	m := NewMultivariate[string]().
+		Append(MultivariateAttr[string]{Item: "a", HitFunc: func(_ int, _ string) { debugLogs.Print("采用高级") }}).       // A 最高优先级：终端命令
+		Append(MultivariateAttr[string]{Item: "b", HitFunc: func(idx int, item string) { debugLogs.Print("采用次高级") }}). // B 次高优先级：全局变量
+		SetDefault(MultivariateAttr[string]{Item: "c"})                                                                // 设置默认值
+
+	_, f := m.Finally(func(item string) bool { return item != "" })
+
+	if f != "a" {
+		t.Fatalf("错误：%s", f)
+	}
+	t.Logf("成功：%s", f)
+
+	// Test default value
+	_, f = m.Finally(func(item string) bool { return item == "missing" })
+	if f != "d" {
+		t.Fatalf("Default value error: %s", f)
+	}
+	t.Logf("Default value success: %s", f)
+}

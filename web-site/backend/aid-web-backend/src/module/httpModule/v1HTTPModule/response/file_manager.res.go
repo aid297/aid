@@ -1,6 +1,6 @@
 package response
 
-import "github.com/aid297/aid/v2/filesystem"
+import "github.com/aid297/aid/v2/filesystems"
 
 type (
 	FileUploadResponse struct {
@@ -10,8 +10,8 @@ type (
 	}
 
 	FileListResponse struct {
-		Items       []filesystem.Filesystem `json:"items" swaggertype:"array,object"`
-		CurrentPath string                  `json:"currentPath" swaggertype:"string"`
+		Items       []filesystems.Filesystem `json:"items" swaggertype:"array,object"`
+		CurrentPath string                   `json:"currentPath" swaggertype:"string"`
 	}
 
 	FileZipResponse struct {

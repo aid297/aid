@@ -1,8 +1,9 @@
 package request
 
 import (
-	"github.com/aid297/aid/v2/validator"
 	"github.com/gin-gonic/gin"
+
+	"github.com/aid297/aid/v2/validations"
 )
 
 type (
@@ -18,11 +19,11 @@ type (
 )
 
 // Bind 表单绑定：保存留言板信息
-func (MessageBoardStoreRequest) Bind(c *gin.Context) (MessageBoardStoreRequest, validator.Checker) {
-	return validator.WithGin[MessageBoardStoreRequest](c)
+func (MessageBoardStoreRequest) Bind(c *gin.Context) (MessageBoardStoreRequest, validations.Checker) {
+	return validations.WithGin[MessageBoardStoreRequest](c)
 }
 
 // Bind 表单绑定：删除留言板信息
-func (MessageBoardDestroyRequest) Bind(c *gin.Context) (MessageBoardDestroyRequest, validator.Checker) {
-	return validator.WithGin[MessageBoardDestroyRequest](c)
+func (MessageBoardDestroyRequest) Bind(c *gin.Context) (MessageBoardDestroyRequest, validations.Checker) {
+	return validations.WithGin[MessageBoardDestroyRequest](c)
 }

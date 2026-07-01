@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/aid297/aid/v2/operation"
+	"github.com/aid297/aid/v2/operations"
 )
 
 type Message struct {
@@ -35,8 +35,8 @@ func NewMessage(async bool, message []byte) Message {
 	b.Write(message)
 	return Message{
 		async:            async,
-		messageId:        operation.NewTernary(operation.TrueValue(u)).GetByValue(async),
-		message:          operation.NewTernary(operation.TrueFn(b.Bytes), operation.FalseValue(message)).GetByValue(async),
+		messageId:        operations.NewTernary(operations.TrueValue(u)).GetByValue(async),
+		message:          operations.NewTernary(operations.TrueFn(b.Bytes), operations.FalseValue(message)).GetByValue(async),
 		prototypeMessage: message,
 	}
 }
@@ -71,7 +71,7 @@ func (my *Message) GetMessageId() string { return my.messageId }
 
 // GetMessage 获取消息
 func (my *Message) GetMessage() []byte {
-	return operation.NewTernary(operation.TrueValue(my.message), operation.FalseValue(my.prototypeMessage)).GetByValue(my.async)
+	return operations.NewTernary(operations.TrueValue(my.message), operations.FalseValue(my.prototypeMessage)).GetByValue(my.async)
 }
 
 // GetPrototypeMessage 获取原始消息

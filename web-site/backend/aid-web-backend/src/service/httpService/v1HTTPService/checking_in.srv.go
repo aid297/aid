@@ -8,8 +8,8 @@ import (
 	"github.com/dromara/carbon/v2"
 
 	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/excel/excelV3/excelReader"
-	"github.com/aid297/aid/v2/operation"
+	"github.com/aid297/aid/v2/excels/excelsV3/excelReader"
+	"github.com/aid297/aid/v2/operations"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 )
 
@@ -156,11 +156,11 @@ func getEveryday(r excelReader.Reader) (map[string]map[string]EverydayRet, error
 			}
 
 			ret := EverydayRet{
-				ClockInTime1: operation.NewTernary(operation.TrueFn(func() string { return cols[9] })).GetByValue(len(cols) >= 9),
-				ClockInNote1: operation.NewTernary(operation.TrueFn(func() string { return cols[10] })).GetByValue(len(cols) >= 10),
-				ClockInTime2: operation.NewTernary(operation.TrueFn(func() string { return cols[11] })).GetByValue(len(cols) >= 11),
-				ClockInNote2: operation.NewTernary(operation.TrueFn(func() string { return cols[12] })).GetByValue(len(cols) >= 12),
-				EventNote:    operation.NewTernary(operation.TrueFn(func() string { return cols[21] })).GetByValue(len(cols) >= 21),
+				ClockInTime1: operations.NewTernary(operations.TrueFn(func() string { return cols[9] })).GetByValue(len(cols) >= 9),
+				ClockInNote1: operations.NewTernary(operations.TrueFn(func() string { return cols[10] })).GetByValue(len(cols) >= 10),
+				ClockInTime2: operations.NewTernary(operations.TrueFn(func() string { return cols[11] })).GetByValue(len(cols) >= 11),
+				ClockInNote2: operations.NewTernary(operations.TrueFn(func() string { return cols[12] })).GetByValue(len(cols) >= 12),
+				EventNote:    operations.NewTernary(operations.TrueFn(func() string { return cols[21] })).GetByValue(len(cols) >= 21),
 			}
 
 			ret.ClockInOK1 = carbon.Parse(fmt.Sprintf("%s %s", date, ret.ClockInTime1)).IsAM()

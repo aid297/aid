@@ -1,4 +1,4 @@
-package websockets
+package websockets_test
 
 import (
 	"errors"
@@ -8,40 +8,42 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/v2/debugLogger"
 	"github.com/gorilla/websocket"
+
+	"github.com/aid297/aid/v2/debugLogs"
+	"github.com/aid297/aid/v2/websockets"
 )
 
-func onLine() (*Client, error) {
-	client, err := NewClient(
+func onLine() (*websockets.Client, error) {
+	client, err := websockets.NewClient(
 		"",
 		"client-test1",
 		"ws://127.0.0.1:8080",
-		ClientCallbackConfig{
+		websockets.ClientCallbackConfig{
 			OnConnSuccessCallback: func(groupName, name string, conn *websocket.Conn) {
-				debugLogger.Print("[%s:%s] 链接：成功\n", groupName, name)
+				debugLogs.Print("[%s:%s] 链接：成功\n", groupName, name)
 			},
 			OnConnFailCallback: func(groupName, name string, conn *websocket.Conn, err error) {
 				log.Fatalf("[%s:%s] 链接失败：%v", groupName, name, err)
 			},
 			OnCloseSuccessCallback: func(groupName, name string, conn *websocket.Conn) {
-				debugLogger.Print("[%s:%s] 关闭链接：成功\n", groupName, name)
+				debugLogs.Print("[%s:%s] 关闭链接：成功\n", groupName, name)
 			},
 			OnCloseFailCallback: func(groupName, name string, conn *websocket.Conn, err error) {
-				debugLogger.Print("[%s:%s] 关闭链接失败：%v\n", groupName, name, err)
+				debugLogs.Print("[%s:%s] 关闭链接失败：%v\n", groupName, name, err)
 			},
 			OnReceiveMessageSuccessCallback: func(groupName, name string, prototypeMessage []byte) {
-				debugLogger.Print("[%s:%s] 接收消息：成功 -> %s\n", groupName, name, prototypeMessage)
+				debugLogs.Print("[%s:%s] 接收消息：成功 -> %s\n", groupName, name, prototypeMessage)
 			},
 			OnReceiveMessageFailCallback: func(groupName, name string, conn *websocket.Conn, err error) {
-				debugLogger.Print("[%s:%s] 接收消息失败：%v", groupName, name, err)
+				debugLogs.Print("[%s:%s] 接收消息失败：%v", groupName, name, err)
 			},
 			OnSendMessageFailCallback: func(groupName, name string, conn *websocket.Conn, err error) {
-				debugLogger.Print("[%s:%s] 发送消息失败：%v", groupName, name, err)
+				debugLogs.Print("[%s:%s] 发送消息失败：%v", groupName, name, err)
 			},
 		},
 		func(groupName, name string, conn *websocket.Conn) {
-			debugLogger.Print("[%s:%s] 链接成功\n", groupName, name)
+			debugLogs.Print("[%s:%s] 链接成功\n", groupName, name)
 		},
 		func(groupName, name string, conn *websocket.Conn, err error) {
 			log.Fatalf("[%s:%s] 链接失败：%v", groupName, name, err)
@@ -58,7 +60,7 @@ func onLine() (*Client, error) {
 	return client, nil
 }
 
-func offLine(client *Client) error {
+func offLine(client *websockets.Client) error {
 	if err := client.Close().Error(); err != nil {
 		return fmt.Errorf("关闭链接失败：%v", err)
 	}
@@ -66,11 +68,11 @@ func offLine(client *Client) error {
 }
 
 func Test(t *testing.T) {
-	client, err := NewClient(
+	client, err := websockets.NewClient(
 		"groupA",
 		"aa",
 		"ws://127.0.0.1:8080/ws",
-		ClientCallbackConfig{
+		websockets.ClientCallbackConfig{
 			OnReceiveMessageSuccessCallback: func(groupName, name string, prototypeMessage []byte) {
 				t.Logf("发送消息成功：[%s:%s] %s", groupName, name, prototypeMessage)
 			},
@@ -99,8 +101,8 @@ func Test(t *testing.T) {
 
 	client.AppendRequestHeader(http.Header{"Identity": []string{"abc"}}).Boot()
 
-	ci := NewClientInstance("groupA")
-	cip := OnceClientInstancePool()
+	ci := websockets.NewClientInstance("groupA")
+	cip := websockets.OnceClientInstancePool()
 	if err = ci.Append(client); err != nil {
 		t.Fatalf("添加客户端到实例失败：%v", err)
 	}
@@ -139,7 +141,7 @@ func Test2Sync(t *testing.T) {
 
 	_, err = client.Boot().SyncMessage([]byte("hello"), time.Second) // 1秒超时
 	if err != nil {
-		if !errors.Is(err, SyncMessageTimeoutErr.New("")) {
+		if !errors.Is(err, websockets.SyncMessageTimeoutErr.New("")) {
 			t.Errorf("发送消息失败：%v", err)
 		}
 	}
@@ -157,21 +159,21 @@ func Test3Heart(t *testing.T) {
 			t.Errorf("获取链接失败：%v", err)
 		}
 
-		client.Boot().Heart(time.Second, func(groupName, name string, client *Client) {
+		client.Boot().Heart(time.Second, func(groupName, name string, client *websockets.Client) {
 			err = client.Ping(func(conn *websocket.Conn) error {
 				return conn.WriteMessage(websocket.TextMessage, []byte(time.Now().GoString()))
 			}).Error()
 			if err != nil {
 				t.Errorf("[%s:%s] 心跳失败：%v", groupName, name, err)
 			} else {
-				debugLogger.Print("[%s:%s] 心跳成功\n", groupName, name)
+				debugLogs.Print("[%s:%s] 心跳成功\n", groupName, name)
 			}
 		})
 
 		timer := time.After(5 * time.Second)
 
 		<-timer
-		debugLogger.Print("测试成功\n")
+		debugLogs.Print("测试成功\n")
 		if err = offLine(client); err != nil {
 			t.Errorf("关闭错误：%v", err)
 		}
@@ -188,7 +190,7 @@ func Test3Async(t *testing.T) {
 		closeSign := make(chan struct{}, 1)
 
 		if err = client.Boot().AsyncMessage([]byte("123"), func(groupName, name string, message []byte) {
-			debugLogger.Print("[%s:%s] 回调成功 -> %s", groupName, name, message)
+			debugLogs.Print("[%s:%s] 回调成功 -> %s", groupName, name, message)
 			closeSign <- struct{}{}
 		}, 60*time.Second).Error(); err != nil {
 			t.Errorf("异步消息错误：%v", err)

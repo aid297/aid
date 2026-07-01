@@ -9,8 +9,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/v2/debugLogger"
-	"github.com/aid297/aid/v2/filesystem"
+	"github.com/aid297/aid/v2/debugLogs"
+	"github.com/aid297/aid/v2/filesystems"
 	"github.com/aid297/aid/v2/str"
 	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
 )
@@ -27,7 +27,7 @@ func (*SFTPServiceCommand) Launch() {
 	var (
 		port       = flag.String("port", "8080", "监听端口，如8080、9000") // 定义命令行参数：端口（默认8080）、共享目录（默认当前目录）
 		outputTemp *str.Template[output]
-		dir        filesystem.Filesystem
+		dir        filesystems.Filesystem
 	)
 	flag.Parse()
 
@@ -35,7 +35,7 @@ func (*SFTPServiceCommand) Launch() {
 		port = &global.CONFIG.FileManager.Port
 	}
 
-	if dir = filesystem.NewDir(filesystem.Rel(global.CONFIG.FileManager.Dir)); !dir.GetExist() {
+	if dir = filesystems.NewDir(filesystems.Rel(global.CONFIG.FileManager.Dir)); !dir.GetExist() {
 		dir.Create()
 	}
 
@@ -56,7 +56,7 @@ func (*SFTPServiceCommand) Launch() {
 		global.LOG.Error("生成输出字符串失败", zap.Error(outputTemp.Error()))
 		return
 	}
-	debugLogger.Print(outputTemp.String())
+	debugLogs.Print(outputTemp.String())
 
 	// 启动HTTP文件服务器，支持目录浏览和文件下载
 	http.Handle("/", http.FileServer(http.Dir(dir.GetFullPath())))
