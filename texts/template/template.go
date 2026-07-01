@@ -14,7 +14,8 @@ var (
 // 通过 `template:"name"` 标签定义模板变量，自动将模板中的 {{name}} 替换为字段值
 type (
 	Templater interface {
-		rander() *Template
+		New(content string, attrs ...TemplateAttr) Templater
+		rander() Templater
 		Error() error
 		String() string
 		Bytes() []byte
@@ -30,7 +31,7 @@ type (
 	}
 )
 
-// NewTemplate 根据结构体的 template tag 渲染模板
+// New 根据结构体的 template tag 渲染模板
 // content 中使用 {{tagName}} 作为占位符，tagName 对应结构体字段上的 `template:"tagName"` 标签值
 //
 // 示例：
@@ -42,7 +43,7 @@ type (
 //	tpl := "Hello {{name}}, you are {{age}} years old"
 //	result := NewTemplateV2(tpl, Data{Name: "Tom", Age: 18}).String()
 //	// => "Hello Tom, you are 18 years old"
-func NewTemplate(content string, attrs ...TemplateAttr) *Template {
+func (my *Template) New(content string, attrs ...TemplateAttr) Templater {
 	ins := &Template{content: content}
 
 	for idx := range attrs {
@@ -52,7 +53,7 @@ func NewTemplate(content string, attrs ...TemplateAttr) *Template {
 	return ins.rander()
 }
 
-func (my *Template) rander() *Template {
+func (my *Template) rander() Templater {
 	vars, err := my.extractTemplateVars()
 	if err != nil {
 		my.err = fmt.Errorf("提取模板变量失败：%w", err)
