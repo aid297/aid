@@ -138,13 +138,10 @@ func (my *CoroutineGroupImpl[T]) GO(funcs ...Func[T]) anySlices.AnySlicer[Result
 		results = anySlices.New(anySlices.Cap[Result[T]](len(funcs)))
 	)
 
-	if len(funcs) > 0 {
-		my.funcs = funcs
-	}
-
 	if len(my.funcs) == 0 {
 		return results
 	}
+	my.funcs = funcs
 
 	for idx := range my.funcs {
 		wg.Add(1)
@@ -152,9 +149,8 @@ func (my *CoroutineGroupImpl[T]) GO(funcs ...Func[T]) anySlices.AnySlicer[Result
 		go func(idx int) {
 			defer wg.Done()
 			defer func() { <-my.sem }()
-			r := my.executeWithRetry(funcs[idx])
 			results.Lock()
-			results.Append(r)
+			results.Append(my.executeWithRetry(funcs[idx]))
 			results.Unlock()
 		}(idx)
 	}
@@ -188,9 +184,8 @@ func (my *CoroutineGroupImpl[T]) GOBatch(total, capacities int, fn func(batch, c
 			wg.Add(1)
 			go func(b, c uint) {
 				defer wg.Done()
-				r := my.executeWithRetry(func() Result[T] { return fn(b, c) })
 				results.Lock()
-				results.Append(r)
+				results.Append(my.executeWithRetry(func() Result[T] { return fn(b, c) }))
 				results.Unlock()
 			}(batch, capacity)
 		}
