@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/cast"
 )
 
+var _ AnySlicer[any] = (*AnySlice[any])(nil)
+
 type (
 	AnySlicer[T any] interface {
 		SetAttrs(attrs ...AnySlicerAttr[T]) AnySlicer[T]
@@ -77,14 +79,14 @@ type (
 		ToString(formats ...string) string
 	}
 
-	AnyArray[T any] struct {
+	AnySlice[T any] struct {
 		data []T
 		mu   sync.RWMutex
 	}
 )
 
 func New[T any](attrs ...AnySlicerAttr[T]) AnySlicer[T] {
-	return (&AnyArray[T]{data: make([]T, 0), mu: sync.RWMutex{}}).SetAttrs(attrs...)
+	return (&AnySlice[T]{data: make([]T, 0), mu: sync.RWMutex{}}).SetAttrs(attrs...)
 }
 
 func NewList[T any](data []T) AnySlicer[T] { return New(List(data)) }
@@ -145,7 +147,7 @@ func ToAny(slice any) []any {
 }
 
 // SetAttrs 设置属性
-func (my *AnyArray[T]) SetAttrs(attrs ...AnySlicerAttr[T]) AnySlicer[T] {
+func (my *AnySlice[T]) SetAttrs(attrs ...AnySlicerAttr[T]) AnySlicer[T] {
 	my.mu.Lock()
 	defer my.mu.Unlock()
 
@@ -157,40 +159,40 @@ func (my *AnyArray[T]) SetAttrs(attrs ...AnySlicerAttr[T]) AnySlicer[T] {
 }
 
 // SetData 设置数据
-func (my *AnyArray[T]) SetData(data []T) { my.data = data }
+func (my *AnySlice[T]) SetData(data []T) { my.data = data }
 
 // Lock 加锁：写锁
-func (my *AnyArray[T]) Lock() AnySlicer[T] {
+func (my *AnySlice[T]) Lock() AnySlicer[T] {
 	my.mu.Lock()
 	return my
 }
 
 // Unlock 释放：写锁
-func (my *AnyArray[T]) Unlock() AnySlicer[T] {
+func (my *AnySlice[T]) Unlock() AnySlicer[T] {
 	my.mu.Unlock()
 	return my
 }
 
 // RLock 加锁：读锁
-func (my *AnyArray[T]) RLock() AnySlicer[T] {
+func (my *AnySlice[T]) RLock() AnySlicer[T] {
 	my.mu.RLock()
 	return my
 }
 
 // RUnlock 释放：读锁
-func (my *AnyArray[T]) RUnlock() AnySlicer[T] {
+func (my *AnySlice[T]) RUnlock() AnySlicer[T] {
 	my.mu.RUnlock()
 	return my
 }
 
 // Empty 判断是否为空
-func (my *AnyArray[T]) Empty() bool { return len(my.data) == 0 }
+func (my *AnySlice[T]) Empty() bool { return len(my.data) == 0 }
 
 // NotEmpty 判断是否不为空
-func (my *AnyArray[T]) NotEmpty() bool { return !my.Empty() }
+func (my *AnySlice[T]) NotEmpty() bool { return !my.Empty() }
 
 // IfEmpty 判断是否为空：如果为空则执行回调
-func (my *AnyArray[T]) IfEmpty(fn func(array AnySlicer[T])) AnySlicer[T] {
+func (my *AnySlice[T]) IfEmpty(fn func(array AnySlicer[T])) AnySlicer[T] {
 	if len(my.data) == 0 {
 		fn(my)
 	}
@@ -198,7 +200,7 @@ func (my *AnyArray[T]) IfEmpty(fn func(array AnySlicer[T])) AnySlicer[T] {
 }
 
 // IfNotEmpty 判断是否不为空：如果不为空则执行回调
-func (my *AnyArray[T]) IfNotEmpty(fn func(array AnySlicer[T])) AnySlicer[T] {
+func (my *AnySlice[T]) IfNotEmpty(fn func(array AnySlicer[T])) AnySlicer[T] {
 	if len(my.data) != 0 {
 		fn(my)
 	}
@@ -206,7 +208,7 @@ func (my *AnyArray[T]) IfNotEmpty(fn func(array AnySlicer[T])) AnySlicer[T] {
 }
 
 // IfEmptyError 判断是否为空：如果为空则执行回调并返回错误
-func (my *AnyArray[T]) IfEmptyError(fn func(array AnySlicer[T]) error) error {
+func (my *AnySlice[T]) IfEmptyError(fn func(array AnySlicer[T]) error) error {
 	if len(my.data) == 0 {
 		return fn(my)
 	}
@@ -214,7 +216,7 @@ func (my *AnyArray[T]) IfEmptyError(fn func(array AnySlicer[T]) error) error {
 }
 
 // IfNotEmptyError 判断是否不为空：如果不为空则执行回调并返回错误
-func (my *AnyArray[T]) IfNotEmptyError(fn func(array AnySlicer[T]) error) error {
+func (my *AnySlice[T]) IfNotEmptyError(fn func(array AnySlicer[T]) error) error {
 	if len(my.data) != 0 {
 		return fn(my)
 	}
@@ -222,19 +224,19 @@ func (my *AnyArray[T]) IfNotEmptyError(fn func(array AnySlicer[T]) error) error 
 }
 
 // Has 检查是否存在
-func (my *AnyArray[T]) Has(k int) bool { return k >= 0 && k < len(my.data) }
+func (my *AnySlice[T]) Has(k int) bool { return k >= 0 && k < len(my.data) }
 
 // SetValue 设置值
-func (my *AnyArray[T]) SetValue(k int, v T) AnySlicer[T] {
+func (my *AnySlice[T]) SetValue(k int, v T) AnySlicer[T] {
 	my.data[k] = v
 	return my
 }
 
 // Get 获取值
-func (my *AnyArray[T]) GetValue(idx int) T { return my.data[idx] }
+func (my *AnySlice[T]) GetValue(idx int) T { return my.data[idx] }
 
 // GetValuePtr 获取值指针
-func (my *AnyArray[T]) GetValuePtr(idx int) *T {
+func (my *AnySlice[T]) GetValuePtr(idx int) *T {
 	if idx < 0 || idx >= len(my.data) {
 		return nil
 	}
@@ -242,7 +244,7 @@ func (my *AnyArray[T]) GetValuePtr(idx int) *T {
 }
 
 // GetValueOrDefault 获取值：如果索引不存在则返回默认值
-func (my *AnyArray[T]) GetValueOrDefault(idx int, defaultValue T) T {
+func (my *AnySlice[T]) GetValueOrDefault(idx int, defaultValue T) T {
 	if idx < 0 || idx >= len(my.data) {
 		return defaultValue
 	}
@@ -250,7 +252,7 @@ func (my *AnyArray[T]) GetValueOrDefault(idx int, defaultValue T) T {
 }
 
 // 获取多个值
-func (my *AnyArray[T]) GetValues(indexes ...int) []T {
+func (my *AnySlice[T]) GetValues(indexes ...int) []T {
 	res := make([]T, len(indexes))
 
 	for k, idx := range indexes {
@@ -261,15 +263,15 @@ func (my *AnyArray[T]) GetValues(indexes ...int) []T {
 }
 
 // GetValuesBySlices 获取切片值
-func (my *AnyArray[T]) GetValuesBySlices(original, finished int) []T {
+func (my *AnySlice[T]) GetValuesBySlices(original, finished int) []T {
 	return my.data[original:finished]
 }
 
 // Append 添加值
-func (my *AnyArray[T]) Append(v ...T) AnySlicer[T] { my.data = append(my.data, v...); return my }
+func (my *AnySlice[T]) Append(v ...T) AnySlicer[T] { my.data = append(my.data, v...); return my }
 
 // First 获取第一个值
-func (my *AnyArray[T]) First() T {
+func (my *AnySlice[T]) First() T {
 	var t T
 	if len(my.data) > 0 {
 		return my.data[0]
@@ -279,7 +281,7 @@ func (my *AnyArray[T]) First() T {
 }
 
 // Last 获取最后一个值
-func (my *AnyArray[T]) Last() T {
+func (my *AnySlice[T]) Last() T {
 	var t T
 
 	if len(my.data) > 0 {
@@ -290,10 +292,10 @@ func (my *AnyArray[T]) Last() T {
 }
 
 // ToSlice 获取全部值：到切片
-func (my *AnyArray[T]) ToSlice() []T { return my.data }
+func (my *AnySlice[T]) ToSlice() []T { return my.data }
 
 // GetIndexes 获取所有索引
-func (my *AnyArray[T]) GetIndexes() []int {
+func (my *AnySlice[T]) GetIndexes() []int {
 	var indexes = make([]int, len(my.data))
 	for i := range my.data {
 		indexes[i] = i
@@ -303,7 +305,7 @@ func (my *AnyArray[T]) GetIndexes() []int {
 }
 
 // GetIndexByValue 根据值获取索引下标
-func (my *AnyArray[T]) GetIndexByValue(value T) int {
+func (my *AnySlice[T]) GetIndexByValue(value T) int {
 	for idx, val := range my.data {
 		if reflect.DeepEqual(val, value) {
 			return idx
@@ -314,7 +316,7 @@ func (my *AnyArray[T]) GetIndexByValue(value T) int {
 }
 
 // GetIndexesByValues 通过值获取索引下标
-func (my *AnyArray[T]) GetIndexesByValues(values ...T) []int {
+func (my *AnySlice[T]) GetIndexesByValues(values ...T) []int {
 	var indexes []int
 	for _, value := range values {
 		for idx, val := range my.data {
@@ -328,7 +330,7 @@ func (my *AnyArray[T]) GetIndexesByValues(values ...T) []int {
 }
 
 // Shuffle 打乱切片中的元素顺序
-func (my *AnyArray[T]) Shuffle() AnySlicer[T] {
+func (my *AnySlice[T]) Shuffle() AnySlicer[T] {
 	randStr := rand.New(rand.NewSource(time.Now().UnixNano()))
 	newData := my.data
 
@@ -342,13 +344,13 @@ func (my *AnyArray[T]) Shuffle() AnySlicer[T] {
 }
 
 // Length 获取数组长度
-func (my *AnyArray[T]) Length() int { return len(my.data) }
+func (my *AnySlice[T]) Length() int { return len(my.data) }
 
 // LengthNotEmpty 获取非0值长度
-func (my *AnyArray[T]) LengthNotEmpty() int { return my.Copy().RemoveEmpty().Length() }
+func (my *AnySlice[T]) LengthNotEmpty() int { return my.Copy().RemoveEmpty().Length() }
 
 // Filter 过滤数组值
-func (my *AnyArray[T]) Filter(fn func(item T) bool) AnySlicer[T] {
+func (my *AnySlice[T]) Filter(fn func(item T) bool) AnySlicer[T] {
 	j := 0
 	ret := make([]T, len(my.data))
 	for i := range my.data {
@@ -363,7 +365,7 @@ func (my *AnyArray[T]) Filter(fn func(item T) bool) AnySlicer[T] {
 }
 
 // RemoveEmpty 清除0值元素
-func (my *AnyArray[T]) RemoveEmpty() AnySlicer[T] {
+func (my *AnySlice[T]) RemoveEmpty() AnySlicer[T] {
 	return my.Filter(func(item T) bool {
 		ref := reflect.ValueOf(item)
 
@@ -378,7 +380,7 @@ func (my *AnyArray[T]) RemoveEmpty() AnySlicer[T] {
 }
 
 // Join 拼接字符串
-func (my *AnyArray[T]) Join(sep string) string {
+func (my *AnySlice[T]) Join(sep string) string {
 	values := make([]string, my.Length())
 	for idx := range my.data {
 		values[idx] = cast.ToString(my.data[idx])
@@ -388,9 +390,9 @@ func (my *AnyArray[T]) Join(sep string) string {
 }
 
 // JoinNotEmpty 拼接非空字符串
-func (my *AnyArray[T]) JoinNotEmpty(sep string) string { return my.Copy().RemoveEmpty().Join(sep) }
+func (my *AnySlice[T]) JoinNotEmpty(sep string) string { return my.Copy().RemoveEmpty().Join(sep) }
 
-func (my *AnyArray[T]) in(target T) bool {
+func (my *AnySlice[T]) in(target T) bool {
 	for idx := range my.data {
 		if reflect.DeepEqual(target, my.data[idx]) {
 			return true
@@ -401,13 +403,13 @@ func (my *AnyArray[T]) in(target T) bool {
 }
 
 // In 检查值是否存在
-func (my *AnyArray[T]) In(targets ...T) bool { return slices.ContainsFunc(targets, my.in) }
+func (my *AnySlice[T]) In(targets ...T) bool { return slices.ContainsFunc(targets, my.in) }
 
 // NotIn 检查值是否不存在
-func (my *AnyArray[T]) NotIn(targets ...T) bool { return !slices.ContainsFunc(targets, my.in) }
+func (my *AnySlice[T]) NotIn(targets ...T) bool { return !slices.ContainsFunc(targets, my.in) }
 
 // IfIn 如果In 检查值是否存在：如果存在则执行回调
-func (my *AnyArray[T]) IfIn(fn func(array AnySlicer[T]), targets ...T) AnySlicer[T] {
+func (my *AnySlice[T]) IfIn(fn func(array AnySlicer[T]), targets ...T) AnySlicer[T] {
 	if my.In(targets...) {
 		fn(my)
 	}
@@ -416,7 +418,7 @@ func (my *AnyArray[T]) IfIn(fn func(array AnySlicer[T]), targets ...T) AnySlicer
 }
 
 // IfNotIn 如果NotIn 检查值是否不存在：如果不存在则执行回调
-func (my *AnyArray[T]) IfNotIn(fn func(array AnySlicer[T]), targets ...T) AnySlicer[T] {
+func (my *AnySlice[T]) IfNotIn(fn func(array AnySlicer[T]), targets ...T) AnySlicer[T] {
 	if my.NotIn(targets...) {
 		fn(my)
 	}
@@ -424,14 +426,14 @@ func (my *AnyArray[T]) IfNotIn(fn func(array AnySlicer[T]), targets ...T) AnySli
 	return my
 }
 
-func (my *AnyArray[T]) IfInError(fn func(array AnySlicer[T]) error, targets ...T) error {
+func (my *AnySlice[T]) IfInError(fn func(array AnySlicer[T]) error, targets ...T) error {
 	if my.In(targets...) {
 		return fn(my)
 	}
 	return nil
 }
 
-func (my *AnyArray[T]) IfNotInError(fn func(array AnySlicer[T]) error, targets ...T) error {
+func (my *AnySlice[T]) IfNotInError(fn func(array AnySlicer[T]) error, targets ...T) error {
 	if my.NotIn(targets...) {
 		return fn(my)
 	}
@@ -439,13 +441,13 @@ func (my *AnyArray[T]) IfNotInError(fn func(array AnySlicer[T]) error, targets .
 }
 
 // AllEmpty 判断当前数组是否0空
-func (my *AnyArray[T]) AllEmpty() bool { return my.RemoveEmpty().Length() == 0 }
+func (my *AnySlice[T]) AllEmpty() bool { return my.RemoveEmpty().Length() == 0 }
 
 // AnyEmpty 判断当前数组中是否存在0值
-func (my *AnyArray[T]) AnyEmpty() bool { return my.RemoveEmpty().Length() != my.Length() }
+func (my *AnySlice[T]) AnyEmpty() bool { return my.RemoveEmpty().Length() != my.Length() }
 
 // Chunk 分块
-func (my *AnyArray[T]) Chunk(size int) [][]T {
+func (my *AnySlice[T]) Chunk(size int) [][]T {
 	var chunks [][]T
 	for i := 0; i < len(my.data); i += size {
 		end := min(i+size, len(my.data))
@@ -456,7 +458,7 @@ func (my *AnyArray[T]) Chunk(size int) [][]T {
 }
 
 // Pluck 获取数组中指定字段的值
-func (my *AnyArray[T]) Pluck(fn func(item T) any) AnySlicer[any] {
+func (my *AnySlice[T]) Pluck(fn func(item T) any) AnySlicer[any] {
 	var ret = make([]any, 0)
 	for _, v := range my.data {
 		ret = append(ret, fn(v))
@@ -466,7 +468,7 @@ func (my *AnyArray[T]) Pluck(fn func(item T) any) AnySlicer[any] {
 }
 
 // Intersection 取交集
-func (my *AnyArray[T]) Intersection(other AnySlicer[T]) AnySlicer[T] {
+func (my *AnySlice[T]) Intersection(other AnySlicer[T]) AnySlicer[T] {
 	if other.Empty() {
 		return New[T]()
 	}
@@ -483,12 +485,12 @@ func (my *AnyArray[T]) Intersection(other AnySlicer[T]) AnySlicer[T] {
 }
 
 // IntersectionBySlice 取交集：通过切片
-func (my *AnyArray[T]) IntersectionBySlice(other ...T) AnySlicer[T] {
+func (my *AnySlice[T]) IntersectionBySlice(other ...T) AnySlicer[T] {
 	return my.Intersection(NewList(other))
 }
 
 // Difference 取差集
-func (my *AnyArray[T]) Difference(other AnySlicer[T]) AnySlicer[T] {
+func (my *AnySlice[T]) Difference(other AnySlicer[T]) AnySlicer[T] {
 	if other.Empty() {
 		return New[T]()
 	}
@@ -505,12 +507,12 @@ func (my *AnyArray[T]) Difference(other AnySlicer[T]) AnySlicer[T] {
 }
 
 // DifferenceBySlice 取差集：通过切片
-func (my *AnyArray[T]) DifferenceBySlice(other ...T) AnySlicer[T] {
+func (my *AnySlice[T]) DifferenceBySlice(other ...T) AnySlicer[T] {
 	return my.Difference(NewList(other))
 }
 
 // Union 取并集
-func (my *AnyArray[T]) Union(other AnySlicer[T]) AnySlicer[T] {
+func (my *AnySlice[T]) Union(other AnySlicer[T]) AnySlicer[T] {
 	if other.Empty() {
 		return New[T]()
 	}
@@ -529,12 +531,12 @@ func (my *AnyArray[T]) Union(other AnySlicer[T]) AnySlicer[T] {
 }
 
 // UnionBySlice 取并集：通过切片
-func (my *AnyArray[T]) UnionBySlice(other ...T) AnySlicer[T] {
+func (my *AnySlice[T]) UnionBySlice(other ...T) AnySlicer[T] {
 	return my.Union(NewList(other))
 }
 
 // Unique 去重
-func (my *AnyArray[T]) Unique() AnySlicer[T] {
+func (my *AnySlice[T]) Unique() AnySlicer[T] {
 	seen := make(map[string]struct{}) // 使用空结构体作为值，因为我们只关心键
 	result := make([]T, 0)
 
@@ -551,7 +553,7 @@ func (my *AnyArray[T]) Unique() AnySlicer[T] {
 }
 
 // RemoveByIndexes 根据索引删除元素
-func (my *AnyArray[T]) RemoveByIndex(indexes ...int) AnySlicer[T] {
+func (my *AnySlice[T]) RemoveByIndex(indexes ...int) AnySlicer[T] {
 	if len(indexes) == 0 {
 		return my
 	}
@@ -582,7 +584,7 @@ func (my *AnyArray[T]) RemoveByIndex(indexes ...int) AnySlicer[T] {
 }
 
 // Every 循环处理每一个
-func (my *AnyArray[T]) Every(fn func(item T) T) AnySlicer[T] {
+func (my *AnySlice[T]) Every(fn func(item T) T) AnySlicer[T] {
 	data := make([]T, len(my.data))
 
 	for idx := range my.data {
@@ -594,7 +596,7 @@ func (my *AnyArray[T]) Every(fn func(item T) T) AnySlicer[T] {
 }
 
 // Each 遍历数组
-func (my *AnyArray[T]) Each(fn func(idx int, item T) (isBreak bool)) AnySlicer[T] {
+func (my *AnySlice[T]) Each(fn func(idx int, item T) (isBreak bool)) AnySlicer[T] {
 	for idx := range my.data {
 		if fn(idx, my.data[idx]) {
 			break
@@ -605,27 +607,27 @@ func (my *AnyArray[T]) Each(fn func(idx int, item T) (isBreak bool)) AnySlicer[T
 }
 
 // Sort 排序
-func (my *AnyArray[T]) Sort(fn func(i, j int) bool) AnySlicer[T] {
+func (my *AnySlice[T]) Sort(fn func(i, j int) bool) AnySlicer[T] {
 	sort.Slice(my.data, fn)
 	return my
 }
 
 // Clean 清理数据
-func (my *AnyArray[T]) Clean() AnySlicer[T] {
+func (my *AnySlice[T]) Clean() AnySlicer[T] {
 	my.data = make([]T, 0)
 	return my
 }
 
 // MarshalJSON 实现接口：json序列化
-func (my *AnyArray[T]) MarshalJSON() ([]byte, error) { return sonic.Marshal(&my.data) }
+func (my *AnySlice[T]) MarshalJSON() ([]byte, error) { return sonic.Marshal(&my.data) }
 
 // UnmarshalJSON 实现接口：json反序列化
-func (my *AnyArray[T]) UnmarshalJSON(data []byte) error { return sonic.Unmarshal(data, &my.data) }
+func (my *AnySlice[T]) UnmarshalJSON(data []byte) error { return sonic.Unmarshal(data, &my.data) }
 
-func (my *AnyArray[T]) Copy() AnySlicer[T] { return NewList(my.data) }
+func (my *AnySlice[T]) Copy() AnySlicer[T] { return NewList(my.data) }
 
 // ToString 导出string
-func (my *AnyArray[T]) ToString(formats ...string) string {
+func (my *AnySlice[T]) ToString(formats ...string) string {
 	var format = "%v"
 	if len(formats) > 0 {
 		format = formats[0]
@@ -635,7 +637,7 @@ func (my *AnyArray[T]) ToString(formats ...string) string {
 }
 
 // ToAny 转换为[]any
-func (my *AnyArray[T]) ToAny() []any {
+func (my *AnySlice[T]) ToAny() []any {
 	v := reflect.ValueOf(my.data)
 	if v.Kind() != reflect.Slice {
 		return nil

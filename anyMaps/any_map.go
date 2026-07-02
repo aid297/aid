@@ -10,6 +10,8 @@ import (
 	"github.com/aid297/aid/v2/anySlices"
 )
 
+var _ AnyMapper[string, any] = (*AnyMap[string, any])(nil)
+
 type (
 	AnyMapper[K comparable, V any] interface {
 		SetAttrs(attrs ...AnyMapperAttr[K, V]) AnyMapper[K, V]
