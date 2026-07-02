@@ -1,4 +1,4 @@
-package coroutineGroups
+package coroutineGroupV2
 
 import (
 	"errors"

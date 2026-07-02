@@ -1,17 +1,17 @@
 package rpcs
 
 import (
-	"github.com/aid297/aid/v2/rpc/rpcClient"
-	"github.com/aid297/aid/v2/rpc/rpcServer"
+	"github.com/aid297/aid/v2/rpcs/rpcClients"
+	"github.com/aid297/aid/v2/rpcs/rpcServers"
 )
 
 var APP struct {
 	RPCClient struct {
-		Client rpcClient.Client
-		Pool   rpcClient.Pool
+		Client rpcClients.Client
+		Pool   rpcClients.Pool
 	}
 	RPCServer struct {
-		Server rpcServer.Server
-		Pool   rpcServer.Pool
+		Server rpcServers.Server
+		Pool   rpcServers.Pool
 	}
 }

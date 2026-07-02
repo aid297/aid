@@ -1,4 +1,4 @@
-package coroutineGroups
+package coroutineGroupV2
 
 import (
 	"sync"
@@ -9,10 +9,10 @@ import (
 )
 
 type (
-	CoroutineGrouper[T any] interface {
-		New(limit uint16) CoroutineGrouper[T]
-		SetFunc(funcs ...Func[T]) CoroutineGrouper[T]
-		SetRetry(opts ...CoroutineGroupRetryAttr) CoroutineGrouper[T]
+	CoroutineGroup[T any] interface {
+		New(limit uint16) CoroutineGroup[T]
+		SetFunc(funcs ...Func[T]) CoroutineGroup[T]
+		SetRetry(opts ...CoroutineGroupRetryAttr) CoroutineGroup[T]
 		GO(funcs ...Func[T]) anySlices.AnySlicer[Result[T]]
 		GOBatch(total, capacities int, fn func(batch, capacity uint) (result Result[T])) (anySlices.AnySlicer[Result[T]], error)
 	}
@@ -43,7 +43,7 @@ type (
 	}
 )
 
-func New[T any](limit uint16, attrs ...CoroutineGroupRetryAttr) CoroutineGrouper[T] {
+func New[T any](limit uint16, attrs ...CoroutineGroupRetryAttr) CoroutineGroup[T] {
 	if limit == 0 {
 		limit = 4
 	}
@@ -60,15 +60,15 @@ func New[T any](limit uint16, attrs ...CoroutineGroupRetryAttr) CoroutineGrouper
 	return ins
 }
 
-func (my *CoroutineGroupImpl[T]) New(limit uint16) CoroutineGrouper[T] { return New[T](limit) }
+func (my *CoroutineGroupImpl[T]) New(limit uint16) CoroutineGroup[T] { return New[T](limit) }
 
-func (my *CoroutineGroupImpl[T]) SetFunc(funcs ...Func[T]) CoroutineGrouper[T] {
+func (my *CoroutineGroupImpl[T]) SetFunc(funcs ...Func[T]) CoroutineGroup[T] {
 	my.funcs = append(my.funcs, funcs...)
 	return my
 }
 
 // SetRetry 设置超时重试配置，每个协程独立享有超时与重试
-func (my *CoroutineGroupImpl[T]) SetRetry(attrs ...CoroutineGroupRetryAttr) CoroutineGrouper[T] {
+func (my *CoroutineGroupImpl[T]) SetRetry(attrs ...CoroutineGroupRetryAttr) CoroutineGroup[T] {
 	my.retry = &RetryConfig{maxAttempts: 1}
 	for idx := range attrs {
 		attrs[idx](my.retry)

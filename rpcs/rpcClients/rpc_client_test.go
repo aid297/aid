@@ -1,4 +1,4 @@
-package rpcClient
+package rpcClients
 
 import (
 	"log"

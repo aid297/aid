@@ -1,4 +1,4 @@
-package rpcServer
+package rpcServers
 
 import (
 	"net"

@@ -1,0 +1,103 @@
+package coroutineGroups
+
+import (
+	"sync"
+
+	"github.com/aid297/aid/v2/operations"
+)
+
+type (
+	CoroutineGroup[T any] interface {
+		SetBatches(batches uint) CoroutineGroup[T]
+		SetCapacity(capacities uint) CoroutineGroup[T]
+		SetBatchesByCapacities(total, capacities int) CoroutineGroup[T]
+		check() error
+		GetResults() []ResultImpl[T]
+		GO(fn func(batch, capacity uint) (result ResultImpl[T])) CoroutineGroup[T]
+	}
+
+	CoroutineGroupImpl[T any] struct {
+		Error      error
+		OK         bool
+		Results    []ResultImpl[T]
+		batches    uint
+		capacities uint
+		sw         sync.WaitGroup
+	}
+
+	ResultImpl[T any] struct {
+		Data   T
+		Error  error
+		IsSkip bool
+	}
+)
+
+// NewCoroutineGroup 创建协程组实例
+func NewCoroutineGroup[T any]() CoroutineGroup[T] {
+	return &CoroutineGroupImpl[T]{sw: sync.WaitGroup{}, OK: true}
+}
+
+func (my *CoroutineGroupImpl[T]) New() CoroutineGroup[T] { return NewCoroutineGroup[T]() }
+
+// GetBatches 计算批次数
+func GetBatches(total, capacities int) uint { return uint((total + capacities - 1) / capacities) }
+
+// SetBatches 设置批次数
+func (my *CoroutineGroupImpl[T]) SetBatches(batches uint) CoroutineGroup[T] {
+	my.batches = batches
+	return my
+}
+
+// SetCapacity 设置每批次容量
+func (my *CoroutineGroupImpl[T]) SetCapacity(capacities uint) CoroutineGroup[T] {
+	my.capacities = capacities
+	return my
+}
+
+// SetBatchesByCapacities 根据总数和每批次容量计算批次数并设置
+func (my *CoroutineGroupImpl[T]) SetBatchesByCapacities(total, capacities int) CoroutineGroup[T] {
+	my.batches = operations.NewTernary(operations.TrueFn(func() uint { return GetBatches(total, capacities) }), operations.FalseValue[uint](1)).GetByValue(total > capacities)
+	my.capacities = uint(capacities)
+	return my
+}
+
+// check 检查参数
+func (my *CoroutineGroupImpl[T]) check() error {
+	if my.batches == 0 {
+		return ErrBatchInvalid
+	}
+	if my.capacities == 0 {
+		return ErrCapacityInvalid
+	}
+
+	return nil
+}
+
+func (my *CoroutineGroupImpl[T]) GetResults() []ResultImpl[T] { return my.Results }
+
+// GO 执行协程组
+func (my *CoroutineGroupImpl[T]) GO(fn func(batch, capacity uint) (result ResultImpl[T])) CoroutineGroup[T] {
+	if err := my.check(); err != nil {
+		my.Error = err
+		my.OK = false
+		return my
+	}
+
+	my.Results = make([]ResultImpl[T], 0, my.batches+my.capacities)
+	for batch := range my.batches {
+		for capacity := range my.capacities {
+			my.sw.Add(1)
+
+			go func(b, c uint) {
+				defer my.sw.Done()
+				var r ResultImpl[T] = fn(b, c)
+				if my.Results = append(my.Results, r); r.Error != nil {
+					my.OK = false
+				}
+			}(batch, capacity)
+		}
+		my.sw.Wait()
+	}
+
+	return my
+}
