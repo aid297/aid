@@ -5,15 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/v2/redisPool"
+	"github.com/aid297/aid/v2/redisPools"
 )
 
 func TestOnceRedisPool(t *testing.T) {
-	rp := redisPool.New(
+	rp := redisPools.New(
 		"localhost:6379",
 		"bsiness",
-		redisPool.Pool("user", 0),
-		redisPool.Pool("order", 1),
+		redisPools.Pool("user", 0),
+		redisPools.Pool("order", 1),
 	)
 
 	prefix, rc := rp.GetClient("user")
