@@ -11,20 +11,20 @@ type (
 		End() string
 	}
 
-	Markdown struct{ buffer buffer.Buffer }
+	MarkdownWriterImpl struct{ buffer buffer.Buffer }
 )
 
-func (Markdown) New(options ...MarkdownAttr) MarkdownWriter {
-	return Markdown{buffer: buffer.BufferImpl{}.NewString("")}.Set(options...)
+func (MarkdownWriterImpl) New(options ...MarkdownAttr) MarkdownWriter {
+	return MarkdownWriterImpl{buffer: buffer.BufferImpl{}.NewString("")}.Set(options...)
 }
 
-func (my Markdown) GetBuffer() buffer.Buffer { return my.buffer }
+func (my MarkdownWriterImpl) GetBuffer() buffer.Buffer { return my.buffer }
 
-func (Markdown) NewString(options ...MarkdownAttr) string {
-	return Markdown{}.New(options...).End()
+func (MarkdownWriterImpl) NewString(options ...MarkdownAttr) string {
+	return MarkdownWriterImpl{}.New(options...).End()
 }
 
-func (my Markdown) Set(options ...MarkdownAttr) MarkdownWriter {
+func (my MarkdownWriterImpl) Set(options ...MarkdownAttr) MarkdownWriter {
 	if len(options) > 0 {
 		for idx := range options {
 			options[idx](&my)
@@ -33,6 +33,6 @@ func (my Markdown) Set(options ...MarkdownAttr) MarkdownWriter {
 	return my
 }
 
-func (my Markdown) End() string {
+func (my MarkdownWriterImpl) End() string {
 	return my.buffer.String()
 }

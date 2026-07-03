@@ -10,8 +10,8 @@ import (
 
 var (
 	Buffer   buffer.Buffer           = (*buffer.BufferImpl)(nil)
-	HTML     html.HTMLWriter         = (*html.HTML)(nil)
-	Markdown markdown.MarkdownWriter = (*markdown.Markdown)(nil)
-	Template template.Templater      = (*template.Template)(nil)
+	HTML     html.HTMLWriter         = (*html.HTMLWriterImpl)(nil)
+	Markdown markdown.MarkdownWriter = (*markdown.MarkdownWriterImpl)(nil)
+	Template template.Templater      = (*template.TemplaterImpl)(nil)
 	Transfer transfer.Transfer       = (*transfer.TransferImpl)(nil)
 )

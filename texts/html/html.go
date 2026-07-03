@@ -11,20 +11,20 @@ type (
 		End() string
 	}
 
-	HTML struct{ buffer buffer.Buffer }
+	HTMLWriterImpl struct{ buffer buffer.Buffer }
 )
 
-func (HTML) New(options ...HTMLAttr) HTMLWriter {
-	return HTML{buffer: buffer.BufferImpl{}.NewString("")}.Set(options...)
+func (HTMLWriterImpl) New(options ...HTMLAttr) HTMLWriter {
+	return HTMLWriterImpl{buffer: buffer.BufferImpl{}.NewString("")}.Set(options...)
 }
 
-func (HTML) NewString(options ...HTMLAttr) string {
-	return HTML{}.New(options...).End()
+func (HTMLWriterImpl) NewString(options ...HTMLAttr) string {
+	return HTMLWriterImpl{}.New(options...).End()
 }
 
-func (my HTML) GetBuffer() buffer.Buffer { return my.buffer }
+func (my HTMLWriterImpl) GetBuffer() buffer.Buffer { return my.buffer }
 
-func (my HTML) Set(options ...HTMLAttr) HTMLWriter {
+func (my HTMLWriterImpl) Set(options ...HTMLAttr) HTMLWriter {
 	if len(options) > 0 {
 		for idx := range options {
 			options[idx](&my)
@@ -33,6 +33,6 @@ func (my HTML) Set(options ...HTMLAttr) HTMLWriter {
 	return my
 }
 
-func (my HTML) End() string {
+func (my HTMLWriterImpl) End() string {
 	return my.buffer.String()
 }

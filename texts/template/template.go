@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Template 基于 struct tag 的模板渲染
+// TemplaterImpl 基于 struct tag 的模板渲染
 // 通过 `template:"name"` 标签定义模板变量，自动将模板中的 {{name}} 替换为字段值
 type (
 	Templater interface {
@@ -20,7 +20,7 @@ type (
 		extractTemplateVars() (map[string]string, error)
 	}
 
-	Template struct {
+	TemplaterImpl struct {
 		err     error
 		content string
 		s       any
@@ -40,8 +40,8 @@ type (
 //	tpl := "Hello {{name}}, you are {{age}} years old"
 //	result := NewTemplateV2(tpl, Data{Name: "Tom", Age: 18}).String()
 //	// => "Hello Tom, you are 18 years old"
-func (my *Template) New(content string, attrs ...TemplateAttr) Templater {
-	ins := &Template{content: content}
+func (my *TemplaterImpl) New(content string, attrs ...TemplateAttr) Templater {
+	ins := &TemplaterImpl{content: content}
 
 	for idx := range attrs {
 		attrs[idx](ins)
@@ -50,14 +50,14 @@ func (my *Template) New(content string, attrs ...TemplateAttr) Templater {
 	return ins.render()
 }
 
-func (my *Template) Error() error    { return my.err }
-func (my *Template) String() string  { return my.ret }
-func (my *Template) Bytes() []byte   { return []byte(my.ret) }
-func (my *Template) Content() string { return my.content }
+func (my *TemplaterImpl) Error() error    { return my.err }
+func (my *TemplaterImpl) String() string  { return my.ret }
+func (my *TemplaterImpl) Bytes() []byte   { return []byte(my.ret) }
+func (my *TemplaterImpl) Content() string { return my.content }
 
-func (my *Template) setS(s any) { my.s = s }
+func (my *TemplaterImpl) setS(s any) { my.s = s }
 
-func (my *Template) render() Templater {
+func (my *TemplaterImpl) render() Templater {
 	vars, err := my.extractTemplateVars()
 	if err != nil {
 		my.err = fmt.Errorf("提取模板变量失败：%w", err)
@@ -75,7 +75,7 @@ func (my *Template) render() Templater {
 }
 
 // extractTemplateVars 通过反射提取结构体或 map 中的模板变量及其值
-func (my *Template) extractTemplateVars() (map[string]string, error) {
+func (my *TemplaterImpl) extractTemplateVars() (map[string]string, error) {
 	v := reflect.ValueOf(my.s)
 	if v.Kind() == reflect.Pointer {
 		v = v.Elem()

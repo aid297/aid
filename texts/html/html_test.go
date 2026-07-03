@@ -8,9 +8,9 @@ import (
 
 func TestHTML1(t *testing.T) {
 	t.Run("HTML", func(t *testing.T) {
-		t.Logf("HTML：%s", html.HTML{}.New(
+		t.Logf("HTML：%s", html.HTMLWriterImpl{}.New(
 			html.P("这里是标题"),
-			html.P(html.HTML{}.New(html.Normal("我想要跳转到"), html.A("百度", "https://www.baidu.com")).End()),
+			html.P(html.HTMLWriterImpl{}.New(html.Normal("我想要跳转到"), html.A("百度", "https://www.baidu.com")).End()),
 			html.A("Google", "https://www.google.com", html.HTMLProperty{Key: "class", Value: "my-class"}),
 			html.Br(),
 			html.Ul("第一项", "第二项"),
@@ -22,7 +22,7 @@ func TestHTML2(t *testing.T) {
 	t.Run("HTML Table", func(t *testing.T) {
 		t.Logf(
 			"%s",
-			html.HTML{}.NewString(
+			html.HTMLWriterImpl{}.NewString(
 				html.Table(
 					[]html.HTMLAttr{
 						html.THead(
