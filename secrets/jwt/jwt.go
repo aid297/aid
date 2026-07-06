@@ -64,14 +64,25 @@ func NewWithAlg(alg Alg, asymm secrets.Asymmetric) *JWT {
 }
 
 // GetAlg 获取当前算法标识
-func (j *JWT) GetAlg() string { return j.alg }
+func (my *JWT) GetAlg() string { return my.alg }
 
 // Generate 生成 JWT token
-func (j *JWT) Generate(claims *Claims) (string, error) {
+func (my *JWT) Generate(claims *Claims) (string, error) {
+	var (
+		err           error
+		header        = Header{Typ: "JWT"}
+		headerBytes   []byte
+		headerBase64  string
+		payloadBytes  []byte
+		payloadBase64 string
+		signInput     string
+		signature     string
+		token         string
+	)
 	if claims == nil {
 		return "", errors.New("claims 不能为空")
 	}
-	if j.asymm == nil {
+	if my.asymm == nil {
 		return "", errors.New("Asymmetric 不能为空")
 	}
 
@@ -81,78 +92,86 @@ func (j *JWT) Generate(claims *Claims) (string, error) {
 	}
 
 	// 编码 header（包含算法标识）
-	header := Header{Typ: "JWT"}
-	if j.alg != "" {
-		header.Alg = j.alg
+	if my.alg != "" {
+		header.Alg = my.alg
 	}
-	headerBytes, err := json.Marshal(header)
-	if err != nil {
+	if headerBytes, err = json.Marshal(header); err != nil {
 		return "", err
 	}
-	headerBase64 := base64.RawURLEncoding.EncodeToString(headerBytes)
+	headerBase64 = base64.RawURLEncoding.EncodeToString(headerBytes)
 
 	// 编码 payload
-	payloadBytes, err := json.Marshal(claims)
-	if err != nil {
+	if payloadBytes, err = json.Marshal(claims); err != nil {
 		return "", err
 	}
-	payloadBase64 := base64.RawURLEncoding.EncodeToString(payloadBytes)
+	payloadBase64 = base64.RawURLEncoding.EncodeToString(payloadBytes)
 
 	// 签名
-	signInput := fmt.Sprintf("%s.%s", headerBase64, payloadBase64)
-	signature, err := j.asymm.Sign([]byte(signInput))
-	if err != nil {
+	signInput = fmt.Sprintf("%s.%s", headerBase64, payloadBase64)
+	if signature, err = my.asymm.Sign([]byte(signInput)); err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s.%s", signInput, signature), nil
+	// 自验证
+	token = fmt.Sprintf("%s.%s", signInput, signature)
+	if _, err = my.Verify(token); err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 // Verify 验证 JWT token
-func (j *JWT) Verify(tokenString string) (*Claims, error) {
-	if j.asymm == nil {
+func (my *JWT) Verify(tokenString string) (*Claims, error) {
+	if my.asymm == nil {
 		return nil, errors.New("Asymmetric 不能为空")
 	}
 
-	parts := strings.Split(tokenString, ".")
-	if len(parts) != 3 {
-		return nil, errors.New("invalid token format")
+	var (
+		err          error
+		parts        []string
+		signInput    string
+		valid        bool
+		payloadBytes []byte
+		claims       Claims
+		now          int64
+	)
+
+	if parts = strings.Split(tokenString, "."); len(parts) != 3 {
+		return nil, errors.New("令牌格式错误")
 	}
 
 	headerBase64, payloadBase64, signatureBase64 := parts[0], parts[1], parts[2]
 
 	// 验证签名
-	signInput := headerBase64 + "." + payloadBase64
-	valid, err := j.asymm.Verify([]byte(signInput), signatureBase64)
-	if err != nil {
+	signInput = headerBase64 + "." + payloadBase64
+	if valid, err = my.asymm.Verify([]byte(signInput), signatureBase64); err != nil {
 		return nil, err
 	}
 	if !valid {
-		return nil, errors.New("invalid signature")
+		return nil, errors.New("签名不合法")
 	}
 
 	// 解析 payload
-	payloadBytes, err := base64.RawURLEncoding.DecodeString(payloadBase64)
-	if err != nil {
+	if payloadBytes, err = base64.RawURLEncoding.DecodeString(payloadBase64); err != nil {
 		return nil, err
 	}
 
-	var claims Claims
-	if err := json.Unmarshal(payloadBytes, &claims); err != nil {
+	if err = json.Unmarshal(payloadBytes, &claims); err != nil {
 		return nil, err
 	}
 
 	// 验证时间声明
-	now := time.Now().Unix()
+	now = time.Now().Unix()
 
 	// 验证 exp (过期时间)
 	if claims.Exp != 0 && now > claims.Exp {
-		return nil, errors.New("token expired")
+		return nil, errors.New("令牌已过期")
 	}
 
 	// 验证 nbf (生效时间)
 	if claims.Nbf != 0 && now < claims.Nbf {
-		return nil, errors.New("token not yet valid")
+		return nil, errors.New("令牌未生效")
 	}
 
 	return &claims, nil
