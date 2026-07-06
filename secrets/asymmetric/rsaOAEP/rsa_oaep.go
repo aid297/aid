@@ -70,7 +70,7 @@ func (my *RSAOAEP) Decrypt(cipherBase64 string) ([]byte, error) {
 	if !ok || priKey == nil {
 		return nil, errors.New("rsaoaep: 私钥缺失或不是 RSA")
 	}
-	cipherText, err := base64.StdEncoding.DecodeString(secrets.PaddingBase64(cipherBase64))
+	cipherText, err := base64.StdEncoding.DecodeString(cipherBase64)
 	if err != nil {
 		return nil, err
 	}

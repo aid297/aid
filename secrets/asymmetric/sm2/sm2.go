@@ -7,9 +7,10 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/aid297/aid/v2/secrets"
 	"github.com/tjfoc/gmsm/sm2"
 	"github.com/tjfoc/gmsm/x509"
+
+	"github.com/aid297/aid/v2/secrets"
 )
 
 var _ secrets.Asymmetric = (*SM2)(nil)
@@ -60,7 +61,7 @@ func (my *SM2) Decrypt(cipherBase64 string) ([]byte, error) {
 		return nil, err
 	}
 
-	if cipherText, err = base64.StdEncoding.DecodeString(secrets.PaddingBase64(cipherBase64)); err != nil {
+	if cipherText, err = base64.StdEncoding.DecodeString(cipherBase64); err != nil {
 		return nil, err
 	}
 

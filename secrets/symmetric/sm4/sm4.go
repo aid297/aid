@@ -11,8 +11,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aid297/aid/v2/secrets"
 	"github.com/tjfoc/gmsm/sm4"
+
+	"github.com/aid297/aid/v2/secrets"
 )
 
 // Mode 加密模式
@@ -166,7 +167,7 @@ func (my SM4) EncryptBase64(plainText []byte) (string, error) {
 
 // DecryptBase64 解密：通过 base64 编码的密文
 func (my *SM4) DecryptBase64(cipherBase64 string) ([]byte, error) {
-	cipherText, err := base64.StdEncoding.DecodeString(secrets.PaddingBase64(cipherBase64))
+	cipherText, err := base64.StdEncoding.DecodeString(cipherBase64)
 	if err != nil {
 		return nil, fmt.Errorf("base64解码错误：%w", err)
 	}
