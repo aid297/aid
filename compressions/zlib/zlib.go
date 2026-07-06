@@ -8,6 +8,8 @@ import (
 	"github.com/aid297/aid/v2/compressions"
 )
 
+var _ compressions.Compressor = (*Zlib)(nil)
+
 type Zlib struct {
 	data     []byte
 	level    int

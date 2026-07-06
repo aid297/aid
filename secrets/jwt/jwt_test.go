@@ -14,6 +14,7 @@ func TestGenerate(t *testing.T) {
 		err                       error
 		rsaSem                    secrets.Semen
 		rsaEncrypter              secrets.Asymmetric
+		rsaDecrypter              secrets.Asymmetric
 		jwtGenerate, jwtVerify    *jwt.JWT
 		srcClaims, verifiedClaims *jwt.Claims
 		taskToken                 string
@@ -54,7 +55,8 @@ func TestGenerate(t *testing.T) {
 	}
 
 	// 验证 token
-	jwtVerify = jwt.New(rsaEncrypter)
+	rsaDecrypter = rsa.New(rsaSem)
+	jwtVerify = jwt.New(rsaDecrypter)
 	verifiedClaims, err = jwtVerify.Verify(taskToken)
 	if err != nil {
 		t.Fatalf("验证 JWT 失败: %v", err)

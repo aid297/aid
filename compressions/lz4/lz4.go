@@ -9,6 +9,8 @@ import (
 	"github.com/aid297/aid/v2/compressions"
 )
 
+var _ compressions.Compressor = (*LZ4)(nil)
+
 type LZ4 struct {
 	data  []byte
 	level int

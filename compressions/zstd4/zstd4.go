@@ -6,6 +6,8 @@ import (
 	"github.com/aid297/aid/v2/compressions"
 )
 
+var _ compressions.Compressor = (*Zstd4)(nil)
+
 type Zstd4 struct {
 	data     []byte
 	level    zstd.EncoderLevel
