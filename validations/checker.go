@@ -50,19 +50,15 @@ func (my *CheckerImpl) Error() error {
 
 func (my *CheckerImpl) ErrorToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
-		ret = anySlices.NewItems(my.wrongs).JoinNotEmpty(operations.NewTernary(
-			operations.TrueValue(limit),
-			operations.FalseValue(my.defaultLimit),
-		).GetByValue(limit != ""))
-		// ret = anySlices.FillFunc(
-		// 	my.wrongs,
-		// 	func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) },
-		// ).
-		// 	JoinNotEmpty(operations.NewTernary(
-		// 		operations.TrueValue(limit),
-		// 		operations.FalseValue(my.defaultLimit),
-		// 	).GetByValue(limit != ""),
-		// 	)
+		ret = anySlices.FillFunc(
+			my.wrongs,
+			func(idx int, value error) string { return value.Error() },
+		).
+			JoinNotEmpty(operations.NewTernary(
+				operations.TrueValue(limit),
+				operations.FalseValue(my.defaultLimit),
+			).GetByValue(limit != ""),
+			)
 	}
 
 	return
