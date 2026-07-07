@@ -1,4 +1,4 @@
 {
-    "ROOT_URL": "http://172.20.232.212:8080",
+    "ROOT_URL": "http://127.0.0.1:38080",
     "API_BASE_URL": "api/v1"
 }

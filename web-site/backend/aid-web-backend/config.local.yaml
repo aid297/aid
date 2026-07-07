@@ -16,13 +16,14 @@ log:
     dir: storage/runtime/log
     filename: daemons.log
   zap:
-    level: debug
-    encoder-type: console
-    extension: .log
+    compress: true
+    encoder-type: CONSOLE
+    filename: storage/runtime/logs/app.log
     in-console: true
-    dir: storage/runtime/log/system
-    max-size: 100
-    max-day: 10
+    level: info
+    max-age: 180
+    max-backups: 180
+    max-size: 1024
 rezip:
   out-dir: storage/runtime/rezip
 file-manager:

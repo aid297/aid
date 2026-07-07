@@ -8,10 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aid297/aid/v2/filesystems"
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/aid297/aid/v2/filesystems"
 )
 
 // ZapProvider Zap日志服务提供者
@@ -227,7 +228,10 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 	levelEnabler := zap.LevelEnablerFunc(func(logLevel zapcore.Level) bool {
 		return logLevel >= ins.Level
 	})
-	core := zapcore.NewCore(encoderTypes[ins.EncoderType](zapLoggerConfig), writer, levelEnabler)
+
+	t := encoderTypes[ins.EncoderType](zapLoggerConfig)
+
+	core := zapcore.NewCore(t, writer, levelEnabler)
 	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(0)), nil
 }
 

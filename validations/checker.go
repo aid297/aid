@@ -24,8 +24,8 @@ type (
 		Validate(exCheckFns ...ExCheckFn) Checker
 	}
 
-	// Check 验证器
-	Check struct {
+	// CheckerImpl 验证器
+	CheckerImpl struct {
 		data         any
 		wrongs       []error
 		defaultLimit string
@@ -34,36 +34,41 @@ type (
 	ExCheckFn func(origin any) (err error)
 )
 
-func NewCheck(data any) Checker { return &Check{data: data, defaultLimit: "<br />"} }
+func NewCheck(data any) Checker { return &CheckerImpl{data: data, defaultLimit: "<br />"} }
 
-func (my *Check) Errors() []error { return my.wrongs }
+func (my *CheckerImpl) Errors() []error { return my.wrongs }
 
-func (my *Check) Invalid() bool { return len(my.wrongs) > 0 }
+func (my *CheckerImpl) Invalid() bool { return len(my.wrongs) > 0 }
 
+// OK
 // fix: 推荐使用 Invalid
-func (my *Check) OK() bool { return len(my.wrongs) == 0 }
+func (my *CheckerImpl) OK() bool { return len(my.wrongs) == 0 }
 
-func (my *Check) Error() error {
+func (my *CheckerImpl) Error() error {
 	return operations.NewTernary(operations.TrueFn(func() error { return errors.New(my.ErrorToString("")) })).GetByValue(len(my.wrongs) > 0)
 }
 
-func (my *Check) ErrorToString(limit string) (ret string) {
+func (my *CheckerImpl) ErrorToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
-		ret = anySlices.FillFunc(
-			my.wrongs,
-			func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) },
-		).
-			JoinNotEmpty(operations.NewTernary(
-				operations.TrueValue(limit),
-				operations.FalseValue(my.defaultLimit),
-			).GetByValue(limit != ""),
-			)
+		ret = anySlices.NewItems(my.wrongs).JoinNotEmpty(operations.NewTernary(
+			operations.TrueValue(limit),
+			operations.FalseValue(my.defaultLimit),
+		).GetByValue(limit != ""))
+		// ret = anySlices.FillFunc(
+		// 	my.wrongs,
+		// 	func(idx int, value error) string { return fmt.Sprintf("问题%d：%s", idx+1, value.Error()) },
+		// ).
+		// 	JoinNotEmpty(operations.NewTernary(
+		// 		operations.TrueValue(limit),
+		// 		operations.FalseValue(my.defaultLimit),
+		// 	).GetByValue(limit != ""),
+		// 	)
 	}
 
 	return
 }
 
-func (my *Check) Validate(exCheckFns ...ExCheckFn) Checker {
+func (my *CheckerImpl) Validate(exCheckFns ...ExCheckFn) Checker {
 	fieldInfos := getStructFieldInfos(my.data, "")
 	for _, fieldInfo := range fieldInfos {
 		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
@@ -86,7 +91,7 @@ func WithGin[T any](c *gin.Context, exCheckFns ...ExCheckFn) (form T, checker Ch
 	form = *new(T)
 
 	if c == nil || c.Request == nil {
-		checker = &Check{wrongs: []error{errors.New("gin request is nil")}}
+		checker = &CheckerImpl{wrongs: []error{errors.New("gin request is nil")}}
 		return
 	}
 
@@ -98,7 +103,7 @@ func WithGin[T any](c *gin.Context, exCheckFns ...ExCheckFn) (form T, checker Ch
 	}
 
 	if err := c.ShouldBind(&form); err != nil {
-		checker = &Check{wrongs: []error{err}}
+		checker = &CheckerImpl{wrongs: []error{err}}
 		return
 	}
 
@@ -109,7 +114,7 @@ func WithFiber[T any](c *fiber.Ctx, exCheckFns ...ExCheckFn) (form T, checker Ch
 	form = *new(T)
 
 	if err := c.BodyParser(&form); err != nil {
-		checker = &Check{wrongs: []error{err}}
+		checker = &CheckerImpl{wrongs: []error{err}}
 		return
 	}
 
