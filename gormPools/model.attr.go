@@ -33,6 +33,7 @@ type (
 		args  []any
 	}
 	AttrDistinct struct{ args []any }
+	AttrScopes   struct{ scopes []func(db *gorm.DB) *gorm.DB }
 )
 
 func ToModel[model Modeler](db *gorm.DB, attrs ...ModelAttr) *gorm.DB {
@@ -157,4 +158,13 @@ func Distinct(args ...any) AttrDistinct { return AttrDistinct{args: args} }
 
 func (my AttrDistinct) Register(model Modeler, db *gorm.DB) *gorm.DB {
 	return db.Distinct(my.args...)
+}
+
+func Scopes(scopes ...func(db *gorm.DB) *gorm.DB) AttrScopes { return AttrScopes{scopes: scopes} }
+
+func (my AttrScopes) Register(model Modeler, db *gorm.DB) *gorm.DB {
+	for _, scope := range my.scopes {
+		db = scope(db)
+	}
+	return db
 }
