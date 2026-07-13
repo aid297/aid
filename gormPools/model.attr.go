@@ -76,7 +76,7 @@ func SaveOrCreate(tx *gorm.DB, data Modeler, query any, args ...any) (err error)
 	return
 }
 
-func UpdatesOrCreate(tx *gorm.DB, data Modeler, updates any, query any, args ...any) (err error) {
+func UpdatesOrCreate(tx *gorm.DB, data Modeler, query any, args ...any) (err error) {
 	var count int64
 
 	if err = tx.Where(query, args...).Limit(1).Count(&count).Error; err != nil {
@@ -84,7 +84,7 @@ func UpdatesOrCreate(tx *gorm.DB, data Modeler, updates any, query any, args ...
 	}
 
 	if count != 0 {
-		if err = tx.Where(query, args...).Updates(updates).Error; err != nil {
+		if err = tx.Where(query, args...).Updates(data).Error; err != nil {
 			return fmt.Errorf("更新数据失败: %w", err)
 		}
 	} else {
@@ -96,7 +96,7 @@ func UpdatesOrCreate(tx *gorm.DB, data Modeler, updates any, query any, args ...
 	return
 }
 
-func UpdateColumnsOrCreate(tx *gorm.DB, data Modeler, updates any, query any, args ...any) (err error) {
+func UpdateColumnsOrCreate(tx *gorm.DB, data Modeler, query any, args ...any) (err error) {
 	var count int64
 
 	if err = tx.Where(query, args...).Limit(1).Count(&count).Error; err != nil {
@@ -104,7 +104,7 @@ func UpdateColumnsOrCreate(tx *gorm.DB, data Modeler, updates any, query any, ar
 	}
 
 	if count != 0 {
-		if err = tx.Where(query, args...).UpdateColumns(updates).Error; err != nil {
+		if err = tx.Where(query, args...).UpdateColumns(data).Error; err != nil {
 			return fmt.Errorf("更新数据失败: %w", err)
 		}
 	} else {
