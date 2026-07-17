@@ -56,7 +56,7 @@ type (
 		Orders   []string `json:"orders,omitempty"`   // 排序
 		Preloads []string `json:"preloads,omitempty"` // 预加载
 		Page     int      `json:"page,omitempty"`     // 页码
-		Limit    int      `json:"limit,omitempty"`    // 页容量
+		PageSize int      `json:"pageSize,omitempty"` // 页容量
 	}
 
 	// Condition 查询
@@ -424,9 +424,9 @@ func (my *FinderImpl) FindUseMap(queries map[string][]any, preloads []string, or
 
 // FindUseCondition 自动填充查询条件并查询：使用FinderCondition
 func (my *FinderImpl) FindUseCondition(finderCondition *FinderCondition, page, size int, ret any) Finder {
-	if finderCondition != nil && finderCondition.Page > 0 && finderCondition.Limit > 0 {
+	if finderCondition != nil && finderCondition.Page > 0 && finderCondition.PageSize > 0 {
 		page = finderCondition.Page
-		size = finderCondition.Limit
+		size = finderCondition.PageSize
 	}
 	return my.QueryUseCondition(finderCondition).TryPagination(page, size).Find(ret).finderNext()
 }
@@ -438,7 +438,7 @@ func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret an
 		return my.finderNext()
 	}
 
-	return my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.Limit).Find(ret).finderNext()
+	return my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.PageSize).Find(ret).finderNext()
 }
 
 func (my *FinderImpl) finderNext() Finder {
