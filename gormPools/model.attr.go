@@ -53,67 +53,80 @@ func ToFinder[model Modeler](db *gorm.DB, attrs ...ModelAttr) Finder {
 
 func Exist(tx *gorm.DB, query any, args ...any) (exist bool, err error) {
 	err = tx.Where(query, args...).Limit(1).Find(nil).Error
-	return tx.RowsAffected != 0, err
+	return tx.RowsAffected != 0, fmt.Errorf("查询数据失败：%v", err)
 }
 
-func SaveOrCreate(tx *gorm.DB, data Modeler, query any, args ...any) (err error) {
-	var count int64
+func SaveOrCreate[T Modeler](tx *gorm.DB, create, save T, query any, args ...any) (T, error) {
+	var ret T
 
-	if err = tx.Where(query, args...).Limit(1).Count(&count).Error; err != nil {
-		return fmt.Errorf("查询待更新数据存在失败: %w", err)
+	exist, err := Exist(tx, query, args...)
+	if err != nil {
+		return ret, err
 	}
 
-	if count != 0 {
-		if err = tx.Where(query, args...).Save(data).Error; err != nil {
-			return fmt.Errorf("更新数据失败: %w", err)
+	if exist {
+		if err = tx.Where(query, args...).Save(&save).Error; err != nil {
+			return ret, fmt.Errorf("保存数据失败: %w", err)
 		}
+
+		return save, nil
 	} else {
-		if err = tx.Table(data.TableName()).Create(data).Error; err != nil {
-			return fmt.Errorf("创建数据失败: %w", err)
+		if err = tx.Create(&create).Error; err != nil {
+			return ret, fmt.Errorf("新建数据失败: %w", err)
 		}
-	}
 
-	return
+		return create, nil
+	}
 }
 
-func UpdatesOrCreate(tx *gorm.DB, data Modeler, query any, args ...any) (err error) {
-	var count int64
+func UpdatesOrCreate[T Modeler](tx *gorm.DB, create T, update, query any, args ...any) (T, error) {
+	var ret T
 
-	if err = tx.Where(query, args...).Limit(1).Count(&count).Error; err != nil {
-		return fmt.Errorf("查询待更新数据存在失败: %w", err)
+	exist, err := Exist(tx, query, args...)
+	if err != nil {
+		return ret, err
 	}
 
-	if count != 0 {
-		if err = tx.Where(query, args...).Updates(data).Error; err != nil {
-			return fmt.Errorf("更新数据失败: %w", err)
+	if exist {
+		if err = tx.Where(query, args...).Updates(update).Error; err != nil {
+			return ret, fmt.Errorf("更新数据失败: %w", err)
 		}
 	} else {
-		if err = tx.Table(data.TableName()).Create(data).Error; err != nil {
-			return fmt.Errorf("创建数据失败: %w", err)
+		if err = tx.Create(&create).Error; err != nil {
+			return ret, fmt.Errorf("新建数据失败: %w", err)
 		}
 	}
 
-	return
+	if err = tx.Where(query, args...).First(&ret).Error; err != nil {
+		return ret, fmt.Errorf("同步数据失败：%v", err)
+	}
+
+	return ret, nil
 }
 
-func UpdateColumnsOrCreate(tx *gorm.DB, data Modeler, query any, args ...any) (err error) {
-	var count int64
+func UpdateColumnsOrCreate[T Modeler](tx *gorm.DB, create T, update, query any, args ...any) (T, error) {
+	var ret T
 
-	if err = tx.Where(query, args...).Limit(1).Count(&count).Error; err != nil {
-		return fmt.Errorf("查询待更新数据存在失败: %w", err)
+	exist, err := Exist(tx, query, args...)
+	if err != nil {
+		return ret, err
 	}
 
-	if count != 0 {
-		if err = tx.Where(query, args...).UpdateColumns(data).Error; err != nil {
-			return fmt.Errorf("更新数据失败: %w", err)
+	if exist {
+		if err = tx.Where(query, args...).UpdateColumns(update).Error; err != nil {
+			return ret, fmt.Errorf("更新数据失败: %w", err)
 		}
 	} else {
-		if err = tx.Table(data.TableName()).Create(data).Error; err != nil {
-			return fmt.Errorf("创建数据失败: %w", err)
+		if err = tx.Create(&create).Error; err != nil {
+			return ret, fmt.Errorf("新建数据失败: %w", err)
 		}
 	}
 
-	return
+	if err = tx.Where(query, args...).First(&ret).Error; err != nil {
+		return ret, fmt.Errorf("同步数据失败：%v", err)
+	}
+
+	return ret, nil
 }
 
 func Table(table string) AttrTable { return AttrTable{table: table} }
