@@ -53,7 +53,10 @@ func ToFinder[model Modeler](db *gorm.DB, attrs ...ModelAttr) Finder {
 
 func Exist(tx *gorm.DB, query any, args ...any) (exist bool, err error) {
 	err = tx.Where(query, args...).Limit(1).Find(nil).Error
-	return tx.RowsAffected != 0, fmt.Errorf("查询数据失败：%v", err)
+	if err != nil {
+		return false, fmt.Errorf("查询数据失败：%v", err)
+	}
+	return tx.RowsAffected != 0, nil
 }
 
 func SaveOrCreate[T Modeler](tx *gorm.DB, create, save T, query any, args ...any) (T, error) {
