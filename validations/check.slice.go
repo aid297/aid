@@ -22,7 +22,10 @@ func (my FieldInfo) checkSlice() FieldInfo {
 
 	if getRuleRequired(my.VRuleTags) {
 		if my.IsPtr && (my.IsNil || my.RefValue.Len() == 0) {
-			l := my.RefValue.Len()
+			l := 0
+			if !my.IsNil {
+				l = my.RefValue.Len()
+			}
 			println(l)
 			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
 			return my

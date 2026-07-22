@@ -171,11 +171,18 @@ func callExCheckFn(fn ExCheckFn, data any) error {
 
 func getStructFieldInfos(s any, parentName string) []FieldInfo {
 	v := reflect.ValueOf(s)
+	// 防止 nil 接口或 nil 指针导致 panic
+	if !v.IsValid() {
+		return nil
+	}
 	t := v.Type()
 
 	var infos []FieldInfo
 
 	if t.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return nil
+		}
 		v = v.Elem()
 		t = v.Type()
 	}
@@ -243,12 +250,16 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				})
 
 				// 检查数组/切片的元素类型是否是基础类型
-				if !isBasicKind(elemElemKind) {
+				if !isBasicKind(elemElemKind) && !isNil {
 					// 非基础类型，需要递归处理
 					if fieldValue.Len() > 0 {
 						// 遍历数组/切片元素
 						for i := 0; i < fieldValue.Len(); i++ {
 							elemValue := fieldValue.Index(i)
+							// 跳过 nil 指针元素，避免递归时 panic
+							if elemValue.Kind() == reflect.Ptr && elemValue.IsNil() {
+								continue
+							}
 							infos = append(
 								infos,
 								getStructFieldInfos(elemValue.Interface(), vNameTag)...,
@@ -256,10 +267,15 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 						}
 					} else {
 						// 空数组/切片，使用零值递归
+						// 如果元素是指针类型，取其底层类型的零值
+						zeroType := elemElemType
+						if elemElemKind == reflect.Ptr {
+							zeroType = elemElemType.Elem()
+						}
 						infos = append(
 							infos,
 							getStructFieldInfos(
-								reflect.Zero(elemElemType).Interface(),
+								reflect.Zero(zeroType).Interface(),
 								vNameTag,
 							)...,
 						)
