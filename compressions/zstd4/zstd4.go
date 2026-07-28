@@ -44,14 +44,14 @@ func (my *Zstd4) Encode() (compressed []byte, err error) {
 
 	// 创建压缩器，支持压缩等级:
 	// 1=SpeedFastest, 2=SpeedDefault, 3=SpeedBetterCompression, 4=SpeedBestCompression
-	opts := []zstd.EOption{}
+	opts := make([]zstd.EOption, 0)
 	if my.levelSet {
 		opts = append(opts, zstd.WithEncoderLevel(my.level))
 	}
 	if encoder, err = zstd.NewWriter(nil, opts...); err != nil {
 		return nil, err
 	}
-	defer encoder.Close()
+	defer func() { _ = encoder.Close() }()
 
 	// EncodeAll 直接返回压缩后的字节切片
 	return encoder.EncodeAll(my.data, nil), nil

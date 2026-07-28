@@ -43,6 +43,7 @@ func (my *LZ4) Encode() (compressed []byte, err error) {
 	}
 
 	w := lz4.NewWriter(&buf)
+	defer func() { _ = w.Close() }()
 
 	// 设置压缩等级: 0=Fast(默认), 1~9=Level1~Level9
 	if my.level > 0 && my.level <= 9 {
@@ -52,11 +53,6 @@ func (my *LZ4) Encode() (compressed []byte, err error) {
 	}
 
 	if _, err = w.Write(my.data); err != nil {
-		return nil, err
-	}
-
-	// 必须显式 Close 以确保数据全部刷新到 buf
-	if err = w.Close(); err != nil {
 		return nil, err
 	}
 

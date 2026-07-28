@@ -49,21 +49,19 @@ func (my *Zlib) Encode() (compressed []byte, err error) {
 	// 创建 Zlib 压缩器，支持压缩等级:
 	// -1=DefaultCompression(默认), 0=NoCompression, 1=BestSpeed ~ 9=BestCompression, -2=HuffmanOnly
 	if my.levelSet {
-		writer, err = zlib.NewWriterLevel(&buffer, my.level)
-		if err != nil {
+		if writer, err = zlib.NewWriterLevel(&buffer, my.level); err != nil {
 			return nil, err
 		}
+
+		defer func() { _ = writer.Close() }()
 	} else {
 		writer = zlib.NewWriter(&buffer)
+
+		defer func() { _ = writer.Close() }()
 	}
 
 	// 写入数据到压缩器
 	if _, err = writer.Write(my.data); err != nil {
-		return nil, err
-	}
-
-	// 记住要关闭Writer以完成压缩
-	if err = writer.Close(); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +83,7 @@ func (my *Zlib) Decode() (decompressed []byte, err error) {
 	if reader, err = zlib.NewReader(bytes.NewReader(my.data)); err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	// 读取解压缩后的数据到缓冲区
 	if _, err = io.Copy(&buffer, reader); err != nil {

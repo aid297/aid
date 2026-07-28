@@ -45,20 +45,20 @@ func (my *LZO) Encode() (compressed []byte, err error) {
 	// 创建 lzo Writer，支持指定压缩级别
 	var writer *lzo.Writer
 	if my.levelSet {
-		writer, err = lzo.NewWriterLevel(&buf, my.level)
+		if writer, err = lzo.NewWriterLevel(&buf, my.level); err != nil {
+			return nil, err
+		}
+
+		defer func() { _ = writer.Close() }()
 	} else {
-		writer, err = lzo.NewWriterLevel(&buf, lzo.BestCompression)
-	}
-	if err != nil {
-		return nil, err
+		if writer, err = lzo.NewWriterLevel(&buf, lzo.BestCompression); err != nil {
+			return nil, err
+		}
+
+		defer func() { _ = writer.Close() }()
 	}
 
-	if _, err := writer.Write(my.data); err != nil {
-		return nil, err
-	}
-
-	// ⚠️ 必须关闭以刷新缓冲区并写入尾部数据
-	if err := writer.Close(); err != nil {
+	if _, err = writer.Write(my.data); err != nil {
 		return nil, err
 	}
 
