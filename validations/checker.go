@@ -201,6 +201,21 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 			}
 
 			if vRuleTag == "" || vRuleTag == "-" {
+				// 如果字段是嵌套结构体（如匿名嵌入），即使没有 v-rule 也需要递归检查
+				actualKind := fieldValue.Kind()
+				actualType := fieldValue.Type()
+				if actualKind == reflect.Ptr {
+					if fieldValue.IsNil() {
+						continue
+					}
+					actualType = actualType.Elem()
+					actualKind = actualType.Kind()
+				}
+				if actualKind == reflect.Struct &&
+					actualType != reflect.TypeOf(time.Time{}) &&
+					actualType != reflect.TypeOf(&time.Time{}) {
+					infos = append(infos, getStructFieldInfos(fieldValue.Interface(), parentName)...)
+				}
 				continue
 			}
 
