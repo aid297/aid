@@ -78,7 +78,7 @@ func (my FieldInfo) checkSlice() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(operations.NewTernary(operations.TrueFn(my.RefValue.Interface)).GetByValue(my.RefValue.CanInterface())); err != nil {
+						if err := fn(my.getName(), operations.NewTernary(operations.TrueFn(my.RefValue.Interface)).GetByValue(my.RefValue.CanInterface())); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
