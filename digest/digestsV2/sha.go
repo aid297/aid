@@ -16,7 +16,7 @@ type (
 
 func NewSHA(original string) SHAEncoder { return &SHA{original: []byte(original)} }
 
-// Sha256 摘要算法
+// Encode256 Sha256 摘要算法
 func (my *SHA) Encode256() (string, error) {
 	hash := sha256.New()
 	if _, err := hash.Write(my.original); err != nil {
@@ -28,7 +28,7 @@ func (my *SHA) Encode256() (string, error) {
 	return shaString, nil
 }
 
-// Sha256Sum256 摘要算法
+// Encode256Sum256 Sha256Sum256 摘要算法
 func (my *SHA) Encode256Sum256() string {
 	h := sha256.Sum256(my.original)
 	return hex.EncodeToString(h[:])
