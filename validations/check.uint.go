@@ -85,7 +85,7 @@ func (my FieldInfo) checkUint() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(my.Value); err != nil {
+						if err := fn(my.getName(), my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
@@ -174,7 +174,7 @@ func (my FieldInfo) checkUint8() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(my.Value); err != nil {
+						if err := fn(my.getName(), my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
@@ -263,7 +263,7 @@ func (my FieldInfo) checkUint16() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(my.Value); err != nil {
+						if err := fn(my.getName(), my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
@@ -352,7 +352,7 @@ func (my FieldInfo) checkUint32() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(my.Value); err != nil {
+						if err := fn(my.getName(), my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
@@ -441,7 +441,7 @@ func (my FieldInfo) checkUint64() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(my.Value); err != nil {
+						if err := fn(my.getName(), my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
