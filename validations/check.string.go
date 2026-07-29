@@ -160,7 +160,7 @@ func (my FieldInfo) checkString() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for _, exFnName := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnName); fn != nil {
-						if err := fn(value); err != nil {
+						if err := fn(my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}

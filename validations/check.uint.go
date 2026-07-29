@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/aid297/aid/v2/anySlices"
 	"github.com/spf13/cast"
+
+	"github.com/aid297/aid/v2/anySlices"
 )
 
 // checkUint 检查正整数，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
@@ -84,7 +85,7 @@ func (my FieldInfo) checkUint() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
+						if err := fn(my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
@@ -173,7 +174,7 @@ func (my FieldInfo) checkUint8() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
+						if err := fn(my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
@@ -262,7 +263,7 @@ func (my FieldInfo) checkUint16() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
+						if err := fn(my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
@@ -351,7 +352,7 @@ func (my FieldInfo) checkUint32() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
+						if err := fn(my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
@@ -440,7 +441,7 @@ func (my FieldInfo) checkUint64() FieldInfo {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
 					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
-						if err := fn(value); err != nil {
+						if err := fn(my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
 					}
