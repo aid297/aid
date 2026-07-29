@@ -30,8 +30,6 @@ type (
 		wrongs       []error
 		defaultLimit string
 	}
-
-	ExCheckFn func(origin any) (err error)
 )
 
 func NewCheck(data any) Checker { return &CheckerImpl{data: data, defaultLimit: "<br />"} }

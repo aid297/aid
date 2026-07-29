@@ -4,23 +4,33 @@ import (
 	"sync"
 )
 
-type Validator struct{ data map[string]func(any) error }
+type (
+	Validation struct{ data map[string]ExCheckFn }
+	ExCheckFn  func(origin any) (err error)
 
-var (
-	validatorExOnce sync.Once
-	validatorExIns  *Validator
+	Validator interface {
+		RegisterExFn(key string, fn ExCheckFn) Validator
+		GetExFn(key string) ExCheckFn
+		Checker(data any) Checker
+	}
 )
 
-func OnceValidator() *Validator {
-	validatorExOnce.Do(func() { validatorExIns = &Validator{data: make(map[string]func(any) (err error))} })
+var (
+	_               Validator = (*Validation)(nil)
+	validatorExOnce sync.Once
+	validatorExIns  *Validation
+)
+
+func OnceValidator() *Validation {
+	validatorExOnce.Do(func() { validatorExIns = &Validation{data: make(map[string]ExCheckFn)} })
 	return validatorExIns
 }
 
-func (*Validator) RegisterExFn(key string, fn ExCheckFn) *Validator {
+func (*Validation) RegisterExFn(key string, fn ExCheckFn) Validator {
 	validatorExIns.data[key] = fn
 	return validatorExIns
 }
 
-func (*Validator) GetExFn(key string) func(any) (err error) { return validatorExIns.data[key] }
+func (*Validation) GetExFn(key string) ExCheckFn { return validatorExIns.data[key] }
 
-func (*Validator) Checker(data any) Checker { return NewCheck(data) }
+func (*Validation) Checker(data any) Checker { return NewCheck(data) }
