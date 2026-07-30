@@ -21,7 +21,7 @@ type (
 		ErrorToString(limit string) (ret string)
 		Invalid() bool
 		OK() bool
-		Validate(exCheckFns ...ExCheckFn) Checker
+		Validate(exCheckFns ...MoreCheckFn) Checker
 	}
 
 	// CheckerImpl 验证器
@@ -54,7 +54,7 @@ func (my *CheckerImpl) ErrorToString(limit string) (ret string) {
 	return
 }
 
-func (my *CheckerImpl) Validate(exCheckFns ...ExCheckFn) Checker {
+func (my *CheckerImpl) Validate(exCheckFns ...MoreCheckFn) Checker {
 	fieldInfos := getStructFieldInfos(my.data, "")
 	for _, fieldInfo := range fieldInfos {
 		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
@@ -73,7 +73,7 @@ func (my *CheckerImpl) Validate(exCheckFns ...ExCheckFn) Checker {
 	return my
 }
 
-func WithGin[T any](c *gin.Context, exCheckFns ...ExCheckFn) (form T, checker Checker) {
+func WithGin[T any](c *gin.Context, exCheckFns ...MoreCheckFn) (form T, checker Checker) {
 	form = *new(T)
 
 	if c == nil || c.Request == nil {
@@ -96,7 +96,7 @@ func WithGin[T any](c *gin.Context, exCheckFns ...ExCheckFn) (form T, checker Ch
 	return form, OnceValidator().Checker(&form).Validate(exCheckFns...)
 }
 
-func WithFiber[T any](c *fiber.Ctx, exCheckFns ...ExCheckFn) (form T, checker Checker) {
+func WithFiber[T any](c *fiber.Ctx, exCheckFns ...MoreCheckFn) (form T, checker Checker) {
 	form = *new(T)
 
 	if err := c.BodyParser(&form); err != nil {
@@ -107,7 +107,7 @@ func WithFiber[T any](c *fiber.Ctx, exCheckFns ...ExCheckFn) (form T, checker Ch
 	return form, OnceValidator().Checker(&form).Validate(exCheckFns...)
 }
 
-func callExCheckFn(fn ExCheckFn, data any) error {
+func callExCheckFn(fn MoreCheckFn, data any) error {
 	if fn == nil {
 		return fmt.Errorf("callback is nil")
 	}

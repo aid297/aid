@@ -5,8 +5,9 @@ import (
 )
 
 type (
-	Validation struct{ data map[string]ExCheckFn }
-	ExCheckFn  func(fieldName string, origin any) (err error)
+	Validation  struct{ data map[string]ExCheckFn }
+	ExCheckFn   func(fieldName string, origin any) (err error)
+	MoreCheckFn func(origin any) (errs []error)
 
 	Validator interface {
 		RegisterExFn(key string, fn ExCheckFn) Validator
