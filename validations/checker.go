@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -89,7 +90,14 @@ func WithGin[T any](c *gin.Context, exCheckFns ...ExCheckFunc) (form T, checker 
 	}
 
 	if err := c.ShouldBind(&form); err != nil {
-		checker = &CheckerImpl{wrongs: []error{err}}
+		re := regexp.MustCompile(`field\s+(\S+)\s+of`)
+		matches := re.FindStringSubmatch(err.Error())
+		fieldName := ""
+		if len(matches) > 1 {
+			fieldName = fmt.Sprintf("：%s", matches[1])
+		}
+
+		checker = &CheckerImpl{wrongs: []error{fmt.Errorf("参数格式解析错误%s", fieldName)}}
 		return
 	}
 
