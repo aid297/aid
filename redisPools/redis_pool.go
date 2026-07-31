@@ -75,12 +75,12 @@ func (my *RedisPool) SetPool(clientName string, dbNum int) {
 }
 
 // GetClient 获取链接和链接前缀
-func (my *RedisPool) GetClient(clientName string) (string, *rds.Client) {
+func (my *RedisPool) GetClient(clientName string) (string, *rds.Client, error) {
 	if value, exist := my.redisClients.Load(clientName); exist {
-		return value.(*redisClient).prefix, value.(*redisClient).conn
+		return value.(*redisClient).prefix, value.(*redisClient).conn, nil
 	}
 
-	return "", nil
+	return "", nil, errors.New("连接不存在")
 }
 
 // Get 获取值
@@ -91,9 +91,9 @@ func (my *RedisPool) Get(ctx context.Context, clientName, key string) (string, e
 		client      *rds.Client
 	)
 
-	prefix, client = my.GetClient(clientName)
-	if client == nil {
-		return "", fmt.Errorf("没有找到redis链接：%s", clientName)
+	prefix, client, err = my.GetClient(clientName)
+	if err != nil {
+		return "", err
 	}
 
 	if ret, err = client.Get(ctx, fmt.Sprintf("%s:%s", prefix, key)).Result(); err != nil {
@@ -110,13 +110,14 @@ func (my *RedisPool) Get(ctx context.Context, clientName, key string) (string, e
 // Set 设置值
 func (my *RedisPool) Set(ctx context.Context, clientName, key string, val any, exp time.Duration) (string, error) {
 	var (
+		err    error
 		prefix string
 		client *rds.Client
 	)
 
-	prefix, client = my.GetClient(clientName)
-	if client == nil {
-		return "", fmt.Errorf("没有找到redis链接：%s", clientName)
+	prefix, client, err = my.GetClient(clientName)
+	if err != nil {
+		return "", err
 	}
 
 	return client.Set(ctx, fmt.Sprintf("%s:%s", prefix, key), val, exp).Result()
@@ -126,9 +127,9 @@ func (my *RedisPool) Set(ctx context.Context, clientName, key string, val any, e
 func (my *RedisPool) GetPipe(clientName string) (prefix string, pipeliner rds.Pipeliner, err error) {
 	var client *rds.Client
 
-	prefix, client = my.GetClient(clientName)
-	if client == nil {
-		return "", nil, fmt.Errorf("没有找到redis链接：%s", clientName)
+	prefix, client, err = my.GetClient(clientName)
+	if err != nil {
+		return "", nil, err
 	}
 
 	pipeliner = client.TxPipeline()
