@@ -32,7 +32,7 @@ func copyFileTo(src, dst string) (err error) {
 	if srcFile, err = os.Open(src); err != nil {
 		return fmt.Errorf("无法打开源文件 %s: %w", src, err)
 	}
-	defer srcFile.Close()
+	defer func() { _ = srcFile.Close() }()
 
 	// 获取源文件信息（用于保留权限）
 	if srcInfo, err = os.Stat(src); err != nil {
@@ -43,7 +43,7 @@ func copyFileTo(src, dst string) (err error) {
 	if dstFile, err = os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, srcInfo.Mode()); err != nil {
 		return fmt.Errorf("无法创建目标文件 %s: %w", dst, err)
 	}
-	defer dstFile.Close()
+	defer func() { _ = dstFile.Close() }()
 
 	// 复制文件内容
 	if _, err = io.Copy(dstFile, srcFile); err != nil {
