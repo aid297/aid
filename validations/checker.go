@@ -94,10 +94,10 @@ func WithGin[T any](c *gin.Context, exCheckFns ...ExCheckFunc) (form T, checker 
 		matches := re.FindStringSubmatch(err.Error())
 		fieldName := ""
 		if len(matches) > 1 {
-			fieldName = fmt.Sprintf("：%s", matches[1])
+			fieldName = fmt.Sprintf("(%s)", matches[1])
 		}
 
-		checker = &CheckerImpl{wrongs: []error{fmt.Errorf("参数格式解析错误%s", fieldName)}}
+		checker = &CheckerImpl{wrongs: []error{fmt.Errorf("参数格式解析错误%s：%v", fieldName, err)}}
 		return
 	}
 
