@@ -1,6 +1,7 @@
 package mysqlPool
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"fmt"
 
@@ -26,6 +27,10 @@ func (b BinaryUUID) IsNil() bool { return uuid.UUID(b) == uuid.Nil }
 func (b BinaryUUID) Value() (driver.Value, error) {
 	return b[:], nil
 }
+
+func (b *BinaryUUID) Equal(something BinaryUUID) bool { return bytes.Equal(b[:], something[:]) }
+
+func (b *BinaryUUID) NoEqual(something BinaryUUID) bool { return !b.Equal(something) }
 
 // Scan 实现 sql.Scanner，从数据库读取 16 字节二进制或字符串
 func (b *BinaryUUID) Scan(src any) error {
