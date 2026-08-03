@@ -20,9 +20,9 @@ func (b BinaryUUID) ToUUID() uuid.UUID { return uuid.UUID(b) }
 func (b BinaryUUID) String() string { return uuid.UUID(b).String() }
 
 // IsNil 判断是否为零值
-func (b *BinaryUUID) IsNil() bool { return b == nil || uuid.UUID(*b) == uuid.Nil }
+func (b BinaryUUID) IsNil() bool { return uuid.UUID(b) == uuid.Nil }
 
-func (b *BinaryUUID) NotNil() bool { return !b.IsNil() }
+func (b BinaryUUID) NotNil() bool { return !b.IsNil() }
 
 // Value 实现 driver.Valuer，返回 16 字节原始二进制用于 binary(16) 存储
 // 注意：必须使用值接收者，否则 GORM 反射提取字段时可能无法调用
@@ -30,9 +30,9 @@ func (b BinaryUUID) Value() (driver.Value, error) {
 	return b[:], nil
 }
 
-func (b *BinaryUUID) Equal(something BinaryUUID) bool { return bytes.Equal(b[:], something[:]) }
+func (b BinaryUUID) Equal(something BinaryUUID) bool { return bytes.Equal(b[:], something[:]) }
 
-func (b *BinaryUUID) NotEqual(something BinaryUUID) bool { return !b.Equal(something) }
+func (b BinaryUUID) NotEqual(something BinaryUUID) bool { return !b.Equal(something) }
 
 // Scan 实现 sql.Scanner，从数据库读取 16 字节二进制或字符串
 func (b *BinaryUUID) Scan(src any) error {
