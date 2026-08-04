@@ -36,7 +36,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、[bool|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size=、size!=, ex:
+// checkString 检查字符串，支持：required、[bool|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size==、size!=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		min, max, size *int
@@ -92,13 +92,13 @@ func (my FieldInfo) checkString() FieldInfo {
 					}
 				}
 			}
-		} else if strings.HasPrefix(rule, "in") {
+		} else if strings.HasPrefix(rule, "in==") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, value)
 			}
-		} else if strings.HasPrefix(rule, "not-in") {
+		} else if strings.HasPrefix(rule, "in!=") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
@@ -118,14 +118,14 @@ func (my FieldInfo) checkString() FieldInfo {
 			}
 		} else if rule == "bool" {
 			var def = []string{"true", "True", "t", "yes", "on", "ok", "1", "false", "False", "f", "off", "no", "0"}
-			if strings.HasPrefix(rule, "in") {
+			if strings.HasPrefix(rule, "in==") {
 				if in = getRuleIn(rule); len(in) > 0 {
 					anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 					}, value)
 				}
 			}
-			if strings.HasPrefix(rule, "not-in") {
+			if strings.HasPrefix(rule, "in!=") {
 				if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 					anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))

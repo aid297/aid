@@ -10,7 +10,7 @@ import (
 	"github.com/aid297/aid/v2/anySlices"
 )
 
-// checkInt 检查整数，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt 检查整数，支持：required、min>、min>=、max<、max<=、in、not-in、size==、size!=、ex:
 func (my FieldInfo) checkInt() FieldInfo {
 	var (
 		min, max, size *int
@@ -57,13 +57,13 @@ func (my FieldInfo) checkInt() FieldInfo {
 					}
 				}
 			}
-		} else if strings.HasPrefix(rule, "in") {
+		} else if strings.HasPrefix(rule, "in==") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
-		} else if strings.HasPrefix(rule, "not-in") {
+		} else if strings.HasPrefix(rule, "in!=") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
@@ -99,7 +99,7 @@ func (my FieldInfo) checkInt() FieldInfo {
 	return my
 }
 
-// checkInt8 检查整数#8位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt8 检查整数#8位，支持：required、min>、min>=、max<、max<=、in、not-in、size==、size!=、ex:
 func (my FieldInfo) checkInt8() FieldInfo {
 	var (
 		min, max, size *int
@@ -146,13 +146,13 @@ func (my FieldInfo) checkInt8() FieldInfo {
 					}
 				}
 			}
-		} else if strings.HasPrefix(rule, "in") {
+		} else if strings.HasPrefix(rule, "in==") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
-		} else if strings.HasPrefix(rule, "not-in") {
+		} else if strings.HasPrefix(rule, "in!=") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
@@ -188,7 +188,7 @@ func (my FieldInfo) checkInt8() FieldInfo {
 	return my
 }
 
-// checkInt16 检查整数#16位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt16 检查整数#16位，支持：required、min>、min>=、max<、max<=、in、not-in、size==、size!=、ex:
 func (my FieldInfo) checkInt16() FieldInfo {
 	var (
 		min, max, size *int
@@ -234,13 +234,13 @@ func (my FieldInfo) checkInt16() FieldInfo {
 					}
 				}
 			}
-		} else if strings.HasPrefix(rule, "in") {
+		} else if strings.HasPrefix(rule, "in==") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
-		} else if strings.HasPrefix(rule, "not-in") {
+		} else if strings.HasPrefix(rule, "in!=") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
@@ -275,7 +275,7 @@ func (my FieldInfo) checkInt16() FieldInfo {
 	return my
 }
 
-// checkInt32 检查整数#32位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt32 检查整数#32位，支持：required、min>、min>=、max<、max<=、in、not-in、size==、size!=、ex:
 func (my FieldInfo) checkInt32() FieldInfo {
 	var (
 		min, max, size *int
@@ -322,13 +322,13 @@ func (my FieldInfo) checkInt32() FieldInfo {
 					}
 				}
 			}
-		} else if strings.HasPrefix(rule, "in") {
+		} else if strings.HasPrefix(rule, "in==") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
-		} else if strings.HasPrefix(rule, "not-in") {
+		} else if strings.HasPrefix(rule, "in!=") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
@@ -364,7 +364,7 @@ func (my FieldInfo) checkInt32() FieldInfo {
 	return my
 }
 
-// checkInt64 检查整数#64位，支持：required、not-empty、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkInt64 检查整数#64位，支持：required、not-empty、min>、min>=、max<、max<=、in、not-in、size==、size!=、ex:
 func (my FieldInfo) checkInt64() FieldInfo {
 	var (
 		min, max, size *int
@@ -411,13 +411,13 @@ func (my FieldInfo) checkInt64() FieldInfo {
 					}
 				}
 			}
-		} else if strings.HasPrefix(rule, "in") {
+		} else if strings.HasPrefix(rule, "in==") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
-		} else if strings.HasPrefix(rule, "not-in") {
+		} else if strings.HasPrefix(rule, "in!=") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))

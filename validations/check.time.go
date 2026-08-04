@@ -58,13 +58,13 @@ func (my FieldInfo) checkTime() FieldInfo {
 					}
 				}
 			}
-		} else if strings.HasPrefix(rule, "in") {
+		} else if strings.HasPrefix(rule, "in==") {
 			if in = getRuleTimeIn(rule); len(in) > 0 {
 				anySlices.New(anySlices.List(in)).IfIn(func(_ anySlices.AnySlicer[time.Time]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, value)
 			}
-		} else if strings.HasPrefix(rule, "not-in") {
+		} else if strings.HasPrefix(rule, "in!=") {
 			if notIn = getRuleTimeNotIn(rule); len(notIn) > 0 {
 				anySlices.New(anySlices.List(notIn)).IfNotIn(func(_ anySlices.AnySlicer[time.Time]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))

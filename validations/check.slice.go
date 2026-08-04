@@ -8,7 +8,7 @@ import (
 	"github.com/aid297/aid/v2/operations"
 )
 
-// checkSlice 检查数组、切片，支持：required、min>、min>=、max<、max<=、size=、size!=、ex:
+// checkSlice 检查数组、切片，支持：required、min>、min>=、max<、max<=、size==、size!=、ex:
 func (my FieldInfo) checkSlice() FieldInfo {
 	var (
 		min, max, size *int

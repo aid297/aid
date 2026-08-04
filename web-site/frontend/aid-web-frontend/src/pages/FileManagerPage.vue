@@ -68,11 +68,11 @@
                                         </q-td>
                                         <q-td align="left" key="path" :props="props">
                                             <q-btn-group flat>
-                                                <q-btn size="sm" color="negative" @click="handleDestroy(props.row)"
+                                                <q-btn size=="sm" color="negative" @click="handleDestroy(props.row)"
                                                     v-if="props.row.name !== '..'">
                                                     <i class="fa fa-trash">&nbsp;</i>删除
                                                 </q-btn>
-                                                <q-btn size="sm" color="info" @click="handleZip(props.row)"
+                                                <q-btn size=="sm" color="info" @click="handleZip(props.row)"
                                                     v-if="props.row.name !== '..'">
                                                     <i class="fa fa-box-archive">&nbsp;</i>压缩
                                                 </q-btn>

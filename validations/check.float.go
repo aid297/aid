@@ -10,7 +10,7 @@ import (
 	"github.com/aid297/aid/v2/anySlices"
 )
 
-// checkFloat32 检查小数#32位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkFloat32 检查小数#32位，支持：required、min>、min>=、max<、max<=、in、not-in、size==、size!=、ex:
 func (my FieldInfo) checkFloat32() FieldInfo {
 	var (
 		min, max, size *float64
@@ -57,13 +57,13 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 					}
 				}
 			}
-		} else if strings.HasPrefix(rule, "in") {
+		} else if strings.HasPrefix(rule, "in==") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
-		} else if strings.HasPrefix(rule, "not-in") {
+		} else if strings.HasPrefix(rule, "in!=") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlices.New(anySlices.List(notIn)).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))
@@ -99,7 +99,7 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 	return my
 }
 
-// checkFloat64 检查小数#64位，支持：required、min>、min>=、max<、max<=、in、not-in、size=、size!=、ex:
+// checkFloat64 检查小数#64位，支持：required、min>、min>=、max<、max<=、in、not-in、size==、size!=、ex:
 func (my FieldInfo) checkFloat64() FieldInfo {
 	var (
 		min, max, size *float64
@@ -146,13 +146,13 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 					}
 				}
 			}
-		} else if strings.HasPrefix(rule, "in") {
+		} else if strings.HasPrefix(rule, "in==") {
 			if in = getRuleIn(rule); len(in) > 0 {
 				anySlices.New(anySlices.List(in)).IfNotIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之中", my.getName(), ErrInvalidValue, in))
 				}, cast.ToString(value))
 			}
-		} else if strings.HasPrefix(rule, "not-in") {
+		} else if strings.HasPrefix(rule, "in!=") {
 			if notIn = getRuleNotIn(rule); len(notIn) > 0 {
 				anySlices.NewList(notIn).IfIn(func(_ anySlices.AnySlicer[string]) {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：在 %v 之外", my.getName(), ErrInvalidValue, notIn))

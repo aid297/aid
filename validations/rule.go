@@ -65,7 +65,7 @@ func getRuleIntSize(rule string) (size *int, eq bool) {
 		ok    bool
 	)
 
-	if value, ok = strings.CutPrefix(rule, "size="); ok {
+	if value, ok = strings.CutPrefix(rule, "size=="); ok {
 		size = points.New(cast.ToInt(value))
 		eq = true
 		return
@@ -86,7 +86,7 @@ func getRuleFloatSize(rule string) (size *float64, eq bool) {
 		ok    bool
 	)
 
-	if value, ok = strings.CutPrefix(rule, "size="); ok {
+	if value, ok = strings.CutPrefix(rule, "size=="); ok {
 		size = points.New(cast.ToFloat64(value))
 		eq = true
 		return
@@ -199,7 +199,7 @@ func getRuleIn(rule string) (in []string) {
 		value string
 		ok    bool
 	)
-	if value, ok = strings.CutPrefix(rule, "in:"); ok {
+	if value, ok = strings.CutPrefix(rule, "in=="); ok {
 		in = strings.Split(value, ",")
 		return
 	}
@@ -212,7 +212,7 @@ func getRuleNotIn(rule string) (notIn []string) {
 		value string
 		ok    bool
 	)
-	if value, ok = strings.CutPrefix(rule, "not-in:"); ok {
+	if value, ok = strings.CutPrefix(rule, "in!="); ok {
 		notIn = strings.Split(value, ",")
 		return
 	}
@@ -266,7 +266,7 @@ func getRuleTimeIn(rule string) (in []time.Time) {
 		ok    bool
 		times []string
 	)
-	if value, ok = strings.CutPrefix(rule, "in:"); ok {
+	if value, ok = strings.CutPrefix(rule, "in=="); ok {
 		times = strings.Split(value, ",")
 	}
 
@@ -286,7 +286,7 @@ func getRuleTimeNotIn(rule string) (notIn []time.Time) {
 		ok    bool
 		times []string
 	)
-	if value, ok = strings.CutPrefix(rule, "not-in:"); ok {
+	if value, ok = strings.CutPrefix(rule, "in!="); ok {
 		times = strings.Split(value, ",")
 	}
 

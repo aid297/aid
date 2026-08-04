@@ -50,12 +50,12 @@
    }
    ```
 
-   * `string`类型支持验证规则：`required`、`min>`、`min>=`、`max<`、`max<=`、`in:a,b,c`、`not-in:a,b,c`、`size=`、`size!=`、`ex:fn-a,fn-b,fn-c`
+   * `string`类型支持验证规则：`required`、`min>`、`min>=`、`max<`、`max<=`、`in:a,b,c`、`in!=a,b,c`、`size==`、`size!=`、`ex:fn-a,fn-b,fn-c`
    * `required`：当前字符串`长度`不能等于`0`。
    * `min>`：当前字符串长度不能`小于x`。`max<`同理。
    * `min>=`：当前字符串长度必须`大于x`。`max<=`同理。
    * `in`、`not-in` ：当前字符必须`在x范围`内或`在x范围`外。
-   * `size=`、`size!=`：当前字符串长度必须`等于x`或必须`不等于x`
+   * `size==`、`size!=`：当前字符串长度必须`等于x`或必须`不等于x`
    * `ex`：额外执行的验证程序，需要提前在验证器中注册。
 
 3. 规则说明：*string
@@ -75,7 +75,7 @@
    }
    ```
 
-   * `int`类型支持验证规则：`min`>、`min>=`、`max<`、`max<=`、`in`、`not-in`、`size=`、`size!=`、`ex:fn-a,fn-b,fn-c`
+   * `int`类型支持验证规则：`min`>、`min>=`、`max<`、`max<=`、`in`、`not-in`、`size==`、`size!=`、`ex:fn-a,fn-b,fn-c`
 
 5. 规则说明：`*int`、`*int8`、`*int16`、`*int32`、`*int64`
    ```go
@@ -84,7 +84,7 @@
    }
    ```
 
-   * `*int`类型支持验证规则：`required`、`min`>、`min>=`、`max<`、`max<=`、`in`、`not-in`、`size=`、`size!=`、`ex:fn-a,fn-b,fn-c`
+   * `*int`类型支持验证规则：`required`、`min`>、`min>=`、`max<`、`max<=`、`in`、`not-in`、`size==`、`size!=`、`ex:fn-a,fn-b,fn-c`
 6. 其他普通类型支持：`uint`、`uint8`、`uint16`、`uint32`、`uint64`、`*uint`、`*uint8`、`*uint16`、`*uint32`、`*uint64`、`float32`、`float64`、`*float32`、`*float64`
 7. 特殊类型支持：`time.Time`、`*time.Time`
 
