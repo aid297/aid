@@ -138,7 +138,7 @@ func (my FieldInfo) checkString() FieldInfo {
 				}, value)
 			}
 		} else if rule == "datetime" {
-			ok := false
+			ok = false
 			anyMaps.New(anyMaps.Map(patternsForTimeString)).RemoveByKeys("DateOnly", "TimeOnly").Each(func(_ string, value string) {
 				if regexp.MustCompile(value).MatchString(value) {
 					ok = true

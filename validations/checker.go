@@ -248,6 +248,11 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				value = fieldValue.Interface()
 			}
 
+			// 自定义基础类型（如 type A string），转换为底层基础类型的值，保证后续类型断言能通过
+			if value != nil && isBasicKind(elemKind) && fieldValue.Type() != elemKindToType(elemKind) {
+				value = fieldValue.Convert(elemKindToType(elemKind)).Interface()
+			}
+
 			// 如果是切片或数组，需要判断是否是基础类型还是 struct 或更深的切片或数组
 			switch elemKind {
 			case reflect.Slice, reflect.Array:
@@ -335,6 +340,48 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 	}
 
 	return infos
+}
+
+// elemKindToType 将基础类型的 reflect.Kind 转换为对应的 reflect.Type
+func elemKindToType(k reflect.Kind) reflect.Type {
+	switch k {
+	case reflect.Bool:
+		return reflect.TypeFor[bool]()
+	case reflect.Int:
+		return reflect.TypeFor[int]()
+	case reflect.Int8:
+		return reflect.TypeFor[int8]()
+	case reflect.Int16:
+		return reflect.TypeFor[int16]()
+	case reflect.Int32:
+		return reflect.TypeFor[int32]()
+	case reflect.Int64:
+		return reflect.TypeFor[int64]()
+	case reflect.Uint:
+		return reflect.TypeFor[uint]()
+	case reflect.Uint8:
+		return reflect.TypeFor[uint8]()
+	case reflect.Uint16:
+		return reflect.TypeFor[uint16]()
+	case reflect.Uint32:
+		return reflect.TypeFor[uint32]()
+	case reflect.Uint64:
+		return reflect.TypeFor[uint64]()
+	case reflect.Uintptr:
+		return reflect.TypeFor[uintptr]()
+	case reflect.Float32:
+		return reflect.TypeFor[float32]()
+	case reflect.Float64:
+		return reflect.TypeFor[float64]()
+	case reflect.Complex64:
+		return reflect.TypeFor[complex64]()
+	case reflect.Complex128:
+		return reflect.TypeFor[complex128]()
+	case reflect.String:
+		return reflect.TypeFor[string]()
+	default:
+		return nil
+	}
 }
 
 // isBasicKind 判断 reflect.Kind 是否是基础类型
