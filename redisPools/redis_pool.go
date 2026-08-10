@@ -80,7 +80,7 @@ func (my *RedisPool) GetClient(clientName string) (string, *rds.Client, error) {
 		return value.(*redisClient).prefix, value.(*redisClient).conn, nil
 	}
 
-	return "", nil, errors.New("连接不存在")
+	return "", nil, fmt.Errorf("redis 连接不存在：%s", clientName)
 }
 
 // Get 获取值
