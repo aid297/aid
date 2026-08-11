@@ -20,5 +20,6 @@
 18. [配置文件](settings/readme.md)
 19. [权重队列](tasks/readme.md)
 20. [验证器](validators/readme.md)
+21. [验证器v2](validators/readme.md)
 21. [`Excel`读写](excels/excelsV2/readme.md)
 22. [加解密](secrets/readme.md)
