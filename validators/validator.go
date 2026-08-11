@@ -12,7 +12,9 @@ type (
 	Validator[T any] interface {
 		Validate(exCheckers ...func(original T) (errors []error)) Validator[T]
 		Invalid() bool
+		GetData() T
 		GetErrors() []error
+		GetError() error
 	}
 	ValidatorImpl[T any] struct {
 		original T
