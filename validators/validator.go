@@ -4,6 +4,8 @@ import (
 	_errors "errors"
 	"fmt"
 	"reflect"
+
+	"github.com/aid297/aid/v2/anySlices"
 )
 
 type (
@@ -84,3 +86,7 @@ func (my *ValidatorImpl[T]) Invalid() bool { return len(my.errors) > 0 }
 func (my *ValidatorImpl[T]) GetData() T { return my.original }
 
 func (my *ValidatorImpl[T]) GetErrors() []error { return my.errors }
+
+func (my *ValidatorImpl[T]) GetError() error {
+	return _errors.New(anySlices.FillFunc(my.errors, func(_ int, err error) string { return err.Error() }).JoinNotEmpty("<br />"))
+}
