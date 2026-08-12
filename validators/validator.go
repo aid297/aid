@@ -15,7 +15,7 @@ var (
 
 type (
 	Validator[T any] interface {
-		Validate(exCheckers ...func(original T) (errors []error)) Validator[T]
+		Validate(exCheckers ...func(original *T) (errors []error)) Validator[T]
 		Invalid() bool
 		GetData() T
 		GetErrors() []error
@@ -51,7 +51,7 @@ func SetDefaultSliceSplitChar(char string) { defaultSliceSplitChar = char }
 
 func SetDefaultErrorSplitChar(char string) { defaultErrorSplitChar = char }
 
-func (my *ValidatorImpl[T]) Validate(exCheckers ...func(original T) (errors []error)) Validator[T] {
+func (my *ValidatorImpl[T]) Validate(exCheckers ...func(original *T) (errors []error)) Validator[T] {
 	v := reflect.ValueOf(any(my.original)) // 显式转 any，避免对 T 直接反射的坑
 
 	// 解引用指针，nil 指针直接返回，避免后续反射 panic
@@ -82,7 +82,7 @@ func (my *ValidatorImpl[T]) Validate(exCheckers ...func(original T) (errors []er
 
 		if len(exCheckers) > 0 {
 			for _, checker := range exCheckers {
-				if errs := checker(my.original); len(errs) > 0 {
+				if errs := checker(&my.original); len(errs) > 0 {
 					my.errors = append(my.errors, errs...)
 				}
 			}
