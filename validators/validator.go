@@ -22,7 +22,7 @@ type (
 		checkers []Checker
 	}
 
-	DefaultDataBindFn[T any] func() (T, error)
+	DefaultDataBindFn[T any] func() (form T, err error)
 )
 
 func WithData[T any](data T, checkers ...Checker) Validator[T] {
