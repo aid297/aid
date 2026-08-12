@@ -8,6 +8,11 @@ import (
 	"github.com/aid297/aid/v2/anySlices"
 )
 
+var (
+	defaultSliceSplitChar string = "|"
+	defaultErrorSplitChar string = "<br />"
+)
+
 type (
 	Validator[T any] interface {
 		Validate(exCheckers ...func(original T) (errors []error)) Validator[T]
@@ -40,6 +45,14 @@ func WithDataBind[T any](fn DefaultDataBindFn[T], checkers ...Checker) Validator
 	}
 
 	return &ValidatorImpl[T]{original: data, checkers: checkers}
+}
+
+func SetDefaultSliceSplitChar(char string) { defaultSliceSplitChar = char }
+
+func SetDefaultErrorSplitChar(char string) { defaultErrorSplitChar = char }
+
+func GenerateSliceCondition[SRC, DST any](data []SRC, fn func(val SRC) DST) string {
+	return anySlices.FillFunc(data, func(_ int, value SRC) DST { return fn(value) }).JoinNotEmpty(defaultSliceSplitChar)
 }
 
 func (my *ValidatorImpl[T]) Validate(exCheckers ...func(original T) (errors []error)) Validator[T] {
@@ -90,5 +103,5 @@ func (my *ValidatorImpl[T]) GetData() T { return my.original }
 func (my *ValidatorImpl[T]) GetErrors() []error { return my.errors }
 
 func (my *ValidatorImpl[T]) GetError() error {
-	return _errors.New(anySlices.FillFunc(my.errors, func(_ int, err error) string { return err.Error() }).JoinNotEmpty("<br />"))
+	return _errors.New(anySlices.FillFunc(my.errors, func(_ int, err error) string { return err.Error() }).JoinNotEmpty(defaultErrorSplitChar))
 }

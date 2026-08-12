@@ -555,14 +555,14 @@ func (my *CheckerImpl) checkSizeFloat(mid string, src float64) (errors []error) 
 
 func (my *CheckerImpl) checkIn(src string) (errors []error) {
 	if ruleVal, ok := strings.CutPrefix(*my.in, "=="); ok {
-		target := strings.Split(ruleVal, "|")
+		target := strings.Split(ruleVal, defaultSliceSplitChar)
 		if !utils.Contains(target, src) {
 			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』内容必须在 %s 中", my.name, strings.Join(target, ","))))
 		}
 	}
 
 	if ruleVal, ok := strings.CutPrefix(*my.in, "!="); ok {
-		target := strings.Split(ruleVal, "|")
+		target := strings.Split(ruleVal, defaultSliceSplitChar)
 		if utils.Contains(target, src) {
 			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』内容不能在 %s 中", my.name, strings.Join(target, ","))))
 		}
