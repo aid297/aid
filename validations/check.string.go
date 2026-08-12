@@ -36,7 +36,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、[bool|datetime|date|time]、min>、min>=、max<、max<=、in、not-in、size==、size!=, ex:
+// checkString 检查字符串，支持：required、[bool|datetime|date|time]、regex==、regex!=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		min, max, size *int
@@ -45,6 +45,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		notIn          []string
 		value          string
 		ok             bool
+		pattern        string
 	)
 
 	if my.Kind != reflect.String {
@@ -155,6 +156,18 @@ func (my FieldInfo) checkString() FieldInfo {
 		} else if rule == "time" {
 			if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
 				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w", my.getName(), ErrInvalidFormat))
+			}
+		} else if strings.HasPrefix(rule, "regex==") {
+			if pattern = getRuleRegexEq(rule); pattern != "" {
+			if !regexp.MustCompile(pattern).MatchString(value) {
+				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：匹配正则 %s", my.getName(), ErrInvalidFormat, pattern))
+			}
+			}
+		} else if strings.HasPrefix(rule, "regex!=") {
+			if pattern = getRuleRegexNotEq(rule); pattern != "" {
+			if regexp.MustCompile(pattern).MatchString(value) {
+				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不匹配正则 %s", my.getName(), ErrInvalidFormat, pattern))
+			}
 			}
 		} else if strings.HasPrefix(rule, "ex") {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
