@@ -65,7 +65,7 @@ func (my *ValidatorImpl[T]) Validate(exCheckers ...func(original T) (errors []er
 
 		for _, checker := range my.checkers {
 			if checker.GetField() == f.Name {
-				if errs := checker.Check(val).GetErrors(); len(errs) > 0 {
+				if errs := checker.check(val).GetErrors(); len(errs) > 0 {
 					my.errors = append(my.errors, errs...)
 				}
 			}

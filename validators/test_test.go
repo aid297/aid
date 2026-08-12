@@ -242,12 +242,12 @@ func TestChecker_Direct(t *testing.T) {
 		t.Errorf("GetField() = %q，期望 %q", c.GetField(), "Name")
 	}
 
-	c = c.Check("ab")
+	c = c.check("ab")
 	if errs := c.GetErrors(); len(errs) != 1 {
 		t.Errorf("期望 1 个错误，实际：%v", errs)
 	}
 
-	c = validators.NewChecker("Name", "姓名").Min(">2").Check("abc")
+	c = validators.NewChecker("Name", "姓名").Min(">2").check("abc")
 	if errs := c.GetErrors(); len(errs) != 0 {
 		t.Errorf("期望通过，实际：%v", errs)
 	}

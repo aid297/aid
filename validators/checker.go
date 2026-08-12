@@ -17,7 +17,7 @@ import (
 type (
 	Checker interface {
 		GetField() string
-		Check(original any) Checker
+		check(original any) Checker
 		GetErrors() []error
 		Size(size string) Checker
 		Min(min string) Checker
@@ -107,7 +107,7 @@ func unwrapValue(original any) any {
 	return rv.Interface()
 }
 
-func (my *CheckerImpl) Check(original any) Checker {
+func (my *CheckerImpl) check(original any) Checker {
 	original = unwrapValue(original)
 
 	if my.required && my.isZeroValue(original) {
