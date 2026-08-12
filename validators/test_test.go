@@ -450,3 +450,19 @@ func TestValidator_Regex(t *testing.T) {
 
 	t.Logf("验证不通过（符合预期）：%v", validator.GetError())
 }
+
+type B struct{ Age int }
+
+func TestValidator_Size(t *testing.T) {
+	var b = B{Age: 18}
+
+	validator := validators.WithData(
+		b,
+		validators.NewChecker("Age", "年龄").Min(">0").Max("<=18"),
+	).Validate()
+	if validator.Invalid() {
+		t.Fatalf("验证不通过：%v", validator.GetError())
+	}
+
+	t.Logf("验证通过：%v", validator.GetData())
+}

@@ -355,19 +355,18 @@ func (my *CheckerImpl) check(original any) Checker {
 }
 
 func (my *CheckerImpl) checkMinInt(mid string, src int) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.min, ">="); ok {
+		target := cast.ToInt(ruleVal)
+		if !(src >= target) {
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于等于 %d", my.name, mid, target)))
+		}
+		return
+	}
+
 	if ruleVal, ok := strings.CutPrefix(*my.min, ">"); ok {
 		target := cast.ToInt(ruleVal)
 		if !(src > target) {
 			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于 %d", my.name, mid, target)))
-		}
-
-		return
-	}
-
-	if ruleVal, ok := strings.CutPrefix(*my.min, ">="); ok {
-		target := cast.ToInt(ruleVal)
-		if !(src >= target) {
-			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于等于 %d", my.name, mid, target)))
 		}
 	}
 
@@ -375,19 +374,18 @@ func (my *CheckerImpl) checkMinInt(mid string, src int) (errors []error) {
 }
 
 func (my *CheckerImpl) checkMinUint(mid string, src uint) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.min, ">="); ok {
+		target := cast.ToUint(ruleVal)
+		if !(src >= target) {
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于等于 %d", my.name, mid, target)))
+		}
+		return
+	}
+
 	if ruleVal, ok := strings.CutPrefix(*my.min, ">"); ok {
 		target := cast.ToUint(ruleVal)
 		if !(src > target) {
 			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于 %d", my.name, mid, target)))
-		}
-
-		return
-	}
-
-	if ruleVal, ok := strings.CutPrefix(*my.min, ">="); ok {
-		target := cast.ToUint(ruleVal)
-		if !(src >= target) {
-			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于等于 %d", my.name, mid, target)))
 		}
 	}
 
@@ -395,19 +393,18 @@ func (my *CheckerImpl) checkMinUint(mid string, src uint) (errors []error) {
 }
 
 func (my *CheckerImpl) checkMinFloat(mid string, src float64) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.min, ">="); ok {
+		target := cast.ToFloat64(ruleVal)
+		if !(src >= target) {
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于等于 %f", my.name, mid, target)))
+		}
+		return
+	}
+
 	if ruleVal, ok := strings.CutPrefix(*my.min, ">"); ok {
 		target := cast.ToFloat64(ruleVal)
 		if !(src > target) {
 			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于 %f", my.name, mid, target)))
-		}
-
-		return
-	}
-
-	if ruleVal, ok := strings.CutPrefix(*my.min, ">="); ok {
-		target := cast.ToFloat64(ruleVal)
-		if !(src >= target) {
-			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于等于 %f", my.name, mid, target)))
 		}
 	}
 
@@ -415,17 +412,18 @@ func (my *CheckerImpl) checkMinFloat(mid string, src float64) (errors []error) {
 }
 
 func (my *CheckerImpl) checkMaxInt(mid string, src int) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.max, "<="); ok {
+		target := cast.ToInt(ruleVal)
+		if !(src <= target) {
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于等于 %d", my.name, mid, target)))
+		}
+		return
+	}
+
 	if ruleVal, ok := strings.CutPrefix(*my.max, "<"); ok {
 		target := cast.ToInt(ruleVal)
 		if !(src < target) {
 			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于 %d", my.name, mid, target)))
-		}
-	}
-
-	if ruleVal, ok := strings.CutPrefix(*my.max, "<="); ok {
-		target := cast.ToInt(ruleVal)
-		if !(src <= target) {
-			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于等于 %d", my.name, mid, target)))
 		}
 	}
 
@@ -433,17 +431,15 @@ func (my *CheckerImpl) checkMaxInt(mid string, src int) (errors []error) {
 }
 
 func (my *CheckerImpl) checkMaxUint(mid string, src uint) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(*my.max, "<"); ok {
-		target := cast.ToUint(ruleVal)
-		if !(src < target) {
-			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于 %d", my.name, mid, target)))
-		}
-	}
-
 	if ruleVal, ok := strings.CutPrefix(*my.max, "<="); ok {
 		target := cast.ToUint(ruleVal)
 		if !(src <= target) {
-			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于等于 %d", my.name, mid, target)))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于等于 %d", my.name, mid, target)))
+		}
+	} else if ruleVal, ok := strings.CutPrefix(*my.max, "<"); ok {
+		target := cast.ToUint(ruleVal)
+		if !(src < target) {
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于 %d", my.name, mid, target)))
 		}
 	}
 
@@ -451,17 +447,15 @@ func (my *CheckerImpl) checkMaxUint(mid string, src uint) (errors []error) {
 }
 
 func (my *CheckerImpl) checkMaxFloat(mid string, src float64) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(*my.max, "<"); ok {
-		target := cast.ToFloat64(ruleVal)
-		if !(src < target) {
-			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于 %f", my.name, mid, target)))
-		}
-	}
-
 	if ruleVal, ok := strings.CutPrefix(*my.max, "<="); ok {
 		target := cast.ToFloat64(ruleVal)
 		if !(src <= target) {
-			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于等于 %f", my.name, mid, target)))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于等于 %f", my.name, mid, target)))
+		}
+	} else if ruleVal, ok := strings.CutPrefix(*my.max, "<"); ok {
+		target := cast.ToFloat64(ruleVal)
+		if !(src < target) {
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于 %f", my.name, mid, target)))
 		}
 	}
 
@@ -489,36 +483,7 @@ func (my *CheckerImpl) checkSizeInt(mid string, src int) (errors []error) {
 		if errs := my.checkMinInt(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		my.min = points.New(fmt.Sprintf("<%s", rules[1]))
-		if errs := my.checkMaxInt(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-	}
-
-	if rules := strings.Split(*my.size, "=~"); len(rules) == 2 {
-		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
-		if errs := my.checkMinInt(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
 		my.max = points.New(fmt.Sprintf("<%s", rules[1]))
-		if errs := my.checkMaxInt(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-
-		my.min = points.New(fmt.Sprintf(">%s", rules[0]))
-		if errs := my.checkMinInt(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
-		if errs := my.checkMaxInt(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-
-		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
-		if errs := my.checkMinInt(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
 		if errs := my.checkMaxInt(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
@@ -543,46 +508,6 @@ func (my *CheckerImpl) checkSizeUint(mid string, src uint) (errors []error) {
 		}
 	}
 
-	if rules := strings.Split(*my.size, "~"); len(rules) == 2 {
-		my.min = points.New(fmt.Sprintf(">%s", rules[0]))
-		if errs := my.checkMinUint(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<%s", rules[1]))
-		if errs := my.checkMaxUint(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-	}
-
-	if rules := strings.Split(*my.size, "=~"); len(rules) == 2 {
-		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
-		if errs := my.checkMinUint(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<%s", rules[1]))
-		if errs := my.checkMaxUint(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-
-		my.min = points.New(fmt.Sprintf(">%s", rules[0]))
-		if errs := my.checkMinUint(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
-		if errs := my.checkMaxUint(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-
-		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
-		if errs := my.checkMinUint(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
-		if errs := my.checkMaxUint(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-	}
-
 	return
 }
 
@@ -593,51 +518,6 @@ func (my *CheckerImpl) checkSizeFloat(mid string, src float64) (errors []error) 
 			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s需要等于 %f", my.name, mid, target)))
 		}
 		return
-	}
-
-	if ruleVal, ok := strings.CutPrefix(*my.size, "!="); ok {
-		target := cast.ToFloat64(ruleVal)
-		if !(src != target) {
-			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能等于 %f", my.name, mid, target)))
-		}
-
-		my.min = points.New(fmt.Sprintf(">%s", *my.size))
-		if errs := my.checkMinFloat(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<%s", *my.size))
-		if errs := my.checkMaxFloat(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-	}
-
-	if rules := strings.Split(*my.size, "=~"); len(rules) == 2 {
-		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
-		if errs := my.checkMinFloat(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<%s", rules[1]))
-		if errs := my.checkMaxFloat(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-
-		my.min = points.New(fmt.Sprintf(">%s", rules[0]))
-		if errs := my.checkMinFloat(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
-		if errs := my.checkMaxFloat(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-
-		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
-		if errs := my.checkMinFloat(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
-		if errs := my.checkMaxFloat(mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
 	}
 
 	return
