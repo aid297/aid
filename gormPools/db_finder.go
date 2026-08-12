@@ -40,6 +40,7 @@ type (
 		FindUseMap(queries map[string][]any, preloads []string, orders []string, page, size int, ret any) Finder
 		FindUseCondition(finderCondition *FinderCondition, page, size int, ret any) Finder
 		FindOnlyCondition(finderCondition *FinderCondition, ret any) Finder
+		Error() error
 		finderNext() Finder
 	}
 
@@ -440,6 +441,8 @@ func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret an
 
 	return my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.PageSize).Find(ret).finderNext()
 }
+
+func (my *FinderImpl) Error() error { return my.db.Error }
 
 func (my *FinderImpl) finderNext() Finder {
 	my.total = operations.NewTernary(operations.TrueValue[int64](0), operations.FalseValue(my.total)).GetByValue(my.total == -1)
