@@ -51,10 +51,6 @@ func SetDefaultSliceSplitChar(char string) { defaultSliceSplitChar = char }
 
 func SetDefaultErrorSplitChar(char string) { defaultErrorSplitChar = char }
 
-func GenerateSliceCondition[SRC, DST any](data []SRC, fn func(val SRC) DST) string {
-	return anySlices.FillFunc(data, func(_ int, value SRC) DST { return fn(value) }).JoinNotEmpty(defaultSliceSplitChar)
-}
-
 func (my *ValidatorImpl[T]) Validate(exCheckers ...func(original T) (errors []error)) Validator[T] {
 	v := reflect.ValueOf(any(my.original)) // 显式转 any，避免对 T 直接反射的坑
 
