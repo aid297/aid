@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cast"
 	"gorm.io/gorm/utils"
 
+	"github.com/aid297/aid/v2/operations"
 	"github.com/aid297/aid/v2/points"
 )
 
@@ -28,10 +29,12 @@ type (
 		Required() Checker
 		True() Checker
 		False() Checker
+		ErrMsg(errMsg string) Checker
 	}
 	CheckerImpl struct {
 		field    string
 		name     string
+		errMsg   *string
 		errors   []error
 		rule     string
 		required bool
@@ -70,6 +73,17 @@ func (my *CheckerImpl) Required() Checker { my.required = true; return my }
 func (my *CheckerImpl) True() Checker { my.boolean = points.New(true); return my }
 
 func (my *CheckerImpl) False() Checker { my.boolean = points.New(false); return my }
+
+func (my *CheckerImpl) ErrMsg(errMsg string) Checker { my.errMsg = points.New(errMsg); return my }
+
+func (my *CheckerImpl) GenerateErrMsg(err error) error {
+	return operations.NewTernary(
+		operations.TrueFn(func() error {
+			return fmt.Errorf("『%s』%s", my.name, *my.errMsg)
+		}),
+		operations.FalseValue(err),
+	).GetByValue(my.errMsg != nil)
+}
 
 func (my *CheckerImpl) isZeroValue(original any) bool {
 	v := reflect.ValueOf(any(original)) // 显式转 any，避免对 T 直接反射的坑
@@ -126,43 +140,43 @@ func (my *CheckerImpl) check(original any) Checker {
 		// 按 string 校验：min/max/size/regex/in/format
 		value := rv.String()
 		if my.min != nil {
-			if errs := checkMinInt(my.name, *my.min, "长度", utf8.RuneCountInString(value)); errs != nil {
+			if errs := my.checkMinInt("长度", utf8.RuneCountInString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.max != nil {
-			if errs := checkMaxInt(my.name, *my.max, "长度", utf8.RuneCountInString(value)); errs != nil {
+			if errs := my.checkMaxInt("长度", utf8.RuneCountInString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.size != nil {
-			if errs := checkSizeInt(my.name, *my.size, "长度", utf8.RuneCountInString(value)); errs != nil {
+			if errs := my.checkSizeInt("长度", utf8.RuneCountInString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.in != nil {
-			if errs := checkIn(my.name, *my.in, value); errs != nil {
+			if errs := my.checkIn(value); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.regex != nil {
-			if errs := checkRegex(my.name, *my.regex, value); errs != nil {
+			if errs := my.checkRegex(value); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.format != nil {
-			if errs := checkFormat(my.name, *my.format, value); errs != nil {
+			if errs := my.checkFormat(value); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.boolean != nil {
-			if errs := checkBoolean(my.name, *my.boolean, original); errs != nil {
+			if errs := my.checkBoolean(original); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
@@ -170,43 +184,43 @@ func (my *CheckerImpl) check(original any) Checker {
 		// 按整数校验
 		value := rv.Int()
 		if my.min != nil {
-			if errs := checkMinInt(my.name, *my.min, "值", int(value)); errs != nil {
+			if errs := my.checkMinInt("值", int(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.max != nil {
-			if errs := checkMaxInt(my.name, *my.max, "值", int(value)); errs != nil {
+			if errs := my.checkMaxInt("值", int(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.size != nil {
-			if errs := checkSizeInt(my.name, *my.size, "值", int(value)); errs != nil {
+			if errs := my.checkSizeInt("值", int(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.in != nil {
-			if errs := checkIn(my.name, *my.in, cast.ToString(value)); errs != nil {
+			if errs := my.checkIn(cast.ToString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.regex != nil {
-			if errs := checkRegex(my.name, *my.regex, cast.ToString(value)); errs != nil {
+			if errs := my.checkRegex(cast.ToString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.format != nil {
-			if errs := checkFormat(my.name, *my.format, cast.ToString(value)); errs != nil {
+			if errs := my.checkFormat(cast.ToString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.boolean != nil {
-			if errs := checkBoolean(my.name, *my.boolean, original); errs != nil {
+			if errs := my.checkBoolean(original); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
@@ -214,43 +228,43 @@ func (my *CheckerImpl) check(original any) Checker {
 		// 按无符号整数校验
 		value := rv.Uint()
 		if my.min != nil {
-			if errs := checkMinUint(my.name, *my.min, "值", uint(value)); errs != nil {
+			if errs := my.checkMinUint("值", uint(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.max != nil {
-			if errs := checkMaxUint(my.name, *my.max, "值", uint(value)); errs != nil {
+			if errs := my.checkMaxUint("值", uint(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.size != nil {
-			if errs := checkSizeUint(my.name, *my.size, "值", uint(value)); errs != nil {
+			if errs := my.checkSizeUint("值", uint(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.in != nil {
-			if errs := checkIn(my.name, *my.in, cast.ToString(value)); errs != nil {
+			if errs := my.checkIn(cast.ToString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.regex != nil {
-			if errs := checkRegex(my.name, *my.regex, cast.ToString(value)); errs != nil {
+			if errs := my.checkRegex(cast.ToString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.format != nil {
-			if errs := checkFormat(my.name, *my.format, cast.ToString(value)); errs != nil {
+			if errs := my.checkFormat(cast.ToString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.boolean != nil {
-			if errs := checkBoolean(my.name, *my.boolean, original); errs != nil {
+			if errs := my.checkBoolean(original); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
@@ -258,43 +272,43 @@ func (my *CheckerImpl) check(original any) Checker {
 		// 按浮点数校验
 		value := rv.Float()
 		if my.min != nil {
-			if errs := checkMinFloat(my.name, *my.min, "值", value); errs != nil {
+			if errs := my.checkMinFloat("值", value); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.max != nil {
-			if errs := checkMaxFloat(my.name, *my.max, "值", value); errs != nil {
+			if errs := my.checkMaxFloat("值", value); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.size != nil {
-			if errs := checkSizeFloat(my.name, *my.size, "值", value); errs != nil {
+			if errs := my.checkSizeFloat("值", value); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.in != nil {
-			if errs := checkIn(my.name, *my.in, cast.ToString(value)); errs != nil {
+			if errs := my.checkIn(cast.ToString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.regex != nil {
-			if errs := checkRegex(my.name, *my.regex, cast.ToString(value)); errs != nil {
+			if errs := my.checkRegex(cast.ToString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.format != nil {
-			if errs := checkFormat(my.name, *my.format, cast.ToString(value)); errs != nil {
+			if errs := my.checkFormat(cast.ToString(value)); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.boolean != nil {
-			if errs := checkBoolean(my.name, *my.boolean, original); errs != nil {
+			if errs := my.checkBoolean(original); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
@@ -302,19 +316,19 @@ func (my *CheckerImpl) check(original any) Checker {
 		// 按长度校验
 		length := rv.Len()
 		if my.min != nil {
-			if errs := checkMinInt(my.name, *my.min, "长度", length); errs != nil {
+			if errs := my.checkMinInt("长度", length); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.max != nil {
-			if errs := checkMaxInt(my.name, *my.max, "长度", length); errs != nil {
+			if errs := my.checkMaxInt("长度", length); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
 
 		if my.size != nil {
-			if errs := checkSizeInt(my.name, *my.size, "长度", length); errs != nil {
+			if errs := my.checkSizeInt("长度", length); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
@@ -323,7 +337,7 @@ func (my *CheckerImpl) check(original any) Checker {
 		if t, ok := original.(time.Time); ok {
 			if my.format != nil {
 				if layout, ok := timeLayouts[*my.format]; ok {
-					if errs := checkFormat(my.name, *my.format, t.Format(layout)); errs != nil {
+					if errs := my.checkFormat(t.Format(layout)); errs != nil {
 						my.errors = append(my.errors, errs...)
 					}
 				}
@@ -331,7 +345,7 @@ func (my *CheckerImpl) check(original any) Checker {
 		}
 	case reflect.Bool:
 		if my.boolean != nil {
-			if errs := checkBoolean(my.name, *my.boolean, original); errs != nil {
+			if errs := my.checkBoolean(original); errs != nil {
 				my.errors = append(my.errors, errs...)
 			}
 		}
@@ -340,164 +354,172 @@ func (my *CheckerImpl) check(original any) Checker {
 	return my
 }
 
-func checkMinInt(name, rule, mid string, src int) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, ">"); ok {
+func (my *CheckerImpl) checkMinInt(mid string, src int) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.min, ">"); ok {
 		target := cast.ToInt(ruleVal)
 		if !(src > target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能小于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于 %d", my.name, mid, target)))
 		}
 
 		return
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, ">="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.min, ">="); ok {
 		target := cast.ToInt(ruleVal)
 		if !(src >= target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能大于等于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于等于 %d", my.name, mid, target)))
 		}
 	}
 
 	return
 }
 
-func checkMinUint(name, rule, mid string, src uint) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, ">"); ok {
+func (my *CheckerImpl) checkMinUint(mid string, src uint) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.min, ">"); ok {
 		target := cast.ToUint(ruleVal)
 		if !(src > target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能小于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于 %d", my.name, mid, target)))
 		}
 
 		return
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, ">="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.min, ">="); ok {
 		target := cast.ToUint(ruleVal)
 		if !(src >= target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能大于等于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于等于 %d", my.name, mid, target)))
 		}
 	}
 
 	return
 }
 
-func checkMinFloat(name, rule, mid string, src float64) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, ">"); ok {
+func (my *CheckerImpl) checkMinFloat(mid string, src float64) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.min, ">"); ok {
 		target := cast.ToFloat64(ruleVal)
 		if !(src > target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能小于 %f", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于 %f", my.name, mid, target)))
 		}
 
 		return
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, ">="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.min, ">="); ok {
 		target := cast.ToFloat64(ruleVal)
 		if !(src >= target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能大于等于 %f", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于等于 %f", my.name, mid, target)))
 		}
 	}
 
 	return
 }
 
-func checkMaxInt(name, rule, mid string, src int) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, "<"); ok {
+func (my *CheckerImpl) checkMaxInt(mid string, src int) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.max, "<"); ok {
 		target := cast.ToInt(ruleVal)
 		if !(src < target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能大于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于 %d", my.name, mid, target)))
 		}
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, "<="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.max, "<="); ok {
 		target := cast.ToInt(ruleVal)
 		if !(src <= target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能小于等于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于等于 %d", my.name, mid, target)))
 		}
 	}
 
 	return
 }
 
-func checkMaxUint(name, rule, mid string, src uint) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, "<"); ok {
+func (my *CheckerImpl) checkMaxUint(mid string, src uint) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.max, "<"); ok {
 		target := cast.ToUint(ruleVal)
 		if !(src < target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能大于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于 %d", my.name, mid, target)))
 		}
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, "<="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.max, "<="); ok {
 		target := cast.ToUint(ruleVal)
 		if !(src <= target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能小于等于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于等于 %d", my.name, mid, target)))
 		}
 	}
 
 	return
 }
 
-func checkMaxFloat(name, rule, mid string, src float64) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, "<"); ok {
+func (my *CheckerImpl) checkMaxFloat(mid string, src float64) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.max, "<"); ok {
 		target := cast.ToFloat64(ruleVal)
 		if !(src < target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能大于 %f", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能大于 %f", my.name, mid, target)))
 		}
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, "<="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.max, "<="); ok {
 		target := cast.ToFloat64(ruleVal)
 		if !(src <= target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能小于等于 %f", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能小于等于 %f", my.name, mid, target)))
 		}
 	}
 
 	return
 }
 
-func checkSizeInt(name, rule, mid string, src int) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, "=="); ok {
+func (my *CheckerImpl) checkSizeInt(mid string, src int) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.size, "=="); ok {
 		target := cast.ToInt(ruleVal)
 		if !(src == target) {
-			errors = append(errors, fmt.Errorf("『%s』%s需要等于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s需要等于 %d", my.name, mid, target)))
 		}
 		return
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, "!="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.size, "!="); ok {
 		target := cast.ToInt(ruleVal)
 		if !(src != target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能等于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能等于 %d", my.name, mid, target)))
 		}
 	}
 
-	if rules := strings.Split(rule, "~"); len(rules) == 2 {
-		if errs := checkMinInt(name, fmt.Sprintf(">%s", rules[0]), mid, src); errs != nil {
+	if rules := strings.Split(*my.size, "~"); len(rules) == 2 {
+		my.min = points.New(fmt.Sprintf(">%s", rules[0]))
+		if errs := my.checkMinInt(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		if errs := checkMaxInt(name, fmt.Sprintf("<%s", rules[1]), mid, src); errs != nil {
+		my.min = points.New(fmt.Sprintf("<%s", rules[1]))
+		if errs := my.checkMaxInt(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
 	}
 
-	if rules := strings.Split(rule, "=~"); len(rules) == 2 {
-		if errs := checkMinInt(name, fmt.Sprintf(">=%s", rules[0]), mid, src); errs != nil {
+	if rules := strings.Split(*my.size, "=~"); len(rules) == 2 {
+		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
+		if errs := my.checkMinInt(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		if errs := checkMaxInt(name, fmt.Sprintf("<%s", rules[1]), mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-
-		if errs := checkMinInt(name, fmt.Sprintf(">%s", rules[0]), mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		if errs := checkMaxInt(name, fmt.Sprintf("<=%s", rules[1]), mid, src); errs != nil {
+		my.max = points.New(fmt.Sprintf("<%s", rules[1]))
+		if errs := my.checkMaxInt(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
 
-		if errs := checkMinInt(name, fmt.Sprintf(">=%s", rules[0]), mid, src); errs != nil {
+		my.min = points.New(fmt.Sprintf(">%s", rules[0]))
+		if errs := my.checkMinInt(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		if errs := checkMaxInt(name, fmt.Sprintf("<=%s", rules[1]), mid, src); errs != nil {
+		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
+		if errs := my.checkMaxInt(mid, src); errs != nil {
+			errors = append(errors, errs...)
+		}
+
+		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
+		if errs := my.checkMinInt(mid, src); errs != nil {
+			errors = append(errors, errs...)
+		}
+		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
+		if errs := my.checkMaxInt(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
 	}
@@ -505,50 +527,58 @@ func checkSizeInt(name, rule, mid string, src int) (errors []error) {
 	return
 }
 
-func checkSizeUint(name, rule, mid string, src uint) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, "=="); ok {
+func (my *CheckerImpl) checkSizeUint(mid string, src uint) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.size, "=="); ok {
 		target := cast.ToUint(ruleVal)
 		if !(src == target) {
-			errors = append(errors, fmt.Errorf("『%s』%s需要等于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s需要等于 %d", my.name, mid, target)))
 		}
 		return
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, "!="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.size, "!="); ok {
 		target := cast.ToUint(ruleVal)
 		if !(src != target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能等于 %d", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能等于 %d", my.name, mid, target)))
 		}
 	}
 
-	if rules := strings.Split(rule, "~"); len(rules) == 2 {
-		if errs := checkMinUint(name, fmt.Sprintf(">%s", rules[0]), mid, src); errs != nil {
+	if rules := strings.Split(*my.size, "~"); len(rules) == 2 {
+		my.min = points.New(fmt.Sprintf(">%s", rules[0]))
+		if errs := my.checkMinUint(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		if errs := checkMaxUint(name, fmt.Sprintf("<%s", rules[1]), mid, src); errs != nil {
+		my.max = points.New(fmt.Sprintf("<%s", rules[1]))
+		if errs := my.checkMaxUint(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
 	}
 
-	if rules := strings.Split(rule, "=~"); len(rules) == 2 {
-		if errs := checkMinUint(name, fmt.Sprintf(">=%s", rules[0]), mid, src); errs != nil {
+	if rules := strings.Split(*my.size, "=~"); len(rules) == 2 {
+		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
+		if errs := my.checkMinUint(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		if errs := checkMaxUint(name, fmt.Sprintf("<%s", rules[1]), mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-
-		if errs := checkMinUint(name, fmt.Sprintf(">%s", rules[0]), mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		if errs := checkMaxUint(name, fmt.Sprintf("<=%s", rules[1]), mid, src); errs != nil {
+		my.max = points.New(fmt.Sprintf("<%s", rules[1]))
+		if errs := my.checkMaxUint(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
 
-		if errs := checkMinUint(name, fmt.Sprintf(">=%s", rules[0]), mid, src); errs != nil {
+		my.min = points.New(fmt.Sprintf(">%s", rules[0]))
+		if errs := my.checkMinUint(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		if errs := checkMaxUint(name, fmt.Sprintf("<=%s", rules[1]), mid, src); errs != nil {
+		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
+		if errs := my.checkMaxUint(mid, src); errs != nil {
+			errors = append(errors, errs...)
+		}
+
+		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
+		if errs := my.checkMinUint(mid, src); errs != nil {
+			errors = append(errors, errs...)
+		}
+		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
+		if errs := my.checkMaxUint(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
 	}
@@ -556,48 +586,56 @@ func checkSizeUint(name, rule, mid string, src uint) (errors []error) {
 	return
 }
 
-func checkSizeFloat(name, rule, mid string, src float64) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, "=="); ok {
+func (my *CheckerImpl) checkSizeFloat(mid string, src float64) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.size, "=="); ok {
 		target := cast.ToFloat64(ruleVal)
 		if !(src == target) {
-			errors = append(errors, fmt.Errorf("『%s』%s需要等于 %f", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s需要等于 %f", my.name, mid, target)))
 		}
 		return
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, "!="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.size, "!="); ok {
 		target := cast.ToFloat64(ruleVal)
 		if !(src != target) {
-			errors = append(errors, fmt.Errorf("『%s』%s不能等于 %f", name, mid, target))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』%s不能等于 %f", my.name, mid, target)))
 		}
 
-		if errs := checkMinFloat(name, fmt.Sprintf(">%s", rule), mid, src); errs != nil {
+		my.min = points.New(fmt.Sprintf(">%s", *my.size))
+		if errs := my.checkMinFloat(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		if errs := checkMaxFloat(name, fmt.Sprintf("<%s", rule), mid, src); errs != nil {
+		my.max = points.New(fmt.Sprintf("<%s", *my.size))
+		if errs := my.checkMaxFloat(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
 	}
 
-	if rules := strings.Split(rule, "=~"); len(rules) == 2 {
-		if errs := checkMinFloat(name, fmt.Sprintf(">=%s", rules[0]), mid, src); errs != nil {
+	if rules := strings.Split(*my.size, "=~"); len(rules) == 2 {
+		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
+		if errs := my.checkMinFloat(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		if errs := checkMaxFloat(name, fmt.Sprintf("<%s", rules[1]), mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-
-		if errs := checkMinFloat(name, fmt.Sprintf(">%s", rules[0]), mid, src); errs != nil {
-			errors = append(errors, errs...)
-		}
-		if errs := checkMaxFloat(name, fmt.Sprintf("<=%s", rules[1]), mid, src); errs != nil {
+		my.max = points.New(fmt.Sprintf("<%s", rules[1]))
+		if errs := my.checkMaxFloat(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
 
-		if errs := checkMinFloat(name, fmt.Sprintf(">=%s", rules[0]), mid, src); errs != nil {
+		my.min = points.New(fmt.Sprintf(">%s", rules[0]))
+		if errs := my.checkMinFloat(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
-		if errs := checkMaxFloat(name, fmt.Sprintf("<=%s", rules[1]), mid, src); errs != nil {
+		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
+		if errs := my.checkMaxFloat(mid, src); errs != nil {
+			errors = append(errors, errs...)
+		}
+
+		my.min = points.New(fmt.Sprintf(">=%s", rules[0]))
+		if errs := my.checkMinFloat(mid, src); errs != nil {
+			errors = append(errors, errs...)
+		}
+		my.max = points.New(fmt.Sprintf("<=%s", rules[1]))
+		if errs := my.checkMaxFloat(mid, src); errs != nil {
 			errors = append(errors, errs...)
 		}
 	}
@@ -605,28 +643,29 @@ func checkSizeFloat(name, rule, mid string, src float64) (errors []error) {
 	return
 }
 
-func checkIn(name, rule string, src string) (errors []error) {
-	if ruleVal, ok := strings.CutPrefix(rule, "=="); ok {
+func (my *CheckerImpl) checkIn(src string) (errors []error) {
+	if ruleVal, ok := strings.CutPrefix(*my.in, "=="); ok {
 		target := strings.Split(ruleVal, "|")
 		if !utils.Contains(target, src) {
-			errors = append(errors, fmt.Errorf("『%s』内容必须在 %s 中", name, strings.Join(target, ",")))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』内容必须在 %s 中", my.name, strings.Join(target, ","))))
 		}
 	}
 
-	if ruleVal, ok := strings.CutPrefix(rule, "!="); ok {
+	if ruleVal, ok := strings.CutPrefix(*my.in, "!="); ok {
 		target := strings.Split(ruleVal, "|")
 		if utils.Contains(target, src) {
-			errors = append(errors, fmt.Errorf("『%s』内容不能在 %s 中", name, strings.Join(target, ",")))
+			errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』内容不能在 %s 中", my.name, strings.Join(target, ","))))
 		}
 	}
 
 	return
 }
 
-func checkRegex(name, rule, src string) (errors []error) {
-	if !regexp.MustCompile(rule).MatchString(src) {
-		errors = append(errors, fmt.Errorf("『%s』内容必须符合 %s 规则", name, rule))
+func (my *CheckerImpl) checkRegex(src string) (errors []error) {
+	if !regexp.MustCompile(*my.regex).MatchString(src) {
+		errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』内容必须符合 %s 规则", my.name, *my.regex)))
 	}
+
 	return
 }
 
@@ -653,7 +692,7 @@ var timeLayouts = map[string]string{
 	"StampNano":       time.StampNano,
 }
 
-func checkFormat(name, rule, src string) (errors []error) {
+func (my *CheckerImpl) checkFormat(src string) (errors []error) {
 	var patternsForTimeString = map[string]string{
 		"RFC3339":           `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+\-]\d{2}:\d{2})$`,
 		"RFC3339Nano":       `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+(Z|[+\-]\d{2}:\d{2})$`,
@@ -676,8 +715,9 @@ func checkFormat(name, rule, src string) (errors []error) {
 		"StampNano":         `^[A-Za-z]{3} [ \d]\d \d{2}:\d{2}:\d{2}\.\d{9}$`,
 		"SonarQubeDatetime": `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$`,
 	}
-	if f, ok := patternsForTimeString[rule]; ok {
-		if errs := checkRegex(name, f, src); errs != nil {
+	if f, ok := patternsForTimeString[*my.format]; ok {
+		my.regex = &f
+		if errs := my.checkRegex(src); errs != nil {
 			errors = append(errors, errs...)
 		}
 	}
@@ -685,9 +725,9 @@ func checkFormat(name, rule, src string) (errors []error) {
 	return
 }
 
-func checkBoolean(name string, rule bool, src any) (errors []error) {
-	if rule != cast.ToBool(src) {
-		errors = append(errors, fmt.Errorf("『%s』需要是 %t", name, rule))
+func (my *CheckerImpl) checkBoolean(src any) (errors []error) {
+	if *my.boolean != cast.ToBool(src) {
+		errors = append(errors, my.GenerateErrMsg(fmt.Errorf("『%s』需要是 %t", my.name, *my.boolean)))
 	}
 
 	return

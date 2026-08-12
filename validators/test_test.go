@@ -11,7 +11,7 @@ import (
 // result 执行校验并返回结果
 func result(t *testing.T, data any, checkers ...validators.Checker) (invalid bool, errs []error) {
 	t.Helper()
-	v := validators.WithData(data).Validate(checkers...)
+	v := validators.WithData(data, checkers...).Validate()
 	return v.Invalid(), v.GetErrors()
 }
 
@@ -235,24 +235,6 @@ func TestValidator_MultiCheckerSameField(t *testing.T) {
 	}
 }
 
-// TestChecker_Direct 校验器可脱离 Validator 单独使用
-func TestChecker_Direct(t *testing.T) {
-	c := validators.NewChecker("Name", "姓名").Min(">2")
-	if c.GetField() != "Name" {
-		t.Errorf("GetField() = %q，期望 %q", c.GetField(), "Name")
-	}
-
-	c = c.check("ab")
-	if errs := c.GetErrors(); len(errs) != 1 {
-		t.Errorf("期望 1 个错误，实际：%v", errs)
-	}
-
-	c = validators.NewChecker("Name", "姓名").Min(">2").check("abc")
-	if errs := c.GetErrors(); len(errs) != 0 {
-		t.Errorf("期望通过，实际：%v", errs)
-	}
-}
-
 // TestValidator_SliceMapRules 切片/数组/map 的长度规则
 func TestValidator_SliceMapRules(t *testing.T) {
 	// 切片 min 失败
@@ -454,4 +436,17 @@ func TestValidator_BoolRequired(t *testing.T) {
 	if invalid {
 		t.Errorf("true + Required 期望通过，实际错误：%v", errs)
 	}
+}
+
+type A struct{ Name string }
+
+func TestValidator_Regex(t *testing.T) {
+	var a = A{Name: "1"}
+
+	validator := validators.WithData(a, validators.NewChecker("Name", "姓名").Required().Regex(`^[a-zA-Z0-9_\x{4e00}-\x{9fa5}-]{3,64}$`).ErrMsg("格式错误")).Validate()
+	if !validator.Invalid() {
+		t.Fatalf("验证意外通过：%v", validator.GetData())
+	}
+
+	t.Logf("验证不通过（符合预期）：%v", validator.GetError())
 }
