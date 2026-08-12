@@ -4,6 +4,7 @@ import (
 	_errors "errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/aid297/aid/v2/anySlices"
 )
@@ -67,29 +68,107 @@ func (my *ValidatorImpl[T]) Validate(exCheckers ...func(original *T) (errors []e
 		return my
 	}
 
-	t := v.Type()
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
-		val := v.Field(i)
+	my.validateRecursive(v, my.checkers, &my.errors)
 
-		for _, checker := range my.checkers {
-			if checker.GetField() == f.Name {
-				if errs := checker.check(val).GetErrors(); len(errs) > 0 {
-					my.errors = append(my.errors, errs...)
-				}
-			}
-		}
-
-		if len(exCheckers) > 0 {
-			for _, checker := range exCheckers {
-				if errs := checker(&my.original); len(errs) > 0 {
-					my.errors = append(my.errors, errs...)
-				}
+	if len(exCheckers) > 0 {
+		for _, checker := range exCheckers {
+			if errs := checker(&my.original); len(errs) > 0 {
+				my.errors = append(my.errors, errs...)
 			}
 		}
 	}
 
 	return my
+}
+
+// validateRecursive recursively validates a struct and its nested structs.
+// It supports dotted field names like "Address.City.Name" for nested validation.
+func (my *ValidatorImpl[T]) validateRecursive(v reflect.Value, checkers []Checker, errors *[]error) {
+	if !v.IsValid() || v.Kind() != reflect.Struct {
+		return
+	}
+
+	t := v.Type()
+
+	// Validate top-level fields first
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		val := v.Field(i)
+
+		// Check if there's an exact-match checker for this field
+		for _, checker := range checkers {
+			if checker.GetField() == f.Name {
+				if errs := checker.check(val).GetErrors(); len(errs) > 0 {
+					*errors = append(*errors, errs...)
+				}
+			}
+		}
+
+		// If the field value is a struct or pointer to struct, recurse into it
+		var fieldVal reflect.Value
+		switch val.Kind() {
+		case reflect.Pointer:
+			if val.IsNil() {
+				continue
+			}
+			fieldVal = val.Elem()
+		default:
+			fieldVal = val
+		}
+
+		if fieldVal.Kind() == reflect.Struct {
+			// Find nested checkers: check if there are checkers whose field name matches
+			// a pattern like "NestedField.SubField"
+			nestedCheckers := make([]Checker, 0)
+			for _, checker := range checkers {
+				fieldName := checker.GetField()
+				if strings.HasPrefix(fieldName, f.Name+".") {
+					// This checker is for a field inside the current nested struct
+					// Create a new checker with adjusted field name
+					adjustedFieldName := strings.TrimPrefix(fieldName, f.Name+".")
+					ci := checker.(*CheckerImpl)
+					adjusted := NewChecker(adjustedFieldName, ci.name)
+					// Copy other fields from original checker
+					if ci.required {
+						adjusted.Required()
+					}
+					if ci.min != nil {
+						adjusted.Min(*ci.min)
+					}
+					if ci.max != nil {
+						adjusted.Max(*ci.max)
+					}
+					if ci.size != nil {
+						adjusted.Size(*ci.size)
+					}
+					if ci.in != nil {
+						adjusted.In(*ci.in)
+					}
+					if ci.regex != nil {
+						adjusted.Regex(*ci.regex)
+					}
+					if ci.format != nil {
+						adjusted.Format(*ci.format)
+					}
+					if ci.boolean != nil {
+						if *ci.boolean {
+							adjusted.True()
+						} else {
+							adjusted.False()
+						}
+					}
+					if ci.errMsg != nil {
+						adjusted.ErrMsg(*ci.errMsg)
+					}
+					nestedCheckers = append(nestedCheckers, adjusted)
+				}
+			}
+
+			if len(nestedCheckers) > 0 {
+				my.validateRecursive(fieldVal, nestedCheckers, errors)
+			}
+		}
+	}
 }
 
 func (my *ValidatorImpl[T]) Invalid() bool { return len(my.errors) > 0 }
