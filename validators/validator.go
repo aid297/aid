@@ -12,11 +12,12 @@ import (
 var (
 	defaultSliceSplitChar string = "|"
 	defaultErrorSplitChar string = "<br />"
+	globalExCheckFn              = make(map[string]any)
 )
 
 type (
 	Validator[T any] interface {
-		Validate(exCheckers ...func(original *T) (errors []error)) Validator[T]
+		Validate(exCheckers ...ExCheckFn[T]) Validator[T]
 		Invalid() bool
 		GetData() T
 		GetErrors() []error
@@ -53,6 +54,19 @@ func SetDefaultSliceSplitChar(char string) { defaultSliceSplitChar = char }
 
 func SetDefaultErrorSplitChar(char string) { defaultErrorSplitChar = char }
 
+func SetGlobalExCheckFn[T any](name string, fn ExCheckFn[T]) {
+	globalExCheckFn[name] = fn
+}
+
+// GetGlobalExCheckFn 按名称取出已注册的全局扩展校验函数，调用方需用类型断言还原为 ExCheckFn[T]。
+func GetGlobalExCheckFn[T any](name string) ExCheckFn[T] {
+	fn, ok := globalExCheckFn[name].(ExCheckFn[T])
+	if !ok {
+		return nil
+	}
+	return fn
+}
+
 func (my *ValidatorImpl[T]) Validate(exCheckers ...ExCheckFn[T]) Validator[T] {
 	v := reflect.ValueOf(any(my.original)) // 显式转 any，避免对 T 直接反射的坑
 
@@ -76,6 +90,28 @@ func (my *ValidatorImpl[T]) Validate(exCheckers ...ExCheckFn[T]) Validator[T] {
 			if errs := checker(&my.original); len(errs) > 0 {
 				my.errors = append(my.errors, errs...)
 			}
+		}
+	}
+
+	// 读取 v-ex 标签，调用已注册的全局扩展校验函数
+	t := v.Type()
+	called := make(map[string]bool)
+	for i := 0; i < t.NumField(); i++ {
+		tagVal := t.Field(i).Tag.Get("v-ex")
+		if tagVal == "" || called[tagVal] {
+			continue
+		}
+		called[tagVal] = true
+		names := strings.Split(tagVal, defaultSliceSplitChar)
+		if len(names) > 0 {
+			for idx := range names {
+				if fn := GetGlobalExCheckFn[T](names[idx]); fn != nil {
+					if errs := fn(&my.original); len(errs) > 0 {
+						my.errors = append(my.errors, errs...)
+					}
+				}
+			}
+
 		}
 	}
 
@@ -146,6 +182,8 @@ func (my *ValidatorImpl[T]) validateRecursive(v reflect.Value, checkers []Checke
 					}
 				}
 			}
+		default:
+			panic("无法处理的类型")
 		}
 	}
 }
