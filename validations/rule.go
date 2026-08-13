@@ -10,33 +10,7 @@ import (
 	"github.com/aid297/aid/v2/points"
 )
 
-// func (my FieldInfo) getRuleType(rules anyArrayV2.AnyArray[string]) (targetType string) {
-// 	// 获取目标类型
-// 	rules.IfIn(func() { targetType = "string" }, "string")
-// 	rules.IfIn(func() { targetType = "datetime" }, "datetime")
-// 	rules.IfIn(func() { targetType = "date" }, "date")
-// 	rules.IfIn(func() { targetType = "time" }, "time")
-// 	rules.IfIn(func() { targetType = "int" }, "int")
-// 	rules.IfIn(func() { targetType = "int8" }, "int8")
-// 	rules.IfIn(func() { targetType = "int16" }, "int16")
-// 	rules.IfIn(func() { targetType = "int32" }, "int32")
-// 	rules.IfIn(func() { targetType = "int64" }, "int64")
-// 	rules.IfIn(func() { targetType = "uint" }, "uint")
-// 	rules.IfIn(func() { targetType = "uint8" }, "uint8")
-// 	rules.IfIn(func() { targetType = "uint16" }, "uint16")
-// 	rules.IfIn(func() { targetType = "uint32" }, "uint32")
-// 	rules.IfIn(func() { targetType = "uint64" }, "uint64")
-// 	rules.IfIn(func() { targetType = "bool" }, "bool")
-// 	rules.IfIn(func() { targetType = "float32" }, "float32")
-// 	rules.IfIn(func() { targetType = "float64" }, "float64")
-// 	rules.IfIn(func() { targetType = "slice" }, "array", "slice")
-// 	rules.IfIn(func() { targetType = "struct" }, "struct")
-// 	rules.IfIn(func() { targetType = "ex" }, "ex")
-
-// 	return
-// }
-
-func getRuleRequired(rules anySlices.AnySlicer[string]) bool { return rules.In("required") }
+func getRuleRequired(rules anySlices.AnySlicer[string]) bool { return rules.In("required", "!") }
 
 func getRuleExFnNames(rule string) (exFnNames []string) {
 	var (
@@ -45,7 +19,7 @@ func getRuleExFnNames(rule string) (exFnNames []string) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "ex:"); ok {
-		exFnNames = strings.Split(value, ",")
+		exFnNames = strings.Split(value, validatorExIns.defaultSliceSplitChar)
 		return
 	}
 
@@ -200,7 +174,7 @@ func getRuleIn(rule string) (in []string) {
 		ok    bool
 	)
 	if value, ok = strings.CutPrefix(rule, "in=="); ok {
-		in = strings.Split(value, ",")
+		in = strings.Split(value, validatorExIns.defaultSliceSplitChar)
 		return
 	}
 
@@ -239,7 +213,7 @@ func getRuleNotIn(rule string) (notIn []string) {
 		ok    bool
 	)
 	if value, ok = strings.CutPrefix(rule, "in!="); ok {
-		notIn = strings.Split(value, ",")
+		notIn = strings.Split(value, validatorExIns.defaultSliceSplitChar)
 		return
 	}
 
@@ -293,7 +267,7 @@ func getRuleTimeIn(rule string) (in []time.Time) {
 		times []string
 	)
 	if value, ok = strings.CutPrefix(rule, "in=="); ok {
-		times = strings.Split(value, ",")
+		times = strings.Split(value, validatorExIns.defaultSliceSplitChar)
 	}
 
 	if len(times) > 0 {
@@ -313,7 +287,7 @@ func getRuleTimeNotIn(rule string) (notIn []time.Time) {
 		times []string
 	)
 	if value, ok = strings.CutPrefix(rule, "in!="); ok {
-		times = strings.Split(value, ",")
+		times = strings.Split(value, validatorExIns.defaultSliceSplitChar)
 	}
 
 	if len(times) > 0 {

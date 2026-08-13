@@ -27,13 +27,12 @@ type (
 
 	// CheckerImpl 验证器
 	CheckerImpl struct {
-		data         any
-		wrongs       []error
-		defaultLimit string
+		data   any
+		wrongs []error
 	}
 )
 
-func NewCheck(data any) Checker { return &CheckerImpl{data: data, defaultLimit: "<br />"} }
+func NewCheck(data any) Checker { return &CheckerImpl{data: data} }
 
 func (my *CheckerImpl) Errors() []error { return my.wrongs }
 
@@ -49,7 +48,7 @@ func (my *CheckerImpl) Error() error {
 
 func (my *CheckerImpl) ErrorToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
-		ret = anySlices.FillFunc(my.wrongs, func(idx int, value error) string { return value.Error() }).JoinNotEmpty(operations.NewTernary(operations.TrueValue(limit), operations.FalseValue(my.defaultLimit)).GetByValue(limit != ""))
+		ret = anySlices.FillFunc(my.wrongs, func(idx int, value error) string { return value.Error() }).JoinNotEmpty(validatorExIns.defaultErrorSplitChar)
 	}
 
 	return

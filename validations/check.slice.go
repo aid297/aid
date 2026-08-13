@@ -22,16 +22,9 @@ func (my FieldInfo) checkSlice() FieldInfo {
 
 	if getRuleRequired(my.VRuleTags) {
 		if my.IsPtr && (my.IsNil || my.RefValue.Len() == 0) {
-			l := 0
-			if !my.IsNil {
-				l = my.RefValue.Len()
-			}
-			println(l)
 			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
 			return my
 		} else if !my.IsPtr && my.RefValue.Len() == 0 {
-			l := my.RefValue.Len()
-			println(l)
 			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrNotEmpty)}
 			return my
 		}
@@ -77,7 +70,7 @@ func (my FieldInfo) checkSlice() FieldInfo {
 		} else if strings.HasPrefix(rule, "ex") {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
-					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
+					if fn := validatorExIns.GetExFn(exFnNames[idx2]); fn != nil {
 						if err := fn(my.getName(), operations.NewTernary(operations.TrueFn(my.RefValue.Interface)).GetByValue(my.RefValue.CanInterface())); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
