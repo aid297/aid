@@ -122,6 +122,7 @@ func unwrapValue(original any) any {
 }
 
 func (my *CheckerImpl) check(original any) Checker {
+	my.errors = nil // 每次校验前重置错误列表，避免复用时累积
 	original = unwrapValue(original)
 
 	if my.required && my.isZeroValue(original) {

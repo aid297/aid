@@ -29,6 +29,7 @@ type (
 	}
 
 	DefaultDataBindFn[T any] func() (form T, err error)
+	ExCheckFn[T any]         = func(original *T) (errors []error)
 )
 
 func WithData[T any](data T, checkers ...Checker) Validator[T] {
@@ -52,7 +53,7 @@ func SetDefaultSliceSplitChar(char string) { defaultSliceSplitChar = char }
 
 func SetDefaultErrorSplitChar(char string) { defaultErrorSplitChar = char }
 
-func (my *ValidatorImpl[T]) Validate(exCheckers ...func(original *T) (errors []error)) Validator[T] {
+func (my *ValidatorImpl[T]) Validate(exCheckers ...ExCheckFn[T]) Validator[T] {
 	v := reflect.ValueOf(any(my.original)) // 显式转 any，避免对 T 直接反射的坑
 
 	// 解引用指针，nil 指针直接返回，避免后续反射 panic
@@ -82,7 +83,8 @@ func (my *ValidatorImpl[T]) Validate(exCheckers ...func(original *T) (errors []e
 }
 
 // validateRecursive recursively validates a struct and its nested structs.
-// It supports dotted field names like "Address.City.Name" for nested validation.
+// It supports dotted field names like "Address.City.Name" for nested validation,
+// and also recurses into slices of structs (e.g. "Items.Name" validates each element's Name).
 func (my *ValidatorImpl[T]) validateRecursive(v reflect.Value, checkers []Checker, errors *[]error) {
 	if !v.IsValid() || v.Kind() != reflect.Struct {
 		return
@@ -104,7 +106,7 @@ func (my *ValidatorImpl[T]) validateRecursive(v reflect.Value, checkers []Checke
 			}
 		}
 
-		// If the field value is a struct or pointer to struct, recurse into it
+		// Dereference pointer fields
 		var fieldVal reflect.Value
 		switch val.Kind() {
 		case reflect.Pointer:
@@ -116,59 +118,84 @@ func (my *ValidatorImpl[T]) validateRecursive(v reflect.Value, checkers []Checke
 			fieldVal = val
 		}
 
-		if fieldVal.Kind() == reflect.Struct {
-			// Find nested checkers: check if there are checkers whose field name matches
-			// a pattern like "NestedField.SubField"
-			nestedCheckers := make([]Checker, 0)
-			for _, checker := range checkers {
-				fieldName := checker.GetField()
-				if strings.HasPrefix(fieldName, f.Name+".") {
-					// This checker is for a field inside the current nested struct
-					// Create a new checker with adjusted field name
-					adjustedFieldName := strings.TrimPrefix(fieldName, f.Name+".")
-					ci := checker.(*CheckerImpl)
-					adjusted := NewChecker(adjustedFieldName, ci.name)
-					// Copy other fields from original checker
-					if ci.required {
-						adjusted.Required()
-					}
-					if ci.min != nil {
-						adjusted.Min(*ci.min)
-					}
-					if ci.max != nil {
-						adjusted.Max(*ci.max)
-					}
-					if ci.size != nil {
-						adjusted.Size(*ci.size)
-					}
-					if ci.in != nil {
-						adjusted.In(*ci.in)
-					}
-					if ci.regex != nil {
-						adjusted.Regex(*ci.regex)
-					}
-					if ci.format != nil {
-						adjusted.Format(*ci.format)
-					}
-					if ci.boolean != nil {
-						if *ci.boolean {
-							adjusted.True()
-						} else {
-							adjusted.False()
-						}
-					}
-					if ci.errMsg != nil {
-						adjusted.ErrMsg(*ci.errMsg)
-					}
-					nestedCheckers = append(nestedCheckers, adjusted)
-				}
-			}
-
+		switch fieldVal.Kind() {
+		case reflect.Struct:
+			// Nested struct: find dotted-notation checkers and recurse
+			nestedCheckers := findNestedCheckers(checkers, f.Name)
 			if len(nestedCheckers) > 0 {
 				my.validateRecursive(fieldVal, nestedCheckers, errors)
 			}
+		case reflect.Slice, reflect.Array:
+			// Slice/array: check if element type is struct, then recurse into each element
+			elemType := fieldVal.Type().Elem()
+			if elemType.Kind() == reflect.Pointer {
+				elemType = elemType.Elem()
+			}
+			if elemType.Kind() == reflect.Struct {
+				nestedCheckers := findNestedCheckers(checkers, f.Name)
+				if len(nestedCheckers) > 0 {
+					for j := 0; j < fieldVal.Len(); j++ {
+						elemVal := fieldVal.Index(j)
+						if elemVal.Kind() == reflect.Pointer {
+							if elemVal.IsNil() {
+								continue
+							}
+							elemVal = elemVal.Elem()
+						}
+						my.validateRecursive(elemVal, nestedCheckers, errors)
+					}
+				}
+			}
 		}
 	}
+}
+
+// findNestedCheckers finds checkers whose field name starts with the given prefix
+// followed by a dot (e.g. prefix="Items" matches "Items.Name"), and creates
+// adjusted checkers with the prefix stripped ("Name").
+func findNestedCheckers(checkers []Checker, prefix string) []Checker {
+	nestedCheckers := make([]Checker, 0)
+	for _, checker := range checkers {
+		fieldName := checker.GetField()
+		if strings.HasPrefix(fieldName, prefix+".") {
+			adjustedFieldName := strings.TrimPrefix(fieldName, prefix+".")
+			ci := checker.(*CheckerImpl)
+			adjusted := NewChecker(adjustedFieldName, ci.name)
+			if ci.required {
+				adjusted.Required()
+			}
+			if ci.min != nil {
+				adjusted.Min(*ci.min)
+			}
+			if ci.max != nil {
+				adjusted.Max(*ci.max)
+			}
+			if ci.size != nil {
+				adjusted.Size(*ci.size)
+			}
+			if ci.in != nil {
+				adjusted.In(*ci.in)
+			}
+			if ci.regex != nil {
+				adjusted.Regex(*ci.regex)
+			}
+			if ci.format != nil {
+				adjusted.Format(*ci.format)
+			}
+			if ci.boolean != nil {
+				if *ci.boolean {
+					adjusted.True()
+				} else {
+					adjusted.False()
+				}
+			}
+			if ci.errMsg != nil {
+				adjusted.ErrMsg(*ci.errMsg)
+			}
+			nestedCheckers = append(nestedCheckers, adjusted)
+		}
+	}
+	return nestedCheckers
 }
 
 func (my *ValidatorImpl[T]) Invalid() bool { return len(my.errors) > 0 }

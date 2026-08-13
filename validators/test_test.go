@@ -466,3 +466,119 @@ func TestValidator_Size(t *testing.T) {
 
 	t.Logf("验证通过：%v", validator.GetData())
 }
+
+// --- 切片型结构体验证 ---
+
+type OrderItem struct {
+	Name  string
+	Price float64
+	Qty   int
+}
+
+type Order struct {
+	Items []OrderItem
+}
+
+// TestValidator_SliceOfStruct_ElementField 校验切片中每个结构体元素的字段
+func TestValidator_SliceOfStruct_ElementField(t *testing.T) {
+	order := Order{Items: []OrderItem{
+		{Name: "ab", Price: 0, Qty: 0},   // Name 太短, Price 太低, Qty 太低
+		{Name: "正确名称", Price: 99.9, Qty: 3}, // 全部通过
+		{Name: "x", Price: -1, Qty: 0},         // 全部失败
+	}}
+
+	invalid, errs := result(t, order,
+		validators.NewChecker("Items", "商品列表").Min(">0"),
+		validators.NewChecker("Items.Name", "商品名").Min(">2"),
+		validators.NewChecker("Items.Price", "商品价格").Min(">0"),
+		validators.NewChecker("Items.Qty", "商品数量").Min(">0"),
+	)
+
+	if !invalid {
+		t.Fatalf("期望校验失败，实际通过")
+	}
+
+	// 第1个元素: 3 个错误 (Name, Price, Qty)
+	// 第2个元素: 0 个错误
+	// 第3个元素: 3 个错误 (Name, Price, Qty)
+	// 共 6 个错误
+	if len(errs) != 6 {
+		t.Errorf("期望 6 个错误，实际 %d 个：%v", len(errs), errs)
+	}
+
+	// 验证错误来自第1和第3个元素
+	if !containsErr(errs, "『商品名』长度不能小于 2") {
+		t.Errorf("期望包含商品名错误，实际：%v", errs)
+	}
+	if !containsErr(errs, "『商品价格』值不能小于 0") {
+		t.Errorf("期望包含商品价格错误，实际：%v", errs)
+	}
+	if !containsErr(errs, "『商品数量』值不能小于 0") {
+		t.Errorf("期望包含商品数量错误，实际：%v", errs)
+	}
+}
+
+// TestValidator_SliceOfStruct_AllPass 切片中所有元素都通过校验
+func TestValidator_SliceOfStruct_AllPass(t *testing.T) {
+	order := Order{Items: []OrderItem{
+		{Name: "商品A", Price: 10.5, Qty: 1},
+		{Name: "商品B", Price: 20.0, Qty: 2},
+	}}
+
+	invalid, errs := result(t, order,
+		validators.NewChecker("Items", "商品列表").Min(">0"),
+		validators.NewChecker("Items.Name", "商品名").Min(">2"),
+		validators.NewChecker("Items.Price", "商品价格").Min(">0"),
+		validators.NewChecker("Items.Qty", "商品数量").Min(">0"),
+	)
+	if invalid {
+		t.Errorf("期望校验通过，实际错误：%v", errs)
+	}
+}
+
+// TestValidator_SliceOfStruct_EmptySlice 空切片不报元素错误
+func TestValidator_SliceOfStruct_EmptySlice(t *testing.T) {
+	order := Order{Items: []OrderItem{}}
+
+	invalid, errs := result(t, order,
+		validators.NewChecker("Items.Name", "商品名").Min(">2"),
+	)
+	// 空切片没有元素，不会触发元素字段校验
+	if invalid {
+		t.Errorf("空切片不应触发元素校验，实际错误：%v", errs)
+	}
+}
+
+// TestValidator_SliceOfStruct_NilSlice nil 切片不 panic 也不报元素错误
+func TestValidator_SliceOfStruct_NilSlice(t *testing.T) {
+	order := Order{}
+
+	invalid, errs := result(t, order,
+		validators.NewChecker("Items.Name", "商品名").Min(">2"),
+	)
+	if invalid {
+		t.Errorf("nil 切片不应触发元素校验，实际错误：%v", errs)
+	}
+}
+
+// TestValidator_SliceOfStruct_WithRequired 切片元素字段 Required 校验
+func TestValidator_SliceOfStruct_WithRequired(t *testing.T) {
+	order := Order{Items: []OrderItem{
+		{Name: "", Price: 0, Qty: 0},
+		{Name: "有值", Price: 1, Qty: 1},
+	}}
+
+	invalid, errs := result(t, order,
+		validators.NewChecker("Items.Name", "商品名").Required().Min(">2"),
+	)
+	if !invalid {
+		t.Fatalf("期望校验失败")
+	}
+	// 第1个元素 Name 为空：必填报错 + 长度不足报错 = 2 个错误
+	if len(errs) != 2 {
+		t.Errorf("期望 2 个错误，实际 %d 个：%v", len(errs), errs)
+	}
+	if !containsErr(errs, "『商品名』必填") {
+		t.Errorf("期望包含必填错误，实际：%v", errs)
+	}
+}
