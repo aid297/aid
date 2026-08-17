@@ -5,10 +5,12 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/aid297/aid/v2/anyMaps"
 	"github.com/aid297/aid/v2/anySlices"
+	"github.com/aid297/aid/v2/consts/timeInfo"
 )
 
 var (
@@ -36,16 +38,19 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、[bool|datetime|date|time]、regex==、regex!=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
+// checkString 检查字符串，支持：required、[bool|datetime|date|time]、str-time>、str-time>=、str-time<、str-time<=、regex==、regex!=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
-		min, max, size *int
-		include, eq    bool
-		in             []string
-		notIn          []string
-		value          string
-		ok             bool
-		pattern        string
+		err                    error
+		min, max, size         *int
+		include, eq            bool
+		in                     []string
+		notIn                  []string
+		value                  string
+		ok                     bool
+		pattern                string
+		strTimeMin, strTimeMax *string
+		stMin, stMax, vt       time.Duration
 	)
 
 	if my.Kind != reflect.String {
@@ -69,7 +74,43 @@ func (my FieldInfo) checkString() FieldInfo {
 	}
 
 	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
-		if strings.HasPrefix(rule, "min") {
+		if strings.HasPrefix(rule, "str-time") {
+			if strTimeMin, include = getRuleStrTimeMin(rule); strTimeMin != nil {
+				if stMin, err = timeInfo.WhatTimeIsIt(*strTimeMin); err != nil {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(规则)", my.getName(), ErrInvalidFormat))
+				} else {
+					if vt, err = timeInfo.WhatTimeIsIt(value); err != nil {
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(值)", my.getName(), ErrInvalidFormat))
+					} else {
+						if include {
+							if !(vt >= stMin) {
+								my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %s", my.getName(), ErrInvalidValue, *strTimeMin))
+							}
+						} else {
+							if !(vt > stMin) {
+								my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %s", my.getName(), ErrInvalidValue, *strTimeMin))
+							}
+						}
+					}
+				}
+			}
+
+			if strTimeMax, include = getRuleStrTimeMax(rule); strTimeMax != nil {
+				if stMax, err = timeInfo.WhatTimeIsIt(*strTimeMax); err != nil {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(规则)", my.getName(), ErrInvalidFormat))
+				} else {
+					if include {
+						if !(vt <= stMax) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %s", my.getName(), ErrInvalidValue, *strTimeMax))
+						}
+					} else {
+						if !(vt < stMax) {
+							my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %s", my.getName(), ErrInvalidValue, *strTimeMax))
+						}
+					}
+				}
+			}
+		} else if strings.HasPrefix(rule, "min") {
 			if min, include = getRuleIntMin(rule); min != nil {
 				if include {
 					if !(utf8.RuneCountInString(value) >= *min) {
@@ -159,15 +200,15 @@ func (my FieldInfo) checkString() FieldInfo {
 			}
 		} else if strings.HasPrefix(rule, "regex==") {
 			if pattern = getRuleRegexEq(rule); pattern != "" {
-			if !regexp.MustCompile(pattern).MatchString(value) {
-				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：匹配正则 %s", my.getName(), ErrInvalidFormat, pattern))
-			}
+				if !regexp.MustCompile(pattern).MatchString(value) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：匹配正则 %s", my.getName(), ErrInvalidFormat, pattern))
+				}
 			}
 		} else if strings.HasPrefix(rule, "regex!=") {
 			if pattern = getRuleRegexNotEq(rule); pattern != "" {
-			if regexp.MustCompile(pattern).MatchString(value) {
-				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不匹配正则 %s", my.getName(), ErrInvalidFormat, pattern))
-			}
+				if regexp.MustCompile(pattern).MatchString(value) {
+					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不匹配正则 %s", my.getName(), ErrInvalidFormat, pattern))
+				}
 			}
 		} else if strings.HasPrefix(rule, "ex") {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {

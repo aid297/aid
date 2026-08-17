@@ -55,3 +55,22 @@ func Test2(t *testing.T) {
 		t.Logf("%v\n", wrong)
 	}
 }
+
+func Test3(t *testing.T) {
+	type T struct {
+		Time1 string  `v-rule:"(!)(str-time>3s)(str-time<10m)" v-name:"时间1"`
+		Time2 *string `v-rule:"(!)(str-time>=10m)(str-time<=1h)" v-name:"时间2"`
+	}
+
+	t1 := &T{Time1: "", Time2: nil}
+	if errs := validations.
+		OnceValidator().
+		DefaultErrorSplitChar("\n").
+		Checker(t1).
+		Validate().
+		Errors(); errs != nil {
+		t.Errorf("验证不通过：%v", errs)
+	}
+
+	t.Logf("完成")
+}

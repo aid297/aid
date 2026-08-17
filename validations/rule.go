@@ -89,6 +89,40 @@ func getRuleUintMax(rule string) (size *uint, include bool) {
 	return
 }
 
+func getRuleStrTimeMin(rule string) (*string, bool) {
+	var (
+		value string
+		ok    bool
+	)
+
+	if value, ok = strings.CutPrefix(rule, "str-time>="); ok {
+		return &value, true
+	}
+
+	if value, ok = strings.CutPrefix(rule, "str-time>"); ok {
+		return &value, false
+	}
+
+	return nil, false
+}
+
+func getRuleStrTimeMax(rule string) (*string, bool) {
+	var (
+		value string
+		ok    bool
+	)
+
+	if value, ok = strings.CutPrefix(rule, "str-time<="); ok {
+		return &value, true
+	}
+
+	if value, ok = strings.CutPrefix(rule, "str-time<"); ok {
+		return &value, false
+	}
+
+	return nil, false
+}
+
 func getRuleIntMin(rule string) (size *int, include bool) {
 	var (
 		value string
