@@ -48,7 +48,7 @@ func (my *CheckerImpl) Error() error {
 
 func (my *CheckerImpl) ErrorToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
-		ret = anySlices.FillFunc(my.wrongs, func(idx int, value error) string { return value.Error() }).JoinNotEmpty(validatorExIns.defaultErrorSplitChar)
+		ret = anySlices.FillFunc(my.wrongs, func(idx int, value error) string { return value.Error() }).JoinNotEmpty(string(validatorExIns.defaultErrorSplitChar))
 	}
 
 	return

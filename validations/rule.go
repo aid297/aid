@@ -19,7 +19,7 @@ func getRuleExFnNames(rule string) (exFnNames []string) {
 	)
 
 	if value, ok = strings.CutPrefix(rule, "ex:"); ok {
-		exFnNames = strings.Split(value, validatorExIns.defaultSliceSplitChar)
+		exFnNames = strings.Split(value, string(validatorExIns.defaultSliceSplitChar))
 		return
 	}
 
@@ -247,7 +247,7 @@ func getRuleIn(rule string) (in []string) {
 		ok    bool
 	)
 	if value, ok = strings.CutPrefix(rule, "in=="); ok {
-		in = strings.Split(value, validatorExIns.defaultSliceSplitChar)
+		in = strings.Split(value, string(validatorExIns.defaultSliceSplitChar))
 		return
 	}
 
@@ -286,7 +286,7 @@ func getRuleNotIn(rule string) (notIn []string) {
 		ok    bool
 	)
 	if value, ok = strings.CutPrefix(rule, "in!="); ok {
-		notIn = strings.Split(value, validatorExIns.defaultSliceSplitChar)
+		notIn = strings.Split(value, string(validatorExIns.defaultSliceSplitChar))
 		return
 	}
 
@@ -340,7 +340,7 @@ func getRuleTimeIn(rule string) (in []time.Time) {
 		times []string
 	)
 	if value, ok = strings.CutPrefix(rule, "in=="); ok {
-		times = strings.Split(value, validatorExIns.defaultSliceSplitChar)
+		times = strings.Split(value, string(validatorExIns.defaultSliceSplitChar))
 	}
 
 	if len(times) > 0 {
@@ -360,7 +360,7 @@ func getRuleTimeNotIn(rule string) (notIn []time.Time) {
 		times []string
 	)
 	if value, ok = strings.CutPrefix(rule, "in!="); ok {
-		times = strings.Split(value, validatorExIns.defaultSliceSplitChar)
+		times = strings.Split(value, string(validatorExIns.defaultSliceSplitChar))
 	}
 
 	if len(times) > 0 {
