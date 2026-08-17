@@ -35,7 +35,7 @@ var (
 	validatorExIns  *Validation
 )
 
-func OnceValidator() Validator {
+func Once() Validator {
 	validatorExOnce.Do(func() {
 		validatorExIns = &Validation{
 			data:                  make(map[string]GlobalExCheckFunc),

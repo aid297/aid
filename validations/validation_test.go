@@ -19,7 +19,7 @@ func TestCustomType(t *testing.T) {
 	_ = Custom2
 	var s = S{AField: Custom1}
 
-	checker := validations.OnceValidator().Checker(s).Validate()
+	checker := validations.Once().Checker(s).Validate()
 	if checker.Invalid() {
 		t.Errorf("验证不通过：%v", checker.Error())
 	}

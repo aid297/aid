@@ -40,7 +40,7 @@ type RequestWithEmptyStructSlice struct {
 func TestNilPointerSlice_NoPanic(t *testing.T) {
 	// nil 切片，元素为指针类型
 	req := &RequestWithNilPtrSlice{UUIDs: nil}
-	checker := validations.OnceValidator().Checker(req)
+	checker := validations.Once().Checker(req)
 	checker.Validate()
 
 	t.Logf("验证是否通过：%v", checker.OK())
@@ -52,7 +52,7 @@ func TestNilPointerSlice_NoPanic(t *testing.T) {
 func TestEmptyPointerSlice_NoPanic(t *testing.T) {
 	// 空切片，元素为指针类型
 	req := &RequestWithEmptyPtrSlice{UUIDs: []*BinaryUUID{}}
-	checker := validations.OnceValidator().Checker(req)
+	checker := validations.Once().Checker(req)
 	checker.Validate()
 
 	t.Logf("验证是否通过：%v", checker.OK())
@@ -70,7 +70,7 @@ func TestPartialNilPointerSlice_NoPanic(t *testing.T) {
 			{ID: "", Name: ""},
 		},
 	}
-	checker := validations.OnceValidator().Checker(req)
+	checker := validations.Once().Checker(req)
 	checker.Validate()
 
 	t.Logf("验证是否通过：%v", checker.OK())
@@ -82,7 +82,7 @@ func TestPartialNilPointerSlice_NoPanic(t *testing.T) {
 func TestNilSlicePointer_NoPanic(t *testing.T) {
 	// *[]BinaryUUID 为 nil
 	req := &RequestWithNilSlicePtr{UUIDs: nil}
-	checker := validations.OnceValidator().Checker(req)
+	checker := validations.Once().Checker(req)
 	checker.Validate()
 
 	t.Logf("验证是否通过：%v", checker.OK())
@@ -94,7 +94,7 @@ func TestNilSlicePointer_NoPanic(t *testing.T) {
 func TestEmptyStructSlice_NoPanic(t *testing.T) {
 	// 空切片，元素为结构体（非指针）
 	req := &RequestWithEmptyStructSlice{UUIDs: []BinaryUUID{}}
-	checker := validations.OnceValidator().Checker(req)
+	checker := validations.Once().Checker(req)
 	checker.Validate()
 
 	t.Logf("验证是否通过：%v", checker.OK())

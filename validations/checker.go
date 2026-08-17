@@ -100,7 +100,7 @@ func WithGin[T any](c *gin.Context, exCheckFns ...ExCheckFunc) (form T, checker 
 		return
 	}
 
-	return form, OnceValidator().Checker(&form).Validate(exCheckFns...)
+	return form, Once().Checker(&form).Validate(exCheckFns...)
 }
 
 func WithFiber[T any](c *fiber.Ctx, exCheckFns ...ExCheckFunc) (form T, checker Checker) {
@@ -111,7 +111,7 @@ func WithFiber[T any](c *fiber.Ctx, exCheckFns ...ExCheckFunc) (form T, checker 
 		return
 	}
 
-	return form, OnceValidator().Checker(&form).Validate(exCheckFns...)
+	return form, Once().Checker(&form).Validate(exCheckFns...)
 }
 
 func callExCheckFn(fn ExCheckFunc, data any) error {

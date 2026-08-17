@@ -46,7 +46,7 @@ func Test2(t *testing.T) {
 		Lastname:  "",
 	}
 
-	valid := validations.OnceValidator()
+	valid := validations.Once()
 	checker := valid.Checker(ur)
 	checker.Validate()
 
@@ -64,7 +64,7 @@ func Test3(t *testing.T) {
 
 	t1 := &T{Time1: "", Time2: nil}
 	if errs := validations.
-		OnceValidator().
+		Once().
 		DefaultErrorSplitChar("\n").
 		Checker(t1).
 		Validate().

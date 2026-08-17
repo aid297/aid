@@ -213,7 +213,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		} else if strings.HasPrefix(rule, "ex") {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for _, exFnName := range exFnNames {
-					if fn := OnceValidator().GetExFn(exFnName); fn != nil {
+					if fn := Once().GetExFn(exFnName); fn != nil {
 						if err := fn(my.getName(), my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}

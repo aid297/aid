@@ -84,7 +84,7 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 		} else if strings.HasPrefix(rule, "ex") {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
-					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
+					if fn := Once().GetExFn(exFnNames[idx2]); fn != nil {
 						if err := fn(my.getName(), my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}
@@ -173,7 +173,7 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 		} else if strings.HasPrefix(rule, "ex") {
 			if exFnNames := getRuleExFnNames(rule); len(exFnNames) > 0 {
 				for idx2 := range exFnNames {
-					if fn := OnceValidator().GetExFn(exFnNames[idx2]); fn != nil {
+					if fn := Once().GetExFn(exFnNames[idx2]); fn != nil {
 						if err := fn(my.getName(), my.Value); err != nil {
 							my.wrongs = append(my.wrongs, err)
 						}

@@ -18,7 +18,7 @@ type Test2Uint8 struct {
 func Test1_uint8(t *testing.T) {
 	test := TestUint8{Age: 30, Test2Uint8: Test2Uint8{Name: "张三"}}
 
-	checker := validations.OnceValidator().Checker(test).Validate()
+	checker := validations.Once().Checker(test).Validate()
 	if checker.Invalid() {
 		t.Errorf("错误：%v", checker.Error())
 	}
