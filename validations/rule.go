@@ -27,9 +27,23 @@ func getRuleExFnNames(rule string) (exFnNames []string) {
 }
 
 func getRuleUintSize(rule string) (size *uint, eq bool) {
-	var s *int
-	s, eq = getRuleIntSize(rule)
-	size = points.New(uint(*s))
+	var (
+		value string
+		ok    bool
+	)
+
+	if value, ok = strings.CutPrefix(rule, "size=="); ok {
+		size = points.New(cast.ToUint(value))
+		eq = true
+		return
+	}
+
+	if value, ok = strings.CutPrefix(rule, "size!="); ok {
+		size = points.New(cast.ToUint(value))
+		eq = false
+		return
+	}
+
 	return
 }
 
@@ -76,16 +90,41 @@ func getRuleFloatSize(rule string) (size *float64, eq bool) {
 }
 
 func getRuleUintMin(rule string) (size *uint, include bool) {
-	var s *int
-	s, include = getRuleIntMin(rule)
-	size = points.New(uint(*s))
+	var (
+		value string
+		ok    bool
+	)
+
+	if value, ok = strings.CutPrefix(rule, "min>="); ok {
+		size = points.New(cast.ToUint(value))
+		include = true
+		return
+	}
+	if value, ok = strings.CutPrefix(rule, "min>"); ok {
+		size = points.New(cast.ToUint(value))
+		return
+	}
+
 	return
 }
 
 func getRuleUintMax(rule string) (size *uint, include bool) {
-	var s *int
-	s, include = getRuleIntMax(rule)
-	size = points.New(uint(*s))
+	var (
+		value string
+		ok    bool
+	)
+
+	if value, ok = strings.CutPrefix(rule, "max<="); ok {
+		size = points.New(cast.ToUint(value))
+		include = true
+		return
+	}
+	if value, ok = strings.CutPrefix(rule, "max<"); ok {
+		size = points.New(cast.ToUint(value))
+		include = false
+		return
+	}
+
 	return
 }
 
