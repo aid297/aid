@@ -12,11 +12,12 @@ import (
 type (
 	Timer interface {
 		Valid(origin string) bool
-		FromText(origin string) (time.Duration, error)
-		FromTextDefault(origin string, def time.Duration) time.Duration
-		ToText(dur time.Duration) string
+		GetDuration() *time.Duration
+		FromText(origin string) (Timer, error)
+		FromTextDefault(origin string, def time.Duration) Timer
+		ToText() string
 	}
-	TimerImpl struct{}
+	Impl struct{ duration time.Duration }
 )
 
 var (
@@ -186,7 +187,7 @@ func toDuration(weeks, days, hours, minutes, seconds int) time.Duration {
 }
 
 // Valid 判断字符串是否符合组合时间格式（如 1w2d, 3d2h15m）或纯数字（默认秒）
-func (*TimerImpl) Valid(origin string) bool {
+func (*Impl) Valid(origin string) bool {
 	origin = strings.ToLower(origin)
 	if len(origin) == 0 {
 		return false
@@ -216,26 +217,34 @@ func (*TimerImpl) Valid(origin string) bool {
 	return rebuilt.String() == origin
 }
 
+func (my *Impl) GetDuration() *time.Duration { return &my.duration }
+
 // FromText 解析字符串并返回时间 duration（支持组合格式如 1w2d, 3d2h15m）
-func (*TimerImpl) FromText(origin string) (time.Duration, error) {
+func (*Impl) FromText(origin string) (Timer, error) {
+	var (
+		err error
+		t   = Impl{}
+	)
 	origin = strings.ToLower(origin)
-	return parseTimeUnits(origin)
+	t.duration, err = parseTimeUnits(origin)
+
+	return &t, err
 }
 
-func (*TimerImpl) FromTextDefault(origin string, def time.Duration) time.Duration {
-	if !new(TimerImpl).Valid(origin) {
-		return def
+func (*Impl) FromTextDefault(origin string, def time.Duration) Timer {
+	if !new(Impl).Valid(origin) {
+		return &Impl{duration: def}
 	}
 
-	dur, err := new(TimerImpl).FromText(origin)
+	dur, err := new(Impl).FromText(origin)
 	if err != nil {
-		return def
+		return &Impl{duration: def}
 	}
 
 	return dur
 }
 
 // ToText 公开接口：将 duration 转换为人可读的中文时间字符串
-func (*TimerImpl) ToText(dur time.Duration) string {
-	return toChinese(dur)
+func (my *Impl) ToText() string {
+	return toChinese(my.duration)
 }

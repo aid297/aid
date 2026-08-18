@@ -18,6 +18,6 @@ var (
 	Template template.Templater      = (*template.TemplaterImpl)(nil)
 	Transfer transfer.Transfer       = (*transfer.TransferImpl)(nil)
 	Rand     rand.Random             = (*rand.RandomImpl)(nil)
-	Timer    timer.Timer             = (*timer.TimerImpl)(nil)
+	Timer    timer.Timer             = (*timer.Impl)(nil)
 	Volumer  volumer.Volumer         = (*volumer.VolumerImpl)(nil)
 )
