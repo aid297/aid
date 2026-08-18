@@ -12,7 +12,7 @@ import (
 type (
 	Timer interface {
 		Valid(origin string) bool
-		GetDuration() *time.Duration
+		GetDuration() time.Duration
 		FromText(origin string) (Timer, error)
 		FromTextDefault(origin string, def time.Duration) Timer
 		ToText() string
