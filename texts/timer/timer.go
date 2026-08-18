@@ -220,7 +220,7 @@ func (*Impl) Valid(origin string) bool {
 func (my *Impl) GetDuration() time.Duration { return my.duration }
 
 // FromText 解析字符串并返回时间 duration（支持组合格式如 1w2d, 3d2h15m）
-func (*Impl) FromText(origin string) (Impl, error) {
+func (*Impl) FromText(origin string) (Timer, error) {
 	var (
 		err error
 		t   = Impl{}
@@ -228,17 +228,17 @@ func (*Impl) FromText(origin string) (Impl, error) {
 	origin = strings.ToLower(origin)
 	t.duration, err = parseTimeUnits(origin)
 
-	return t, err
+	return &t, err
 }
 
-func (*Impl) FromTextDefault(origin string, def time.Duration) Impl {
+func (*Impl) FromTextDefault(origin string, def time.Duration) Timer {
 	if !new(Impl).Valid(origin) {
-		return Impl{duration: def}
+		return &Impl{duration: def}
 	}
 
 	dur, err := new(Impl).FromText(origin)
 	if err != nil {
-		return Impl{duration: def}
+		return &Impl{duration: def}
 	}
 
 	return dur
