@@ -217,7 +217,7 @@ func (*Impl) Valid(origin string) bool {
 	return rebuilt.String() == origin
 }
 
-func (my *Impl) GetDuration() *time.Duration { return &my.duration }
+func (my *Impl) GetDuration() time.Duration { return my.duration }
 
 // FromText 解析字符串并返回时间 duration（支持组合格式如 1w2d, 3d2h15m）
 func (*Impl) FromText(origin string) (Timer, error) {
@@ -245,6 +245,4 @@ func (*Impl) FromTextDefault(origin string, def time.Duration) Timer {
 }
 
 // ToText 公开接口：将 duration 转换为人可读的中文时间字符串
-func (my *Impl) ToText() string {
-	return toChinese(my.duration)
-}
+func (my *Impl) ToText() string { return toChinese(my.duration) }
