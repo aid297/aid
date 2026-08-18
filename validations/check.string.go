@@ -38,7 +38,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、[bool|datetime|date|time]、str-time>、str-time>=、str-time<、str-time<=、regex==、regex!=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
+// checkString 检查字符串，支持：required、[bool|datetime|date|timer]、str-timer>、str-timer>=、str-timer<、str-timer<=、regex==、regex!=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		err                    error
@@ -74,7 +74,7 @@ func (my FieldInfo) checkString() FieldInfo {
 	}
 
 	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
-		if strings.HasPrefix(rule, "str-time") {
+		if strings.HasPrefix(rule, "str-timer") {
 			if strTimeMin, include = getRuleStrTimeMin(rule); strTimeMin != nil {
 				if stMin, err = textTime.WhatTimeIsIt(*strTimeMin); err != nil {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(规则)", my.getName(), ErrInvalidFormat))
@@ -194,7 +194,7 @@ func (my FieldInfo) checkString() FieldInfo {
 			if !regexp.MustCompile(patternsForTimeString["DateOnly"]).MatchString(value) {
 				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w", my.getName(), ErrInvalidFormat))
 			}
-		} else if rule == "time" {
+		} else if rule == "timer" {
 			if !regexp.MustCompile(patternsForTimeString["TimeOnly"]).MatchString(value) {
 				my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w", my.getName(), ErrInvalidFormat))
 			}

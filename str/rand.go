@@ -140,7 +140,7 @@ func (my *Rand) S(n int, symbols ...bool) string {
 	return string(b)
 }
 
-// D returns a random time.Duration between min and max: [min, max].
+// D returns a random timer.Duration between min and max: [min, max].
 func (my *Rand) D(min, max time.Duration) time.Duration {
 	multiple := int64(1)
 	if min != 0 {

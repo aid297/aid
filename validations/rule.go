@@ -134,11 +134,11 @@ func getRuleStrTimeMin(rule string) (*string, bool) {
 		ok    bool
 	)
 
-	if value, ok = strings.CutPrefix(rule, "str-time>="); ok {
+	if value, ok = strings.CutPrefix(rule, "str-timer>="); ok {
 		return &value, true
 	}
 
-	if value, ok = strings.CutPrefix(rule, "str-time>"); ok {
+	if value, ok = strings.CutPrefix(rule, "str-timer>"); ok {
 		return &value, false
 	}
 
@@ -151,11 +151,11 @@ func getRuleStrTimeMax(rule string) (*string, bool) {
 		ok    bool
 	)
 
-	if value, ok = strings.CutPrefix(rule, "str-time<="); ok {
+	if value, ok = strings.CutPrefix(rule, "str-timer<="); ok {
 		return &value, true
 	}
 
-	if value, ok = strings.CutPrefix(rule, "str-time<"); ok {
+	if value, ok = strings.CutPrefix(rule, "str-timer<"); ok {
 		return &value, false
 	}
 

@@ -1,4 +1,4 @@
-# textTime - 智能时间解析与格式化库
+# 智能时间解析与格式化库
 
 强大的 Go 时间字符串解析和格式化工具库，支持组合时间格式、纯数字默认值和人性化中文输出。
 
@@ -13,7 +13,7 @@
 ## 📦 安装
 
 ```go
-import "github.com/aid297/aid/v2/consts/textTime"
+import "github.com/aid297/aid/v2/texts"
 ```
 
 ## 🚀 快速开始
@@ -22,15 +22,15 @@ import "github.com/aid297/aid/v2/consts/textTime"
 
 ```go
 // 单一单位
-dur, err := textTime.WhatTimeIsIt("1w")
+dur, err := texts.Timer.WhatTimeIsIt("1w")
 // dur = 7 * 24 * timer.Hour (1周)
 
 // 组合时间
-dur, err := textTime.WhatTimeIsIt("1w2d3h")
+dur, err := texts.Timer.WhatTimeIsIt("1w2d3h")
 // dur = 9天3小时
 
 // 纯数字（默认秒）
-dur, err := textTime.WhatTimeIsIt("100")
+dur, err := texts.Timer.WhatTimeIsIt("100")
 // dur = 100 * timer.Second
 ```
 
@@ -38,32 +38,32 @@ dur, err := textTime.WhatTimeIsIt("100")
 
 ```go
 // 单个单位
-output := textTime.DurationToString(1 * time.Hour)
+output := texts.Timer.DurationToString(1 * time.Hour)
 // output = "1小时"
 
 // 组合单位
-output := textTime.DurationToString(1*time.Hour + 20*time.Minute)
+output := texts.Timer.DurationToString(1*time.Hour + 20*time.Minute)
 // output = "1小时+20分"
 
 // 分级处理
-output := textTime.DurationToString(80 * time.Minute)
+output := texts.Timer.DurationToString(80 * time.Minute)
 // output = "1小时+20分"
 ```
 
 ### 3. 格式验证
 
 ```go
-valid := textTime.IsValidTimeFormat("1w2d")     // true
-valid := textTime.IsValidTimeFormat("100")      // true (纯数字)
-valid := textTime.IsValidTimeFormat("abc")      // false
-valid := textTime.IsValidTimeFormat("1.5w")     // false
+valid := texts.Timer.IsValidTimeFormat("1w2d")     // true
+valid := texts.Timer.IsValidTimeFormat("100")      // true (纯数字)
+valid := texts.Timer.IsValidTimeFormat("abc")      // false
+valid := texts.Timer.IsValidTimeFormat("1.5w")     // false
 ```
 
 ### 4. 默认值处理
 
 ```go
 // 格式无效时返回默认值
-dur := textTime.WhatTimeIsItDefault("invalid", 1*time.Hour)
+dur := texts.Timer.WhatTimeIsItDefault("invalid", 1*time.Hour)
 // dur = 1小时
 ```
 
@@ -83,14 +83,14 @@ dur := textTime.WhatTimeIsItDefault("invalid", 1*time.Hour)
 **示例：**
 ```go
 // 单一单位
-dur, err := textTime.WhatTimeIsIt("1w")    // 7天
-dur, err := textTime.WhatTimeIsIt("2h30m") // 2小时30分
+dur, err := texts.Timer.WhatTimeIsIt("1w")    // 7天
+dur, err := texts.Timer.WhatTimeIsIt("2h30m") // 2小时30分
 
 // 组合单位
-dur, err := textTime.WhatTimeIsIt("1w2d3h") // 9天3小时
+dur, err := texts.Timer.WhatTimeIsIt("1w2d3h") // 9天3小时
 
 // 纯数字
-dur, err := textTime.WhatTimeIsIt("3600")   // 3600秒 = 1小时
+dur, err := texts.Timer.WhatTimeIsIt("3600")   // 3600秒 = 1小时
 ```
 
 ---
@@ -107,9 +107,9 @@ dur, err := textTime.WhatTimeIsIt("3600")   // 3600秒 = 1小时
 
 **示例：**
 ```go
-textTime.DurationToString(100 * time.Second)        // "1分+40秒"
-textTime.DurationToString(2 * time.Hour)            // "2小时"
-textTime.DurationToString(9*24*time.Hour + 3*time.Hour) // "9天+3小时"
+texts.Timer.DurationToString(100 * time.Second)        // "1分+40秒"
+texts.Timer.DurationToString(2 * time.Hour)            // "2小时"
+texts.Timer.DurationToString(9*24*time.Hour + 3*time.Hour) // "9天+3小时"
 ```
 
 ---
@@ -125,11 +125,11 @@ textTime.DurationToString(9*24*time.Hour + 3*time.Hour) // "9天+3小时"
 
 **示例：**
 ```go
-textTime.IsValidTimeFormat("1w2d")    // true
-textTime.IsValidTimeFormat("100")     // true
-textTime.IsValidTimeFormat("abc")     // false
-textTime.IsValidTimeFormat("")        // false
-textTime.IsValidTimeFormat("1.5w")    // false
+texts.Timer.IsValidTimeFormat("1w2d")    // true
+texts.Timer.IsValidTimeFormat("100")     // true
+texts.Timer.IsValidTimeFormat("abc")     // false
+texts.Timer.IsValidTimeFormat("")        // false
+texts.Timer.IsValidTimeFormat("1.5w")    // false
 ```
 
 ---
@@ -141,11 +141,11 @@ textTime.IsValidTimeFormat("1.5w")    // false
 **示例：**
 ```go
 // 有效格式
-dur := textTime.WhatTimeIsItDefault("1w", 1*time.Hour)
+dur := texts.Timer.WhatTimeIsItDefault("1w", 1*time.Hour)
 // dur = 7天
 
 // 无效格式
-dur := textTime.WhatTimeIsItDefault("invalid", 1*time.Hour)
+dur := texts.Timer.WhatTimeIsItDefault("invalid", 1*time.Hour)
 // dur = 1小时（使用默认值）
 ```
 
@@ -169,12 +169,12 @@ dur := textTime.WhatTimeIsItDefault("invalid", 1*time.Hour)
 ```go
 // 输入：80分钟
 dur := 80 * time.Minute
-output := textTime.DurationToString(dur)
+output := texts.Timer.DurationToString(dur)
 // 输出: "1小时+20分"
 
 // 输入：10天
 dur := 10 * 24 * time.Hour
-output := textTime.DurationToString(dur)
+output := texts.Timer.DurationToString(dur)
 // 输出: "1周+3天"
 ```
 
@@ -201,30 +201,30 @@ import (
 func main() {
     // 场景1：解析用户输入的组合时间
     userInput := "1w2d3h"
-    dur, err := textTime.WhatTimeIsIt(userInput)
+    dur, err := texts.Timer.WhatTimeIsIt(userInput)
     if err != nil {
         fmt.Printf("解析失败: %v\n", err)
     } else {
-        output := textTime.DurationToString(dur)
+        output := texts.Timer.DurationToString(dur)
         fmt.Printf("%s → %s\n", userInput, output)
         // 输出: 1w2d3h → 1周+2天+3小时
     }
 
     // 场景2：纯数字默认按秒处理
     seconds := "100"
-    dur, _ = textTime.WhatTimeIsIt(seconds)
-    output := textTime.DurationToString(dur)
+    dur, _ = texts.Timer.WhatTimeIsIt(seconds)
+    output := texts.Timer.DurationToString(dur)
     fmt.Printf("%s → %s\n", seconds, output)
     // 输出: 100 → 1分+40秒
 
     // 场景3：格式验证
-    if textTime.IsValidTimeFormat("1w2d") {
+    if texts.Timer.IsValidTimeFormat("1w2d") {
         fmt.Println("格式合法")
     }
 
     // 场景4：智能分级处理
     dur = 80 * time.Minute
-    output = textTime.DurationToString(dur)
+    output = texts.Timer.DurationToString(dur)
     fmt.Printf("80分钟 → %s\n", output)
     // 输出: 80分钟 → 1小时+20分
 }
@@ -273,13 +273,13 @@ go test -bench=.
 当输入格式不合法时，`WhatTimeIsIt` 会返回错误：
 
 ```go
-dur, err := textTime.WhatTimeIsIt("abc")
+dur, err := texts.Timer.WhatTimeIsIt("abc")
 // err: "未找到有效的时间单元"
 
-dur, err := textTime.WhatTimeIsIt("1x")
+dur, err := texts.Timer.WhatTimeIsIt("1x")
 // err: "时间单位不支持：x"
 
-dur, err := textTime.WhatTimeIsIt("")
+dur, err := texts.Timer.WhatTimeIsIt("")
 // err: "未找到有效的时间单元"
 ```
 

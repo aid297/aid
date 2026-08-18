@@ -6,6 +6,7 @@ import (
 	"github.com/aid297/aid/v2/texts/markdown"
 	"github.com/aid297/aid/v2/texts/rand"
 	"github.com/aid297/aid/v2/texts/template"
+	"github.com/aid297/aid/v2/texts/timer"
 	"github.com/aid297/aid/v2/texts/transfer"
 )
 
@@ -16,4 +17,5 @@ var (
 	Template template.Templater      = (*template.TemplaterImpl)(nil)
 	Transfer transfer.Transfer       = (*transfer.TransferImpl)(nil)
 	Rand     rand.Random             = (*rand.RandomImpl)(nil)
+	Timer    timer.Timer             = (*timer.TimerImpl)(nil)
 )
