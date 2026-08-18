@@ -73,11 +73,11 @@ func (my FieldInfo) checkUint() FieldInfo {
 			if size, eq = getRuleUintSize(rule); size != nil {
 				if eq {
 					if !(cast.ToUint(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToUint(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -162,11 +162,11 @@ func (my FieldInfo) checkUint8() FieldInfo {
 			if size, eq = getRuleUintSize(rule); size != nil {
 				if eq {
 					if !(cast.ToUint(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToUint(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -251,11 +251,11 @@ func (my FieldInfo) checkUint16() FieldInfo {
 			if size, eq = getRuleUintSize(rule); size != nil {
 				if eq {
 					if !(cast.ToUint(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToUint(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -429,11 +429,11 @@ func (my FieldInfo) checkUint64() FieldInfo {
 			if size, eq = getRuleUintSize(rule); size != nil {
 				if eq {
 					if !(cast.ToUint(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToUint(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}

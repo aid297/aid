@@ -73,11 +73,11 @@ func (my FieldInfo) checkInt() FieldInfo {
 			if size, eq = getRuleIntSize(rule); size != nil {
 				if eq {
 					if !(cast.ToInt(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToInt(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -162,11 +162,11 @@ func (my FieldInfo) checkInt8() FieldInfo {
 			if size, eq = getRuleIntSize(rule); size != nil {
 				if eq {
 					if !(cast.ToInt(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToInt(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -250,11 +250,11 @@ func (my FieldInfo) checkInt16() FieldInfo {
 			if size, eq = getRuleIntSize(rule); size != nil {
 				if eq {
 					if !(cast.ToInt(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToInt(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -338,11 +338,11 @@ func (my FieldInfo) checkInt32() FieldInfo {
 			if size, eq = getRuleIntSize(rule); size != nil {
 				if eq {
 					if !(cast.ToInt(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToInt(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}

@@ -59,11 +59,11 @@ func (my FieldInfo) checkSlice() FieldInfo {
 			if size, eq = getRuleIntSize(rule); size != nil {
 				if eq {
 					if !(my.RefValue.Len() == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(my.RefValue.Len() != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %d", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %d", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}

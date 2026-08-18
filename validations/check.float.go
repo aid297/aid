@@ -73,11 +73,11 @@ func (my FieldInfo) checkFloat32() FieldInfo {
 			if size, eq = getRuleFloatSize(rule); size != nil {
 				if eq {
 					if !(cast.ToFloat64(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToFloat64(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
@@ -162,11 +162,11 @@ func (my FieldInfo) checkFloat64() FieldInfo {
 			if size, eq = getRuleFloatSize(rule); size != nil {
 				if eq {
 					if !(cast.ToFloat64(value) == *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
 					}
 				} else {
 					if !(cast.ToFloat64(value) != *size) {
-						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：等于 %f", my.getName(), ErrInvalidLength, *size))
+						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：不等于 %f", my.getName(), ErrInvalidLength, *size))
 					}
 				}
 			}
