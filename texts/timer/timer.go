@@ -13,8 +13,8 @@ type (
 	Timer interface {
 		Valid(origin string) bool
 		GetDuration() time.Duration
-		FromText(origin string) (*Impl, error)
-		FromTextDefault(origin string, def time.Duration) *Impl
+		FromText(origin string) (Timer, error)
+		FromTextDefault(origin string, def time.Duration) Timer
 		ToText() string
 	}
 	Impl struct{ duration time.Duration }
