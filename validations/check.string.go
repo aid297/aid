@@ -50,7 +50,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		ok                     bool
 		pattern                string
 		strTimeMin, strTimeMax *string
-		stMin, stMax, vt       timer.Impl
+		stMin, stMax, vt       timer.Timer
 	)
 
 	if my.Kind != reflect.String {
