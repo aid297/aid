@@ -8,6 +8,7 @@ import (
 	"github.com/aid297/aid/v2/texts/template"
 	"github.com/aid297/aid/v2/texts/timer"
 	"github.com/aid297/aid/v2/texts/transfer"
+	"github.com/aid297/aid/v2/texts/volumer"
 )
 
 var (
@@ -18,4 +19,5 @@ var (
 	Transfer transfer.Transfer       = (*transfer.TransferImpl)(nil)
 	Rand     rand.Random             = (*rand.RandomImpl)(nil)
 	Timer    timer.Timer             = (*timer.TimerImpl)(nil)
+	Volumer  volumer.Volumer         = (*volumer.VolumerImpl)(nil)
 )
