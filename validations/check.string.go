@@ -10,7 +10,7 @@ import (
 
 	"github.com/aid297/aid/v2/anyMaps"
 	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/consts/timeInfo"
+	"github.com/aid297/aid/v2/consts/textTime"
 )
 
 var (
@@ -76,10 +76,10 @@ func (my FieldInfo) checkString() FieldInfo {
 	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
 		if strings.HasPrefix(rule, "str-time") {
 			if strTimeMin, include = getRuleStrTimeMin(rule); strTimeMin != nil {
-				if stMin, err = timeInfo.WhatTimeIsIt(*strTimeMin); err != nil {
+				if stMin, err = textTime.WhatTimeIsIt(*strTimeMin); err != nil {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(规则)", my.getName(), ErrInvalidFormat))
 				} else {
-					if vt, err = timeInfo.WhatTimeIsIt(value); err != nil {
+					if vt, err = textTime.WhatTimeIsIt(value); err != nil {
 						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(值)", my.getName(), ErrInvalidFormat))
 					} else {
 						if include {
@@ -96,7 +96,7 @@ func (my FieldInfo) checkString() FieldInfo {
 			}
 
 			if strTimeMax, include = getRuleStrTimeMax(rule); strTimeMax != nil {
-				if stMax, err = timeInfo.WhatTimeIsIt(*strTimeMax); err != nil {
+				if stMax, err = textTime.WhatTimeIsIt(*strTimeMax); err != nil {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(规则)", my.getName(), ErrInvalidFormat))
 				} else {
 					if include {
