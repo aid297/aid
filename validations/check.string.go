@@ -5,12 +5,12 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/aid297/aid/v2/anyMaps"
 	"github.com/aid297/aid/v2/anySlices"
 	"github.com/aid297/aid/v2/texts"
+	"github.com/aid297/aid/v2/texts/timer"
 )
 
 var (
@@ -50,7 +50,7 @@ func (my FieldInfo) checkString() FieldInfo {
 		ok                     bool
 		pattern                string
 		strTimeMin, strTimeMax *string
-		stMin, stMax, vt       time.Duration
+		stMin, stMax, vt       timer.Timer
 	)
 
 	if my.Kind != reflect.String {
@@ -74,8 +74,8 @@ func (my FieldInfo) checkString() FieldInfo {
 	}
 
 	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
-		if strings.HasPrefix(rule, "str-timer") {
-			if strTimeMin, include = getRuleStrTimeMin(rule); strTimeMin != nil {
+		if strings.HasPrefix(rule, "str-time") || strings.HasPrefix(rule, "text-time") {
+			if strTimeMin, include = getRuleTextTimeMin(rule); strTimeMin != nil {
 				if stMin, err = texts.Timer.FromText(*strTimeMin); err != nil {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(规则)", my.getName(), ErrInvalidFormat))
 				} else {
@@ -83,11 +83,11 @@ func (my FieldInfo) checkString() FieldInfo {
 						my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(值)", my.getName(), ErrInvalidFormat))
 					} else {
 						if include {
-							if !(vt >= stMin) {
+							if !(vt.GetDuration() >= stMin.GetDuration()) {
 								my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：>= %s", my.getName(), ErrInvalidValue, *strTimeMin))
 							}
 						} else {
-							if !(vt > stMin) {
+							if !(vt.GetDuration() > stMin.GetDuration()) {
 								my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：> %s", my.getName(), ErrInvalidValue, *strTimeMin))
 							}
 						}
@@ -95,16 +95,16 @@ func (my FieldInfo) checkString() FieldInfo {
 				}
 			}
 
-			if strTimeMax, include = getRuleStrTimeMax(rule); strTimeMax != nil {
+			if strTimeMax, include = getRuleTextTimeMax(rule); strTimeMax != nil {
 				if stMax, err = texts.Timer.FromText(*strTimeMax); err != nil {
 					my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w(规则)", my.getName(), ErrInvalidFormat))
 				} else {
 					if include {
-						if !(vt <= stMax) {
+						if !(vt.GetDuration() <= stMax.GetDuration()) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：<= %s", my.getName(), ErrInvalidValue, *strTimeMax))
 						}
 					} else {
-						if !(vt < stMax) {
+						if !(vt.GetDuration() < stMax.GetDuration()) {
 							my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：< %s", my.getName(), ErrInvalidValue, *strTimeMax))
 						}
 					}
