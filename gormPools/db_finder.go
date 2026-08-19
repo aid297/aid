@@ -74,10 +74,10 @@ type (
 	}
 )
 
-func NewFinder(db *gorm.DB) Finder { return &FinderImpl{db: db, total: -1} }
+func NewFinder(db *gorm.DB) Finder { return &FinderImpl{db: db} }
 
 // // New 实例化：查询帮助器
-// func (*FinderImpl) New(db *gorm.DB) *FinderImpl { return &FinderImpl{db: db, total: -1} }
+// func (*FinderImpl) New(db *gorm.DB) *FinderImpl { return &FinderImpl{db: db} }
 
 // GetDB 获取 gorm.DB 对象
 func (my *FinderImpl) GetDB() *gorm.DB { return my.db }
