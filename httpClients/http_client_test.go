@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/aid297/aid/v2/compressions/zlib"
-	"github.com/aid297/aid/v2/consts/volumeInfo"
 	"github.com/aid297/aid/v2/httpClients"
 	"github.com/aid297/aid/v2/secrets/symmetric/aes"
+	"github.com/aid297/aid/v2/texts/volumer"
 )
 
 func getCAPool() *x509.CertPool {
@@ -278,7 +278,7 @@ func Test4(t *testing.T) {
 		defer os.Remove(tempFileName)
 
 		// 写入足够大的内容来测试切块
-		largeContent := make([]byte, 6*volumeInfo.MB) // 6MB
+		largeContent := make([]byte, int(6*volumer.MB)) // 6MB
 		for i := range largeContent {
 			largeContent[i] = byte(i % 256)
 		}
@@ -288,7 +288,7 @@ func Test4(t *testing.T) {
 		tempFile.Close()
 
 		// 可以通过 SetDefaultFileSplitSize 来设置默认的切块大小
-		httpClients.SetDefaultFileSplitSize(2 * volumeInfo.MB)
+		httpClients.SetDefaultFileSplitSize(int64(2 * volumer.MB))
 
 		// 使用切块模式（4个协程）
 		_, err = httpClients.New(
@@ -391,7 +391,7 @@ func Test4(t *testing.T) {
 		tempFileName := tempFile.Name()
 		defer os.Remove(tempFileName)
 
-		largeContent := make([]byte, 7*volumeInfo.MB) // 7MB
+		largeContent := make([]byte, int(7*volumer.MB)) // 7MB
 		for i := range largeContent {
 			largeContent[i] = byte(i % 256)
 		}

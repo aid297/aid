@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/v2/operations"
 	"github.com/aid297/aid/v2/str"
 )
 
@@ -41,13 +40,14 @@ type (
 		FindUseCondition(finderCondition *FinderCondition, page, size int, ret any) Finder
 		FindOnlyCondition(finderCondition *FinderCondition, ret any) Finder
 		Error() error
-		finderNext() Finder
+		// finderNext() Finder
 	}
 
 	// FinderImpl 查询帮助器
 	FinderImpl struct {
-		db    *gorm.DB
-		total int64
+		db             *gorm.DB
+		total          int64
+		needPagination bool
 	}
 
 	// FinderCondition 查询条件
@@ -104,7 +104,7 @@ func (my *FinderImpl) Ex(functions ...func(db *gorm.DB)) Finder {
 // TryPagination 尝试分页
 func (my *FinderImpl) TryPagination(page, size int) Finder {
 	if page > 0 && size > 0 {
-		if my.total == -1 {
+		if my.needPagination {
 			if my.db.Count(&my.total).Error != nil {
 				return my
 			}
@@ -168,7 +168,7 @@ func (my *FinderImpl) When(condition bool, query any, args ...any) Finder {
 func (my *FinderImpl) WhenIn(condition bool, query any, args any) Finder {
 	if condition {
 		ref := reflect.ValueOf(args)
-		if ref.Kind() == reflect.Ptr && !ref.IsNil() {
+		if ref.Kind() == reflect.Pointer && !ref.IsNil() {
 			my.db.Where(str.APP.Buffer.JoinStringLimit(" ", cast.ToString(query), "in", "(?)"), ref.Elem().Interface())
 			// my.db.Where(fmt.Sprintf("%v in (?)", query), ref.Elem().Interface())
 		} else {
@@ -195,7 +195,7 @@ func (my *FinderImpl) WhenInPtr(condition bool, query any, args any) Finder {
 func (my *FinderImpl) WhenNotIn(condition bool, query any, args any) Finder {
 	if condition {
 		ref := reflect.ValueOf(args)
-		if ref.Kind() == reflect.Ptr && !ref.IsNil() {
+		if ref.Kind() == reflect.Pointer && !ref.IsNil() {
 			my.db.Where(str.APP.Buffer.JoinStringLimit(" ", cast.ToString(query), "not", "in", "(?)"), ref.Elem().Interface())
 			// my.db.Where(fmt.Sprintf("%v not in (?)", query), ref.Elem().Interface())
 		} else {
@@ -420,7 +420,10 @@ func (my *FinderImpl) QueryUseCondition(finderCondition *FinderCondition) Finder
 
 // FindUseMap 自动填充查询条件并查询：使用map[string][]any
 func (my *FinderImpl) FindUseMap(queries map[string][]any, preloads []string, orders []string, page, size int, ret any) Finder {
-	return my.QueryUseMap(queries).TryPagination(page, size).TryOrder(orders...).Find(ret, preloads...).finderNext()
+	my.needPagination = page > 0 && size > 0
+
+	my.QueryUseMap(queries).TryPagination(page, size).TryOrder(orders...).Find(ret, preloads...)
+	return my
 }
 
 // FindUseCondition 自动填充查询条件并查询：使用FinderCondition
@@ -429,22 +432,30 @@ func (my *FinderImpl) FindUseCondition(finderCondition *FinderCondition, page, s
 		page = finderCondition.Page
 		size = finderCondition.PageSize
 	}
-	return my.QueryUseCondition(finderCondition).TryPagination(page, size).Find(ret).finderNext()
+
+	my.needPagination = page > 0 && size > 0
+
+	my.QueryUseCondition(finderCondition).TryPagination(page, size).Find(ret)
+	return my
 }
 
 // FindOnlyCondition  自动填充查询条件并查询：使用FinderCondition
 func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret any) Finder {
 	if finderCondition == nil {
 		my.db.Find(ret)
-		return my.finderNext()
+		return my
 	}
 
-	return my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.PageSize).Find(ret).finderNext()
+	my.needPagination = finderCondition.Page > 0 && finderCondition.PageSize > 0
+
+	my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.PageSize).Find(ret)
+	return my
 }
 
 func (my *FinderImpl) Error() error { return my.db.Error }
 
-func (my *FinderImpl) finderNext() Finder {
-	my.total = operations.NewTernary(operations.TrueValue[int64](0), operations.FalseValue(my.total)).GetByValue(my.total == -1)
-	return my
-}
+// func (my *FinderImpl) finderNext() Finder {
+
+// 	my.total = operations.NewTernary(operations.TrueValue[int64](0), operations.FalseValue(my.total)).GetByValue(my.total == -1)
+// 	return my
+// }

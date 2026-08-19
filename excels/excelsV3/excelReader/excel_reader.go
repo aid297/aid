@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aid297/aid/v2/consts/volumeInfo"
+	"github.com/aid297/aid/v2/texts/volumer"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -36,8 +36,8 @@ type (
 
 func NewReader(attrs ...ReaderAttribute) Reader {
 	return (&Read{
-		unzipXMLSizeLimit: 10 * volumeInfo.MB,
-		unzipSizeLimit:    100 * volumeInfo.MB,
+		unzipXMLSizeLimit: int64(10 * volumer.MB),
+		unzipSizeLimit:    int64(100 * volumer.MB),
 	}).setAttrs(attrs...)
 }
 

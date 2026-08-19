@@ -16,7 +16,7 @@ func TestOnceRedisPool(t *testing.T) {
 		redisPools.Pool("order", 1),
 	)
 
-	prefix, rc := rp.GetClient("user")
+	prefix, rc, _ := rp.GetClient("user")
 	if rc == nil {
 		t.Fatal("user client is nil")
 	}
