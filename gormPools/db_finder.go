@@ -53,11 +53,11 @@ type (
 	// FinderCondition 查询条件
 	FinderCondition struct {
 		Table    *string  `json:"table,omitempty"`
-		Queries  []Query  `json:"queries,omitempty"`  // 查询条件
-		Orders   []string `json:"orders,omitempty"`   // 排序
-		Preloads []string `json:"preloads,omitempty"` // 预加载
-		Page     int      `json:"page,omitempty"`     // 页码
-		PageSize int      `json:"pageSize,omitempty"` // 页容量
+		Queries  []Query  `json:"queries,omitempty"`   // 查询条件
+		Orders   []string `json:"orders,omitempty"`    // 排序
+		Preloads []string `json:"preloads,omitempty"`  // 预加载
+		Page     int      `json:"page,omitempty"`      // 页码
+		PageSize int      `json:"page_size,omitempty"` // 页容量
 	}
 
 	// Condition 查询
