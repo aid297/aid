@@ -17,7 +17,13 @@ type BinaryUUID uuid.UUID
 func (b BinaryUUID) ToUUID() uuid.UUID { return uuid.UUID(b) }
 
 // String 返回标准 UUID 字符串格式（36字符）
-func (b BinaryUUID) String() string { return uuid.UUID(b).String() }
+func (b BinaryUUID) String() string {
+	if b.IsNil() {
+		return ""
+	}
+
+	return uuid.UUID(b).String()
+}
 
 // IsNil 判断是否为零值
 func (b BinaryUUID) IsNil() bool { return uuid.UUID(b) == uuid.Nil }
