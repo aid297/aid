@@ -270,32 +270,6 @@ func getRuleIn(rule string) (in []string) {
 	return
 }
 
-func getRuleRegexEq(rule string) (pattern string) {
-	var (
-		value string
-		ok    bool
-	)
-	if value, ok = strings.CutPrefix(rule, "regex=="); ok {
-		pattern = value
-		return
-	}
-
-	return
-}
-
-func getRuleRegexNotEq(rule string) (pattern string) {
-	var (
-		value string
-		ok    bool
-	)
-	if value, ok = strings.CutPrefix(rule, "regex!="); ok {
-		pattern = value
-		return
-	}
-
-	return
-}
-
 func getRuleNotIn(rule string) (notIn []string) {
 	var (
 		value string
