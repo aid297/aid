@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aid297/aid/v2/texts/markdown"
+	"github.com/aid297/aid/v3/texts/markdown"
 )
 
 func TestNormal(t *testing.T) {

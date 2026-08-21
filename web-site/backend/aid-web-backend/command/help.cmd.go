@@ -1,6 +1,6 @@
 package command
 
-import "github.com/aid297/aid/v2/debugLogs"
+import "github.com/aid297/aid/v3/debugLogs"
 
 type HelpCommand struct{}
 

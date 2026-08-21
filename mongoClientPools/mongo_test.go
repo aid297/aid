@@ -4,7 +4,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/aid297/aid/v2/anySlices"
+	"github.com/aid297/aid/v3/anySlices"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -3,7 +3,7 @@ package str_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/str"
+	"github.com/aid297/aid/v3/str"
 )
 
 type testTemplate2Data struct {

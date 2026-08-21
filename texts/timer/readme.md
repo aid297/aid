@@ -13,7 +13,7 @@
 ## 📦 安装
 
 ```go
-import "github.com/aid297/aid/v2/texts"
+import "github.com/aid297/aid/v3/texts"
 ```
 
 ## 🚀 快速开始
@@ -195,7 +195,7 @@ package main
 
 import (
     "fmt"
-    "github.com/aid297/aid/v2/consts/textTime"
+    "github.com/aid297/aid/v3/consts/textTime"
 )
 
 func main() {

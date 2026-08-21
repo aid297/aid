@@ -7,7 +7,7 @@
    import (
    	`fmt`
    
-   	`github.com/aid297/aid/v2/mongoClientPool`
+   	`github.com/aid297/aid/v3/mongoClientPool`
    )
    
    func main() {
@@ -37,7 +37,7 @@
    	`log`
    	`testing`
    
-   	`github.com/aid297/aid/v2/mongoClientPool`
+   	`github.com/aid297/aid/v3/mongoClientPool`
    	`go.mongodb.org/mongo-driver/mongo`
    )
    
@@ -103,7 +103,7 @@
    import (
    	. `fmt`
    
-   	`github.com/aid297/aid/v2/mongoClientPool`
+   	`github.com/aid297/aid/v3/mongoClientPool`
    	`go.mongodb.org/mongo-driver/bson/primitive`
    	`go.mongodb.org/mongo-driver/mongo`
    )
@@ -183,7 +183,7 @@
    import (
    	. `fmt`
    
-   	`github.com/aid297/aid/v2/mongoClientPool`
+   	`github.com/aid297/aid/v3/mongoClientPool`
    	`go.mongodb.org/mongo-driver/mongo`
    )
    
@@ -241,7 +241,7 @@
    import (
    	. `fmt`
    
-   	`github.com/aid297/aid/v2/mongoClientPool`
+   	`github.com/aid297/aid/v3/mongoClientPool`
    	`go.mongodb.org/mongo-driver/mongo`
    )
    
@@ -299,7 +299,7 @@
    import (
    	. `fmt`
    
-   	`github.com/aid297/aid/v2/mongoClientPool`
+   	`github.com/aid297/aid/v3/mongoClientPool`
    )
    
    type (
@@ -356,8 +356,8 @@
    import (
    	. `fmt`
    
-   	`github.com/aid297/aid/v2/array`
-   	`github.com/aid297/aid/v2/mongoClientPool`
+   	`github.com/aid297/aid/v3/array`
+   	`github.com/aid297/aid/v3/mongoClientPool`
    )
    
    type (
@@ -474,7 +474,7 @@
    import (
    	. `fmt`
    
-   	`github.com/aid297/aid/v2/mongoClientPool`
+   	`github.com/aid297/aid/v3/mongoClientPool`
    	`go.mongodb.org/mongo-driver/mongo`
    )
    
@@ -533,7 +533,7 @@
    import (
    	. `fmt`
    
-   	`github.com/aid297/aid/v2/mongoClientPool`
+   	`github.com/aid297/aid/v3/mongoClientPool`
    	`go.mongodb.org/mongo-driver/mongo`
    )
    

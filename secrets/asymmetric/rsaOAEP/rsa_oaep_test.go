@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	myrsa "github.com/aid297/aid/v2/secrets/asymmetric/rsa"
-	"github.com/aid297/aid/v2/secrets/asymmetric/rsaOAEP"
+	myrsa "github.com/aid297/aid/v3/secrets/asymmetric/rsa"
+	"github.com/aid297/aid/v3/secrets/asymmetric/rsaOAEP"
 )
 
 func TestRSAOAEP_EncryptDecrypt_RoundTrip(t *testing.T) {

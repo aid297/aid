@@ -10,13 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/v2/filesystems"
-	"github.com/aid297/aid/v2/str"
-	"github.com/aid297/aid/v2/validations"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/response"
+	"github.com/aid297/aid/v3/filesystems"
+	"github.com/aid297/aid/v3/str"
+	"github.com/aid297/aid/v3/validations"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/module/httpModule"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/response"
 )
 
 type FileManagerAPI struct{}

@@ -12,7 +12,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 var _ secrets.Symmetric = (*AES)(nil)

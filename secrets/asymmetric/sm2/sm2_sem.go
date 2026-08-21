@@ -5,9 +5,10 @@ import (
 	"encoding/base64"
 	"errors"
 
-	"github.com/aid297/aid/v2/secrets"
 	"github.com/tjfoc/gmsm/sm2"
 	"github.com/tjfoc/gmsm/x509"
+
+	"github.com/aid297/aid/v3/secrets"
 )
 
 type SM2Sem struct {

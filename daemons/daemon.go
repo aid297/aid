@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aid297/aid/v2/filesystems"
-	"github.com/aid297/aid/v2/operations"
+	"github.com/aid297/aid/v3/filesystems"
+	"github.com/aid297/aid/v3/operations"
 )
 
 // Daemon 守护进程服务提供者

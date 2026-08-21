@@ -1,6 +1,6 @@
 package gormPools
 
-import "github.com/aid297/aid/v2/settings"
+import "github.com/aid297/aid/v3/settings"
 
 type (
 	DBSetting struct {

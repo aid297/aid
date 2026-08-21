@@ -11,7 +11,7 @@ import (
 
 	"encoding/pem"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 type RSASem struct {

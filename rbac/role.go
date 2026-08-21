@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/str"
+	"github.com/aid297/aid/v3/anySlices"
+	"github.com/aid297/aid/v3/str"
 )
 
 type Role struct {

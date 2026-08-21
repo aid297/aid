@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/v2/debugLogs"
+	"github.com/aid297/aid/v3/debugLogs"
 )
 
 func operations() error {

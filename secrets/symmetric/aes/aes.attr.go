@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 func validateKeyBits(bits int) error {

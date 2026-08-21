@@ -8,7 +8,7 @@ import (
 	"encoding/pem"
 	"errors"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 type Ed25519Sem struct {

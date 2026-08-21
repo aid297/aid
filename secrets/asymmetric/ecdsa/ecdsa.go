@@ -8,7 +8,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 var _ secrets.Asymmetric = (*ECDSA)(nil)

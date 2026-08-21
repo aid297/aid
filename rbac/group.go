@@ -3,7 +3,7 @@ package rbac
 import (
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/v2/str"
+	"github.com/aid297/aid/v3/str"
 )
 
 type Group struct {

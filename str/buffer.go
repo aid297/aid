@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/digest"
+	"github.com/aid297/aid/v3/digest"
 )
 
 type Buffer struct {

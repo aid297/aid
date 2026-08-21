@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/v2/secrets"
-	"github.com/aid297/aid/v2/secrets/asymmetric/rsa"
-	"github.com/aid297/aid/v2/secrets/jwt"
+	"github.com/aid297/aid/v3/secrets"
+	"github.com/aid297/aid/v3/secrets/asymmetric/rsa"
+	"github.com/aid297/aid/v3/secrets/jwt"
 )
 
 func TestGenerate(t *testing.T) {

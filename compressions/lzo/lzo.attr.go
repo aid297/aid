@@ -5,8 +5,8 @@ import (
 
 	"github.com/cyberdelia/lzo"
 
-	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/compressions"
+	"github.com/aid297/aid/v3/anySlices"
+	"github.com/aid297/aid/v3/compressions"
 )
 
 func Level(level int) compressions.CompressorAttr {

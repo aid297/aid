@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/aid297/aid/v2/filesystems"
+	"github.com/aid297/aid/v3/filesystems"
 )
 
 // ZapProvider Zap日志服务提供者

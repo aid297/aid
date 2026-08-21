@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/v2/compressions/zlib"
-	"github.com/aid297/aid/v2/httpClients"
-	"github.com/aid297/aid/v2/secrets/symmetric/aes"
-	"github.com/aid297/aid/v2/texts/volumer"
+	"github.com/aid297/aid/v3/compressions/zlib"
+	"github.com/aid297/aid/v3/httpClients"
+	"github.com/aid297/aid/v3/secrets/symmetric/aes"
+	"github.com/aid297/aid/v3/texts/volumer"
 )
 
 func getCAPool() *x509.CertPool {

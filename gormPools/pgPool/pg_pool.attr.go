@@ -1,6 +1,6 @@
 package pgPool
 
-import "github.com/aid297/aid/v2/gormPools"
+import "github.com/aid297/aid/v3/gormPools"
 
 type PGPoolAttr func(*PGPoolImpl)
 

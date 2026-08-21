@@ -8,8 +8,8 @@
    	`fmt`
    	`time`
    
-   	`github.com/aid297/aid/v2/ptr`
-   	`github.com/aid297/aid/v2/validator/validatorV3`
+   	`github.com/aid297/aid/v3/ptr`
+   	`github.com/aid297/aid/v3/validator/validatorV3`
    )
    
    type UserRequest struct {
@@ -97,7 +97,7 @@
    	"testing"
    	"time"
    
-   	"github.com/aid297/aid/v2/ptr"
+   	"github.com/aid297/aid/v3/ptr"
    )
    
    type (

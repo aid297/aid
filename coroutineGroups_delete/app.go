@@ -1,6 +1,6 @@
 package coroutineGroups
 
-import `github.com/aid297/aid/v2/coroutineGroups_delete/coroutineGroupV2`
+import "github.com/aid297/aid/v3/coroutineGroups_delete/coroutineGroupV2"
 
 var (
 	CoroutineGroupV1 CoroutineGroup[any]                  = (*CoroutineGroupImpl[any])(nil)

@@ -9,7 +9,7 @@
    import (
    	`fmt`
    
-   	`github.com/aid297/aid/v2/httpClients`
+   	`github.com/aid297/aid/v3/httpClients`
    )
    
    func main() {
@@ -41,8 +41,8 @@
    	`log`
    	`net/http`
    
-   	`github.com/aid297/aid/v2/httpClients`
-   	`github.com/aid297/aid/v2/time`
+   	`github.com/aid297/aid/v3/httpClients`
+   	`github.com/aid297/aid/v3/time`
    )
    
    func main() {
@@ -307,9 +307,9 @@ func Test3(t *testing.T) {
 package main
 
 import (
-	"github.com/aid297/aid/v2/compressions/zlib"
-	"github.com/aid297/aid/v2/httpClients"
-	"github.com/aid297/aid/v2/secrets/symmetric/aes"
+	"github.com/aid297/aid/v3/compressions/zlib"
+	"github.com/aid297/aid/v3/httpClients"
+	"github.com/aid297/aid/v3/secrets/symmetric/aes"
 )
 
 func main() {

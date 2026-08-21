@@ -7,9 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aid297/aid/v2/debugLogs"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+
+	"github.com/aid297/aid/v3/debugLogs"
 )
 
 type (

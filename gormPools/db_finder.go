@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
-	"github.com/aid297/aid/v2/str"
+	"github.com/aid297/aid/v3/str"
 )
 
 var _ Finder = (*FinderImpl)(nil)

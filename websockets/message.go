@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/aid297/aid/v2/operations"
+	"github.com/aid297/aid/v3/operations"
 )
 
 type Message struct {

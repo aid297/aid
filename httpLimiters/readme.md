@@ -9,7 +9,7 @@
    	`fmt`
    	`time`
    
-   	`github.com/aid297/aid/v2/httpLimiter`
+   	`github.com/aid297/aid/v3/httpLimiter`
    )
    
    func main() {
@@ -29,7 +29,7 @@
    	`fmt`
    	`time`
    
-   	`github.com/aid297/aid/v2/httpLimiter`
+   	`github.com/aid297/aid/v3/httpLimiter`
    )
    
    func main() {

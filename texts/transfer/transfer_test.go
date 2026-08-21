@@ -3,7 +3,7 @@ package transfer_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/texts/transfer"
+	"github.com/aid297/aid/v3/texts/transfer"
 )
 
 // ==================== PascalCase 转换 ====================

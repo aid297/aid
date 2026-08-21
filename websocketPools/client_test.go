@@ -4,7 +4,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/aid297/aid/v2/debugLogs"
+	"github.com/aid297/aid/v3/debugLogs"
 	"github.com/gorilla/websocket"
 )
 

@@ -10,9 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/v2/filesystems"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule"
+	"github.com/aid297/aid/v3/filesystems"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/module/httpModule"
 )
 
 type RezipAPI struct{}

@@ -3,7 +3,7 @@ package validations_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/validations"
+	"github.com/aid297/aid/v3/validations"
 )
 
 func TestCustomType(t *testing.T) {

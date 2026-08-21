@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/aid297/aid/v2/secrets"
-	"github.com/aid297/aid/v2/secrets/asymmetric/sm2"
+	"github.com/aid297/aid/v3/secrets"
+	"github.com/aid297/aid/v3/secrets/asymmetric/sm2"
 )
 
 func TestGenerateKeyPair(t *testing.T) {

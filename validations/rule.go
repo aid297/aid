@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/points"
+	"github.com/aid297/aid/v3/anySlices"
+	"github.com/aid297/aid/v3/points"
 )
 
 func getRuleRequired(rules anySlices.AnySlicer[string]) bool { return rules.In("required", "!") }

@@ -6,9 +6,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/aid297/aid/v2/gormPools"
-	"github.com/aid297/aid/v2/gormPools/mysqlPool"
-	"github.com/aid297/aid/v2/rbac"
+	"github.com/aid297/aid/v3/gormPools"
+	"github.com/aid297/aid/v3/gormPools/mysqlPool"
+	"github.com/aid297/aid/v3/rbac"
 )
 
 func init() {

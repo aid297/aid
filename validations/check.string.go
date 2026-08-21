@@ -7,10 +7,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/aid297/aid/v2/anyMaps"
-	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/texts"
-	"github.com/aid297/aid/v2/texts/timer"
+	"github.com/aid297/aid/v3/anyMaps"
+	"github.com/aid297/aid/v3/anySlices"
+	"github.com/aid297/aid/v3/texts"
+	"github.com/aid297/aid/v3/texts/timer"
 )
 
 var (

@@ -9,7 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 var _ secrets.Asymmetric = (*RSA)(nil)

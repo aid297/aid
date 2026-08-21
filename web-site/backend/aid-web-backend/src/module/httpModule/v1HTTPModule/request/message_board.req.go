@@ -3,7 +3,7 @@ package request
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/aid297/aid/v2/validations"
+	"github.com/aid297/aid/v3/validations"
 )
 
 type (

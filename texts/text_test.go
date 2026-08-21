@@ -1,10 +1,10 @@
 package texts_test
 
 import (
-	`testing`
+	"testing"
 
-	`github.com/aid297/aid/v2/texts`
-	`github.com/aid297/aid/v2/texts/template`
+	"github.com/aid297/aid/v3/texts"
+	"github.com/aid297/aid/v3/texts/template"
 )
 
 func Test1(t *testing.T) {

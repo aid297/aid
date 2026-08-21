@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aid297/aid/v2/gormPools"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
+
+	"github.com/aid297/aid/v3/gormPools"
 )
 
 type (

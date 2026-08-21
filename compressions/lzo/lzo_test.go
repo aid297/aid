@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/aid297/aid/v2/compressions"
-	"github.com/aid297/aid/v2/compressions/lzo"
+	"github.com/aid297/aid/v3/compressions"
+	"github.com/aid297/aid/v3/compressions/lzo"
 )
 
 func TestEncodeAndDecode(t *testing.T) {

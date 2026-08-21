@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/operations"
+	"github.com/aid297/aid/v3/operations"
 )
 
 func Timeout(second time.Duration) gin.HandlerFunc {

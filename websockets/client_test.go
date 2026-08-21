@@ -10,8 +10,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/aid297/aid/v2/debugLogs"
-	"github.com/aid297/aid/v2/websockets"
+	"github.com/aid297/aid/v3/debugLogs"
+	"github.com/aid297/aid/v3/websockets"
 )
 
 func onLine() (*websockets.Client, error) {

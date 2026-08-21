@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/aid297/aid/v2/anyMaps"
+	"github.com/aid297/aid/v3/anyMaps"
 )
 
 type (

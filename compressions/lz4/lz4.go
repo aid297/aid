@@ -6,7 +6,7 @@ import (
 
 	lz4 "github.com/pierrec/lz4/v4"
 
-	"github.com/aid297/aid/v2/compressions"
+	"github.com/aid297/aid/v3/compressions"
 )
 
 var _ compressions.Compressor = (*LZ4)(nil)

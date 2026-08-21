@@ -9,8 +9,8 @@
    	"bytes"
    	"testing"
    
-   	"github.com/aid297/aid/v2/compressions"
-   	"github.com/aid297/aid/v2/compressions/zlib"
+   	"github.com/aid297/aid/v3/compressions"
+   	"github.com/aid297/aid/v3/compressions/zlib"
    )
    
    func TestEncodeAndDecode(t *testing.T) {
@@ -143,8 +143,8 @@
    
    	"github.com/klauspost/compress/zstd"
    
-   	"github.com/aid297/aid/v2/compressions"
-   	"github.com/aid297/aid/v2/compressions/zstd4"
+   	"github.com/aid297/aid/v3/compressions"
+   	"github.com/aid297/aid/v3/compressions/zstd4"
    )
    
    func TestEncodeAndDecode(t *testing.T) {
@@ -294,8 +294,8 @@
    	"bytes"
    	"testing"
    
-   	"github.com/aid297/aid/v2/compressions"
-   	"github.com/aid297/aid/v2/compressions/lzo"
+   	"github.com/aid297/aid/v3/compressions"
+   	"github.com/aid297/aid/v3/compressions/lzo"
    )
    
    func TestEncodeAndDecode(t *testing.T) {
@@ -439,8 +439,8 @@
    	"bytes"
    	"testing"
    
-   	"github.com/aid297/aid/v2/compressions"
-   	"github.com/aid297/aid/v2/compressions/lz4"
+   	"github.com/aid297/aid/v3/compressions"
+   	"github.com/aid297/aid/v3/compressions/lz4"
    )
    
    func TestEncodeAndDecode(t *testing.T) {

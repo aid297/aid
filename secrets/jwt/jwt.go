@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 // Header JWT 头部

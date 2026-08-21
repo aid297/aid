@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/module/httpModule"
 )
 
 func RecoverHandler(c *gin.Context) {

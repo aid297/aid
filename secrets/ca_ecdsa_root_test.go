@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/v2/filesystems"
-	"github.com/aid297/aid/v2/secrets"
-	myECDSA "github.com/aid297/aid/v2/secrets/asymmetric/ecdsa"
+	"github.com/aid297/aid/v3/filesystems"
+	"github.com/aid297/aid/v3/secrets"
+	myECDSA "github.com/aid297/aid/v3/secrets/asymmetric/ecdsa"
 )
 
 var testPath = filepath.Join("test.data", "ecdsa")

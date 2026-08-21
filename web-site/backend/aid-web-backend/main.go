@@ -8,12 +8,12 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/daemons"
-	"github.com/aid297/aid/v2/debugLogs"
-	"github.com/aid297/aid/v2/operations"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/command"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/initialize"
+	"github.com/aid297/aid/v3/daemons"
+	"github.com/aid297/aid/v3/debugLogs"
+	"github.com/aid297/aid/v3/operations"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/command"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/initialize"
 )
 
 type ConsoleArgs struct {

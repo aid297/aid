@@ -9,10 +9,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/v2/debugLogs"
-	"github.com/aid297/aid/v2/filesystems"
-	"github.com/aid297/aid/v2/str"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v3/debugLogs"
+	"github.com/aid297/aid/v3/filesystems"
+	"github.com/aid297/aid/v3/str"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/global"
 )
 
 type SFTPServiceCommand struct{}

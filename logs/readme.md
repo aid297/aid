@@ -7,7 +7,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aid297/aid/v2/logger"
+	"github.com/aid297/aid/v3/logger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

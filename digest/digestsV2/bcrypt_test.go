@@ -3,7 +3,7 @@ package digestsV2_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/digest/digestsV2"
+	"github.com/aid297/aid/v3/digest/digestsV2"
 )
 
 func Test1(t *testing.T) {

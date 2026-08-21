@@ -6,7 +6,7 @@ package main
 import (
 	. `fmt`
 
-	"github.com/aid297/aid/v2/ptr"
+	"github.com/aid297/aid/v3/ptr"
 )
 
 func main() {

@@ -1,6 +1,6 @@
 package response
 
-import "github.com/aid297/aid/v2/filesystems"
+import "github.com/aid297/aid/v3/filesystems"
 
 type (
 	FileUploadResponse struct {

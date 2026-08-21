@@ -3,7 +3,7 @@ package v1HTTPRoute
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/api/httpAPI/v1HTTPAPI"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/api/httpAPI/v1HTTPAPI"
 )
 
 type RezipRoute struct{}

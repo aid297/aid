@@ -3,7 +3,7 @@ package lz4
 import (
 	"errors"
 
-	"github.com/aid297/aid/v2/compressions"
+	"github.com/aid297/aid/v3/compressions"
 )
 
 // Level 设置 lz4 压缩等级: 0=Fast(默认), 1~9=Level1~Level9

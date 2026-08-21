@@ -3,7 +3,7 @@ package rpcClients
 import (
 	"sync"
 
-	"github.com/aid297/aid/v2/anyMaps"
+	"github.com/aid297/aid/v3/anyMaps"
 )
 
 type Pool struct {

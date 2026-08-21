@@ -11,8 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/operations"
+	"github.com/aid297/aid/v3/anySlices"
+	"github.com/aid297/aid/v3/operations"
 )
 
 type (

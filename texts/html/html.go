@@ -1,6 +1,6 @@
 package html
 
-import `github.com/aid297/aid/v2/texts/buffer`
+import "github.com/aid297/aid/v3/texts/buffer"
 
 type (
 	HTMLWriter interface {

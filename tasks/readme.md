@@ -6,7 +6,7 @@ package main
 import (
 	`fmt`
 
-	`github.com/aid297/aid/v2/task`
+	`github.com/aid297/aid/v3/task`
 )
 
 func main() {

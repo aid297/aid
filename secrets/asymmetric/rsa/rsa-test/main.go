@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/aid297/aid/v2/secrets"
-	"github.com/aid297/aid/v2/secrets/asymmetric/rsa"
-	"github.com/aid297/aid/v2/secrets/symmetric/aes"
+	"github.com/aid297/aid/v3/secrets"
+	"github.com/aid297/aid/v3/secrets/asymmetric/rsa"
+	"github.com/aid297/aid/v3/secrets/symmetric/aes"
 )
 
 // 1. 文件加密/解密演示（RSA + AES）

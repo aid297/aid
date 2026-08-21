@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aid297/aid/v2/anyMaps"
+	"github.com/aid297/aid/v3/anyMaps"
 
 	"github.com/gorilla/websocket"
 )

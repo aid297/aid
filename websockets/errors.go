@@ -3,9 +3,9 @@ package websockets
 import (
 	"reflect"
 
-	"github.com/aid297/aid/v2/anySlices"
+	"github.com/aid297/aid/v3/anySlices"
 
-	"github.com/aid297/aid/v2/myError"
+	"github.com/aid297/aid/v3/myError"
 )
 
 type (

@@ -3,7 +3,7 @@ package operations
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/debugLogs"
+	"github.com/aid297/aid/v3/debugLogs"
 )
 
 func Test1(t *testing.T) {

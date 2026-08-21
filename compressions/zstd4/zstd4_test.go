@@ -6,8 +6,8 @@ import (
 
 	"github.com/klauspost/compress/zstd"
 
-	"github.com/aid297/aid/v2/compressions"
-	"github.com/aid297/aid/v2/compressions/zstd4"
+	"github.com/aid297/aid/v3/compressions"
+	"github.com/aid297/aid/v3/compressions/zstd4"
 )
 
 func TestEncodeAndDecode(t *testing.T) {

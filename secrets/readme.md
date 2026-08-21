@@ -1057,9 +1057,9 @@
       	"log"
       	"os"
       
-      	"github.com/aid297/aid/v2/secrets"
-      	"github.com/aid297/aid/v2/secrets/asymmetric/sm2"
-      	"github.com/aid297/aid/v2/secrets/symmetric/sm4"
+      	"github.com/aid297/aid/v3/secrets"
+      	"github.com/aid297/aid/v3/secrets/asymmetric/sm2"
+      	"github.com/aid297/aid/v3/secrets/symmetric/sm4"
       )
       
       // TestFileEncrypt 1. 文件加密/解密演示
@@ -1277,9 +1277,9 @@
       	"log"
       	"os"
       
-      	"github.com/aid297/aid/v2/secrets"
-      	"github.com/aid297/aid/v2/secrets/asymmetric/rsa"
-      	"github.com/aid297/aid/v2/secrets/symmetric/aes"
+      	"github.com/aid297/aid/v3/secrets"
+      	"github.com/aid297/aid/v3/secrets/asymmetric/rsa"
+      	"github.com/aid297/aid/v3/secrets/symmetric/aes"
       )
       
       // 1. 文件加密/解密演示（RSA + AES）
@@ -1472,7 +1472,7 @@
 
 7. JWT 工具（*secrets/jwt*）
 
-   本节放在文档末尾：JWT 属于 **secrets 下的令牌工具包**（包路径 `github.com/aid297/aid/v2/secrets/jwt`），与 `secrets/asymmetric` 中的 RSA、RSA-OAEP（`rsaoaep`）、ECDSA、Ed25519、SM2 等**并列**，通过注入 `secrets.Asymmetric` 完成签名与验签，而不作为某一类非对称子算法目录的一部分。
+   本节放在文档末尾：JWT 属于 **secrets 下的令牌工具包**（包路径 `github.com/aid297/aid/v3/secrets/jwt`），与 `secrets/asymmetric` 中的 RSA、RSA-OAEP（`rsaoaep`）、ECDSA、Ed25519、SM2 等**并列**，通过注入 `secrets.Asymmetric` 完成签名与验签，而不作为某一类非对称子算法目录的一部分。
 
    JWT（JSON Web Token）用于在各方之间安全传输声明。
 
@@ -1498,9 +1498,9 @@
        "testing"
        "timers"
    
-       "github.com/aid297/aid/v2/secrets"
-       "github.com/aid297/aid/v2/secrets/asymmetric/rsa"
-       "github.com/aid297/aid/v2/secrets/jwt"
+       "github.com/aid297/aid/v3/secrets"
+       "github.com/aid297/aid/v3/secrets/asymmetric/rsa"
+       "github.com/aid297/aid/v3/secrets/jwt"
    )
    
    func TestJWTBasic(t *testing.T) {
@@ -1548,9 +1548,9 @@
        "testing"
        "timers"
    
-       "github.com/aid297/aid/v2/secrets"
-       "github.com/aid297/aid/v2/secrets/asymmetric/rsa"
-       "github.com/aid297/aid/v2/secrets/jwt"
+       "github.com/aid297/aid/v3/secrets"
+       "github.com/aid297/aid/v3/secrets/asymmetric/rsa"
+       "github.com/aid297/aid/v3/secrets/jwt"
    )
    
    func TestJWTWithExistingKeys(t *testing.T) {

@@ -19,13 +19,13 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/anyMaps"
-	"github.com/aid297/aid/v2/compressions"
-	"github.com/aid297/aid/v2/debugLogs"
-	"github.com/aid297/aid/v2/operations"
-	"github.com/aid297/aid/v2/secrets"
-	"github.com/aid297/aid/v2/str"
-	"github.com/aid297/aid/v2/texts/volumer"
+	"github.com/aid297/aid/v3/anyMaps"
+	"github.com/aid297/aid/v3/compressions"
+	"github.com/aid297/aid/v3/debugLogs"
+	"github.com/aid297/aid/v3/operations"
+	"github.com/aid297/aid/v3/secrets"
+	"github.com/aid297/aid/v3/str"
+	"github.com/aid297/aid/v3/texts/volumer"
 )
 
 var (

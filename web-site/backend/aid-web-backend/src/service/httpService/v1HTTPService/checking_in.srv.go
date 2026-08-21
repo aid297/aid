@@ -7,10 +7,10 @@ import (
 
 	"github.com/dromara/carbon/v2"
 
-	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/excels/excelsV3/excelReader"
-	"github.com/aid297/aid/v2/operations"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
+	"github.com/aid297/aid/v3/anySlices"
+	"github.com/aid297/aid/v3/excels/excelsV3/excelReader"
+	"github.com/aid297/aid/v3/operations"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 )
 
 type (

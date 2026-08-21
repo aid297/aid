@@ -3,7 +3,7 @@ package anySlices_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/anySlices"
+	"github.com/aid297/aid/v3/anySlices"
 )
 
 func Test1(t *testing.T) {

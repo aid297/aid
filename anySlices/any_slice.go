@@ -104,36 +104,22 @@ func FillFunc[SRC any, DST any](src []SRC, fn func(idx int, value SRC) DST) AnyS
 }
 
 // Cast 转换值类型
-func Cast[SRC, DST any](src AnySlicer[SRC], fn func(value SRC) DST) AnySlicer[DST] {
-	if src.Length() == 0 {
+func (my *AnySlice[T]) Cast[DST any](fn func(value T) DST) AnySlicer[DST] {
+	if len(my.data) == 0 {
 		return New[DST]()
 	}
 
-	data := make([]DST, len(src.ToSlice()))
-	for idx := range src.ToSlice() {
-		data[idx] = fn(src.ToSlice()[idx])
+	data := make([]DST, len(my.data))
+	for idx := range my.data {
+		data[idx] = fn(my.data[idx])
 	}
 
 	return NewList(data)
 }
 
 // CastAny 任意类型转目标类型
-func CastAny[DST any](src AnySlicer[any], fn func(value any) DST) AnySlicer[DST] {
-	if src.Length() == 0 {
-		return New[DST]()
-	}
-
-	data := make([]DST, len(src.ToSlice()))
-	for idx := range src.ToSlice() {
-		data[idx] = fn(src.ToSlice()[idx])
-	}
-
-	return NewList(data)
-}
-
-// ToAny converts any slice to []any
-func ToAny(slice any) []any {
-	v := reflect.ValueOf(slice)
+func (my *AnySlice[T]) CastAny(fn func(value T) any) AnySlicer[any] {
+	v := reflect.ValueOf(my.data)
 	if v.Kind() != reflect.Slice {
 		return nil
 	}
@@ -143,7 +129,7 @@ func ToAny(slice any) []any {
 		result[i] = v.Index(i).Interface()
 	}
 
-	return result
+	return NewList(result)
 }
 
 // SetAttrs 设置属性

@@ -1,9 +1,9 @@
 package html_test
 
 import (
-	`testing`
+	"testing"
 
-	`github.com/aid297/aid/v2/texts/html`
+	"github.com/aid297/aid/v3/texts/html"
 )
 
 func TestHTML1(t *testing.T) {

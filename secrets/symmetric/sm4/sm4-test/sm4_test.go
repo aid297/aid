@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/aid297/aid/v2/secrets/symmetric/sm4"
+	"github.com/aid297/aid/v3/secrets/symmetric/sm4"
 )
 
 var (

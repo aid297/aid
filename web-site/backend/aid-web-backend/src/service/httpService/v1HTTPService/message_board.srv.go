@@ -8,10 +8,10 @@ import (
 	"github.com/gofrs/uuid/v5"
 	jsonIter "github.com/json-iterator/go"
 
-	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/filesystems"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
+	"github.com/aid297/aid/v3/anySlices"
+	"github.com/aid297/aid/v3/filesystems"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
 )
 
 // MessageBoardService 服务：留言板

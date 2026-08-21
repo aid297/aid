@@ -3,7 +3,7 @@ package rand_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/texts/rand"
+	"github.com/aid297/aid/v3/texts/rand"
 )
 
 func Test1(t *testing.T) {

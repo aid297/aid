@@ -6,8 +6,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/aid297/aid/v2/logs"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v3/logs"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/global"
 )
 
 type ZapInitialize struct{}

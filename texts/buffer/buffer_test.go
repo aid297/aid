@@ -3,7 +3,7 @@ package buffer_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/texts/buffer"
+	"github.com/aid297/aid/v3/texts/buffer"
 )
 
 func TestNewString_Empty(t *testing.T) {

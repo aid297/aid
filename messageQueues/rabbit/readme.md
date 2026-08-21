@@ -9,7 +9,7 @@
    	`fmt`
    	`time`
    
-   	`github.com/aid297/aid/v2/messageQueue/rabbit`
+   	`github.com/aid297/aid/v3/messageQueue/rabbit`
    )
    
    func main() {
@@ -39,7 +39,7 @@
    import (
    	`log`
    
-   	`github.com/aid297/aid/v2/messageQueue/rabbit`
+   	`github.com/aid297/aid/v3/messageQueue/rabbit`
    )
    
    func main() {

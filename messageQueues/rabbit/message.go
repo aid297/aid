@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	json "github.com/json-iterator/go"
 
-	"github.com/aid297/aid/v2/str"
+	"github.com/aid297/aid/v3/str"
 )
 
 type (

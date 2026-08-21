@@ -3,7 +3,7 @@ package sm4
 import (
 	"crypto/rand"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 func KeyString(key string) secrets.SymmetricAttr {

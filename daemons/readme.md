@@ -4,7 +4,7 @@
 package main
 
 import (
-	"github.com/aid297/aid/v2/daemons"
+	"github.com/aid297/aid/v3/daemons"
 )
 
 // 主程序

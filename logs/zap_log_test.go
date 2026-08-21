@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/aid297/aid/v2/logs"
+	"github.com/aid297/aid/v3/logs"
 )
 
 func Test1(t *testing.T) {

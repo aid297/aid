@@ -10,7 +10,7 @@ import (
 	"github.com/tjfoc/gmsm/sm2"
 	"github.com/tjfoc/gmsm/x509"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 var _ secrets.Asymmetric = (*SM2)(nil)

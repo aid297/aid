@@ -7,7 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 
-	"github.com/aid297/aid/v2/anySlices"
+	"github.com/aid297/aid/v3/anySlices"
 )
 
 var _ AnyMapper[string, any] = (*AnyMap[string, any])(nil)
@@ -415,7 +415,28 @@ func (my *AnyMap[K, V]) MarshalJSON() ([]byte, error) { return sonic.Marshal(&my
 // UnmarshalJSON 实现接口：json反序列化
 func (my *AnyMap[K, V]) UnmarshalJSON(data []byte) error { return sonic.Unmarshal(data, &my.data) }
 
-// Cast 转换所有值并创建新 AsnyMapper
+func (my *AnyMap[K, V]) Cast[DST any](fn func(key K, value V) DST) AnyMapper[K, DST] {
+	d := New[K, DST]()
+
+	for key, value := range my.data {
+		d = d.SetValue(key, fn(key, value))
+	}
+
+	return d
+}
+
+// Zip 组合键值对为一个新的有序map
+func (my *AnyMap[K, V]) Zip() AnyMapper[K, V] {
+	d := New[K, V]()
+
+	for idx, key := range my.keys.ToSlice() {
+		d = d.SetValue(key, my.values.GetValue(idx))
+	}
+
+	return d
+}
+
+// Cast 转换所有值并创建新 AnyMapper
 func Cast[K comparable, SRC, DST any](src AnyMapper[K, SRC], fn func(key K, value SRC) DST) AnyMapper[K, DST] {
 	d := New[K, DST]()
 

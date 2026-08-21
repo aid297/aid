@@ -1,9 +1,9 @@
 package terminalPrinter_test
 
 import (
-	`testing`
+	"testing"
 
-	`github.com/aid297/aid/v2/texts/terminalPrinter`
+	"github.com/aid297/aid/v3/texts/terminalPrinter"
 )
 
 func Test1(t *testing.T) {

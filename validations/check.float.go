@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/aid297/aid/v2/anySlices"
+	"github.com/aid297/aid/v3/anySlices"
 )
 
 // checkFloat32 检查小数#32位，支持：required、min>、min>=、max<、max<=、in、not-in、size==、size!=、ex:

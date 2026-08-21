@@ -32,7 +32,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/anySlice"
+   	"github.com/aid297/aid/v3/anySlice"
    )
    
    func main() {
@@ -50,7 +50,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/anySlice"
+   	"github.com/aid297/aid/v3/anySlice"
    )
    
    func main() {
@@ -71,7 +71,7 @@
    	"errors"
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/anySlice"
+   	"github.com/aid297/aid/v3/anySlice"
    )
    
    func main() {
@@ -106,7 +106,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/anySlice"
+   	"github.com/aid297/aid/v3/anySlice"
    )
    
    func main() {
@@ -125,7 +125,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/anySlice"
+   	"github.com/aid297/aid/v3/anySlice"
    )
    
    func main() {
@@ -150,7 +150,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/anySlice"
+   	"github.com/aid297/aid/v3/anySlice"
    )
    
    func main() {
@@ -170,8 +170,8 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/anySlice"
-   	"github.com/aid297/aid/v2/ptr"
+   	"github.com/aid297/aid/v3/anySlice"
+   	"github.com/aid297/aid/v3/ptr"
    )
    
    func main() {
@@ -196,7 +196,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/anySlice"
+   	"github.com/aid297/aid/v3/anySlice"
    )
    
    func main() {
@@ -214,7 +214,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -233,7 +233,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -252,7 +252,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -272,7 +272,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -291,7 +291,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -311,7 +311,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -329,7 +329,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -347,7 +347,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -365,7 +365,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -383,7 +383,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -401,7 +401,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -419,7 +419,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -438,7 +438,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -458,7 +458,7 @@
     	"errors"
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -488,7 +488,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -508,7 +508,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -527,7 +527,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -557,7 +557,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -578,7 +578,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -599,7 +599,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -620,7 +620,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -640,7 +640,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     type User struct{ FirstName, LastName, FullName string }
@@ -675,7 +675,7 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
+    	"github.com/aid297/aid/v3/anySlice"
     )
     
     func main() {
@@ -724,8 +724,8 @@
     import (
     	. "fmt"
     
-    	"github.com/aid297/aid/v2/anySlice"
-    	"github.com/aid297/aid/v2/operations"
+    	"github.com/aid297/aid/v3/anySlice"
+    	"github.com/aid297/aid/v3/operations"
     )
     
     func main() {

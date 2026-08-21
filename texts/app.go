@@ -1,14 +1,14 @@
 package texts
 
 import (
-	"github.com/aid297/aid/v2/texts/buffer"
-	"github.com/aid297/aid/v2/texts/html"
-	"github.com/aid297/aid/v2/texts/markdown"
-	"github.com/aid297/aid/v2/texts/rand"
-	"github.com/aid297/aid/v2/texts/template"
-	"github.com/aid297/aid/v2/texts/timer"
-	"github.com/aid297/aid/v2/texts/transfer"
-	"github.com/aid297/aid/v2/texts/volumer"
+	"github.com/aid297/aid/v3/texts/buffer"
+	"github.com/aid297/aid/v3/texts/html"
+	"github.com/aid297/aid/v3/texts/markdown"
+	"github.com/aid297/aid/v3/texts/rand"
+	"github.com/aid297/aid/v3/texts/template"
+	"github.com/aid297/aid/v3/texts/timer"
+	"github.com/aid297/aid/v3/texts/transfer"
+	"github.com/aid297/aid/v3/texts/volumer"
 )
 
 var (

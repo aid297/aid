@@ -9,8 +9,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 
-	"github.com/aid297/aid/v2/operations"
-	"github.com/aid297/aid/v2/str"
+	"github.com/aid297/aid/v3/operations"
+	"github.com/aid297/aid/v3/str"
 )
 
 // ******************** 配置文件 ********************

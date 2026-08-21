@@ -5,8 +5,8 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"github.com/aid297/aid/v2/anyMaps"
-	"github.com/aid297/aid/v2/str"
+	"github.com/aid297/aid/v3/anyMaps"
+	"github.com/aid297/aid/v3/str"
 )
 
 // ColumnNumberToText 列索引转文字

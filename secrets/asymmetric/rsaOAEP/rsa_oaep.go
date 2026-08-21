@@ -15,8 +15,8 @@ import (
 	"errors"
 	"hash"
 
-	"github.com/aid297/aid/v2/secrets"
-	myrsa "github.com/aid297/aid/v2/secrets/asymmetric/rsa"
+	"github.com/aid297/aid/v3/secrets"
+	myrsa "github.com/aid297/aid/v3/secrets/asymmetric/rsa"
 )
 
 var _ secrets.Asymmetric = (*RSAOAEP)(nil)

@@ -4,7 +4,7 @@ import (
 	"compress/zlib"
 	"errors"
 
-	"github.com/aid297/aid/v2/compressions"
+	"github.com/aid297/aid/v3/compressions"
 )
 
 // Level 设置 zlib 压缩等级:

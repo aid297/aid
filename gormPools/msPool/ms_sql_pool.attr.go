@@ -1,6 +1,6 @@
 package msPool
 
-import "github.com/aid297/aid/v2/gormPools"
+import "github.com/aid297/aid/v3/gormPools"
 
 type MSSQLPoolAttr func(mssqlPool MSSQLPool)
 

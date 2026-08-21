@@ -7,7 +7,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/digest/digestV2"
+   	"github.com/aid297/aid/v3/digest/digestV2"
    )
    
    func main() {
@@ -25,7 +25,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/digest/digestV2"
+   	"github.com/aid297/aid/v3/digest/digestV2"
    )
    
    func main() {
@@ -44,7 +44,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/digest/digestV2"
+   	"github.com/aid297/aid/v3/digest/digestV2"
    )
    
    func main() {
@@ -67,7 +67,7 @@
    import (
    	. "fmt"
    
-   	"github.com/aid297/aid/v2/digest/digestV2"
+   	"github.com/aid297/aid/v3/digest/digestV2"
    )
    
    func main() {

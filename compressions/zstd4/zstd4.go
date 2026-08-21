@@ -3,7 +3,7 @@ package zstd4
 import (
 	"github.com/klauspost/compress/zstd"
 
-	"github.com/aid297/aid/v2/compressions"
+	"github.com/aid297/aid/v3/compressions"
 )
 
 var _ compressions.Compressor = (*Zstd4)(nil)

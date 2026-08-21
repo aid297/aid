@@ -3,7 +3,7 @@ package validations_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/validations"
+	"github.com/aid297/aid/v3/validations"
 )
 
 // BinaryUUID 模拟 mysql.BinaryUUID 结构体

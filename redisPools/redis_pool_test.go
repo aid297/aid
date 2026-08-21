@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/v2/redisPools"
+	"github.com/aid297/aid/v3/redisPools"
 )
 
 func TestOnceRedisPool(t *testing.T) {

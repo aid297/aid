@@ -3,8 +3,9 @@ package excelReader
 import (
 	"errors"
 
-	"github.com/aid297/aid/v2/filesystems"
 	"github.com/xuri/excelize/v2"
+
+	"github.com/aid297/aid/v3/filesystems"
 )
 
 type ReaderAttribute func(reader *Read) (err error)

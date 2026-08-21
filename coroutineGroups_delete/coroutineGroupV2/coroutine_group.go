@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	`github.com/aid297/aid/v2/anySlices`
-	`github.com/aid297/aid/v2/operations`
+	"github.com/aid297/aid/v3/anySlices"
+	"github.com/aid297/aid/v3/operations"
 )
 
 type (

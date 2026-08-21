@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/aid297/aid/v2/anyMaps"
+	"github.com/aid297/aid/v3/anyMaps"
 )
 
 // ClientIns websocket 客户端链接实例

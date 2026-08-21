@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
-	"github.com/aid297/aid/v2/daemons"
-	"github.com/aid297/aid/v2/debugLogs"
+	"github.com/aid297/aid/v3/daemons"
+	"github.com/aid297/aid/v3/debugLogs"
 )
 
 // 主程序

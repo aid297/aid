@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/aid297/aid/v2/secrets/symmetric/aes"
+	"github.com/aid297/aid/v3/secrets/symmetric/aes"
 )
 
 func TestECB(t *testing.T) {

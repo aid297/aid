@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aid297/aid/v2/compressions"
-	"github.com/aid297/aid/v2/secrets"
-	"github.com/aid297/aid/v2/str"
+	"github.com/aid297/aid/v3/compressions"
+	"github.com/aid297/aid/v3/secrets"
+	"github.com/aid297/aid/v3/str"
 )
 
 type HTTPClientAttr func(hc HTTPClient) (err error)

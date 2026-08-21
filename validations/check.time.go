@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aid297/aid/v2/anySlices"
+	"github.com/aid297/aid/v3/anySlices"
 )
 
 // checkTime 检查时间，支持：required、min>、min>=、max<、max<=、in、not-in、ex:

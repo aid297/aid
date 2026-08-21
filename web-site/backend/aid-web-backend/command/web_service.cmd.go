@@ -3,13 +3,13 @@ package command
 import (
 	"log"
 
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/route"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/route"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/v2/str"
+	"github.com/aid297/aid/v3/str"
 )
 
 type WebServiceCommand struct{}

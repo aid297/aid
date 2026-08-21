@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/aid297/aid/v2/secrets"
-	"github.com/aid297/aid/v2/secrets/asymmetric/sm2"
-	"github.com/aid297/aid/v2/secrets/symmetric/sm4"
+	"github.com/aid297/aid/v3/secrets"
+	"github.com/aid297/aid/v3/secrets/asymmetric/sm2"
+	"github.com/aid297/aid/v3/secrets/symmetric/sm4"
 )
 
 // TestFileEncrypt 1. 文件加密/解密演示

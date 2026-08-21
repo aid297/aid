@@ -11,12 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/v2/secrets"
-	myECDSA "github.com/aid297/aid/v2/secrets/asymmetric/ecdsa"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+
+	"github.com/aid297/aid/v3/secrets"
+	myECDSA "github.com/aid297/aid/v3/secrets/asymmetric/ecdsa"
 )
 
 // tlsCertFromSem 将 *x509.Certificate 与 Semen 私钥组装为 tls.Certificate，chain 为附加的签发链（如根 CA）。

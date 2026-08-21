@@ -26,7 +26,7 @@ package main
 
 import (
     "fmt"
-    "github.com/aid297/aid/v2/coroutineGroups"
+    "github.com/aid297/aid/v3/coroutineGroups"
 )
 
 func main() {
@@ -61,7 +61,7 @@ package main
 import (
     "errors"
     "fmt"
-    "github.com/aid297/aid/v2/coroutineGroups"
+    "github.com/aid297/aid/v3/coroutineGroups"
 )
 
 func main() {
@@ -98,7 +98,7 @@ package main
 
 import (
     "fmt"
-    "github.com/aid297/aid/v2/coroutineGroups"
+    "github.com/aid297/aid/v3/coroutineGroups"
 )
 
 func main() {
@@ -129,7 +129,7 @@ package main
 
 import (
     "fmt"
-    "github.com/aid297/aid/v2/coroutineGroups"
+    "github.com/aid297/aid/v3/coroutineGroups"
 )
 
 func main() {
@@ -155,7 +155,7 @@ package main
 
 import (
     "fmt"
-    "github.com/aid297/aid/v2/coroutineGroups"
+    "github.com/aid297/aid/v3/coroutineGroups"
 )
 
 func main() {
@@ -189,7 +189,7 @@ import (
     "fmt"
     "sync/atomic"
     "time"
-    "github.com/aid297/aid/v2/coroutineGroups"
+    "github.com/aid297/aid/v3/coroutineGroups"
 )
 
 func main() {
@@ -298,7 +298,7 @@ import (
     "fmt"
     "sync/atomic"
     "time"
-    "github.com/aid297/aid/v2/coroutineGroups"
+    "github.com/aid297/aid/v3/coroutineGroups"
 )
 
 func main() {
@@ -364,7 +364,7 @@ import (
     "fmt"
     "sync/atomic"
     "time"
-    "github.com/aid297/aid/v2/coroutineGroups"
+    "github.com/aid297/aid/v3/coroutineGroups"
 )
 
 func main() {

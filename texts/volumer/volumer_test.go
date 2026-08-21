@@ -3,7 +3,7 @@ package volumer_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/texts/volumer"
+	"github.com/aid297/aid/v3/texts/volumer"
 )
 
 func TestIsValidVolumeFormat(t *testing.T) {

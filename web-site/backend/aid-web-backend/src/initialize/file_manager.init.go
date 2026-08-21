@@ -1,8 +1,8 @@
 package initialize
 
 import (
-	"github.com/aid297/aid/v2/filesystems"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v3/filesystems"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/global"
 )
 
 type FileManagerInitialize struct{}

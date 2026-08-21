@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aid297/aid/v2/texts/template"
+	"github.com/aid297/aid/v3/texts/template"
 )
 
 func TestStruct_Basic(t *testing.T) {

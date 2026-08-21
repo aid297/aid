@@ -13,7 +13,7 @@ import (
 
 	"github.com/tjfoc/gmsm/sm4"
 
-	"github.com/aid297/aid/v2/secrets"
+	"github.com/aid297/aid/v3/secrets"
 )
 
 // Mode 加密模式

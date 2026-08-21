@@ -1,6 +1,6 @@
 package mysqlPool
 
-import "github.com/aid297/aid/v2/gormPools"
+import "github.com/aid297/aid/v3/gormPools"
 
 type MySQLPoolAttr func(mysqlPool MySQLPool)
 

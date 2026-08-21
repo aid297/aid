@@ -3,10 +3,10 @@ package gormPools_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/debugLogs"
-	"github.com/aid297/aid/v2/filesystems"
-	"github.com/aid297/aid/v2/gormPools"
-	"github.com/aid297/aid/v2/gormPools/mysqlPool"
+	"github.com/aid297/aid/v3/debugLogs"
+	"github.com/aid297/aid/v3/filesystems"
+	"github.com/aid297/aid/v3/gormPools"
+	"github.com/aid297/aid/v3/gormPools/mysqlPool"
 )
 
 type (

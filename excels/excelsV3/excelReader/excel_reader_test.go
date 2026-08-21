@@ -3,7 +3,7 @@ package excelReader_test
 import (
 	"testing"
 
-	"github.com/aid297/aid/v2/excels/excelsV3/excelReader"
+	"github.com/aid297/aid/v3/excels/excelsV3/excelReader"
 )
 
 func Test(t *testing.T) {

@@ -9,15 +9,15 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"go.uber.org/zap"
 
-	"github.com/aid297/aid/v2/anySlices"
-	"github.com/aid297/aid/v2/excels/excelsV3/excelReader"
-	"github.com/aid297/aid/v2/filesystems"
-	"github.com/aid297/aid/v2/texts/volumer"
-	"github.com/aid297/aid/v2/validations"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/global"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
-	"github.com/aid297/aid/v2/web-site/backend/aid-web-backend/src/service/httpService/v1HTTPService"
+	"github.com/aid297/aid/v3/anySlices"
+	"github.com/aid297/aid/v3/excels/excelsV3/excelReader"
+	"github.com/aid297/aid/v3/filesystems"
+	"github.com/aid297/aid/v3/texts/volumer"
+	"github.com/aid297/aid/v3/validations"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/global"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/module/httpModule"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/module/httpModule/v1HTTPModule/request"
+	"github.com/aid297/aid/v3/web-site/backend/aid-web-backend/src/service/httpService/v1HTTPService"
 )
 
 type CheckingInAPI struct{}
