@@ -2,8 +2,6 @@ package timers
 
 import (
 	"sync"
-
-	_uuid "github.com/google/uuid"
 )
 
 var (
@@ -19,24 +17,24 @@ type (
 		Once() Timer
 		AddTask(tasker Tasker) Timer
 		AddTaskAndStart(tasker Tasker) Timer
-		GetTask(taskerUUID _uuid.UUID) Tasker
-		MustGetTask(taskerUUID _uuid.UUID) Tasker
+		GetTask(taskerUUID string) Tasker
+		MustGetTask(taskerUUID string) Tasker
 		runTask(tasker Tasker)
-		RemoveTask(uuid _uuid.UUID) Timer
-		MustRemoveTask(uuid _uuid.UUID) Timer
+		RemoveTask(uuid string) Timer
+		MustRemoveTask(uuid string) Timer
 		Start() Timer
-		Stop(uuids ..._uuid.UUID) Timer
+		Stop(uuids ...string) Timer
 	}
 
 	TimerImpl struct {
 		lock    sync.RWMutex
-		timers  map[_uuid.UUID]Tasker
+		timers  map[string]Tasker
 		running bool
 	}
 )
 
 func (*TimerImpl) Once() Timer {
-	timerOnce.Do(func() { timerIns = &TimerImpl{timers: make(map[_uuid.UUID]Tasker)} })
+	timerOnce.Do(func() { timerIns = &TimerImpl{timers: make(map[string]Tasker)} })
 	return timerIns
 }
 
@@ -49,7 +47,7 @@ func (my *TimerImpl) AddTask(tasker Tasker) Timer {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
-	my.timers[tasker.GetUUID()] = tasker
+	my.timers[tasker.GetUUID().String()] = tasker
 	return my
 }
 
@@ -65,14 +63,14 @@ func (my *TimerImpl) AddTaskAndStart(tasker Tasker) Timer {
 	return my.AddTask(tasker)
 }
 
-func (my *TimerImpl) GetTask(taskerUUID _uuid.UUID) Tasker {
+func (my *TimerImpl) GetTask(taskerUUID string) Tasker {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.timers[taskerUUID]
 }
 
-func (my *TimerImpl) MustGetTask(taskerUUID _uuid.UUID) Tasker {
+func (my *TimerImpl) MustGetTask(taskerUUID string) Tasker {
 	tasker := my.GetTask(taskerUUID)
 
 	if tasker == nil {
@@ -92,7 +90,7 @@ func (my *TimerImpl) runTask(tasker Tasker) {
 }
 
 // RemoveTask 删除任务
-func (my *TimerImpl) RemoveTask(uuid _uuid.UUID) Timer {
+func (my *TimerImpl) RemoveTask(uuid string) Timer {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
@@ -105,7 +103,7 @@ func (my *TimerImpl) RemoveTask(uuid _uuid.UUID) Timer {
 }
 
 // MustRemoveTask 删除任务
-func (my *TimerImpl) MustRemoveTask(uuid _uuid.UUID) Timer {
+func (my *TimerImpl) MustRemoveTask(uuid string) Timer {
 	my.lock.Lock()
 	defer my.lock.Unlock()
 
@@ -144,7 +142,7 @@ func (my *TimerImpl) Start() Timer {
 }
 
 // Stop 停止全部或指定的任务
-func (my *TimerImpl) Stop(uuids ..._uuid.UUID) Timer {
+func (my *TimerImpl) Stop(uuids ...string) Timer {
 	my.lock.Lock()
 	my.running = false
 	// 锁内快照任务列表，释放锁后再停止任务，避免任务 errHandler 内再调用 AddTask/GetTask 时死锁
