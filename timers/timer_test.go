@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aid297/aid/v2/timers"
 	_uuid "github.com/google/uuid"
+
+	"github.com/aid297/aid/v2/timers"
 )
 
 // timerErrRecorder 收集 errHandler 收到的错误，并发安全
@@ -32,7 +33,7 @@ func (r *timerErrRecorder) count() int {
 
 func newTimerOnceTask(t *testing.T, fn timers.FN, errHandler timers.ErrHandler) timers.Tasker {
 	t.Helper()
-	tasker, err := timers.Task.New(timers.TaskTypeOnce, "timer-test-once", 10*time.Millisecond, 0, fn, errHandler)
+	tasker, err := timers.Task.New(timers.TaskTypeAfter, "timer-test-once", 10*time.Millisecond, 0, time.Time{}, fn, errHandler)
 	if err != nil {
 		t.Fatalf("New 失败：%v", err)
 	}
@@ -41,7 +42,7 @@ func newTimerOnceTask(t *testing.T, fn timers.FN, errHandler timers.ErrHandler) 
 
 func newTimerDailyTask(t *testing.T, name string, fn timers.FN, errHandler timers.ErrHandler) timers.Tasker {
 	t.Helper()
-	tasker, err := timers.Task.New(timers.TaskTypeDaily, name, 20*time.Millisecond, 0, fn, errHandler)
+	tasker, err := timers.Task.New(timers.TaskTypeCyclicity, name, 20*time.Millisecond, 0, time.Time{}, fn, errHandler)
 	if err != nil {
 		t.Fatalf("New 失败：%v", err)
 	}

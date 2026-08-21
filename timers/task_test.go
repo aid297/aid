@@ -40,7 +40,7 @@ func (r *errRecorder) last() error {
 
 func newOnceTask(t *testing.T, fn timers.FN, interval time.Duration, errHandler timers.ErrHandler) timers.Tasker {
 	t.Helper()
-	tasker, err := timers.Task.New(timers.TaskTypeOnce, "test-once", interval, 0, fn, errHandler)
+	tasker, err := timers.Task.New(timers.TaskTypeAfter, "test-once", interval, 0, time.Time{}, fn, errHandler)
 	if err != nil {
 		t.Fatalf("New 失败：%v", err)
 	}
@@ -52,20 +52,26 @@ func TestNew(t *testing.T) {
 	var noop = func() {}
 	var handler = func(tasker timers.Tasker, err error) {}
 
-	if _, err := timers.Task.New(timers.TaskTypeOnce, "t", 10*time.Millisecond, 0, noop, handler); err != nil {
+	if _, err := timers.Task.New(timers.TaskTypeAfter, "t", 10*time.Millisecond, 0, time.Time{}, noop, handler); err != nil {
 		t.Fatalf("合法参数创建失败：%v", err)
 	}
 
-	if _, err := timers.Task.New(timers.TaskTypeTag(-1), "t", 10*time.Millisecond, 0, noop, handler); err == nil {
+	if _, err := timers.Task.New(timers.TaskTypeTag(-1), "t", 10*time.Millisecond, 0, time.Time{}, noop, handler); err == nil {
 		t.Fatal("期望非法任务类型被拒绝")
 	}
-	if _, err := timers.Task.New(timers.TaskTypeOnce, "t", 0, 0, noop, handler); err == nil {
+	if _, err := timers.Task.New(timers.TaskTypeAfter, "t", 0, 0, time.Time{}, noop, handler); err == nil {
 		t.Fatal("期望 interval <= 0 被拒绝")
 	}
-	if _, err := timers.Task.New(timers.TaskTypeOnce, "t", 10*time.Millisecond, 0, nil, handler); err == nil {
+	if _, err := timers.Task.New(timers.TaskTypeOnce, "t", 0, 0, time.Time{}, noop, handler); err == nil {
+		t.Fatal("期望 Once 类型 at 为零值被拒绝")
+	}
+	if _, err := timers.Task.New(timers.TaskTypeOnce, "t", 0, 0, time.Now().Add(time.Hour), noop, handler); err != nil {
+		t.Fatalf("Once 类型无需 interval，合法 at 创建失败：%v", err)
+	}
+	if _, err := timers.Task.New(timers.TaskTypeAfter, "t", 10*time.Millisecond, 0, time.Time{}, nil, handler); err == nil {
 		t.Fatal("期望 nil fn 被拒绝")
 	}
-	if _, err := timers.Task.New(timers.TaskTypeOnce, "t", 10*time.Millisecond, 0, noop, nil); err == nil {
+	if _, err := timers.Task.New(timers.TaskTypeAfter, "t", 10*time.Millisecond, 0, time.Time{}, noop, nil); err == nil {
 		t.Fatal("期望 nil errHandler 被拒绝")
 	}
 }
@@ -142,7 +148,7 @@ func TestOnceTaskTimeout(t *testing.T) {
 	var count int64
 	var rec = &errRecorder{}
 	tasker, err := timers.Task.New(
-		timers.TaskTypeOnce, "test-once-timeout", 50*time.Millisecond, 20*time.Millisecond,
+		timers.TaskTypeAfter, "test-once-timeout", 50*time.Millisecond, 20*time.Millisecond, time.Time{},
 		func() { atomic.AddInt64(&count, 1) },
 		rec.handler(),
 	)
@@ -163,20 +169,15 @@ func TestOnceTaskTimeout(t *testing.T) {
 	}
 }
 
-// TestUnsupportedTaskType 验证暂不支持的任务类型返回错误
-func TestUnsupportedTaskType(t *testing.T) {
+// TestNewRejectsUnknownType 验证超出范围的任务类型被 New 拒绝
+func TestNewRejectsUnknownType(t *testing.T) {
 	var rec = &errRecorder{}
-	tasker, err := timers.Task.New(
-		timers.TaskTypeWeekly, "test-weekly", 10*time.Millisecond, 0,
+	if _, err := timers.Task.New(
+		timers.TaskTypeTag(99), "test-unknown", 10*time.Millisecond, 0, time.Time{},
 		func() {},
 		rec.handler(),
-	)
-	if err != nil {
-		t.Fatalf("New 失败：%v", err)
-	}
-
-	if err = tasker.Start(); err == nil {
-		t.Fatal("期望不支持的任务类型 Start 失败")
+	); err == nil {
+		t.Fatal("期望未知任务类型被 New 拒绝")
 	}
 }
 
@@ -184,7 +185,7 @@ func TestUnsupportedTaskType(t *testing.T) {
 func TestStopIdempotent(t *testing.T) {
 	var rec = &errRecorder{}
 	tasker, err := timers.Task.New(
-		timers.TaskTypeOnce, "test-stop-idempotent", 10*time.Millisecond, 0,
+		timers.TaskTypeAfter, "test-stop-idempotent", 10*time.Millisecond, 0, time.Time{},
 		func() {},
 		rec.handler(),
 	)
@@ -204,7 +205,7 @@ func TestDailyTaskLoop(t *testing.T) {
 	var count int64
 	var rec = &errRecorder{}
 	tasker, err := timers.Task.New(
-		timers.TaskTypeDaily, "test-daily", 20*time.Millisecond, 0,
+		timers.TaskTypeCyclicity, "test-daily", 20*time.Millisecond, 0, time.Time{},
 		func() { atomic.AddInt64(&count, 1) },
 		rec.handler(),
 	)
@@ -244,7 +245,7 @@ func TestDailyTaskPanicContinues(t *testing.T) {
 	var count int64
 	var rec = &errRecorder{}
 	tasker, err := timers.Task.New(
-		timers.TaskTypeDaily, "test-daily-panic", 20*time.Millisecond, 0,
+		timers.TaskTypeCyclicity, "test-daily-panic", 20*time.Millisecond, 0, time.Time{},
 		func() { atomic.AddInt64(&count, 1); panic("模拟任务异常") },
 		rec.handler(),
 	)
@@ -269,7 +270,7 @@ func TestDailyTaskTimeout(t *testing.T) {
 	var count int64
 	var rec = &errRecorder{}
 	tasker, err := timers.Task.New(
-		timers.TaskTypeDaily, "test-daily-timeout", 50*time.Millisecond, 20*time.Millisecond,
+		timers.TaskTypeCyclicity, "test-daily-timeout", 50*time.Millisecond, 20*time.Millisecond, time.Time{},
 		func() { atomic.AddInt64(&count, 1) },
 		rec.handler(),
 	)
@@ -287,5 +288,56 @@ func TestDailyTaskTimeout(t *testing.T) {
 	time.Sleep(80 * time.Millisecond)
 	if got := atomic.LoadInt64(&count); got != 0 {
 		t.Fatalf("超时退出后任务不应执行，实际执行 %d 次", got)
+	}
+}
+
+// TestOnceTaskAtTime 验证 Once 任务在指定时间点执行一次
+func TestOnceTaskAtTime(t *testing.T) {
+	var count int64
+	var rec = &errRecorder{}
+	var at = time.Now().Add(30 * time.Millisecond)
+	tasker, err := timers.Task.New(
+		timers.TaskTypeOnce, "test-once-at", 0, 0, at,
+		func() { atomic.AddInt64(&count, 1) },
+		rec.handler(),
+	)
+	if err != nil {
+		t.Fatalf("New 失败：%v", err)
+	}
+
+	var start = time.Now()
+	if err = tasker.Start(); err != nil {
+		t.Fatalf("Start 失败：%v", err)
+	}
+
+	if got := atomic.LoadInt64(&count); got != 1 {
+		t.Fatalf("期望执行 1 次，实际 %d 次", got)
+	}
+	if time.Since(start) < 20*time.Millisecond {
+		t.Fatal("任务未等到指定时间就执行了")
+	}
+	if rec.count() != 0 {
+		t.Fatalf("期望无错误上报，实际 %d 个", rec.count())
+	}
+}
+
+// TestOnceTaskAtPast 验证目标时间已过时立即执行
+func TestOnceTaskAtPast(t *testing.T) {
+	var count int64
+	var rec = &errRecorder{}
+	tasker, err := timers.Task.New(
+		timers.TaskTypeOnce, "test-once-at-past", 0, 0, time.Now().Add(-time.Hour),
+		func() { atomic.AddInt64(&count, 1) },
+		rec.handler(),
+	)
+	if err != nil {
+		t.Fatalf("New 失败：%v", err)
+	}
+
+	if err = tasker.Start(); err != nil {
+		t.Fatalf("Start 失败：%v", err)
+	}
+	if got := atomic.LoadInt64(&count); got != 1 {
+		t.Fatalf("目标时间已过期望立即执行 1 次，实际 %d 次", got)
 	}
 }

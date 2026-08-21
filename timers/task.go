@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	TaskTypeOnce TaskTypeTag = iota
+	TaskTypeAfter TaskTypeTag = iota
 	TaskTypeCyclicity
+	TaskTypeOnce
 )
 
 var (
@@ -28,6 +29,7 @@ type (
 			name string,
 			interval time.Duration,
 			timeout time.Duration,
+			at time.Time,
 			fn FN,
 			errHandler ErrHandler,
 		) (tasker Tasker, err error)
@@ -36,6 +38,7 @@ type (
 		GetTaskType() TaskTypeTag
 		GetInterval() time.Duration
 		GetTimeout() time.Duration
+		GetAt() time.Time
 		GetFn() FN
 		GetErrHandler() ErrHandler
 		Start() (err error)
@@ -48,6 +51,7 @@ type (
 		TaskType   TaskTypeTag
 		Fn         FN
 		Interval   time.Duration
+		At         time.Time // 仅 TaskTypeOnce 使用：到点执行一次的目标时间
 		stop       chan struct{}
 		stopOnce   sync.Once
 		Timeout    time.Duration
@@ -64,13 +68,18 @@ func (*TaskerImpl) New(
 	name string,
 	interval time.Duration,
 	timeout time.Duration,
+	at time.Time,
 	fn FN,
 	errHandler ErrHandler,
 ) (tasker Tasker, err error) {
-	if taskType < TaskTypeOnce || taskType > TaskTypeCyclicity {
+	if taskType < TaskTypeAfter || taskType > TaskTypeOnce {
 		return nil, errors.New("定时任务类型错误")
 	}
-	if interval <= 0 {
+	if taskType == TaskTypeOnce {
+		if at.IsZero() {
+			return nil, errors.New("时间错误")
+		}
+	} else if interval <= 0 {
 		return nil, errors.New("时间错误")
 	}
 	if fn == nil {
@@ -85,6 +94,7 @@ func (*TaskerImpl) New(
 		TaskType:   taskType,
 		Name:       name,
 		Interval:   interval,
+		At:         at,
 		Timeout:    timeout,
 		Fn:         fn,
 		ErrHandler: errHandler,
@@ -103,6 +113,8 @@ func (my *TaskerImpl) GetInterval() time.Duration { return my.Interval }
 
 func (my *TaskerImpl) GetTimeout() time.Duration { return my.Timeout }
 
+func (my *TaskerImpl) GetAt() time.Time { return my.At }
+
 func (my *TaskerImpl) GetFn() FN { return my.Fn }
 
 func (my *TaskerImpl) GetErrHandler() ErrHandler { return my.ErrHandler }
@@ -113,41 +125,14 @@ func (my *TaskerImpl) Start() (err error) {
 	}
 
 	switch my.TaskType {
+	case TaskTypeAfter:
+		return my.runAfter(my.Interval)
 	case TaskTypeOnce:
-		var c = make(chan error, 1)
-		var timer = time.AfterFunc(my.Interval, func() {
-			select {
-			case <-my.stop: // 已停止则不再执行
-				return
-			default:
-			}
-			defer func() {
-				if r := recover(); r != nil {
-					c <- fmt.Errorf("定时任务执行失败：%v", r)
-				}
-			}()
-			my.Fn()
-			c <- nil // 缓冲 channel，不会阻塞泄漏
-		})
-
-		var timeoutCh <-chan time.Time
-		if my.Timeout > 0 {
-			timeoutCh = time.After(my.Timeout) // timeout <= 0 时 timeoutCh 为 nil，该 case 永不触发
+		var delay = time.Until(my.At)
+		if delay < 0 {
+			delay = 0 // 目标时间已过，立即执行
 		}
-		select {
-		case err = <-c: // 执行完成，失败时上报 errHandler
-			if err != nil {
-				my.ErrHandler(my, err)
-			}
-		case <-my.stop: // 手动停止，不算错误
-			timer.Stop()
-			return
-		case <-timeoutCh: // 等待超时
-			timer.Stop()
-			my.ErrHandler(my, fmt.Errorf("定时任务执行超时：%s", my.Timeout))
-			return
-		}
-		return
+		return my.runAfter(delay)
 	case TaskTypeCyclicity:
 		var ticker = time.NewTicker(my.Interval)
 		defer ticker.Stop()
@@ -179,6 +164,44 @@ func (my *TaskerImpl) Start() (err error) {
 	default:
 		return fmt.Errorf("不支持的定时任务类型 %d", my.TaskType)
 	}
+}
+
+// runAfter 在 delay 之后执行一次回调，供 After/Once 共用
+func (my *TaskerImpl) runAfter(delay time.Duration) (err error) {
+	var c = make(chan error, 1)
+	var timer = time.AfterFunc(delay, func() {
+		select {
+		case <-my.stop: // 已停止则不再执行
+			return
+		default:
+		}
+		defer func() {
+			if r := recover(); r != nil {
+				c <- fmt.Errorf("定时任务执行失败：%v", r)
+			}
+		}()
+		my.Fn()
+		c <- nil // 缓冲 channel，不会阻塞泄漏
+	})
+
+	var timeoutCh <-chan time.Time
+	if my.Timeout > 0 {
+		timeoutCh = time.After(my.Timeout) // timeout <= 0 时 timeoutCh 为 nil，该 case 永不触发
+	}
+	select {
+	case err = <-c: // 执行完成，失败时上报 errHandler
+		if err != nil {
+			my.ErrHandler(my, err)
+		}
+	case <-my.stop: // 手动停止，不算错误
+		timer.Stop()
+		return
+	case <-timeoutCh: // 等待超时
+		timer.Stop()
+		my.ErrHandler(my, fmt.Errorf("定时任务执行超时：%s", my.Timeout))
+		return
+	}
+	return
 }
 
 // safeFn 带 panic 保护地执行回调，供循环任务使用，单次 panic 不中断调度
