@@ -89,6 +89,18 @@ func (*TaskerImpl) New(
 
 func (my *TaskerImpl) GetUUID() _uuid.UUID { return my.UUID }
 
+func (my *TaskerImpl) GetName() string { return my.Name }
+
+func (my *TaskerImpl) GetTaskType() TaskTypeTag { return my.TaskType }
+
+func (my *TaskerImpl) GetInterval() time.Duration { return my.Interval }
+
+func (my *TaskerImpl) GetTimeout() time.Duration { return my.Timeout }
+
+func (my *TaskerImpl) GetFn() FN { return my.Fn }
+
+func (my *TaskerImpl) GetErrHandler() ErrHandler { return my.ErrHandler }
+
 func (my *TaskerImpl) Start() (err error) {
 	if my.Fn == nil {
 		return fmt.Errorf("定时任务执行失败，没有需要执行的方法")
