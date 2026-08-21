@@ -24,15 +24,9 @@ type (
 	TaskTypeTag int
 
 	Tasker interface {
-		New(
-			taskType TaskTypeTag,
-			name string,
-			interval time.Duration,
-			timeout time.Duration,
-			at time.Time,
-			fn FN,
-			errHandler ErrHandler,
-		) (tasker Tasker, err error)
+		Once(at time.Time, taskerOption TaskerOption) (tasker Tasker, err error)
+		After(interval time.Duration, taskerOption TaskerOption) (tasker Tasker, err error)
+		Cyclicity(interval time.Duration, taskerOption TaskerOption) (tasker Tasker, err error)
 		GetUUID() _uuid.UUID
 		GetName() string
 		GetTaskType() TaskTypeTag
@@ -58,48 +52,96 @@ type (
 		ErrHandler ErrHandler
 	}
 
+	TaskerOption struct {
+		err        error
+		Name       string
+		Fn         FN
+		Timeout    time.Duration
+		ErrHandler ErrHandler
+	}
+
 	FN func()
 
 	ErrHandler func(tasker Tasker, err error)
 )
 
-func (*TaskerImpl) New(
-	taskType TaskTypeTag,
-	name string,
-	interval time.Duration,
-	timeout time.Duration,
-	at time.Time,
-	fn FN,
-	errHandler ErrHandler,
-) (tasker Tasker, err error) {
-	if taskType < TaskTypeAfter || taskType > TaskTypeOnce {
-		return nil, errors.New("定时任务类型错误")
-	}
-	if taskType == TaskTypeOnce {
-		if at.IsZero() {
-			return nil, errors.New("时间错误")
-		}
-	} else if interval <= 0 {
-		return nil, errors.New("时间错误")
-	}
+func NewTaskerOption(name string, timeout time.Duration, fn FN, errHandler ErrHandler) TaskerOption {
 	if fn == nil {
-		return nil, errors.New("回调方法不能为空")
+		return TaskerOption{err: errors.New("回调方法不能为空")}
 	}
 	if errHandler == nil {
-		return nil, errors.New("错误处理方法不能为空")
+		return TaskerOption{err: errors.New("错误处理方法不能为空")}
+	}
+
+	return TaskerOption{Name: name, Timeout: timeout, Fn: fn, ErrHandler: errHandler, err: nil}
+}
+
+func (*TaskerImpl) Once(at time.Time, taskerOption TaskerOption) (tasker Tasker, err error) {
+	if taskerOption.err != nil {
+		return nil, taskerOption.err
+	}
+
+	if at.IsZero() {
+		return nil, errors.New("启动时间错误")
 	}
 
 	tasker = &TaskerImpl{
 		UUID:       _uuid.Must(_uuid.NewV7()),
-		TaskType:   taskType,
-		Name:       name,
-		Interval:   interval,
+		TaskType:   TaskTypeOnce,
+		Name:       taskerOption.Name,
 		At:         at,
-		Timeout:    timeout,
-		Fn:         fn,
-		ErrHandler: errHandler,
+		Timeout:    taskerOption.Timeout,
+		Fn:         taskerOption.Fn,
+		ErrHandler: taskerOption.ErrHandler,
 		stop:       make(chan struct{}, 1),
 	}
+
+	return
+}
+
+func (*TaskerImpl) After(interval time.Duration, taskerOption TaskerOption) (tasker Tasker, err error) {
+	if taskerOption.err != nil {
+		return nil, taskerOption.err
+	}
+
+	if interval <= 0 {
+		return nil, errors.New("间隔时间错误")
+	}
+
+	tasker = &TaskerImpl{
+		UUID:       _uuid.Must(_uuid.NewV7()),
+		TaskType:   TaskTypeAfter,
+		Name:       taskerOption.Name,
+		Interval:   interval,
+		Timeout:    taskerOption.Timeout,
+		Fn:         taskerOption.Fn,
+		ErrHandler: taskerOption.ErrHandler,
+		stop:       make(chan struct{}, 1),
+	}
+
+	return
+}
+
+func (*TaskerImpl) Cyclicity(interval time.Duration, taskerOption TaskerOption) (tasker Tasker, err error) {
+	if taskerOption.err != nil {
+		return nil, taskerOption.err
+	}
+
+	if interval <= 0 {
+		return nil, errors.New("间隔时间错误")
+	}
+
+	tasker = &TaskerImpl{
+		UUID:       _uuid.Must(_uuid.NewV7()),
+		TaskType:   TaskTypeCyclicity,
+		Name:       taskerOption.Name,
+		Interval:   interval,
+		Timeout:    taskerOption.Timeout,
+		Fn:         taskerOption.Fn,
+		ErrHandler: taskerOption.ErrHandler,
+		stop:       make(chan struct{}, 1),
+	}
+
 	return
 }
 
