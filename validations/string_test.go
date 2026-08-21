@@ -58,8 +58,8 @@ func Test2(t *testing.T) {
 
 func Test3(t *testing.T) {
 	type T struct {
-		Time1 string  `v-rule:"(!)(str-timer>3s)(str-timer<10m)" v-name:"时间1"`
-		Time2 *string `v-rule:"(!)(str-timer>=10m)(str-timer<=1h)" v-name:"时间2"`
+		Time1 string  `v-rule:"(!)(str-timers>3s)(str-timers<10m)" v-name:"时间1"`
+		Time2 *string `v-rule:"(!)(str-timers>=10m)(str-timers<=1h)" v-name:"时间2"`
 	}
 
 	t1 := &T{Time1: "", Time2: nil}

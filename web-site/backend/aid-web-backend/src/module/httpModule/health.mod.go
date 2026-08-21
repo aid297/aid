@@ -4,7 +4,7 @@ import "time"
 
 type (
 	HealthResponse struct {
-		Time         HealthTime       `json:"timer" yaml:"timer" toml:"timer"`
+		Time         HealthTime       `json:"timers" yaml:"timers" toml:"timers"`
 		System       HealthSystem     `json:"system" yaml:"system" toml:"system"`
 		WebService   HealthWebService `json:"webService" yaml:"webService" toml:"webService"`
 		VSCodeLaunch HealthVSCode     `json:"vscodeLaunchFile" yaml:"vscodeLaunchFile" toml:"vscodeLaunchFile"`

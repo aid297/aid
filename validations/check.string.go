@@ -38,7 +38,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、[bool|datetime|date|timer]、str-timer>、str-timer>=、str-timer<、str-timer<=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
+// checkString 检查字符串，支持：required、[bool|datetime|date|timers]、str-timers>、str-timers>=、str-timers<、str-timers<=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		err                    error

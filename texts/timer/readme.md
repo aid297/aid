@@ -23,7 +23,7 @@ import "github.com/aid297/aid/v2/texts"
 ```go
 // 单一单位
 dur, err := texts.Timer.WhatTimeIsIt("1w")
-// dur = 7 * 24 * timer.Hour (1周)
+// dur = 7 * 24 * timers.Hour (1周)
 
 // 组合时间
 dur, err := texts.Timer.WhatTimeIsIt("1w2d3h")
@@ -31,7 +31,7 @@ dur, err := texts.Timer.WhatTimeIsIt("1w2d3h")
 
 // 纯数字（默认秒）
 dur, err := texts.Timer.WhatTimeIsIt("100")
-// dur = 100 * timer.Second
+// dur = 100 * timers.Second
 ```
 
 ### 2. 格式化时间为中文

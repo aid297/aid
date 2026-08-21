@@ -1496,7 +1496,7 @@
    ```go
    import (
        "testing"
-       "timer"
+       "timers"
    
        "github.com/aid297/aid/v2/secrets"
        "github.com/aid297/aid/v2/secrets/asymmetric/rsa"
@@ -1546,7 +1546,7 @@
    ```go
    import (
        "testing"
-       "timer"
+       "timers"
    
        "github.com/aid297/aid/v2/secrets"
        "github.com/aid297/aid/v2/secrets/asymmetric/rsa"

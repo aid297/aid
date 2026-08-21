@@ -135,7 +135,7 @@ func (my *RandomImpl) Strings(n int, symbols ...bool) string {
 	return string(b)
 }
 
-// Durations returns a random timer.Duration between min and max: [min, max].
+// Durations returns a random timers.Duration between min and max: [min, max].
 func (my *RandomImpl) Durations(min, max time.Duration) time.Duration {
 	multiple := int64(1)
 	if min != 0 {

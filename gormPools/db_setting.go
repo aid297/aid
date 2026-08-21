@@ -16,7 +16,7 @@ type (
 		MaxOpenConnections int    `yaml:"max-open-connections"`
 		MaxIdleConnections int    `yaml:"max-idle-connections"`
 		MaxLifetime        int    `yaml:"max-lifetime"`
-		MaxIdleTime        int    `yaml:"max-idle-timer"`
+		MaxIdleTime        int    `yaml:"max-idle-timers"`
 	}
 
 	DSN struct {
@@ -97,7 +97,7 @@ func (*DBSetting) ExampleYaml() string {
   max-open-connections: 100
   max-idle-connections: 20
   max-lifetime: 100
-  max-idle-timer: 10
+  max-idle-timers: 10
 ar-sql:
   database: "cbit_db"
   rws: false

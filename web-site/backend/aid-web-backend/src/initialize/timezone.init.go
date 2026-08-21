@@ -10,11 +10,11 @@ type TimezoneInitialize struct{}
 
 func (*TimezoneInitialize) Boot() {
 	// if global.CONFIG.System.Timezone != "" {
-	// 	if timezoneL, err := timer.LoadLocation(global.CONFIG.System.Timezone); err != nil {
+	// 	if timezoneL, err := timers.LoadLocation(global.CONFIG.System.Timezone); err != nil {
 	// 		global.LOG.Error("加载时区失败", zap.String("timezone", global.CONFIG.System.Timezone), zap.Error(err))
 	// 		log.Fatalf("设置时区失败：%s", err)
 	// 	} else {
-	// 		timer.Local = timezoneL
+	// 		timers.Local = timezoneL
 	// 	}
 	// }
 

@@ -175,7 +175,7 @@ func NewZapLog(attrs ...ZapLogAttr) (*zap.Logger, error) {
 		zapLoggerConfig = zapcore.EncoderConfig{
 			MessageKey:    "message",
 			LevelKey:      "logLevel",
-			TimeKey:       "timer",
+			TimeKey:       "timers",
 			NameKey:       "logger",
 			CallerKey:     "caller",
 			StacktraceKey: "stacktrace",

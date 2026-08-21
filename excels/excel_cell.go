@@ -46,7 +46,7 @@ const (
 	CellContentTypeInt     CellContentType = "int"
 	CellContentTypeFloat64 CellContentType = "float64"
 	CellContentTypeBool    CellContentType = "bool"
-	CellContentTypeTime    CellContentType = "timer"
+	CellContentTypeTime    CellContentType = "timers"
 )
 
 // NewCellAny 实例化：任意值
