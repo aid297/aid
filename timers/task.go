@@ -32,6 +32,12 @@ type (
 			errHandler ErrHandler,
 		) (tasker Tasker, err error)
 		GetUUID() _uuid.UUID
+		GetName() string
+		GetTaskType() TaskTypeTag
+		GetInterval() time.Duration
+		GetTimeout() time.Duration
+		GetFn() FN
+		GetErrHandler() ErrHandler
 		Start() (err error)
 		Stop() (err error)
 	}
