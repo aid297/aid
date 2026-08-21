@@ -21,8 +21,11 @@ type (
 		AddTaskAndStart(tasker Tasker) Timer
 		GetTask(taskerUUID _uuid.UUID) Tasker
 		MustGetTask(taskerUUID _uuid.UUID) Tasker
+		runTask(tasker Tasker)
+		RemoveTask(uuid _uuid.UUID) Timer
+		MustRemoveTask(uuid _uuid.UUID) Timer
 		Start() Timer
-		Stop() Timer
+		Stop(uuids ..._uuid.UUID) Timer
 	}
 
 	TimerImpl struct {
@@ -88,6 +91,34 @@ func (my *TimerImpl) runTask(tasker Tasker) {
 	tasker.Start()
 }
 
+// RemoveTask 删除任务
+func (my *TimerImpl) RemoveTask(uuid _uuid.UUID) Timer {
+	my.lock.Lock()
+	defer my.lock.Unlock()
+
+	if tasker, ok := my.timers[uuid]; ok {
+		tasker.Stop()
+		delete(my.timers, uuid)
+	}
+
+	return my
+}
+
+// MustRemoveTask 删除任务
+func (my *TimerImpl) MustRemoveTask(uuid _uuid.UUID) Timer {
+	my.lock.Lock()
+	defer my.lock.Unlock()
+
+	if tasker, ok := my.timers[uuid]; ok {
+		tasker.Stop()
+		delete(my.timers, uuid)
+	} else {
+		panic("任务不存在")
+	}
+
+	return my
+}
+
 // Start 启动当前已登记的全部任务；一次性快照语义，启动后再加入的任务不会被启动，且重复调用直接返回
 func (my *TimerImpl) Start() Timer {
 	my.lock.Lock()
@@ -112,14 +143,25 @@ func (my *TimerImpl) Start() Timer {
 	return my
 }
 
-func (my *TimerImpl) Stop() Timer {
+// Stop 停止全部或指定的任务
+func (my *TimerImpl) Stop(uuids ..._uuid.UUID) Timer {
 	my.lock.Lock()
 	my.running = false
 	// 锁内快照任务列表，释放锁后再停止任务，避免任务 errHandler 内再调用 AddTask/GetTask 时死锁
 	var taskers = make([]Tasker, 0, len(my.timers))
-	for _, tasker := range my.timers {
-		taskers = append(taskers, tasker)
+
+	if len(uuids) > 0 {
+		for idx := range uuids {
+			if tasker, ok := my.timers[uuids[idx]]; ok {
+				taskers = append(taskers, tasker)
+			}
+		}
+	} else {
+		for _, tasker := range my.timers {
+			taskers = append(taskers, tasker)
+		}
 	}
+
 	my.lock.Unlock()
 
 	for _, tasker := range taskers {
