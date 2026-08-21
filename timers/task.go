@@ -37,15 +37,15 @@ type (
 	}
 
 	TaskerImpl struct {
-		uuid       _uuid.UUID
-		name       string
-		taskType   TaskTypeTag
-		fn         FN
-		interval   time.Duration
+		UUID       _uuid.UUID
+		Name       string
+		TaskType   TaskTypeTag
+		Fn         FN
+		Interval   time.Duration
 		stop       chan struct{}
 		stopOnce   sync.Once
-		timeout    time.Duration
-		errHandler ErrHandler
+		Timeout    time.Duration
+		ErrHandler ErrHandler
 	}
 
 	FN func()
@@ -75,29 +75,29 @@ func (*TaskerImpl) New(
 	}
 
 	tasker = &TaskerImpl{
-		uuid:       _uuid.Must(_uuid.NewV7()),
-		taskType:   taskType,
-		name:       name,
-		interval:   interval,
-		timeout:    timeout,
-		fn:         fn,
-		errHandler: errHandler,
+		UUID:       _uuid.Must(_uuid.NewV7()),
+		TaskType:   taskType,
+		Name:       name,
+		Interval:   interval,
+		Timeout:    timeout,
+		Fn:         fn,
+		ErrHandler: errHandler,
 		stop:       make(chan struct{}, 1),
 	}
 	return
 }
 
-func (my *TaskerImpl) GetUUID() _uuid.UUID { return my.uuid }
+func (my *TaskerImpl) GetUUID() _uuid.UUID { return my.UUID }
 
 func (my *TaskerImpl) Start() (err error) {
-	if my.fn == nil {
+	if my.Fn == nil {
 		return fmt.Errorf("定时任务执行失败，没有需要执行的方法")
 	}
 
-	switch my.taskType {
+	switch my.TaskType {
 	case TaskTypeOnce:
 		var c = make(chan error, 1)
-		var timer = time.AfterFunc(my.interval, func() {
+		var timer = time.AfterFunc(my.Interval, func() {
 			select {
 			case <-my.stop: // 已停止则不再执行
 				return
@@ -108,35 +108,35 @@ func (my *TaskerImpl) Start() (err error) {
 					c <- fmt.Errorf("定时任务执行失败：%v", r)
 				}
 			}()
-			my.fn()
+			my.Fn()
 			c <- nil // 缓冲 channel，不会阻塞泄漏
 		})
 
 		var timeoutCh <-chan time.Time
-		if my.timeout > 0 {
-			timeoutCh = time.After(my.timeout) // timeout <= 0 时 timeoutCh 为 nil，该 case 永不触发
+		if my.Timeout > 0 {
+			timeoutCh = time.After(my.Timeout) // timeout <= 0 时 timeoutCh 为 nil，该 case 永不触发
 		}
 		select {
 		case err = <-c: // 执行完成，失败时上报 errHandler
 			if err != nil {
-				my.errHandler(my, err)
+				my.ErrHandler(my, err)
 			}
 		case <-my.stop: // 手动停止，不算错误
 			timer.Stop()
 			return
 		case <-timeoutCh: // 等待超时
 			timer.Stop()
-			my.errHandler(my, fmt.Errorf("定时任务执行超时：%s", my.timeout))
+			my.ErrHandler(my, fmt.Errorf("定时任务执行超时：%s", my.Timeout))
 			return
 		}
 		return
 	case TaskTypeCyclicity:
-		var ticker = time.NewTicker(my.interval)
+		var ticker = time.NewTicker(my.Interval)
 		defer ticker.Stop()
 
 		var timeoutCh <-chan time.Time
-		if my.timeout > 0 {
-			timeoutCh = time.After(my.timeout) // timeout <= 0 时 timeoutCh 为 nil，该 case 永不触发
+		if my.Timeout > 0 {
+			timeoutCh = time.After(my.Timeout) // timeout <= 0 时 timeoutCh 为 nil，该 case 永不触发
 		}
 
 		for {
@@ -149,17 +149,17 @@ func (my *TaskerImpl) Start() (err error) {
 				}
 				// 单次执行的 panic 不中断循环调度
 				if fnErr := my.safeFn(); fnErr != nil {
-					my.errHandler(my, fnErr)
+					my.ErrHandler(my, fnErr)
 				}
 			case <-my.stop: // 手动停止，不算错误
 				return
 			case <-timeoutCh: // 等待超时
-				my.errHandler(my, fmt.Errorf("定时任务执行超时：%s", my.timeout))
+				my.ErrHandler(my, fmt.Errorf("定时任务执行超时：%s", my.Timeout))
 				return
 			}
 		}
 	default:
-		return fmt.Errorf("不支持的定时任务类型 %d", my.taskType)
+		return fmt.Errorf("不支持的定时任务类型 %d", my.TaskType)
 	}
 }
 
@@ -171,7 +171,7 @@ func (my *TaskerImpl) safeFn() (err error) {
 		}
 	}()
 
-	my.fn()
+	my.Fn()
 	return
 }
 
