@@ -26,7 +26,7 @@ type (
 	Tasker interface {
 		Once(at time.Time, taskerOption TaskerOption) (tasker Tasker, err error)
 		After(interval time.Duration, taskerOption TaskerOption) (tasker Tasker, err error)
-		Cyclicity(interval time.Duration, taskerOption TaskerOption) (tasker Tasker, err error)
+		Cyclicity(interval time.Duration, taskerOption TaskerOption, at time.Time) (tasker Tasker, err error)
 		GetUUID() _uuid.UUID
 		GetName() string
 		GetTaskType() TaskTypeTag
@@ -45,7 +45,7 @@ type (
 		TaskType   TaskTypeTag
 		Fn         FN
 		Interval   time.Duration
-		At         time.Time // 仅 TaskTypeOnce 使用：到点执行一次的目标时间
+		At         time.Time // TaskTypeOnce: 到点执行一次的目标时间；TaskTypeCyclicity: 锚点时间，提取 Location 和 Hour/Min/Sec 实现每日精确调度
 		stop       chan struct{}
 		stopOnce   sync.Once
 		Timeout    time.Duration
@@ -122,7 +122,7 @@ func (*TaskerImpl) After(interval time.Duration, taskerOption TaskerOption) (tas
 	return
 }
 
-func (*TaskerImpl) Cyclicity(interval time.Duration, taskerOption TaskerOption) (tasker Tasker, err error) {
+func (*TaskerImpl) Cyclicity(interval time.Duration, taskerOption TaskerOption, at time.Time) (tasker Tasker, err error) {
 	if taskerOption.err != nil {
 		return nil, taskerOption.err
 	}
@@ -140,6 +140,7 @@ func (*TaskerImpl) Cyclicity(interval time.Duration, taskerOption TaskerOption) 
 		Fn:         taskerOption.Fn,
 		ErrHandler: taskerOption.ErrHandler,
 		stop:       make(chan struct{}, 1),
+		At:         at,
 	}
 
 	return
@@ -176,6 +177,11 @@ func (my *TaskerImpl) Start() (err error) {
 		}
 		return my.runAfter(delay)
 	case TaskTypeCyclicity:
+		// At 非零时启用锚点调度：从 At 提取时区与时:分:秒，每天在精确时刻执行
+		if !my.At.IsZero() {
+			return my.runCyclicityAt()
+		}
+
 		var ticker = time.NewTicker(my.Interval)
 		defer ticker.Stop()
 
@@ -244,6 +250,61 @@ func (my *TaskerImpl) runAfter(delay time.Duration) (err error) {
 		return
 	}
 	return
+}
+
+// runCyclicityAt 锚点调度：从 At 提取时区与时:分:秒，每隔 Interval 在精确时刻执行一次；
+// 每次触发都在目标时区重新构造日期，确保 DST 切换等场景下墙钟时间始终正确
+func (my *TaskerImpl) runCyclicityAt() (err error) {
+	var loc = my.At.Location()
+	var h, m, s = my.At.Clock()
+	var days = int(my.Interval / TaskIntervalDaily)
+	if days < 1 {
+		days = 1
+	}
+
+	// 从今天（锚点日期）的 H:M:S 开始，若已过则推进到下一个周期
+	var next = time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), h, m, s, 0, loc)
+	if next.Before(time.Now()) {
+		next = time.Date(my.At.Year(), my.At.Month(), my.At.Day(), h, m, s, 0, loc)
+		for !next.After(time.Now()) {
+			next = next.AddDate(0, 0, days)
+		}
+	}
+
+	var timeoutCh <-chan time.Time
+	if my.Timeout > 0 {
+		timeoutCh = time.After(my.Timeout)
+	}
+
+	for {
+		var delay = time.Until(next)
+		var timer = time.NewTimer(delay)
+
+		select {
+		case <-timer.C:
+			select {
+			case <-my.stop:
+				timer.Stop()
+				return
+			default:
+			}
+			if fnErr := my.safeFn(); fnErr != nil {
+				my.ErrHandler(my, fnErr)
+			}
+		case <-my.stop:
+			timer.Stop()
+			return
+		case <-timeoutCh:
+			timer.Stop()
+			my.ErrHandler(my, fmt.Errorf("定时任务执行超时：%s", my.Timeout))
+			return
+		}
+
+		timer.Stop()
+		// 在目标时区重新构造日期，保证跨 DST 边界时墙钟时间不变
+		next = next.AddDate(0, 0, days)
+		next = time.Date(next.Year(), next.Month(), next.Day(), h, m, s, 0, loc)
+	}
 }
 
 // safeFn 带 panic 保护地执行回调，供循环任务使用，单次 panic 不中断调度
