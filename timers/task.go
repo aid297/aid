@@ -11,7 +11,12 @@ import (
 
 const (
 	TaskTypeAfter TaskTypeTag = iota
-	TaskTypeCyclicity
+	TaskTypeYearly
+	TaskTypeMonthly
+	TaskTypeWeekly
+	TaskTypeDaily
+	TaskTypeHourly
+	TaskTypeMinutely
 	TaskTypeOnce
 )
 
@@ -26,7 +31,12 @@ type (
 	Tasker interface {
 		Once(at time.Time, taskerOption TaskerOption) (tasker Tasker, err error)
 		After(interval time.Duration, taskerOption TaskerOption) (tasker Tasker, err error)
-		Cyclicity(interval time.Duration, taskerOption TaskerOption, at time.Time) (tasker Tasker, err error)
+		Yearly(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error)
+		Monthly(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error)
+		Weekly(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error)
+		Daily(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error)
+		Hourly(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error)
+		Minutely(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error)
 		GetUUID() _uuid.UUID
 		GetName() string
 		GetTaskType() TaskTypeTag
@@ -45,7 +55,7 @@ type (
 		TaskType   TaskTypeTag
 		Fn         FN
 		Interval   time.Duration
-		At         time.Time // TaskTypeOnce: 到点执行一次的目标时间；TaskTypeCyclicity: 锚点时间，提取 Location 和 Hour/Min/Sec 实现每日精确调度
+		At         time.Time // TaskTypeOnce: 到点执行一次的目标时间；周期性任务: 锚点时间，定义每个周期内的精确执行时刻
 		stop       chan struct{}
 		stopOnce   sync.Once
 		Timeout    time.Duration
@@ -122,27 +132,153 @@ func (*TaskerImpl) After(interval time.Duration, taskerOption TaskerOption) (tas
 	return
 }
 
-func (*TaskerImpl) Cyclicity(interval time.Duration, taskerOption TaskerOption, at time.Time) (tasker Tasker, err error) {
+func (*TaskerImpl) Yearly(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error) {
 	if taskerOption.err != nil {
 		return nil, taskerOption.err
 	}
-
-	if interval <= 0 {
-		return nil, errors.New("间隔时间错误")
+	if at.IsZero() {
+		return nil, errors.New("锚点时间不能为空")
+	}
+	if interval < 1 {
+		interval = 1
 	}
 
 	tasker = &TaskerImpl{
 		UUID:       _uuid.Must(_uuid.NewV7()),
-		TaskType:   TaskTypeCyclicity,
+		TaskType:   TaskTypeYearly,
 		Name:       taskerOption.Name,
-		Interval:   interval,
+		Interval:   time.Duration(interval),
+		At:         at,
 		Timeout:    taskerOption.Timeout,
 		Fn:         taskerOption.Fn,
 		ErrHandler: taskerOption.ErrHandler,
 		stop:       make(chan struct{}, 1),
-		At:         at,
+	}
+	return
+}
+
+func (*TaskerImpl) Monthly(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error) {
+	if taskerOption.err != nil {
+		return nil, taskerOption.err
+	}
+	if at.IsZero() {
+		return nil, errors.New("锚点时间不能为空")
+	}
+	if interval < 1 {
+		interval = 1
 	}
 
+	tasker = &TaskerImpl{
+		UUID:       _uuid.Must(_uuid.NewV7()),
+		TaskType:   TaskTypeMonthly,
+		Name:       taskerOption.Name,
+		Interval:   time.Duration(interval),
+		At:         at,
+		Timeout:    taskerOption.Timeout,
+		Fn:         taskerOption.Fn,
+		ErrHandler: taskerOption.ErrHandler,
+		stop:       make(chan struct{}, 1),
+	}
+	return
+}
+
+func (*TaskerImpl) Weekly(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error) {
+	if taskerOption.err != nil {
+		return nil, taskerOption.err
+	}
+	if at.IsZero() {
+		return nil, errors.New("锚点时间不能为空")
+	}
+	if interval < 1 {
+		interval = 1
+	}
+
+	tasker = &TaskerImpl{
+		UUID:       _uuid.Must(_uuid.NewV7()),
+		TaskType:   TaskTypeWeekly,
+		Name:       taskerOption.Name,
+		Interval:   time.Duration(interval),
+		At:         at,
+		Timeout:    taskerOption.Timeout,
+		Fn:         taskerOption.Fn,
+		ErrHandler: taskerOption.ErrHandler,
+		stop:       make(chan struct{}, 1),
+	}
+	return
+}
+
+func (*TaskerImpl) Daily(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error) {
+	if taskerOption.err != nil {
+		return nil, taskerOption.err
+	}
+	if at.IsZero() {
+		return nil, errors.New("锚点时间不能为空")
+	}
+	if interval < 1 {
+		interval = 1
+	}
+
+	tasker = &TaskerImpl{
+		UUID:       _uuid.Must(_uuid.NewV7()),
+		TaskType:   TaskTypeDaily,
+		Name:       taskerOption.Name,
+		Interval:   time.Duration(interval),
+		At:         at,
+		Timeout:    taskerOption.Timeout,
+		Fn:         taskerOption.Fn,
+		ErrHandler: taskerOption.ErrHandler,
+		stop:       make(chan struct{}, 1),
+	}
+	return
+}
+
+func (*TaskerImpl) Hourly(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error) {
+	if taskerOption.err != nil {
+		return nil, taskerOption.err
+	}
+	if at.IsZero() {
+		return nil, errors.New("锚点时间不能为空")
+	}
+	if interval < 1 {
+		interval = 1
+	}
+
+	tasker = &TaskerImpl{
+		UUID:       _uuid.Must(_uuid.NewV7()),
+		TaskType:   TaskTypeHourly,
+		Name:       taskerOption.Name,
+		Interval:   time.Duration(interval),
+		At:         at,
+		Timeout:    taskerOption.Timeout,
+		Fn:         taskerOption.Fn,
+		ErrHandler: taskerOption.ErrHandler,
+		stop:       make(chan struct{}, 1),
+	}
+	return
+}
+
+func (*TaskerImpl) Minutely(interval int, at time.Time, taskerOption TaskerOption) (tasker Tasker, err error) {
+	if taskerOption.err != nil {
+		return nil, taskerOption.err
+	}
+	if at.IsZero() {
+		return nil, errors.New("锚点时间不能为空")
+	}
+	if interval < 1 {
+		interval = 1
+	}
+
+	tasker = &TaskerImpl{
+		UUID:       _uuid.Must(_uuid.NewV7()),
+		TaskType:   TaskTypeMinutely,
+		Name:       taskerOption.Name,
+		Interval:   time.Duration(interval),
+		At:         at,
+		Timeout:    taskerOption.Timeout,
+		Fn:         taskerOption.Fn,
+		ErrHandler: taskerOption.ErrHandler,
+		stop:       make(chan struct{}, 1),
+	}
 	return
 }
 
@@ -176,39 +312,8 @@ func (my *TaskerImpl) Start() (err error) {
 			delay = 0 // 目标时间已过，立即执行
 		}
 		return my.runAfter(delay)
-	case TaskTypeCyclicity:
-		// At 非零时启用锚点调度：从 At 提取时区与时:分:秒，每天在精确时刻执行
-		if !my.At.IsZero() {
-			return my.runCyclicityAt()
-		}
-
-		var ticker = time.NewTicker(my.Interval)
-		defer ticker.Stop()
-
-		var timeoutCh <-chan time.Time
-		if my.Timeout > 0 {
-			timeoutCh = time.After(my.Timeout) // timeout <= 0 时 timeoutCh 为 nil，该 case 永不触发
-		}
-
-		for {
-			select {
-			case <-ticker.C: // 周期触发
-				select {
-				case <-my.stop: // 已停止则不再执行
-					return
-				default:
-				}
-				// 单次执行的 panic 不中断循环调度
-				if fnErr := my.safeFn(); fnErr != nil {
-					my.ErrHandler(my, fnErr)
-				}
-			case <-my.stop: // 手动停止，不算错误
-				return
-			case <-timeoutCh: // 等待超时
-				my.ErrHandler(my, fmt.Errorf("定时任务执行超时：%s", my.Timeout))
-				return
-			}
-		}
+	case TaskTypeYearly, TaskTypeMonthly, TaskTypeWeekly, TaskTypeDaily, TaskTypeHourly, TaskTypeMinutely:
+		return my.runSchedule(int(my.Interval))
 	default:
 		return fmt.Errorf("不支持的定时任务类型 %d", my.TaskType)
 	}
@@ -252,24 +357,10 @@ func (my *TaskerImpl) runAfter(delay time.Duration) (err error) {
 	return
 }
 
-// runCyclicityAt 锚点调度：从 At 提取时区与时:分:秒，每隔 Interval 在精确时刻执行一次；
-// 每次触发都在目标时区重新构造日期，确保 DST 切换等场景下墙钟时间始终正确
-func (my *TaskerImpl) runCyclicityAt() (err error) {
+// runSchedule 通用周期调度：计算下一个精确执行时刻，循环等待并执行
+func (my *TaskerImpl) runSchedule(interval int) (err error) {
 	var loc = my.At.Location()
-	var h, m, s = my.At.Clock()
-	var days = int(my.Interval / TaskIntervalDaily)
-	if days < 1 {
-		days = 1
-	}
-
-	// 从今天（锚点日期）的 H:M:S 开始，若已过则推进到下一个周期
-	var next = time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), h, m, s, 0, loc)
-	if next.Before(time.Now()) {
-		next = time.Date(my.At.Year(), my.At.Month(), my.At.Day(), h, m, s, 0, loc)
-		for !next.After(time.Now()) {
-			next = next.AddDate(0, 0, days)
-		}
-	}
+	var next = my.computeNext(loc)
 
 	var timeoutCh <-chan time.Time
 	if my.Timeout > 0 {
@@ -301,9 +392,79 @@ func (my *TaskerImpl) runCyclicityAt() (err error) {
 		}
 
 		timer.Stop()
-		// 在目标时区重新构造日期，保证跨 DST 边界时墙钟时间不变
-		next = next.AddDate(0, 0, days)
-		next = time.Date(next.Year(), next.Month(), next.Day(), h, m, s, 0, loc)
+		next = my.advanceNext(next, loc, interval)
+	}
+}
+
+// computeNext 根据任务类型和锚点，计算第一个未来执行时刻
+func (my *TaskerImpl) computeNext(loc *time.Location) time.Time {
+	var now = time.Now().In(loc)
+	var h, m, s = my.At.Clock()
+
+	switch my.TaskType {
+	case TaskTypeYearly:
+		var next = time.Date(now.Year(), my.At.Month(), my.At.Day(), h, m, s, 0, loc)
+		if !next.After(now) {
+			next = time.Date(now.Year()+1, my.At.Month(), my.At.Day(), h, m, s, 0, loc)
+		}
+		return next
+	case TaskTypeMonthly:
+		var next = time.Date(now.Year(), now.Month(), my.At.Day(), h, m, s, 0, loc)
+		if !next.After(now) {
+			next = time.Date(now.Year(), now.Month()+1, my.At.Day(), h, m, s, 0, loc)
+		}
+		return next
+	case TaskTypeWeekly:
+		var next = time.Date(now.Year(), now.Month(), now.Day(), h, m, s, 0, loc)
+		var targetWeekday = my.At.Weekday()
+		var daysAhead = (int(targetWeekday) - int(now.Weekday()) + 7) % 7
+		if daysAhead == 0 && !next.After(now) {
+			daysAhead = 7
+		}
+		next = next.AddDate(0, 0, daysAhead)
+		return next
+	case TaskTypeDaily:
+		var next = time.Date(now.Year(), now.Month(), now.Day(), h, m, s, 0, loc)
+		if !next.After(now) {
+			next = time.Date(now.Year(), now.Month(), now.Day()+1, h, m, s, 0, loc)
+		}
+		return next
+	case TaskTypeHourly:
+		var next = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), m, s, 0, loc)
+		if !next.After(now) {
+			next = next.Add(time.Hour)
+		}
+		return next
+	case TaskTypeMinutely:
+		var next = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), s, 0, loc)
+		if !next.After(now) {
+			next = next.Add(time.Minute)
+		}
+		return next
+	default:
+		return now
+	}
+}
+
+// advanceNext 按任务类型将当前执行时刻推进到下一个周期
+func (my *TaskerImpl) advanceNext(current time.Time, loc *time.Location, interval int) time.Time {
+	var h, m, s = my.At.Clock()
+
+	switch my.TaskType {
+	case TaskTypeYearly:
+		return time.Date(current.Year()+interval, my.At.Month(), my.At.Day(), h, m, s, 0, loc)
+	case TaskTypeMonthly:
+		return time.Date(current.Year(), current.Month()+time.Month(interval), my.At.Day(), h, m, s, 0, loc)
+	case TaskTypeWeekly:
+		return current.AddDate(0, 0, 7*interval)
+	case TaskTypeDaily:
+		return time.Date(current.Year(), current.Month(), current.Day()+interval, h, m, s, 0, loc)
+	case TaskTypeHourly:
+		return current.Add(time.Duration(interval) * time.Hour)
+	case TaskTypeMinutely:
+		return current.Add(time.Duration(interval) * time.Minute)
+	default:
+		return current
 	}
 }
 
