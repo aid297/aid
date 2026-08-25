@@ -1,7 +1,6 @@
 package timers
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -27,7 +26,7 @@ type (
 	TaskTypeTag int
 
 	TimerTasker interface {
-		New(fn FN) (TimerTasker, error)
+		New(fn FN) TimerTasker
 		SetTimeout(timeout time.Duration) TimerTasker
 		SetErrHandler(errHandler ErrHandler) TimerTasker
 		SetName(name string) TimerTasker
@@ -76,14 +75,14 @@ type (
 	ErrHandler func(tasker TimerTasker, err error)
 )
 
-func (*TimerTaskerImpl) New(fn FN) (TimerTasker, error) {
+func (*TimerTaskerImpl) New(fn FN) TimerTasker {
 	timerTasker := &TimerTaskerImpl{UUID: _uuid.Must(_uuid.NewV7()), At: defaultAt, Timeout: defaultTimeout, stopCh: make(chan struct{}, 1)}
 
 	if fn == nil {
-		return nil, errors.New("回调方法不能为空")
+		timerTasker.Fn = func() {}
 	}
 
-	return timerTasker, nil
+	return timerTasker
 }
 
 func (my *TimerTaskerImpl) SetTimeout(timeout time.Duration) TimerTasker {

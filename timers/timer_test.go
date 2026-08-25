@@ -12,7 +12,7 @@ import (
 // newTasker 创建 TimerTasker 并确保 Fn 字段被正确赋值
 // （Task.New 当前不将 fn 存入 Fn 字段，需手动补充）
 func newTasker(fn FN) TimerTasker {
-	tasker, _ := Task.New(fn)
+	tasker := Task.New(fn)
 	tasker.(*TimerTaskerImpl).Fn = fn
 	return tasker
 }
@@ -20,10 +20,7 @@ func newTasker(fn FN) TimerTasker {
 // ==================== TimerTasker 构造与链式方法 ====================
 
 func TestNew_ValidFn(t *testing.T) {
-	tasker, err := Task.New(func() {})
-	if err != nil {
-		t.Fatalf("期望无错误，得到 %v", err)
-	}
+	tasker := Task.New(func() {})
 	if tasker.GetUUID() == _uuid.Nil {
 		t.Fatal("期望非零 UUID")
 	}
@@ -35,15 +32,8 @@ func TestNew_ValidFn(t *testing.T) {
 	}
 }
 
-func TestNew_NilFn(t *testing.T) {
-	_, err := Task.New(nil)
-	if err == nil {
-		t.Fatal("期望返回错误")
-	}
-}
-
 func TestSetTimeout(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.SetTimeout(5 * time.Second)
 	if tasker.GetTimeout() != 5*time.Second {
 		t.Fatalf("期望 5s，得到 %v", tasker.GetTimeout())
@@ -63,7 +53,7 @@ func TestSetTimeout(t *testing.T) {
 func TestSetErrHandler(t *testing.T) {
 	called := false
 	handler := ErrHandler(func(tasker TimerTasker, err error) { called = true })
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.SetErrHandler(handler)
 	if tasker.GetErrHandler() == nil {
 		t.Fatal("期望 ErrHandler 不为空")
@@ -74,7 +64,7 @@ func TestSetErrHandler(t *testing.T) {
 }
 
 func TestSetName(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.SetName("test-task")
 	if tasker.GetName() != "test-task" {
 		t.Fatalf("期望 test-task，得到 %s", tasker.GetName())
@@ -82,7 +72,7 @@ func TestSetName(t *testing.T) {
 }
 
 func TestSetAt(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	at := time.Date(2025, 6, 15, 10, 30, 0, 0, time.Local)
 	tasker.SetAt(at)
 	if !tasker.GetAt().Equal(at) {
@@ -91,7 +81,7 @@ func TestSetAt(t *testing.T) {
 }
 
 func TestSetDelay(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.SetDelay(5 * time.Second)
 	if tasker.GetDelay() != 5*time.Second {
 		t.Fatalf("期望 5s，得到 %v", tasker.GetDelay())
@@ -109,7 +99,7 @@ func TestSetDelay(t *testing.T) {
 }
 
 func TestSetDelayAt_FutureTime(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	// 目标时间设为当前 +5 秒
 	target := time.Now().Add(5 * time.Second)
 	tasker.SetDelayAt(target, time.Local)
@@ -121,7 +111,7 @@ func TestSetDelayAt_FutureTime(t *testing.T) {
 }
 
 func TestSetDelayAt_PastTime(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	// 目标时间设为过去 1 小时
 	target := time.Now().Add(-1 * time.Hour)
 	tasker.SetDelayAt(target, time.Local)
@@ -132,7 +122,7 @@ func TestSetDelayAt_PastTime(t *testing.T) {
 }
 
 func TestSetDelayAt_NilLocation(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	target := time.Now().Add(3 * time.Second)
 	// loc 传 nil，应回退到 time.Local
 	tasker.SetDelayAt(target, nil)
@@ -143,7 +133,7 @@ func TestSetDelayAt_NilLocation(t *testing.T) {
 }
 
 func TestSetDelayAt_CustomTimezone(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	// 使用 UTC 时区
 	target := time.Now().Add(5 * time.Second)
 	tasker.SetDelayAt(target, time.UTC)
@@ -154,7 +144,7 @@ func TestSetDelayAt_CustomTimezone(t *testing.T) {
 }
 
 func TestSetDelayAt_Chaining(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	target := time.Now().Add(10 * time.Second)
 	result := tasker.SetName("delay-at-test").SetDelayAt(target, time.Local)
 	if result.GetName() != "delay-at-test" {
@@ -169,7 +159,7 @@ func TestSetDelayAt_Chaining(t *testing.T) {
 // ==================== 任务类型设置方法 ====================
 
 func TestOnce(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	at := time.Now().Add(time.Hour)
 	tasker.Once(at)
 	if tasker.GetTaskType() != TaskTypeOnce {
@@ -181,7 +171,7 @@ func TestOnce(t *testing.T) {
 }
 
 func TestAfter(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.After(10 * time.Second)
 	if tasker.GetInterval() != 10*time.Second {
 		t.Fatalf("期望 10s，得到 %v", tasker.GetInterval())
@@ -189,7 +179,7 @@ func TestAfter(t *testing.T) {
 }
 
 func TestAfter_DefaultOnNonPositive(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.After(0)
 	if tasker.GetInterval() != defaultAfter {
 		t.Fatalf("期望默认 %v，得到 %v", defaultAfter, tasker.GetInterval())
@@ -201,7 +191,7 @@ func TestAfter_DefaultOnNonPositive(t *testing.T) {
 }
 
 func TestDaily(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Daily(3)
 	if tasker.GetTaskType() != TaskTypeDaily {
 		t.Fatalf("期望 TaskTypeDaily，得到 %d", tasker.GetTaskType())
@@ -212,7 +202,7 @@ func TestDaily(t *testing.T) {
 }
 
 func TestDaily_MinInterval(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Daily(0)
 	if tasker.GetInterval() != 24*time.Hour {
 		t.Fatalf("interval<1 应回退为 1 天，得到 %v", tasker.GetInterval())
@@ -220,7 +210,7 @@ func TestDaily_MinInterval(t *testing.T) {
 }
 
 func TestHourly(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Hourly(2)
 	if tasker.GetTaskType() != TaskTypeHourly {
 		t.Fatalf("期望 TaskTypeHourly，得到 %d", tasker.GetTaskType())
@@ -231,7 +221,7 @@ func TestHourly(t *testing.T) {
 }
 
 func TestHourly_MinInterval(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Hourly(-1)
 	if tasker.GetInterval() != time.Hour {
 		t.Fatalf("interval<1 应回退为 1h，得到 %v", tasker.GetInterval())
@@ -239,7 +229,7 @@ func TestHourly_MinInterval(t *testing.T) {
 }
 
 func TestMinutely(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Minutely(5)
 	// 注意：当前实现中 Minutely 设置的是 TaskTypeDaily
 	if tasker.GetTaskType() != TaskTypeDaily {
@@ -251,7 +241,7 @@ func TestMinutely(t *testing.T) {
 }
 
 func TestMinutely_MinInterval(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Minutely(0)
 	if tasker.GetInterval() != time.Minute {
 		t.Fatalf("interval<1 应回退为 1m，得到 %v", tasker.GetInterval())
@@ -261,7 +251,7 @@ func TestMinutely_MinInterval(t *testing.T) {
 // ==================== 链式调用 ====================
 
 func TestChaining(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	result := tasker.SetName("chain").SetTimeout(10 * time.Second).SetDelay(2 * time.Second).Daily(1)
 	if result.GetName() != "chain" {
 		t.Fatal("SetName 链式失败")
@@ -293,7 +283,7 @@ func TestStart_NilFn(t *testing.T) {
 }
 
 func TestStart_UnsupportedType(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	// TaskType = 0 (TaskTypeAfter) 是默认值，手动设为无效值
 	tasker.(*TimerTaskerImpl).TaskType = TaskTypeTag(99)
 	err := tasker.Start()
@@ -375,7 +365,7 @@ func TestOnce_PastTime(t *testing.T) {
 // ==================== Stop 机制 ====================
 
 func TestStop_Idempotent(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.After(time.Second)
 	// 多次 Stop 不应 panic
 	tasker.Stop()
@@ -462,7 +452,7 @@ func TestSafeFn_Panic(t *testing.T) {
 // ==================== computeNext ====================
 
 func TestComputeNext_Daily(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Daily(1)
 	// 设置锚点为未来时间，确保 next > now
 	now := time.Now()
@@ -480,7 +470,7 @@ func TestComputeNext_Daily(t *testing.T) {
 }
 
 func TestComputeNext_Hourly(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Hourly(1)
 	now := time.Now()
 	// 锚点秒数设为未来 5 秒，确保 next > now
@@ -494,7 +484,7 @@ func TestComputeNext_Hourly(t *testing.T) {
 }
 
 func TestComputeNext_Minutely(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Minutely(1) // TaskTypeDaily, interval=1m
 	now := time.Now()
 	at := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()+5, 0, time.Local)
@@ -507,7 +497,7 @@ func TestComputeNext_Minutely(t *testing.T) {
 }
 
 func TestComputeNext_Daily_PastAt(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Daily(1)
 	// 锚点设为凌晨 00:00:00（几乎肯定已过）
 	at := time.Date(2020, 1, 1, 0, 0, 0, 0, time.Local)
@@ -527,7 +517,7 @@ func TestComputeNext_Daily_PastAt(t *testing.T) {
 // ==================== advanceNext ====================
 
 func TestAdvanceNext_Daily(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Daily(2) // 每 2 天
 	at := time.Date(2025, 6, 15, 10, 30, 0, 0, time.Local)
 	tasker.SetAt(at)
@@ -541,7 +531,7 @@ func TestAdvanceNext_Daily(t *testing.T) {
 }
 
 func TestAdvanceNext_Hourly(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Hourly(3)
 	current := time.Date(2025, 6, 15, 10, 0, 0, 0, time.Local)
 	next := tasker.(*TimerTaskerImpl).advanceNext(current, time.Local, 3)
@@ -552,7 +542,7 @@ func TestAdvanceNext_Hourly(t *testing.T) {
 }
 
 func TestAdvanceNext_Minutely(t *testing.T) {
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.Minutely(10)
 	// 注意：Minutely 实际设置 TaskTypeDaily，advanceNext 走 Daily 分支
 	// At 未重新设置，defaultAt 时分秒均为 0
@@ -731,7 +721,7 @@ func newTestTimer() *TimerImpl {
 
 func TestTimer_AddTask(t *testing.T) {
 	timer := newTestTimer()
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.SetName("t1")
 	timer.AddTask(tasker)
 
@@ -762,7 +752,7 @@ func TestTimer_GetTask_NotFound(t *testing.T) {
 
 func TestTimer_MustGetTask(t *testing.T) {
 	timer := newTestTimer()
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	timer.AddTask(tasker)
 
 	got := timer.MustGetTask(tasker.GetUUID().String())
@@ -783,7 +773,7 @@ func TestTimer_MustGetTask_Panic(t *testing.T) {
 
 func TestTimer_RemoveTask(t *testing.T) {
 	timer := newTestTimer()
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	timer.AddTask(tasker)
 	timer.RemoveTask(tasker.GetUUID().String())
 
@@ -799,7 +789,7 @@ func TestTimer_RemoveTask_NonExistent(t *testing.T) {
 
 func TestTimer_MustRemoveTask(t *testing.T) {
 	timer := newTestTimer()
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	timer.AddTask(tasker)
 	timer.MustRemoveTask(tasker.GetUUID().String())
 
@@ -836,7 +826,7 @@ func TestTimer_Start(t *testing.T) {
 
 func TestTimer_Start_Idempotent(t *testing.T) {
 	timer := newTestTimer()
-	tasker, _ := Task.New(func() {})
+	tasker := Task.New(func() {})
 	tasker.After(time.Second)
 	timer.AddTask(tasker)
 
