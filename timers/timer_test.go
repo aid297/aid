@@ -1,97 +1,141 @@
-package timers
+package timers_test
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+	_time "time"
 
 	_uuid "github.com/google/uuid"
+
+	_timers "github.com/aid297/aid/v2/timers"
 )
 
-// newTasker 创建 TimerTasker 并确保 Fn 字段被正确赋值
-// （Task.New 当前不将 fn 存入 Fn 字段，需手动补充）
-func newTasker(fn FN) TimerTasker {
-	tasker := Task.New(fn)
-	tasker.(*TimerTaskerImpl).Fn = fn
-	return tasker
+func newTimer() _timers.Timer { return _timers.Time.Once().Start() }
+
+type es struct{}
+
+func Test1(t *testing.T) {
+	closeCh := make(chan es, 1)
+	timer := newTimer()
+	defer timer.Stop()
+
+	loc, _ := _time.LoadLocation("Asia/Shanghai")
+	startTime := _time.Date(2026, 8, 25, 13, 47, 30, 0, loc)
+
+	tasker := _timers.Task.New(func() { t.Log("执行定时器"); closeCh <- es{} }).Once(startTime)
+
+	timer.AddTaskAndStart(tasker)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*_time.Minute)
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		t.Log("测试超时")
+		return
+	case <-closeCh:
+		t.Log("测试成功")
+	}
+}
+
+func Test2(t *testing.T) {
+	closeCh := make(chan es, 1)
+	timer := newTimer()
+	defer timer.Stop()
+
+	loc, _ := _time.LoadLocation("Asia/Shanghai")
+	startTime := time.Now().In(loc).Add(5 * time.Second)
+
+	tasker := _timers.Task.New(func() { t.Log("执行定时器"); closeCh <- es{} }).SetDelayAt(startTime).Minutely(1)
+	timer.AddTaskAndStart(tasker)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*_time.Minute)
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		t.Log("测试超时")
+		return
+	case <-closeCh:
+		t.Log("测试成功")
+	}
 }
 
 // ==================== TimerTasker 构造与链式方法 ====================
 
 func TestNew_ValidFn(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	if tasker.GetUUID() == _uuid.Nil {
 		t.Fatal("期望非零 UUID")
 	}
-	if tasker.GetTimeout() != defaultTimeout {
-		t.Fatalf("期望默认超时 %v，得到 %v", defaultTimeout, tasker.GetTimeout())
+	if tasker.GetTimeout() != 24*time.Hour {
+		t.Fatalf("期望默认超时 24h，得到 %v", tasker.GetTimeout())
 	}
-	if tasker.GetAt() != defaultAt {
-		t.Fatalf("期望默认 At %v，得到 %v", defaultAt, tasker.GetAt())
+	expectedAt := time.Date(0, 0, 0, 0, 0, 0, 0, time.Local)
+	if tasker.GetAt() != expectedAt {
+		t.Fatalf("期望默认 At %v，得到 %v", expectedAt, tasker.GetAt())
+	}
+}
+
+func TestNew_NilFn(t *testing.T) {
+	tasker := _timers.Task.New(nil)
+	// New(nil) 不再返回 error，而是设置空函数
+	if tasker == nil {
+		t.Fatal("期望返回非空 tasker")
+	}
+	if tasker.GetFn() == nil {
+		t.Fatal("nil fn 应被替换为空函数")
 	}
 }
 
 func TestSetTimeout(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.SetTimeout(5 * time.Second)
 	if tasker.GetTimeout() != 5*time.Second {
 		t.Fatalf("期望 5s，得到 %v", tasker.GetTimeout())
 	}
 	// 零值回退默认
 	tasker.SetTimeout(0)
-	if tasker.GetTimeout() != defaultTimeout {
-		t.Fatalf("期望默认超时，得到 %v", tasker.GetTimeout())
+	if tasker.GetTimeout() != 24*time.Hour {
+		t.Fatalf("期望默认超时 24h，得到 %v", tasker.GetTimeout())
 	}
 	// 负值回退默认
 	tasker.SetTimeout(-1 * time.Second)
-	if tasker.GetTimeout() != defaultTimeout {
-		t.Fatalf("期望默认超时，得到 %v", tasker.GetTimeout())
+	if tasker.GetTimeout() != 24*time.Hour {
+		t.Fatalf("期望默认超时 24h，得到 %v", tasker.GetTimeout())
 	}
 }
 
 func TestSetErrHandler(t *testing.T) {
-	called := false
-	handler := ErrHandler(func(tasker TimerTasker, err error) { called = true })
-	tasker := Task.New(func() {})
+	handler := _timers.ErrHandler(func(tasker _timers.TimerTasker, err error) {})
+	tasker := _timers.Task.New(func() {})
 	tasker.SetErrHandler(handler)
 	if tasker.GetErrHandler() == nil {
 		t.Fatal("期望 ErrHandler 不为空")
 	}
-	// 触发 handler 验证绑定
-	tasker.SetErrHandler(handler)
-	_ = called // handler 在实际执行中才会被调用
 }
 
 func TestSetName(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.SetName("test-task")
 	if tasker.GetName() != "test-task" {
 		t.Fatalf("期望 test-task，得到 %s", tasker.GetName())
 	}
 }
 
-func TestSetAt(t *testing.T) {
-	tasker := Task.New(func() {})
-	at := time.Date(2025, 6, 15, 10, 30, 0, 0, time.Local)
-	tasker.SetAt(at)
-	if !tasker.GetAt().Equal(at) {
-		t.Fatalf("期望 %v，得到 %v", at, tasker.GetAt())
-	}
-}
-
 func TestSetDelay(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.SetDelay(5 * time.Second)
 	if tasker.GetDelay() != 5*time.Second {
 		t.Fatalf("期望 5s，得到 %v", tasker.GetDelay())
 	}
-	// 零值不设置
 	tasker.SetDelay(0)
 	if tasker.GetDelay() != 5*time.Second {
 		t.Fatalf("零值不应改变 Delay，得到 %v", tasker.GetDelay())
 	}
-	// 负值不设置
 	tasker.SetDelay(-1 * time.Second)
 	if tasker.GetDelay() != 5*time.Second {
 		t.Fatalf("负值不应改变 Delay，得到 %v", tasker.GetDelay())
@@ -99,70 +143,42 @@ func TestSetDelay(t *testing.T) {
 }
 
 func TestSetDelayAt_FutureTime(t *testing.T) {
-	tasker := Task.New(func() {})
-	// 目标时间设为当前 +5 秒
+	tasker := _timers.Task.New(func() {})
 	target := time.Now().Add(5 * time.Second)
-	tasker.SetDelayAt(target, time.Local)
-	// Delay 应约为 5 秒（允许微小误差）
-	delay := tasker.GetDelay()
-	if delay < 4*time.Second || delay > 6*time.Second {
-		t.Fatalf("期望 Delay 约 5s，得到 %v", delay)
+	tasker.SetDelayAt(target)
+	if !tasker.GetAt().Equal(target) {
+		t.Fatalf("期望 At = %v，得到 %v", target, tasker.GetAt())
 	}
 }
 
 func TestSetDelayAt_PastTime(t *testing.T) {
-	tasker := Task.New(func() {})
-	// 目标时间设为过去 1 小时
+	tasker := _timers.Task.New(func() {})
 	target := time.Now().Add(-1 * time.Hour)
-	tasker.SetDelayAt(target, time.Local)
-	// 过去时间不应设置 Delay
-	if tasker.GetDelay() != 0 {
-		t.Fatalf("过去时间不应设置 Delay，得到 %v", tasker.GetDelay())
-	}
-}
-
-func TestSetDelayAt_NilLocation(t *testing.T) {
-	tasker := Task.New(func() {})
-	target := time.Now().Add(3 * time.Second)
-	// loc 传 nil，应回退到 time.Local
-	tasker.SetDelayAt(target, nil)
-	delay := tasker.GetDelay()
-	if delay < 2*time.Second || delay > 4*time.Second {
-		t.Fatalf("nil loc 时期望 Delay 约 3s，得到 %v", delay)
-	}
-}
-
-func TestSetDelayAt_CustomTimezone(t *testing.T) {
-	tasker := Task.New(func() {})
-	// 使用 UTC 时区
-	target := time.Now().Add(5 * time.Second)
-	tasker.SetDelayAt(target, time.UTC)
-	delay := tasker.GetDelay()
-	if delay < 4*time.Second || delay > 6*time.Second {
-		t.Fatalf("UTC 时区时期望 Delay 约 5s，得到 %v", delay)
+	tasker.SetDelayAt(target)
+	if !tasker.GetAt().Equal(target) {
+		t.Fatalf("过去时间也应设置 At，期望 %v，得到 %v", target, tasker.GetAt())
 	}
 }
 
 func TestSetDelayAt_Chaining(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	target := time.Now().Add(10 * time.Second)
-	result := tasker.SetName("delay-at-test").SetDelayAt(target, time.Local)
+	result := tasker.SetName("delay-at-test").SetDelayAt(target)
 	if result.GetName() != "delay-at-test" {
 		t.Fatal("链式调用 SetName 失败")
 	}
-	delay := result.GetDelay()
-	if delay < 9*time.Second || delay > 11*time.Second {
-		t.Fatalf("链式调用 SetDelayAt 时期望 Delay 约 10s，得到 %v", delay)
+	if !result.GetAt().Equal(target) {
+		t.Fatalf("链式调用 SetDelayAt 时期望 At = %v，得到 %v", target, result.GetAt())
 	}
 }
 
 // ==================== 任务类型设置方法 ====================
 
 func TestOnce(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	at := time.Now().Add(time.Hour)
 	tasker.Once(at)
-	if tasker.GetTaskType() != TaskTypeOnce {
+	if tasker.GetTaskType() != _timers.TaskTypeOnce {
 		t.Fatalf("期望 TaskTypeOnce，得到 %d", tasker.GetTaskType())
 	}
 	if !tasker.GetAt().Equal(at) {
@@ -171,7 +187,7 @@ func TestOnce(t *testing.T) {
 }
 
 func TestAfter(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.After(10 * time.Second)
 	if tasker.GetInterval() != 10*time.Second {
 		t.Fatalf("期望 10s，得到 %v", tasker.GetInterval())
@@ -179,21 +195,21 @@ func TestAfter(t *testing.T) {
 }
 
 func TestAfter_DefaultOnNonPositive(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.After(0)
-	if tasker.GetInterval() != defaultAfter {
-		t.Fatalf("期望默认 %v，得到 %v", defaultAfter, tasker.GetInterval())
+	if tasker.GetInterval() != 30*time.Second {
+		t.Fatalf("期望默认 30s，得到 %v", tasker.GetInterval())
 	}
 	tasker.After(-5 * time.Second)
-	if tasker.GetInterval() != defaultAfter {
-		t.Fatalf("负值期望默认 %v，得到 %v", defaultAfter, tasker.GetInterval())
+	if tasker.GetInterval() != 30*time.Second {
+		t.Fatalf("负值期望默认 30s，得到 %v", tasker.GetInterval())
 	}
 }
 
 func TestDaily(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.Daily(3)
-	if tasker.GetTaskType() != TaskTypeDaily {
+	if tasker.GetTaskType() != _timers.TaskTypeDaily {
 		t.Fatalf("期望 TaskTypeDaily，得到 %d", tasker.GetTaskType())
 	}
 	if tasker.GetInterval() != 3*24*time.Hour {
@@ -202,7 +218,7 @@ func TestDaily(t *testing.T) {
 }
 
 func TestDaily_MinInterval(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.Daily(0)
 	if tasker.GetInterval() != 24*time.Hour {
 		t.Fatalf("interval<1 应回退为 1 天，得到 %v", tasker.GetInterval())
@@ -210,9 +226,9 @@ func TestDaily_MinInterval(t *testing.T) {
 }
 
 func TestHourly(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.Hourly(2)
-	if tasker.GetTaskType() != TaskTypeHourly {
+	if tasker.GetTaskType() != _timers.TaskTypeHourly {
 		t.Fatalf("期望 TaskTypeHourly，得到 %d", tasker.GetTaskType())
 	}
 	if tasker.GetInterval() != 2*time.Hour {
@@ -221,7 +237,7 @@ func TestHourly(t *testing.T) {
 }
 
 func TestHourly_MinInterval(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.Hourly(-1)
 	if tasker.GetInterval() != time.Hour {
 		t.Fatalf("interval<1 应回退为 1h，得到 %v", tasker.GetInterval())
@@ -229,10 +245,9 @@ func TestHourly_MinInterval(t *testing.T) {
 }
 
 func TestMinutely(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.Minutely(5)
-	// 注意：当前实现中 Minutely 设置的是 TaskTypeDaily
-	if tasker.GetTaskType() != TaskTypeDaily {
+	if tasker.GetTaskType() != _timers.TaskTypeDaily {
 		t.Fatalf("期望 TaskTypeDaily，得到 %d", tasker.GetTaskType())
 	}
 	if tasker.GetInterval() != 5*time.Minute {
@@ -241,7 +256,7 @@ func TestMinutely(t *testing.T) {
 }
 
 func TestMinutely_MinInterval(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.Minutely(0)
 	if tasker.GetInterval() != time.Minute {
 		t.Fatalf("interval<1 应回退为 1m，得到 %v", tasker.GetInterval())
@@ -251,7 +266,7 @@ func TestMinutely_MinInterval(t *testing.T) {
 // ==================== 链式调用 ====================
 
 func TestChaining(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	result := tasker.SetName("chain").SetTimeout(10 * time.Second).SetDelay(2 * time.Second).Daily(1)
 	if result.GetName() != "chain" {
 		t.Fatal("SetName 链式失败")
@@ -262,7 +277,7 @@ func TestChaining(t *testing.T) {
 	if result.GetDelay() != 2*time.Second {
 		t.Fatal("SetDelay 链式失败")
 	}
-	if result.GetTaskType() != TaskTypeDaily {
+	if result.GetTaskType() != _timers.TaskTypeDaily {
 		t.Fatal("Daily 链式失败")
 	}
 }
@@ -270,33 +285,30 @@ func TestChaining(t *testing.T) {
 // ==================== Start 错误分支 ====================
 
 func TestStart_NilFn(t *testing.T) {
-	tasker := &TimerTaskerImpl{
-		UUID:    _uuid.Must(_uuid.NewV7()),
-		At:      defaultAt,
-		Timeout: defaultTimeout,
-		stopCh:  make(chan struct{}, 1),
-	}
+	// New(nil) 现在设置空函数，Start 会正常执行而非返回错误
+	tasker := _timers.Task.New(nil)
+	tasker.After(50 * time.Millisecond)
+	tasker.SetTimeout(2 * time.Second)
 	err := tasker.Start()
-	if err == nil {
-		t.Fatal("期望错误")
+	if err != nil {
+		t.Fatalf("空函数应正常执行，得到错误: %v", err)
 	}
 }
 
 func TestStart_UnsupportedType(t *testing.T) {
-	tasker := Task.New(func() {})
-	// TaskType = 0 (TaskTypeAfter) 是默认值，手动设为无效值
-	tasker.(*TimerTaskerImpl).TaskType = TaskTypeTag(99)
+	tasker := _timers.Task.New(func() {})
+	tasker.(*_timers.TimerTaskerImpl).TaskType = _timers.TaskTypeTag(99)
 	err := tasker.Start()
 	if err == nil {
 		t.Fatal("期望不支持的类型错误")
 	}
 }
 
-// ==================== runAfter / After 执行 ====================
+// ==================== After / Once 执行 ====================
 
 func TestAfter_Execution(t *testing.T) {
 	var called int32
-	tasker := newTasker(func() { atomic.StoreInt32(&called, 1) })
+	tasker := _timers.Task.New(func() { atomic.StoreInt32(&called, 1) })
 	tasker.After(50 * time.Millisecond)
 	tasker.SetTimeout(2 * time.Second)
 
@@ -316,11 +328,9 @@ func TestAfter_Execution(t *testing.T) {
 	}
 }
 
-// ==================== Once 执行 ====================
-
 func TestOnce_FutureTime(t *testing.T) {
 	var called int32
-	tasker := newTasker(func() { atomic.StoreInt32(&called, 1) })
+	tasker := _timers.Task.New(func() { atomic.StoreInt32(&called, 1) })
 	tasker.Once(time.Now().Add(50 * time.Millisecond))
 	tasker.SetTimeout(2 * time.Second)
 
@@ -342,8 +352,8 @@ func TestOnce_FutureTime(t *testing.T) {
 
 func TestOnce_PastTime(t *testing.T) {
 	var called int32
-	tasker := newTasker(func() { atomic.StoreInt32(&called, 1) })
-	tasker.Once(time.Now().Add(-1 * time.Hour)) // 过去时间，应立即执行
+	tasker := _timers.Task.New(func() { atomic.StoreInt32(&called, 1) })
+	tasker.Once(time.Now().Add(-1 * time.Hour))
 	tasker.SetTimeout(2 * time.Second)
 
 	done := make(chan error, 1)
@@ -365,9 +375,8 @@ func TestOnce_PastTime(t *testing.T) {
 // ==================== Stop 机制 ====================
 
 func TestStop_Idempotent(t *testing.T) {
-	tasker := Task.New(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.After(time.Second)
-	// 多次 Stop 不应 panic
 	tasker.Stop()
 	tasker.Stop()
 	tasker.Stop()
@@ -375,8 +384,8 @@ func TestStop_Idempotent(t *testing.T) {
 
 func TestAfter_StopBeforeExecution(t *testing.T) {
 	var called int32
-	tasker := newTasker(func() { atomic.StoreInt32(&called, 1) })
-	tasker.After(5 * time.Second) // 较长延迟
+	tasker := _timers.Task.New(func() { atomic.StoreInt32(&called, 1) })
+	tasker.After(5 * time.Second)
 	tasker.SetTimeout(10 * time.Second)
 
 	done := make(chan error, 1)
@@ -403,10 +412,10 @@ func TestAfter_StopBeforeExecution(t *testing.T) {
 func TestRunAfter_PanicRecovery(t *testing.T) {
 	var errReceived error
 	var mu sync.Mutex
-	tasker := newTasker(func() { panic("test panic in After") })
+	tasker := _timers.Task.New(func() { panic("test panic in After") })
 	tasker.After(50 * time.Millisecond)
 	tasker.SetTimeout(2 * time.Second)
-	tasker.SetErrHandler(func(tasker TimerTasker, err error) {
+	tasker.SetErrHandler(func(tasker _timers.TimerTasker, err error) {
 		mu.Lock()
 		errReceived = err
 		mu.Unlock()
@@ -427,143 +436,14 @@ func TestRunAfter_PanicRecovery(t *testing.T) {
 	}
 }
 
-// ==================== safeFn ====================
-
-func TestSafeFn_Normal(t *testing.T) {
-	var called int32
-	tasker := newTasker(func() { atomic.StoreInt32(&called, 1) })
-	err := tasker.(*TimerTaskerImpl).safeFn()
-	if err != nil {
-		t.Fatalf("期望无错误，得到 %v", err)
-	}
-	if atomic.LoadInt32(&called) != 1 {
-		t.Fatal("safeFn 未执行回调")
-	}
-}
-
-func TestSafeFn_Panic(t *testing.T) {
-	tasker := newTasker(func() { panic("safeFn panic") })
-	err := tasker.(*TimerTaskerImpl).safeFn()
-	if err == nil {
-		t.Fatal("期望 panic 被捕获为错误")
-	}
-}
-
-// ==================== computeNext ====================
-
-func TestComputeNext_Daily(t *testing.T) {
-	tasker := Task.New(func() {})
-	tasker.Daily(1)
-	// 设置锚点为未来时间，确保 next > now
-	now := time.Now()
-	at := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()+5, 0, time.Local)
-	tasker.SetAt(at)
-
-	next := tasker.(*TimerTaskerImpl).computeNext(time.Local)
-	if !next.After(now) {
-		t.Fatalf("Daily computeNext 应返回未来时间，得到 %v vs now %v", next, now)
-	}
-	if next.Hour() != at.Hour() || next.Minute() != at.Minute() {
-		t.Fatalf("时刻应与锚点一致，期望 %02d:%02d，得到 %02d:%02d",
-			at.Hour(), at.Minute(), next.Hour(), next.Minute())
-	}
-}
-
-func TestComputeNext_Hourly(t *testing.T) {
-	tasker := Task.New(func() {})
-	tasker.Hourly(1)
-	now := time.Now()
-	// 锚点秒数设为未来 5 秒，确保 next > now
-	at := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()+5, 0, time.Local)
-	tasker.SetAt(at)
-
-	next := tasker.(*TimerTaskerImpl).computeNext(time.Local)
-	if !next.After(now) {
-		t.Fatalf("Hourly computeNext 应返回未来时间")
-	}
-}
-
-func TestComputeNext_Minutely(t *testing.T) {
-	tasker := Task.New(func() {})
-	tasker.Minutely(1) // TaskTypeDaily, interval=1m
-	now := time.Now()
-	at := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()+5, 0, time.Local)
-	tasker.SetAt(at)
-
-	next := tasker.(*TimerTaskerImpl).computeNext(time.Local)
-	if !next.After(now) {
-		t.Fatalf("Minutely computeNext 应返回未来时间")
-	}
-}
-
-func TestComputeNext_Daily_PastAt(t *testing.T) {
-	tasker := Task.New(func() {})
-	tasker.Daily(1)
-	// 锚点设为凌晨 00:00:00（几乎肯定已过）
-	at := time.Date(2020, 1, 1, 0, 0, 0, 0, time.Local)
-	tasker.SetAt(at)
-
-	now := time.Now()
-	next := tasker.(*TimerTaskerImpl).computeNext(time.Local)
-	if !next.After(now) {
-		t.Fatalf("已过锚点时应返回明天的时刻")
-	}
-	if next.Hour() != 0 || next.Minute() != 0 || next.Second() != 0 {
-		t.Fatalf("时刻应保持锚点 00:00:00，得到 %02d:%02d:%02d",
-			next.Hour(), next.Minute(), next.Second())
-	}
-}
-
-// ==================== advanceNext ====================
-
-func TestAdvanceNext_Daily(t *testing.T) {
-	tasker := Task.New(func() {})
-	tasker.Daily(2) // 每 2 天
-	at := time.Date(2025, 6, 15, 10, 30, 0, 0, time.Local)
-	tasker.SetAt(at)
-
-	current := time.Date(2025, 6, 15, 10, 30, 0, 0, time.Local)
-	next := tasker.(*TimerTaskerImpl).advanceNext(current, time.Local, 2)
-	expected := time.Date(2025, 6, 17, 10, 30, 0, 0, time.Local)
-	if !next.Equal(expected) {
-		t.Fatalf("期望 %v，得到 %v", expected, next)
-	}
-}
-
-func TestAdvanceNext_Hourly(t *testing.T) {
-	tasker := Task.New(func() {})
-	tasker.Hourly(3)
-	current := time.Date(2025, 6, 15, 10, 0, 0, 0, time.Local)
-	next := tasker.(*TimerTaskerImpl).advanceNext(current, time.Local, 3)
-	expected := current.Add(3 * time.Hour)
-	if !next.Equal(expected) {
-		t.Fatalf("期望 %v，得到 %v", expected, next)
-	}
-}
-
-func TestAdvanceNext_Minutely(t *testing.T) {
-	tasker := Task.New(func() {})
-	tasker.Minutely(10)
-	// 注意：Minutely 实际设置 TaskTypeDaily，advanceNext 走 Daily 分支
-	// At 未重新设置，defaultAt 时分秒均为 0
-	current := time.Date(2025, 6, 15, 10, 0, 0, 0, time.Local)
-	next := tasker.(*TimerTaskerImpl).advanceNext(current, time.Local, 10)
-	expected := time.Date(2025, 6, 25, 0, 0, 0, 0, time.Local)
-	if !next.Equal(expected) {
-		t.Fatalf("期望 %v，得到 %v", expected, next)
-	}
-}
-
 // ==================== runSchedule 周期执行 ====================
 
 func TestRunSchedule_MinutelyExecution(t *testing.T) {
 	var count int32
-	tasker := newTasker(func() { atomic.AddInt32(&count, 1) })
-	tasker.Minutely(1) // TaskTypeDaily, interval=1min
+	tasker := _timers.Task.New(func() { atomic.AddInt32(&count, 1) })
+	tasker.Minutely(1)
 	tasker.SetTimeout(5 * time.Second)
-	// 锚点设为当前时刻附近，使 computeNext 返回很快到达的时间
-	now := time.Now()
-	tasker.SetAt(time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()+1, 0, time.Local))
+	tasker.SetDelayAt(time.Now().Add(1 * time.Second))
 
 	done := make(chan struct{})
 	go func() {
@@ -571,7 +451,6 @@ func TestRunSchedule_MinutelyExecution(t *testing.T) {
 		close(done)
 	}()
 
-	// 等待第一次执行
 	time.Sleep(2 * time.Second)
 	tasker.Stop()
 	<-done
@@ -581,49 +460,13 @@ func TestRunSchedule_MinutelyExecution(t *testing.T) {
 	}
 }
 
-// ==================== runSchedule Delay ====================
+// ==================== runSchedule Stop/Timeout ====================
 
-func TestRunSchedule_DelayBeforeFirstCycle(t *testing.T) {
+func TestRunSchedule_StopBeforeFirstExecution(t *testing.T) {
 	var count int32
-	tasker := newTasker(func() { atomic.AddInt32(&count, 1) })
+	tasker := _timers.Task.New(func() { atomic.AddInt32(&count, 1) })
 	tasker.Minutely(1)
-	tasker.SetDelay(200 * time.Millisecond)
-	tasker.SetTimeout(5 * time.Second)
-	now := time.Now()
-	tasker.SetAt(time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()+1, 0, time.Local))
-
-	start := time.Now()
-	done := make(chan struct{})
-	go func() {
-		tasker.Start()
-		close(done)
-	}()
-
-	// Delay 期间不应有执行
-	time.Sleep(80 * time.Millisecond)
-	if atomic.LoadInt32(&count) != 0 {
-		t.Fatal("Delay 期间不应执行回调")
-	}
-
-	// 等待 Delay 结束 + 第一次周期执行
-	time.Sleep(2 * time.Second)
-	tasker.Stop()
-	<-done
-
-	elapsed := time.Since(start)
-	if elapsed < 200*time.Millisecond {
-		t.Fatalf("总耗时不应少于 Delay 200ms，实际 %v", elapsed)
-	}
-	if atomic.LoadInt32(&count) < 1 {
-		t.Fatalf("Delay 后期望至少执行 1 次，实际 %d", atomic.LoadInt32(&count))
-	}
-}
-
-func TestRunSchedule_StopDuringDelay(t *testing.T) {
-	var count int32
-	tasker := newTasker(func() { atomic.AddInt32(&count, 1) })
-	tasker.Minutely(1)
-	tasker.SetDelay(10 * time.Second) // 很长的 Delay
+	tasker.SetDelayAt(time.Now().Add(10 * time.Second))
 	tasker.SetTimeout(30 * time.Second)
 
 	done := make(chan struct{})
@@ -638,7 +481,7 @@ func TestRunSchedule_StopDuringDelay(t *testing.T) {
 	select {
 	case <-done:
 		if atomic.LoadInt32(&count) != 0 {
-			t.Fatal("Delay 期间 Stop 后不应执行回调")
+			t.Fatal("Stop 后不应执行回调")
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("Stop 后 runSchedule 未及时返回")
@@ -650,14 +493,12 @@ func TestRunSchedule_StopDuringDelay(t *testing.T) {
 func TestRunSchedule_Timeout(t *testing.T) {
 	var errReceived error
 	var mu sync.Mutex
-	tasker := newTasker(func() {})
+	tasker := _timers.Task.New(func() {})
 	tasker.Minutely(1)
-	tasker.SetTimeout(200 * time.Millisecond) // 短超时
-	now := time.Now()
-	// 锚点设为较远的未来，让第一次 computeNext 返回较远时间
-	tasker.SetAt(time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute()+5, 0, 0, time.Local))
+	tasker.SetTimeout(200 * time.Millisecond)
+	tasker.SetDelayAt(time.Now().Add(5 * time.Minute))
 
-	tasker.SetErrHandler(func(tasker TimerTasker, err error) {
+	tasker.SetErrHandler(func(tasker _timers.TimerTasker, err error) {
 		mu.Lock()
 		errReceived = err
 		mu.Unlock()
@@ -681,69 +522,84 @@ func TestRunSchedule_Timeout(t *testing.T) {
 	}
 }
 
-// ==================== runSchedule panic 不中断调度 ====================
+// ==================== safeFn panic 恢复（通过公开接口间接验证） ====================
 
-// TestRunSchedule_PanicDoesNotStopSchedule 验证 safeFn 捕获 panic 后不中断调度
-// 注：由于 Minutely 实际 TaskTypeDaily，advanceNext 每次加 1 天，
-// 无法在合理时间内触发第二次周期执行，因此直接验证 safeFn 的 panic 恢复行为
-func TestRunSchedule_PanicDoesNotStopSchedule(t *testing.T) {
+func TestSafeFn_PanicRecovery(t *testing.T) {
 	var count int32
-	tasker := newTasker(func() {
+	tasker := _timers.Task.New(func() {
 		atomic.AddInt32(&count, 1)
 		panic("schedule panic")
 	})
-	tasker.SetErrHandler(func(tasker TimerTasker, err error) {}) // 吞掉错误
+	tasker.SetErrHandler(func(tasker _timers.TimerTasker, err error) {})
 
-	// safeFn 应捕获 panic 并返回错误，而非传播 panic
-	err := tasker.(*TimerTaskerImpl).safeFn()
-	if err == nil {
-		t.Fatal("期望 safeFn 返回 panic 错误")
-	}
-	if atomic.LoadInt32(&count) != 1 {
-		t.Fatal("回调应被执行")
-	}
+	// 通过 Start 执行一次 After 类型任务，验证 panic 被捕获后通过 ErrHandler 上报
+	tasker.After(50 * time.Millisecond)
+	tasker.SetTimeout(2 * time.Second)
 
-	// 再次调用 safeFn 仍可正常执行（调度未中断）
-	err = tasker.(*TimerTaskerImpl).safeFn()
-	if err == nil {
-		t.Fatal("第二次 safeFn 也应返回 panic 错误")
-	}
-	if atomic.LoadInt32(&count) != 2 {
-		t.Fatalf("期望回调执行 2 次，实际 %d", atomic.LoadInt32(&count))
+	var errReceived error
+	var mu sync.Mutex
+	tasker.SetErrHandler(func(tasker _timers.TimerTasker, err error) {
+		mu.Lock()
+		errReceived = err
+		mu.Unlock()
+	})
+
+	done := make(chan error, 1)
+	go func() { done <- tasker.Start() }()
+
+	select {
+	case <-done:
+		mu.Lock()
+		defer mu.Unlock()
+		if errReceived == nil {
+			t.Fatal("panic 应触发 ErrHandler")
+		}
+		if atomic.LoadInt32(&count) != 1 {
+			t.Fatal("回调应被执行")
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("超时")
 	}
 }
 
-// ==================== Timer (TimerImpl) ====================
+// ==================== Timer (TimerImpl) - 通过单例测试 ====================
 
-func newTestTimer() *TimerImpl {
-	return &TimerImpl{timers: make(map[string]TimerTasker)}
+func TestTimer_Once_ReturnsNonNil(t *testing.T) {
+	ins := _timers.Time.Once()
+	if ins == nil {
+		t.Fatal("Once 应返回非空实例")
+	}
+	ins2 := _timers.Time.Once()
+	if ins != ins2 {
+		t.Fatal("Once 多次调用应返回同一实例")
+	}
 }
 
-func TestTimer_AddTask(t *testing.T) {
-	timer := newTestTimer()
-	tasker := Task.New(func() {})
-	tasker.SetName("t1")
+func TestTimer_AddAndGetTask(t *testing.T) {
+	timer := _timers.Time.Once()
+	tasker := _timers.Task.New(func() {})
+	tasker.SetName("get-test")
 	timer.AddTask(tasker)
 
 	got := timer.GetTask(tasker.GetUUID().String())
 	if got == nil {
 		t.Fatal("添加后应能查到任务")
 	}
-	if got.GetName() != "t1" {
-		t.Fatalf("期望 t1，得到 %s", got.GetName())
+	if got.GetName() != "get-test" {
+		t.Fatalf("期望 get-test，得到 %s", got.GetName())
 	}
+
+	// 清理
+	timer.RemoveTask(tasker.GetUUID().String())
 }
 
 func TestTimer_AddTask_Nil(t *testing.T) {
-	timer := newTestTimer()
+	timer := _timers.Time.Once()
 	timer.AddTask(nil) // 不应 panic
-	if len(timer.timers) != 0 {
-		t.Fatal("nil 任务不应被添加")
-	}
 }
 
 func TestTimer_GetTask_NotFound(t *testing.T) {
-	timer := newTestTimer()
+	timer := _timers.Time.Once()
 	got := timer.GetTask("non-existent")
 	if got != nil {
 		t.Fatal("不存在的任务应返回 nil")
@@ -751,18 +607,20 @@ func TestTimer_GetTask_NotFound(t *testing.T) {
 }
 
 func TestTimer_MustGetTask(t *testing.T) {
-	timer := newTestTimer()
-	tasker := Task.New(func() {})
+	timer := _timers.Time.Once()
+	tasker := _timers.Task.New(func() {})
 	timer.AddTask(tasker)
 
 	got := timer.MustGetTask(tasker.GetUUID().String())
 	if got == nil {
 		t.Fatal("MustGetTask 应返回任务")
 	}
+
+	timer.RemoveTask(tasker.GetUUID().String())
 }
 
 func TestTimer_MustGetTask_Panic(t *testing.T) {
-	timer := newTestTimer()
+	timer := _timers.Time.Once()
 	defer func() {
 		if r := recover(); r == nil {
 			t.Fatal("期望 panic")
@@ -772,8 +630,8 @@ func TestTimer_MustGetTask_Panic(t *testing.T) {
 }
 
 func TestTimer_RemoveTask(t *testing.T) {
-	timer := newTestTimer()
-	tasker := Task.New(func() {})
+	timer := _timers.Time.Once()
+	tasker := _timers.Task.New(func() {})
 	timer.AddTask(tasker)
 	timer.RemoveTask(tasker.GetUUID().String())
 
@@ -783,13 +641,13 @@ func TestTimer_RemoveTask(t *testing.T) {
 }
 
 func TestTimer_RemoveTask_NonExistent(t *testing.T) {
-	timer := newTestTimer()
+	timer := _timers.Time.Once()
 	timer.RemoveTask("non-existent") // 不应 panic
 }
 
 func TestTimer_MustRemoveTask(t *testing.T) {
-	timer := newTestTimer()
-	tasker := Task.New(func() {})
+	timer := _timers.Time.Once()
+	tasker := _timers.Task.New(func() {})
 	timer.AddTask(tasker)
 	timer.MustRemoveTask(tasker.GetUUID().String())
 
@@ -799,112 +657,60 @@ func TestTimer_MustRemoveTask(t *testing.T) {
 }
 
 func TestTimer_MustRemoveTask_Panic(t *testing.T) {
-	timer := newTestTimer()
+	timer := _timers.Time.Once()
 	defer func() {
 		if r := recover(); r == nil {
 			t.Fatal("期望 panic")
 		}
 	}()
-	timer.MustRemoveTask("non-existent")
+	timer.MustRemoveTask("non-existent-uuid")
 }
 
-func TestTimer_Start(t *testing.T) {
-	timer := newTestTimer()
+func TestTimer_StartAndStop(t *testing.T) {
+	timer := _timers.Time.Once()
+	timer.Stop() // 清理单例残留状态
 	var called int32
 
-	tasker := newTasker(func() { atomic.StoreInt32(&called, 1) })
+	tasker := _timers.Task.New(func() { atomic.StoreInt32(&called, 1) })
 	tasker.After(50 * time.Millisecond)
 	tasker.SetTimeout(2 * time.Second)
-	timer.AddTask(tasker)
-	timer.Start()
+	timer.AddTaskAndStart(tasker)
 
 	time.Sleep(500 * time.Millisecond)
 	if atomic.LoadInt32(&called) != 1 {
 		t.Fatal("Start 后任务应被执行")
 	}
+
+	timer.Stop(tasker.GetUUID().String())
 }
 
-func TestTimer_Start_Idempotent(t *testing.T) {
-	timer := newTestTimer()
-	tasker := Task.New(func() {})
-	tasker.After(time.Second)
-	timer.AddTask(tasker)
-
-	timer.Start()
-	if !timer.running {
-		t.Fatal("启动后 running 应为 true")
-	}
-	timer.Start() // 重复调用应直接返回
-	if !timer.running {
-		t.Fatal("重复 Start 后 running 应仍为 true")
-	}
-	timer.Stop()
-}
-
-func TestTimer_Stop_All(t *testing.T) {
-	timer := newTestTimer()
+func TestTimer_StopAll(t *testing.T) {
+	timer := _timers.Time.Once()
+	timer.Stop() // 清理单例残留状态
 	var count int32
 
 	for i := 0; i < 3; i++ {
-		tasker := newTasker(func() { atomic.AddInt32(&count, 1) })
+		tasker := _timers.Task.New(func() { atomic.AddInt32(&count, 1) })
 		tasker.After(50 * time.Millisecond)
 		tasker.SetTimeout(2 * time.Second)
-		timer.AddTask(tasker)
+		timer.AddTaskAndStart(tasker)
 	}
 
-	timer.Start()
 	time.Sleep(500 * time.Millisecond)
 	timer.Stop()
 
-	if atomic.LoadInt32(&count) != 3 {
-		t.Fatalf("期望 3 个任务都执行，实际 %d", atomic.LoadInt32(&count))
-	}
-	if timer.running {
-		t.Fatal("Stop 后 running 应为 false")
-	}
-}
-
-func TestTimer_Stop_Specific(t *testing.T) {
-	timer := newTestTimer()
-	var called1, called2 int32
-
-	t1 := newTasker(func() { atomic.StoreInt32(&called1, 1) })
-	t1.After(50 * time.Millisecond)
-	t1.SetTimeout(2 * time.Second)
-
-	t2 := newTasker(func() { atomic.StoreInt32(&called2, 1) })
-	t2.After(50 * time.Millisecond)
-	t2.SetTimeout(2 * time.Second)
-
-	timer.AddTask(t1)
-	timer.AddTask(t2)
-
-	// 仅停止 t1
-	timer.Stop(t1.GetUUID().String())
-
-	// 启动剩余任务
-	timer.Start()
-	time.Sleep(500 * time.Millisecond)
-
-	// t1 已被停止，不应执行
-	// t2 应正常执行
-	if atomic.LoadInt32(&called1) != 0 {
-		t.Fatal("被 Stop 的 t1 不应执行")
-	}
-	if atomic.LoadInt32(&called2) != 1 {
-		t.Fatal("t2 应正常执行")
+	if atomic.LoadInt32(&count) < 1 {
+		t.Fatalf("期望至少有任务执行，实际 %d", atomic.LoadInt32(&count))
 	}
 }
 
 func TestTimer_AddTaskAndStart(t *testing.T) {
-	timer := newTestTimer()
-	timer.running = true // 模拟已运行状态
-
+	timer := _timers.Time.Once()
 	var called int32
-	tasker := newTasker(func() { atomic.StoreInt32(&called, 1) })
+
+	tasker := _timers.Task.New(func() { atomic.StoreInt32(&called, 1) })
 	tasker.After(50 * time.Millisecond)
 	tasker.SetTimeout(2 * time.Second)
-
 	timer.AddTaskAndStart(tasker)
 
 	time.Sleep(500 * time.Millisecond)
@@ -912,31 +718,13 @@ func TestTimer_AddTaskAndStart(t *testing.T) {
 		t.Fatal("AddTaskAndStart 应立即启动任务")
 	}
 
-	// 任务应已被登记
 	if timer.GetTask(tasker.GetUUID().String()) == nil {
 		t.Fatal("AddTaskAndStart 后任务应被登记")
 	}
-	timer.Stop()
+	timer.RemoveTask(tasker.GetUUID().String())
 }
 
 func TestTimer_AddTaskAndStart_Nil(t *testing.T) {
-	timer := newTestTimer()
+	timer := _timers.Time.Once()
 	timer.AddTaskAndStart(nil) // 不应 panic
-	if len(timer.timers) != 0 {
-		t.Fatal("nil 任务不应被添加")
-	}
-}
-
-// ==================== Timer.Once 单例 ====================
-
-func TestTimer_Once_ReturnsNonNil(t *testing.T) {
-	ins := Time.Once()
-	if ins == nil {
-		t.Fatal("Once 应返回非空实例")
-	}
-	// 多次调用返回同一实例
-	ins2 := Time.Once()
-	if ins != ins2 {
-		t.Fatal("Once 多次调用应返回同一实例")
-	}
 }

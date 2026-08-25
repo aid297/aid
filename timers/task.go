@@ -30,9 +30,8 @@ type (
 		SetTimeout(timeout time.Duration) TimerTasker
 		SetErrHandler(errHandler ErrHandler) TimerTasker
 		SetName(name string) TimerTasker
-		SetAt(at time.Time) TimerTasker
 		SetDelay(delay time.Duration) TimerTasker
-		SetDelayAt(at time.Time, loc *time.Location) TimerTasker
+		SetDelayAt(at time.Time) TimerTasker
 		Once(at time.Time) TimerTasker
 		After(interval time.Duration) TimerTasker
 		Daily(interval int) TimerTasker
@@ -49,9 +48,8 @@ type (
 		GetErrHandler() ErrHandler
 		Start() (err error)
 		runAfter(delay time.Duration) (err error)
-		runSchedule(interval int) (err error)
-		computeNext(loc *time.Location) time.Time
-		advanceNext(current time.Time, loc *time.Location, interval int) time.Time
+		runSchedule() (err error)
+		advanceNext(current time.Time) time.Time
 		safeFn() (err error)
 		Stop() (err error)
 	}
@@ -62,8 +60,8 @@ type (
 		TaskType   TaskTypeTag
 		Fn         FN
 		Interval   time.Duration
-		At         time.Time     // TaskTypeOnce: 到点执行一次的目标时间；周期性任务: 锚点时间，定义每个周期内的精确执行时刻
-		Delay      time.Duration // 周期任务启动后的首次延迟时长，在进入第一个调度周期前等待
+		At         time.Time     // 首次执行的目标时间；Once: 到点执行一次；周期任务: 首次执行时刻
+		Delay      time.Duration // 首次延迟时长（SetDelay 设置，保留字段）
 		stopCh     chan struct{}
 		stopOnce   sync.Once
 		Timeout    time.Duration
@@ -80,6 +78,8 @@ func (*TimerTaskerImpl) New(fn FN) TimerTasker {
 
 	if fn == nil {
 		timerTasker.Fn = func() {}
+	} else {
+		timerTasker.Fn = fn
 	}
 
 	return timerTasker
@@ -101,33 +101,18 @@ func (my *TimerTaskerImpl) SetErrHandler(errHandler ErrHandler) TimerTasker {
 
 func (my *TimerTaskerImpl) SetName(name string) TimerTasker { my.Name = name; return my }
 
-func (my *TimerTaskerImpl) SetAt(at time.Time) TimerTasker { my.At = at; return my }
-
+// SetDelay 设置单次任务的延迟时长，等同 After
 func (my *TimerTaskerImpl) SetDelay(delay time.Duration) TimerTasker {
-	if delay > 0 {
-		my.Delay = delay
-	}
-	return my
+	return my.After(delay)
 }
 
-// SetDelayAt 根据目标时间和时区计算延迟时长并设置；
-// 将 at 和当前时间统一转换到 loc 时区后再计算差值，避免因时区不一致导致计算错误；
-// 若计算结果 <= 0（目标时间已过），则不设置 Delay
-func (my *TimerTaskerImpl) SetDelayAt(at time.Time, loc *time.Location) TimerTasker {
-	if loc == nil {
-		loc = time.Local
-	}
-	var now = time.Now().In(loc)
-	var target = at.In(loc)
-	var delay = target.Sub(now)
-	if delay > 0 {
-		my.Delay = delay
-	}
+// SetDelayAt 设置周期任务的首次执行时间；At = at，之后按 Interval 循环
+func (my *TimerTaskerImpl) SetDelayAt(at time.Time) TimerTasker {
+	my.At = at
 	return my
 }
 
 func (my *TimerTaskerImpl) Once(at time.Time) TimerTasker {
-	my.UUID = _uuid.Must(_uuid.NewV7())
 	my.TaskType = TaskTypeOnce
 	my.At = at
 
@@ -206,11 +191,11 @@ func (my *TimerTaskerImpl) Start() (err error) {
 	case TaskTypeOnce:
 		var delay = time.Until(my.At)
 		if delay < 0 {
-			delay = 0 // 目标时间已过，立即执行
+			delay = 0
 		}
 		return my.runAfter(delay)
 	case TaskTypeDaily, TaskTypeHourly, TaskTypeMinutely:
-		return my.runSchedule(int(my.Interval))
+		return my.runSchedule()
 	default:
 		return fmt.Errorf("不支持的定时任务类型 %d", my.TaskType)
 	}
@@ -254,22 +239,9 @@ func (my *TimerTaskerImpl) runAfter(delay time.Duration) (err error) {
 	return
 }
 
-// runSchedule 通用周期调度：若有 Delay 则先等待，之后计算下一个精确执行时刻，循环等待并执行
-func (my *TimerTaskerImpl) runSchedule(interval int) (err error) {
-	// 首次延迟：在进入周期调度前等待 Delay 时长，期间可被 Stop 取消
-	if my.Delay > 0 {
-		var delayTimer = time.NewTimer(my.Delay)
-		select {
-		case <-delayTimer.C:
-		case <-my.stopCh:
-			delayTimer.Stop()
-			return
-		}
-		delayTimer.Stop()
-	}
-
-	var loc = my.At.Location()
-	var next = my.computeNext(loc)
+// runSchedule 通用周期调度：从 At 开始，按 Interval 周期执行
+func (my *TimerTaskerImpl) runSchedule() (err error) {
+	var next = my.computeNext()
 
 	var timeoutCh <-chan time.Time
 	if my.Timeout > 0 {
@@ -278,6 +250,9 @@ func (my *TimerTaskerImpl) runSchedule(interval int) (err error) {
 
 	for {
 		var delay = time.Until(next)
+		if delay < 0 {
+			delay = 0
+		}
 		var timer = time.NewTimer(delay)
 
 		select {
@@ -301,80 +276,21 @@ func (my *TimerTaskerImpl) runSchedule(interval int) (err error) {
 		}
 
 		timer.Stop()
-		next = my.advanceNext(next, loc, interval)
+		next = my.advanceNext(next)
 	}
 }
 
-// computeNext 根据任务类型和锚点，计算第一个未来执行时刻
-func (my *TimerTaskerImpl) computeNext(loc *time.Location) time.Time {
-	var now = time.Now().In(loc)
-	var h, m, s = my.At.Clock()
-
-	switch my.TaskType {
-	// case TaskTypeYearly:
-	// 	var next = time.Date(now.Year(), my.At.Month(), my.At.Day(), h, m, s, 0, loc)
-	// 	if !next.After(now) {
-	// 		next = time.Date(now.Year()+1, my.At.Month(), my.At.Day(), h, m, s, 0, loc)
-	// 	}
-	// 	return next
-	// case TaskTypeMonthly:
-	// 	var next = time.Date(now.Year(), now.Month(), my.At.Day(), h, m, s, 0, loc)
-	// 	if !next.After(now) {
-	// 		next = time.Date(now.Year(), now.Month()+1, my.At.Day(), h, m, s, 0, loc)
-	// 	}
-	// 	return next
-	// case TaskTypeWeekly:
-	// 	var next = time.Date(now.Year(), now.Month(), now.Day(), h, m, s, 0, loc)
-	// 	var targetWeekday = my.At.Weekday()
-	// 	var daysAhead = (int(targetWeekday) - int(now.Weekday()) + 7) % 7
-	// 	if daysAhead == 0 && !next.After(now) {
-	// 		daysAhead = 7
-	// 	}
-	// 	next = next.AddDate(0, 0, daysAhead)
-	// 	return next
-	case TaskTypeDaily:
-		var next = time.Date(now.Year(), now.Month(), now.Day(), h, m, s, 0, loc)
-		if !next.After(now) {
-			next = time.Date(now.Year(), now.Month(), now.Day()+1, h, m, s, 0, loc)
-		}
-		return next
-	case TaskTypeHourly:
-		var next = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), m, s, 0, loc)
-		if !next.After(now) {
-			next = next.Add(time.Hour)
-		}
-		return next
-	case TaskTypeMinutely:
-		var next = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), s, 0, loc)
-		if !next.After(now) {
-			next = next.Add(time.Minute)
-		}
-		return next
-	default:
-		return now
+// computeNext 计算首次执行时刻：At 在未来则用 At，否则立即执行
+func (my *TimerTaskerImpl) computeNext() time.Time {
+	if my.At.After(time.Now()) {
+		return my.At
 	}
+	return time.Now()
 }
 
-// advanceNext 按任务类型将当前执行时刻推进到下一个周期
-func (my *TimerTaskerImpl) advanceNext(current time.Time, loc *time.Location, interval int) time.Time {
-	var h, m, s = my.At.Clock()
-
-	switch my.TaskType {
-	// case TaskTypeYearly:
-	// 	return time.Date(current.Year()+interval, my.At.Month(), my.At.Day(), h, m, s, 0, loc)
-	// case TaskTypeMonthly:
-	// 	return time.Date(current.Year(), current.Month()+time.Month(interval), my.At.Day(), h, m, s, 0, loc)
-	// case TaskTypeWeekly:
-	// 	return current.AddDate(0, 0, 7*interval)
-	case TaskTypeDaily:
-		return time.Date(current.Year(), current.Month(), current.Day()+interval, h, m, s, 0, loc)
-	case TaskTypeHourly:
-		return current.Add(time.Duration(interval) * time.Hour)
-	case TaskTypeMinutely:
-		return current.Add(time.Duration(interval) * time.Minute)
-	default:
-		return current
-	}
+// advanceNext 将当前执行时刻推进到下一个周期
+func (my *TimerTaskerImpl) advanceNext(current time.Time) time.Time {
+	return current.Add(my.Interval)
 }
 
 // safeFn 带 panic 保护地执行回调，供循环任务使用，单次 panic 不中断调度
