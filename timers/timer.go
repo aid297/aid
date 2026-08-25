@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	Task Tasker = (*TaskerImpl)(nil)
-	Time Timer  = (*TimerImpl)(nil)
+	Task TimerTasker = (*TimerTaskerImpl)(nil)
+	Time Timer       = (*TimerImpl)(nil)
 
 	timerOnce sync.Once
 	timerIns  *TimerImpl
@@ -15,11 +15,11 @@ var (
 type (
 	Timer interface {
 		Once() Timer
-		AddTask(tasker Tasker) Timer
-		AddTaskAndStart(tasker Tasker) Timer
-		GetTask(taskerUUID string) Tasker
-		MustGetTask(taskerUUID string) Tasker
-		runTask(tasker Tasker)
+		AddTask(tasker TimerTasker) Timer
+		AddTaskAndStart(tasker TimerTasker) Timer
+		GetTask(taskerUUID string) TimerTasker
+		MustGetTask(taskerUUID string) TimerTasker
+		runTask(tasker TimerTasker)
 		RemoveTask(uuid string) Timer
 		MustRemoveTask(uuid string) Timer
 		Start() Timer
@@ -28,18 +28,18 @@ type (
 
 	TimerImpl struct {
 		lock    sync.RWMutex
-		timers  map[string]Tasker
+		timers  map[string]TimerTasker
 		running bool
 	}
 )
 
 func (*TimerImpl) Once() Timer {
-	timerOnce.Do(func() { timerIns = &TimerImpl{timers: make(map[string]Tasker)} })
+	timerOnce.Do(func() { timerIns = &TimerImpl{timers: make(map[string]TimerTasker)} })
 	return timerIns
 }
 
 // AddTask 仅登记任务，不会启动；timer 运行中加入的任务也不会自动执行，需改用 AddTaskAndStart
-func (my *TimerImpl) AddTask(tasker Tasker) Timer {
+func (my *TimerImpl) AddTask(tasker TimerTasker) Timer {
 	if tasker == nil {
 		return my
 	}
@@ -53,7 +53,7 @@ func (my *TimerImpl) AddTask(tasker Tasker) Timer {
 
 // AddTaskAndStart 添加并立即启动任务，适用于 timer 运行中动态加任务；
 // 注意：在 Start 之前调用时，后续 Start 会再次启动该任务，一次性任务会被执行两次
-func (my *TimerImpl) AddTaskAndStart(tasker Tasker) Timer {
+func (my *TimerImpl) AddTaskAndStart(tasker TimerTasker) Timer {
 	if tasker == nil {
 		return my
 	}
@@ -63,14 +63,14 @@ func (my *TimerImpl) AddTaskAndStart(tasker Tasker) Timer {
 	return my.AddTask(tasker)
 }
 
-func (my *TimerImpl) GetTask(taskerUUID string) Tasker {
+func (my *TimerImpl) GetTask(taskerUUID string) TimerTasker {
 	my.lock.RLock()
 	defer my.lock.RUnlock()
 
 	return my.timers[taskerUUID]
 }
 
-func (my *TimerImpl) MustGetTask(taskerUUID string) Tasker {
+func (my *TimerImpl) MustGetTask(taskerUUID string) TimerTasker {
 	tasker := my.GetTask(taskerUUID)
 
 	if tasker == nil {
@@ -81,7 +81,7 @@ func (my *TimerImpl) MustGetTask(taskerUUID string) Tasker {
 }
 
 // runTask 在独立协程中执行任务，并带 panic 保护；任务错误由各任务自身的 errHandler 处理
-func (my *TimerImpl) runTask(tasker Tasker) {
+func (my *TimerImpl) runTask(tasker TimerTasker) {
 	defer func() {
 		recover()
 	}()
@@ -128,7 +128,7 @@ func (my *TimerImpl) Start() Timer {
 
 	my.running = true
 	// 锁内快照任务列表，释放锁后再派生协程，避免任务 errHandler 内再调用 AddTask/Start 时与锁竞争
-	var taskers = make([]Tasker, 0, len(my.timers))
+	var taskers = make([]TimerTasker, 0, len(my.timers))
 	for _, tasker := range my.timers {
 		taskers = append(taskers, tasker)
 	}
@@ -146,7 +146,7 @@ func (my *TimerImpl) Stop(uuids ...string) Timer {
 	my.lock.Lock()
 	my.running = false
 	// 锁内快照任务列表，释放锁后再停止任务，避免任务 errHandler 内再调用 AddTask/GetTask 时死锁
-	var taskers = make([]Tasker, 0, len(my.timers))
+	var taskers = make([]TimerTasker, 0, len(my.timers))
 
 	if len(uuids) > 0 {
 		for idx := range uuids {
