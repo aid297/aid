@@ -29,6 +29,8 @@ type (
 		Timeout() _time.Duration
 		SetFn(fn func(tasker Tasker)) Tasker
 		Fn() func(tasker Tasker)
+		SetImmediately(immediately bool) Tasker
+		Immediately() bool
 		Begin() error
 		Stop() Tasker
 	}

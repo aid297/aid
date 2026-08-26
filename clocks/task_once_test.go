@@ -11,7 +11,7 @@ func Test_AfterNormal(t *_testing.T) {
 	if err := _clocks.TaskOnce.
 		After(3 * _time.Second).
 		SetTimeout(5 * _time.Second).
-		SetFn(func() { t.Logf("执行定时任务") }).
+		SetFn(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
 		Begin(); err != nil {
 		t.Fatalf("测试失败：%v", err)
 	}
@@ -23,7 +23,7 @@ func Test_AfterTimeout(t *_testing.T) {
 	err := _clocks.TaskOnce.
 		After(3 * _time.Second).
 		SetTimeout(1 * _time.Second).
-		SetFn(func() { t.Logf("执行定时任务") }).
+		SetFn(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
 		Begin()
 	if err != nil {
 		t.Errorf("测试失败：%v", err)
@@ -40,7 +40,7 @@ func Test_AtNormal(t *_testing.T) {
 	if err = _clocks.TaskOnce.
 		At(_time.Now().In(loc).Add(3*_time.Second), loc).
 		SetTimeout(5 * _time.Second).
-		SetFn(func() { t.Logf("执行定时任务") }).
+		SetFn(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
 		Begin(); err != nil {
 		t.Errorf(" 测试失败：%v", err)
 	}
@@ -56,7 +56,7 @@ func Test_AtTimeout(t *_testing.T) {
 	if err = _clocks.TaskOnce.
 		At(_time.Now().In(loc).Add(3*_time.Second), loc).
 		SetTimeout(1 * _time.Second).
-		SetFn(func() { t.Logf("执行定时任务") }).
+		SetFn(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
 		Begin(); err != nil {
 		t.Errorf(" 测试失败：%v", err)
 	}
