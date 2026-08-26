@@ -23,14 +23,14 @@ type TaskOnceImpl struct {
 	closeCh  chan es
 }
 
-func (*TaskOnceImpl) After(interval _time.Duration) TaskOnceImpl {
+func (*TaskOnceImpl) After(interval _time.Duration) *TaskOnceImpl {
 	if interval <= 0 {
 		interval = defaultInterval
 	}
-	return TaskOnceImpl{uuid: _uuid.Must(_uuid.NewV7()), interval: interval, timeout: defaultTimeout, closeCh: make(chan es, 1)}
+	return &TaskOnceImpl{uuid: _uuid.Must(_uuid.NewV7()), interval: interval, timeout: defaultTimeout, closeCh: make(chan es, 1)}
 }
 
-func (*TaskOnceImpl) At(time _time.Time, loc *_time.Location) TaskOnceImpl {
+func (*TaskOnceImpl) At(time _time.Time, loc *_time.Location) *TaskOnceImpl {
 	return TaskOnce.After(time.Sub(_time.Now().In(loc)))
 }
 
