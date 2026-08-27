@@ -11,7 +11,7 @@ var (
 	defaultInterval = 1 * _time.Minute
 	defaultTimeout  = 24 * _time.Hour
 	clockOnce       = sync.Once{}
-	clockIns        ClockImpl
+	clockIns        *ClockImpl
 	clockLock       = sync.RWMutex{}
 
 	Clock ClockImpl
@@ -41,12 +41,16 @@ type (
 	}
 )
 
-func (ClockImpl) Ins() ClockImpl {
-	clockOnce.Do(func() { clockIns = ClockImpl{taskers: make(map[_uuid.UUID]Tasker)} })
+func init() { Clock.Ins() }
+
+func (*ClockImpl) Ins() *ClockImpl {
+	clockOnce.Do(func() {
+		clockIns = &ClockImpl{taskers: make(map[_uuid.UUID]Tasker), errHandler: func(Tasker, error) {}}
+	})
 	return clockIns
 }
 
-func (ClockImpl) SetErrHandler(errHandler func(tasker Tasker, err error)) ClockImpl {
+func (*ClockImpl) SetErrHandler(errHandler func(tasker Tasker, err error)) *ClockImpl {
 	clockLock.Lock()
 	defer clockLock.Unlock()
 
@@ -55,7 +59,7 @@ func (ClockImpl) SetErrHandler(errHandler func(tasker Tasker, err error)) ClockI
 	return clockIns
 }
 
-func (ClockImpl) AddTasker(taskers ...Tasker) ClockImpl {
+func (*ClockImpl) AddTasker(taskers ...Tasker) *ClockImpl {
 	clockLock.Lock()
 	defer clockLock.Unlock()
 
@@ -66,7 +70,7 @@ func (ClockImpl) AddTasker(taskers ...Tasker) ClockImpl {
 	return clockIns
 }
 
-func (ClockImpl) AddTaskerAndBegin(tasker Tasker) ClockImpl {
+func (*ClockImpl) AddTaskerAndBegin(tasker Tasker) *ClockImpl {
 	clockLock.Lock()
 	defer clockLock.Unlock()
 
@@ -76,14 +80,25 @@ func (ClockImpl) AddTaskerAndBegin(tasker Tasker) ClockImpl {
 	return clockIns
 }
 
-func (ClockImpl) Tasker(uuid _uuid.UUID) Tasker {
+func (*ClockImpl) Tasker(uuid _uuid.UUID) Tasker {
 	clockLock.RUnlock()
 	defer clockLock.RUnlock()
 
 	return clockIns.taskers[uuid]
 }
 
-func (ClockImpl) begin(uuid _uuid.UUID) {
+func (*ClockImpl) DeleteTasker(uuids ..._uuid.UUID) *ClockImpl {
+	clockLock.Lock()
+	defer clockLock.Unlock()
+
+	for idx := range uuids {
+		delete(clockIns.taskers, uuids[idx])
+	}
+
+	return clockIns
+}
+
+func (*ClockImpl) begin(uuid _uuid.UUID) {
 	tasker, ok := clockIns.taskers[uuid]
 	if ok {
 		go func() {
@@ -94,14 +109,14 @@ func (ClockImpl) begin(uuid _uuid.UUID) {
 	}
 }
 
-func (ClockImpl) Begin(uuid _uuid.UUID) {
+func (*ClockImpl) Begin(uuid _uuid.UUID) {
 	clockLock.RLock()
 	defer clockLock.RUnlock()
 
 	clockIns.begin(uuid)
 }
 
-func (ClockImpl) close(uuid _uuid.UUID) {
+func (*ClockImpl) close(uuid _uuid.UUID) {
 	tasker, ok := clockIns.taskers[uuid]
 	if ok {
 		tasker.Stop()
@@ -109,14 +124,14 @@ func (ClockImpl) close(uuid _uuid.UUID) {
 	}
 }
 
-func (ClockImpl) Close(uuid _uuid.UUID) {
+func (*ClockImpl) Close(uuid _uuid.UUID) {
 	clockLock.Lock()
 	defer clockLock.Unlock()
 
 	clockIns.close(uuid)
 }
 
-func (ClockImpl) Boot() ClockImpl {
+func (*ClockImpl) Boot() *ClockImpl {
 	clockLock.RLock()
 	defer clockLock.RUnlock()
 
@@ -127,7 +142,7 @@ func (ClockImpl) Boot() ClockImpl {
 	return clockIns
 }
 
-func (ClockImpl) Clean() ClockImpl {
+func (*ClockImpl) Clean() *ClockImpl {
 	clockLock.Lock()
 	defer clockLock.Unlock()
 

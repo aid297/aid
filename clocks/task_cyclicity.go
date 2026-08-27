@@ -90,9 +90,7 @@ func (my *TaskCyclicityImpl) Do() {
 
 	select {
 	case <-ctx.Done():
-		if clockIns.errHandler != nil {
-			clockIns.errHandler(my, _errors.New("任务执行超时"))
-		}
+		clockIns.errHandler(my, _errors.New("任务执行超时"))
 	case <-done:
 	}
 }
