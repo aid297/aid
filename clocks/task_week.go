@@ -14,22 +14,41 @@ var (
 	TaskWeek TaskWeekImpl
 )
 
+const (
+	// LastWeek 表示月份最后一周：在只有4周的月份等价于第4周，在有5周的月份等价于第5周
+	LastWeek = -1
+)
+
+var (
+	// EveryMonth 表示每月都生效（不限制月份），用于 AddRule 的 month 参数
+	EveryMonth = _time.Month(0)
+)
+
 // WeekRule 定义月份中第 N 周的某个星期几在指定时刻触发的规则
 //
-// WeekOfMonth: 1-5，表示月份的第几周（第1周=1-7日，第2周=8-14日，以此类推）
+// Month: 指定生效月份（_time.January ~ _time.December）；EveryMonth（0）表示每月都生效
+// WeekOfMonth: 1-5 表示月份的第几周（第1周=1-7日，第2周=8-14日，以此类推）；
+// 传 LastWeek（-1）表示月份最后一周，自动适配当月实际周数（4或5）
 // Weekday: 星期几（_time.Sunday ~ _time.Saturday）
 // Hour/Minute/Second: 触发时刻
 type WeekRule struct {
-	WeekOfMonth int          // 第几周（1-5）
+	Month       _time.Month   // 生效月份（1-12），EveryMonth（0）表示每月
+	WeekOfMonth int           // 第几周（1-5），LastWeek（-1）表示最后一周
 	Weekday     _time.Weekday // 星期几
-	Hour        int          // 时（0-23）
-	Minute      int          // 分（0-59）
-	Second      int          // 秒（0-59）
+	Hour        int           // 时（0-23）
+	Minute      int           // 分（0-59）
+	Second      int           // 秒（0-59）
 }
 
 // WeekOfMonthOf 根据日期计算当前是月份的第几周（第1-7日为第1周，第8-14日为第2周，以此类推）
 func WeekOfMonthOf(t _time.Time) int {
 	return (t.Day()-1)/7 + 1
+}
+
+// LastWeekOfMonth 计算指定日期所在月份共有几周（返回 4 或 5）
+func LastWeekOfMonth(t _time.Time) int {
+	lastDay := _time.Date(t.Year(), t.Month()+1, 0, 0, 0, 0, 0, t.Location())
+	return WeekOfMonthOf(lastDay)
 }
 
 type TaskWeekImpl struct {
@@ -57,15 +76,24 @@ func (*TaskWeekImpl) New(loc *_time.Location) *TaskWeekImpl {
 	}
 }
 
-// AddRule 添加一条触发规则：月份第 weekOfMonth 周的 weekday 在 hour:minute:second 触发
-func (my *TaskWeekImpl) AddRule(weekOfMonth int, weekday _time.Weekday, hour, minute, second int) *TaskWeekImpl {
-	if weekOfMonth < 1 {
-		weekOfMonth = 1
+// AddRule 添加一条触发规则：month 月的第 weekOfMonth 周的 weekday 在 hour:minute:second 触发
+//
+// month 取值范围：_time.January ~ _time.December 或 EveryMonth（0）表示每月都生效
+// weekOfMonth 取值范围：1-5 或 LastWeek（-1）表示最后一周
+func (my *TaskWeekImpl) AddRule(month _time.Month, weekOfMonth int, weekday _time.Weekday, hour, minute, second int) *TaskWeekImpl {
+	if month < _time.January || month > _time.December {
+		month = EveryMonth
 	}
-	if weekOfMonth > 5 {
-		weekOfMonth = 5
+	if weekOfMonth != LastWeek {
+		if weekOfMonth < 1 {
+			weekOfMonth = 1
+		}
+		if weekOfMonth > 5 {
+			weekOfMonth = 5
+		}
 	}
 	my.rules = append(my.rules, WeekRule{
+		Month:       month,
 		WeekOfMonth: weekOfMonth,
 		Weekday:     weekday,
 		Hour:        hour,
@@ -122,9 +150,20 @@ func (my *TaskWeekImpl) Do() {
 // matchRule 检查当前时间是否命中某条规则，返回命中的规则指针（未命中返回 nil）
 func (my *TaskWeekImpl) matchRule(now _time.Time) *WeekRule {
 	wom := WeekOfMonthOf(now)
+	lastWom := LastWeekOfMonth(now)
+	curMonth := now.Month()
 	for idx := range my.rules {
 		r := &my.rules[idx]
-		if r.WeekOfMonth == wom &&
+		// 月份匹配：EveryMonth 表示不限制月份
+		if r.Month != EveryMonth && r.Month != curMonth {
+			continue
+		}
+		// LastWeek 动态解析为当月实际最后一周
+		ruleWom := r.WeekOfMonth
+		if ruleWom == LastWeek {
+			ruleWom = lastWom
+		}
+		if ruleWom == wom &&
 			r.Weekday == now.Weekday() &&
 			r.Hour == now.Hour() &&
 			r.Minute == now.Minute() &&
