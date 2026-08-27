@@ -5,6 +5,8 @@ import (
 	_time "time"
 
 	_uuid "github.com/google/uuid"
+
+	"github.com/aid297/aid/v2/anyMaps"
 )
 
 var (
@@ -85,6 +87,13 @@ func (*ClockImpl) Tasker(uuid _uuid.UUID) Tasker {
 	defer clockLock.RUnlock()
 
 	return clockIns.taskers[uuid]
+}
+
+func (my *ClockImpl) Taskers() []Tasker {
+	clockLock.RLock()
+	defer clockLock.RUnlock()
+
+	return anyMaps.New(anyMaps.Map(my.taskers)).GetValues().ToSlice()
 }
 
 func (*ClockImpl) DeleteTasker(uuids ..._uuid.UUID) *ClockImpl {
