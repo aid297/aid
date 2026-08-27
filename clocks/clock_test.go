@@ -5,7 +5,7 @@ import (
 	_time "time"
 )
 
-func newClock() ClockImpl { return Clock.Ins() }
+func newClock() *ClockImpl { return Clock.Ins() }
 
 func Test_Clock_AfterNormal(t *_testing.T) {
 	clock := newClock()
@@ -13,11 +13,11 @@ func Test_Clock_AfterNormal(t *_testing.T) {
 
 	tasker := TaskOnce.
 		After(3 * _time.Second).
-		SetFn(func() { t.Logf("执行定时任务") }).
+		SetFn(func(_ Tasker) { t.Logf("执行定时任务") }).
 		SetName("定时任务").
 		SetTimeout(5 * _time.Second)
 
-	clock = clock.
+	clock.
 		AddTasker(tasker).
 		SetErrHandler(func(tasker Tasker, err error) { t.Errorf("定时任务：%v 执行失败：%v", tasker, err) }).
 		Boot()
@@ -32,13 +32,13 @@ func Test_Clock_AfterTimeout(t *_testing.T) {
 
 	tasker1 := TaskOnce.
 		After(5 * _time.Second).
-		SetFn(func() { t.Logf("执行定时任务（会超时） -> 执行成功") }).
+		SetFn(func(_ Tasker) { t.Logf("执行定时任务（会超时） -> 执行成功") }).
 		SetName("定时任务1：会超时").
 		SetTimeout(3 * _time.Second)
 
 	tasker2 := TaskOnce.
 		After(3 * _time.Second).
-		SetFn(func() { t.Logf("执行定时任务（不会超时） ->  执行成功") }).
+		SetFn(func(_ Tasker) { t.Logf("执行定时任务（不会超时） ->  执行成功") }).
 		SetName("定时任务2：不会超时").
 		SetTimeout(5 * _time.Second)
 
