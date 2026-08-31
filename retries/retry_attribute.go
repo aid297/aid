@@ -6,7 +6,7 @@ import (
 )
 
 type (
-	Attributer interface{ Register(retry *Retry) }
+	Attributer interface{ Register(retry *RetryImpl) }
 
 	AttrSleep   struct{ sleep time.Duration }
 	AttrFn      struct{ fn func() error }
@@ -15,12 +15,12 @@ type (
 
 func Sleep(sleep time.Duration) AttrSleep { return AttrSleep{sleep: sleep} }
 
-func (my AttrSleep) Register(retry *Retry) { retry.sleep = my.sleep }
+func (my AttrSleep) Register(retry *RetryImpl) { retry.sleep = my.sleep }
 
 func Fn(fn func() error) AttrFn { return AttrFn{fn: fn} }
 
-func (my AttrFn) Register(retry *Retry) { retry.fn = my.fn }
+func (my AttrFn) Register(retry *RetryImpl) { retry.fn = my.fn }
 
 func Context(ctx context.Context) AttrContext { return AttrContext{ctx: ctx} }
 
-func (my AttrContext) Register(retry *Retry) { retry.ctx = my.ctx }
+func (my AttrContext) Register(retry *RetryImpl) { retry.ctx = my.ctx }

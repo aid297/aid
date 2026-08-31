@@ -1,5 +1,3 @@
 package retries
 
-var APP struct {
-	Retry Retry
-}
+var APP struct{ Retry *RetryImpl }
