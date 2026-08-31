@@ -10,18 +10,18 @@ type (
 	Retry interface {
 		New(attrs ...Attributer) Retry
 		Set(attrs ...Attributer) Retry
-		Retried() int
-		Linear(attempts int) error
-		Exponent(attempts int) error
-		LinearWithContext(attempts int) error
-		JitterWithContext(attempts int) error
+		Retried() uint
+		Linear(attempts uint) error
+		Exponent(attempts uint) error
+		LinearWithContext(attempts uint) error
+		JitterWithContext(attempts uint) error
 	}
 
 	RetryImpl struct {
 		sleep   time.Duration
 		fn      func() error
 		ctx     context.Context
-		retried int
+		retried uint
 	}
 )
 
@@ -44,10 +44,10 @@ func (my *RetryImpl) Set(attrs ...Attributer) Retry {
 }
 
 // Retried 已经重试次数
-func (my *RetryImpl) Retried() int { return my.retried }
+func (my *RetryImpl) Retried() uint { return my.retried }
 
 // Linear 线性重试
-func (my *RetryImpl) Linear(attempts int) error {
+func (my *RetryImpl) Linear(attempts uint) error {
 	if my.fn == nil {
 		return nil
 	}
@@ -65,7 +65,7 @@ func (my *RetryImpl) Linear(attempts int) error {
 }
 
 // Exponent 指数退避
-func (my *RetryImpl) Exponent(attempts int) error {
+func (my *RetryImpl) Exponent(attempts uint) error {
 	if my.fn == nil {
 		return nil
 	}
@@ -83,7 +83,7 @@ func (my *RetryImpl) Exponent(attempts int) error {
 }
 
 // LinearWithContext 线性重试携带上下文
-func (my *RetryImpl) LinearWithContext(attempts int) error {
+func (my *RetryImpl) LinearWithContext(attempts uint) error {
 	if my.fn == nil {
 		return nil
 	}
@@ -105,7 +105,7 @@ func (my *RetryImpl) LinearWithContext(attempts int) error {
 }
 
 // JitterWithContext 随机数退避携带上下文
-func (my *RetryImpl) JitterWithContext(attempts int) error {
+func (my *RetryImpl) JitterWithContext(attempts uint) error {
 	if my.fn == nil {
 		return nil
 	}
