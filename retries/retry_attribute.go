@@ -1,26 +1,20 @@
 package retries
 
 import (
-	"context"
-	"time"
+	_context "context"
+	_time "time"
 )
 
-type (
-	Attributer interface{ Register(retry *RetryImpl) }
+type RetryAttr func(retry *RetryImpl)
 
-	AttrSleep   struct{ sleep time.Duration }
-	AttrFn      struct{ fn func() error }
-	AttrContext struct{ ctx context.Context }
-)
+func Sleep(sleep _time.Duration) RetryAttr {
+	return func(retry *RetryImpl) { retry.sleep = sleep }
+}
 
-func Sleep(sleep time.Duration) AttrSleep { return AttrSleep{sleep: sleep} }
+func Fn(fn RetryFn) RetryAttr {
+	return func(retry *RetryImpl) { retry.fn = fn }
+}
 
-func (my AttrSleep) Register(retry *RetryImpl) { retry.sleep = my.sleep }
-
-func Fn(fn func() error) AttrFn { return AttrFn{fn: fn} }
-
-func (my AttrFn) Register(retry *RetryImpl) { retry.fn = my.fn }
-
-func Context(ctx context.Context) AttrContext { return AttrContext{ctx: ctx} }
-
-func (my AttrContext) Register(retry *RetryImpl) { retry.ctx = my.ctx }
+func Context(ctx _context.Context) RetryAttr {
+	return func(retry *RetryImpl) { retry.ctx = ctx }
+}

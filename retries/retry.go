@@ -1,15 +1,15 @@
 package retries
 
 import (
-	"context"
-	"math/rand"
-	"time"
+	_context "context"
+	_rand "math/rand"
+	_time "time"
 )
 
 type (
 	Retry interface {
-		New(attrs ...Attributer) Retry
-		Set(attrs ...Attributer) Retry
+		New(attrs ...RetryAttr) Retry
+		Set(attrs ...RetryAttr) Retry
 		Linear(attempts uint) error
 		Exponent(attempts uint) error
 		LinearWithContext(attempts uint) error
@@ -19,24 +19,24 @@ type (
 	RetryFn func(retried uint) (err error)
 
 	RetryImpl struct {
-		sleep time.Duration
+		sleep _time.Duration
 		fn    RetryFn
-		ctx   context.Context
+		ctx   _context.Context
 	}
 )
 
-func NewRetry(attrs ...Attributer) Retry {
-	return (&RetryImpl{fn: nil, ctx: context.TODO()}).Set(attrs...)
+func NewRetry(attrs ...RetryAttr) Retry {
+	return (&RetryImpl{fn: nil, ctx: _context.TODO()}).Set(attrs...)
 }
 
 // New 实例化
-func (*RetryImpl) New(attrs ...Attributer) Retry { return NewRetry(attrs...) }
+func (*RetryImpl) New(attrs ...RetryAttr) Retry { return NewRetry(attrs...) }
 
 // Set 设置属性
-func (my *RetryImpl) Set(attrs ...Attributer) Retry {
+func (my *RetryImpl) Set(attrs ...RetryAttr) Retry {
 	if len(attrs) > 0 {
 		for idx := range attrs {
-			attrs[idx].Register(my)
+			attrs[idx](my)
 		}
 	}
 
@@ -51,7 +51,7 @@ func (my *RetryImpl) Linear(attempts uint) error {
 
 	if err := my.fn(attempts); err != nil {
 		if attempts--; attempts > 0 {
-			time.Sleep(my.sleep)
+			_time.Sleep(my.sleep)
 			return my.Linear(attempts)
 		}
 		return err
@@ -68,7 +68,7 @@ func (my *RetryImpl) Exponent(attempts uint) error {
 
 	if err := my.fn(attempts); err != nil {
 		if attempts--; attempts > 0 {
-			time.Sleep(my.sleep)
+			_time.Sleep(my.sleep)
 			return my.Set(Sleep(2 * my.sleep)).Exponent(attempts)
 		}
 		return err
@@ -86,7 +86,7 @@ func (my *RetryImpl) LinearWithContext(attempts uint) error {
 	if err := my.fn(attempts); err != nil {
 		if attempts--; attempts > 0 {
 			select {
-			case <-time.After(my.sleep):
+			case <-_time.After(my.sleep):
 				return my.Set(Sleep(2 * my.sleep)).LinearWithContext(attempts) // 指数退避
 			case <-my.ctx.Done():
 				return my.ctx.Err()
@@ -107,11 +107,11 @@ func (my *RetryImpl) JitterWithContext(attempts uint) error {
 	if err := my.fn(attempts); err != nil {
 		if attempts--; attempts > 0 {
 			// 加入随机退避
-			jitter := time.Duration(rand.Int63n(int64(my.sleep)))
+			jitter := _time.Duration(_rand.Int63n(int64(my.sleep)))
 			my.sleep = my.sleep + jitter
 
 			select {
-			case <-time.After(my.sleep):
+			case <-_time.After(my.sleep):
 				return my.Set(Sleep(2 * my.sleep)).JitterWithContext(attempts) // 指数退避
 			case <-my.ctx.Done():
 				return my.ctx.Err()
