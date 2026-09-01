@@ -9,10 +9,7 @@ import (
 	_uuid "github.com/google/uuid"
 )
 
-var (
-	_        Tasker = (*TaskWeekImpl)(nil)
-	TaskWeek TaskWeekImpl
-)
+var _ Tasker = (*TaskWeekImpl)(nil)
 
 const (
 	// LastWeek 表示月份最后一周：在只有4周的月份等价于第4周，在有5周的月份等价于第5周
@@ -63,8 +60,8 @@ type TaskWeekImpl struct {
 	lastFired   _time.Time // 上次触发的时刻（精确到秒），用于防止同一秒内重复触发
 }
 
-// New 创建按周规则定时任务，loc 为时区（传 nil 则使用 time.Local）
-func (*TaskWeekImpl) New(loc *_time.Location) *TaskWeekImpl {
+// NewTaskWeek 创建按周规则定时任务，loc 为时区（传 nil 则使用 time.Local）
+func NewTaskWeek(loc *_time.Location) *TaskWeekImpl {
 	if loc == nil {
 		loc = _time.Local
 	}
@@ -130,6 +127,10 @@ func (my *TaskWeekImpl) SetImmediately(immediately bool) Tasker {
 	my.immediately = immediately
 	return my
 }
+
+func (my *TaskWeekImpl) EnableImmediately() Tasker { return my.SetImmediately(true) }
+
+func (my *TaskWeekImpl) DisableImmediately() Tasker { return my.SetImmediately(false) }
 
 func (my *TaskWeekImpl) Immediately() bool { return my.immediately }
 

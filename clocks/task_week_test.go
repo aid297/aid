@@ -8,7 +8,7 @@ import (
 	_clocks "github.com/aid297/aid/v2/clocks"
 )
 
-// Test_WeekOfMonthOf 验证 WeekOfMonthOf 工具函数的周序号计算
+// Test_WeekOfMonthOf 验证 weekOfMonthOf 工具函数的周序号计算
 func Test_WeekOfMonthOf(t *_testing.T) {
 	loc := _time.UTC
 	cases := []struct {
@@ -48,7 +48,7 @@ func Test_WeekRuleMatch(t *_testing.T) {
 
 	var count int32
 
-	tasker := _clocks.TaskWeek.New(loc).
+	tasker := _clocks.NewTaskWeek(loc).
 		AddRule(_clocks.EveryMonth, wom, weekday, triggerTime.Hour(), triggerTime.Minute(), triggerTime.Second()).
 		SetName("周规则匹配测试").
 		SetFn(func(_ _clocks.Tasker) {
@@ -81,7 +81,7 @@ func Test_WeekRuleNoMatch(t *_testing.T) {
 	var count int32
 
 	// 构造一条当前时刻绝不会命中的规则：第5周星期一的 00:00:00（大多数月份第5周不存在）
-	tasker := _clocks.TaskWeek.New(loc).
+	tasker := _clocks.NewTaskWeek(loc).
 		AddRule(_clocks.EveryMonth, 5, _time.Monday, 0, 0, 0).
 		SetName("不匹配规则测试").
 		SetFn(func(_ _clocks.Tasker) {
@@ -116,7 +116,7 @@ func Test_WeekMultiRules(t *_testing.T) {
 
 	var count int32
 
-	tasker := _clocks.TaskWeek.New(loc).
+	tasker := _clocks.NewTaskWeek(loc).
 		// 命中的规则
 		AddRule(_clocks.EveryMonth, wom, weekday, triggerTime.Hour(), triggerTime.Minute(), triggerTime.Second()).
 		// 不命中的规则：第5周周五 03:00:00
@@ -144,7 +144,7 @@ func Test_WeekMultiRules(t *_testing.T) {
 	t.Logf("测试通过，多规则场景触发 %d 次", count)
 }
 
-// Test_LastWeekOfMonth 验证 LastWeekOfMonth 工具函数：不同月份天数不同，最后一周可能是4或5
+// Test_LastWeekOfMonth 验证 lastWeekOfMonth 工具函数：不同月份天数不同，最后一周可能是4或5
 func Test_LastWeekOfMonth(t *_testing.T) {
 	loc := _time.UTC
 	cases := []struct {
@@ -184,7 +184,7 @@ func Test_WeekLastWeekRule(t *_testing.T) {
 	triggerTime := now.Add(2 * _time.Second)
 	var count int32
 
-	tasker := _clocks.TaskWeek.New(loc).
+	tasker := _clocks.NewTaskWeek(loc).
 		AddRule(_clocks.EveryMonth, _clocks.LastWeek, now.Weekday(), triggerTime.Hour(), triggerTime.Minute(), triggerTime.Second()).
 		SetName("LastWeek 规则测试").
 		SetFn(func(_ _clocks.Tasker) {
@@ -211,7 +211,7 @@ func Test_WeekLastWeekRule(t *_testing.T) {
 
 // Test_WeekNoRules 验证未配置规则时 Begin 返回错误
 func Test_WeekNoRules(t *_testing.T) {
-	tasker := _clocks.TaskWeek.New(nil).
+	tasker := _clocks.NewTaskWeek(nil).
 		SetFn(func(_ _clocks.Tasker) {})
 
 	err := tasker.Begin()
@@ -223,7 +223,7 @@ func Test_WeekNoRules(t *_testing.T) {
 
 // Test_WeekNoFn 验证未设置回调时 Begin 返回错误
 func Test_WeekNoFn(t *_testing.T) {
-	tasker := _clocks.TaskWeek.New(nil).
+	tasker := _clocks.NewTaskWeek(nil).
 		AddRule(_clocks.EveryMonth, 1, _time.Monday, 12, 0, 0)
 
 	err := tasker.Begin()
@@ -249,7 +249,7 @@ func Test_WeekMonthFilter(t *_testing.T) {
 
 	var count int32
 
-	tasker := _clocks.TaskWeek.New(loc).
+	tasker := _clocks.NewTaskWeek(loc).
 		// 指定为其他月份，即使周、星期、时刻都匹配也不应触发
 		AddRule(wrongMonth, wom, now.Weekday(), triggerTime.Hour(), triggerTime.Minute(), triggerTime.Second()).
 		SetName("月份过滤测试").
@@ -283,7 +283,7 @@ func Test_WeekSpecificMonthMatch(t *_testing.T) {
 	triggerTime := now.Add(2 * _time.Second)
 	var count int32
 
-	tasker := _clocks.TaskWeek.New(loc).
+	tasker := _clocks.NewTaskWeek(loc).
 		// 指定当前月份
 		AddRule(now.Month(), wom, now.Weekday(), triggerTime.Hour(), triggerTime.Minute(), triggerTime.Second()).
 		SetName("指定月份匹配测试").

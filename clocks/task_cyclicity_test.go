@@ -10,8 +10,7 @@ import (
 func Test_CyclicityNormal(t *_testing.T) {
 	count := 0
 
-	tasker := _clocks.TaskCyclicity.
-		Secondly(3).
+	tasker := _clocks.NewTaskCyclicitySecondly(3).
 		SetTimeout(5 * _time.Second).
 		SetFn(func(_ _clocks.Tasker) { count++; t.Logf("每3秒执行一次：执行成功；第%d次", count) })
 
@@ -32,20 +31,19 @@ func Test_CyclicityNormal(t *_testing.T) {
 }
 
 func Test_CyclicityTimeout(t *_testing.T) {
-	clock := _clocks.Clock.Ins().SetErrHandler(func(tasker _clocks.Tasker, err error) { t.Errorf("执行错误(%v)：%v", tasker, err) })
+	clock := _clocks.OnceClock().SetErrHandler(func(tasker _clocks.Tasker, err error) { t.Errorf("执行错误(%v)：%v", tasker, err) })
 	defer clock.Clean()
 
 	count := 0
 
-	tasker1 := _clocks.TaskCyclicity.
-		Secondly(3).
+	tasker1 := _clocks.NewTaskCyclicitySecondly(3).
 		SetName("任务A").
 		SetFn(func(_ _clocks.Tasker) {
 			count++
 			t.Logf("【任务A】每3秒执行一次，执行成功：第%d次", count)
 		})
 
-	tasker2 := _clocks.TaskCyclicity.Secondly(3).SetName("任务B").SetFn(func(_ _clocks.Tasker) {
+	tasker2 := _clocks.NewTaskCyclicitySecondly(3).SetName("任务B").SetFn(func(_ _clocks.Tasker) {
 		count++
 		t.Logf("【任务B】每3秒执行一次，执行成功：第%d次", count)
 	})

@@ -16,11 +16,26 @@ var (
 	clockIns        *ClockImpl
 	clockLock       = sync.RWMutex{}
 
-	Clock ClockImpl
+	_ Clock = (*ClockImpl)(nil)
 )
 
 type (
 	es struct{}
+
+	Clock interface {
+		SetErrHandler(errHandler func(tasker Tasker, err error)) Clock
+		AddTasker(taskers ...Tasker) Clock
+		AddTaskerAndBegin(tasker Tasker) Clock
+		Tasker(uuid _uuid.UUID) Tasker
+		Taskers() []Tasker
+		DeleteTasker(uuids ..._uuid.UUID) Clock
+		begin(uuid _uuid.UUID)
+		Begin(uuid _uuid.UUID)
+		close(uuid _uuid.UUID)
+		Close(uuid _uuid.UUID)
+		Boot() *ClockImpl
+		Clean() *ClockImpl
+	}
 
 	Tasker interface {
 		String() string
@@ -32,6 +47,8 @@ type (
 		SetFn(fn func(tasker Tasker)) Tasker
 		Fn() func(tasker Tasker)
 		SetImmediately(immediately bool) Tasker
+		EnableImmediately() Tasker
+		DisableImmediately() Tasker
 		Immediately() bool
 		Begin() error
 		Stop() Tasker
@@ -43,16 +60,16 @@ type (
 	}
 )
 
-func init() { Clock.Ins() }
+func init() { OnceClock() }
 
-func (*ClockImpl) Ins() *ClockImpl {
+func OnceClock() *ClockImpl {
 	clockOnce.Do(func() {
 		clockIns = &ClockImpl{taskers: make(map[_uuid.UUID]Tasker), errHandler: func(Tasker, error) {}}
 	})
 	return clockIns
 }
 
-func (*ClockImpl) SetErrHandler(errHandler func(tasker Tasker, err error)) *ClockImpl {
+func (*ClockImpl) SetErrHandler(errHandler func(tasker Tasker, err error)) Clock {
 	clockLock.Lock()
 	defer clockLock.Unlock()
 
@@ -61,7 +78,7 @@ func (*ClockImpl) SetErrHandler(errHandler func(tasker Tasker, err error)) *Cloc
 	return clockIns
 }
 
-func (*ClockImpl) AddTasker(taskers ...Tasker) *ClockImpl {
+func (*ClockImpl) AddTasker(taskers ...Tasker) Clock {
 	clockLock.Lock()
 	defer clockLock.Unlock()
 
@@ -72,7 +89,7 @@ func (*ClockImpl) AddTasker(taskers ...Tasker) *ClockImpl {
 	return clockIns
 }
 
-func (*ClockImpl) AddTaskerAndBegin(tasker Tasker) *ClockImpl {
+func (*ClockImpl) AddTaskerAndBegin(tasker Tasker) Clock {
 	clockLock.Lock()
 	defer clockLock.Unlock()
 
@@ -96,7 +113,7 @@ func (my *ClockImpl) Taskers() []Tasker {
 	return anyMaps.New(anyMaps.Map(my.taskers)).GetValues().ToSlice()
 }
 
-func (*ClockImpl) DeleteTasker(uuids ..._uuid.UUID) *ClockImpl {
+func (*ClockImpl) DeleteTasker(uuids ..._uuid.UUID) Clock {
 	clockLock.Lock()
 	defer clockLock.Unlock()
 

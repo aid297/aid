@@ -9,10 +9,7 @@ import (
 	_uuid "github.com/google/uuid"
 )
 
-var (
-	_        Tasker = (*TaskOnceImpl)(nil)
-	TaskOnce TaskOnceImpl
-)
+var _ Tasker = (*TaskOnceImpl)(nil)
 
 type TaskOnceImpl struct {
 	uuid     _uuid.UUID
@@ -23,15 +20,15 @@ type TaskOnceImpl struct {
 	closeCh  chan es
 }
 
-func (*TaskOnceImpl) After(interval _time.Duration) *TaskOnceImpl {
+func NewTaskOnceAfter(interval _time.Duration) Tasker {
 	if interval <= 0 {
 		interval = defaultInterval
 	}
 	return &TaskOnceImpl{uuid: _uuid.Must(_uuid.NewV7()), interval: interval, timeout: defaultTimeout, closeCh: make(chan es, 1)}
 }
 
-func (*TaskOnceImpl) At(time _time.Time, loc *_time.Location) *TaskOnceImpl {
-	return TaskOnce.After(time.Sub(_time.Now().In(loc)))
+func NewTaskOnceAt(time _time.Time, loc *_time.Location) Tasker {
+	return NewTaskOnceAfter(time.Sub(_time.Now().In(loc)))
 }
 
 func (my *TaskOnceImpl) String() string {
@@ -59,7 +56,11 @@ func (my *TaskOnceImpl) Fn() func(tasker Tasker) { return my.fn }
 
 func (my *TaskOnceImpl) SetImmediately(_ bool) Tasker { return my }
 
-func (my *TaskOnceImpl) Immediately() bool { return false }
+func (my *TaskOnceImpl) EnableImmediately() Tasker { return my.SetImmediately(true) }
+
+func (my *TaskOnceImpl) DisableImmediately() Tasker { return my.SetImmediately(false) }
+
+func (my *TaskOnceImpl) Immediately() bool { return true }
 
 func (my *TaskOnceImpl) Begin() error {
 	if my.fn == nil {

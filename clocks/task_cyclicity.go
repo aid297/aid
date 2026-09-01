@@ -9,10 +9,7 @@ import (
 	_uuid "github.com/google/uuid"
 )
 
-var (
-	_             Tasker = (*TaskCyclicityImpl)(nil)
-	TaskCyclicity TaskCyclicityImpl
-)
+var _ Tasker = (*TaskCyclicityImpl)(nil)
 
 type (
 	TaskCyclicityImpl struct {
@@ -26,27 +23,27 @@ type (
 	}
 )
 
-func (*TaskCyclicityImpl) New(interval _time.Duration) *TaskCyclicityImpl {
+func NewTaskCyclicity(interval _time.Duration) Tasker {
 	return &TaskCyclicityImpl{uuid: _uuid.Must(_uuid.NewV7()), interval: interval, timeout: defaultTimeout, closeCh: make(chan es, 1)}
 }
 
-func (*TaskCyclicityImpl) Secondly(seconds uint64) *TaskCyclicityImpl {
+func NewTaskCyclicitySecondly(seconds uint64) Tasker {
 	return &TaskCyclicityImpl{uuid: _uuid.Must(_uuid.NewV7()), interval: _time.Duration(seconds) * _time.Second, timeout: defaultTimeout, closeCh: make(chan es, 1)}
 }
 
-func (*TaskCyclicityImpl) Minutely(minutes uint64) *TaskCyclicityImpl {
+func NewTaskCyclicityMinutely(minutes uint64) Tasker {
 	return &TaskCyclicityImpl{uuid: _uuid.Must(_uuid.NewV7()), interval: _time.Duration(minutes) * _time.Minute, timeout: defaultTimeout, closeCh: make(chan es, 1)}
 }
 
-func (*TaskCyclicityImpl) Hourly(hours uint64) *TaskCyclicityImpl {
+func NewTaskCyclicityHourly(hours uint64) Tasker {
 	return &TaskCyclicityImpl{uuid: _uuid.Must(_uuid.NewV7()), interval: _time.Duration(hours) * _time.Hour, timeout: defaultTimeout, closeCh: make(chan es, 1)}
 }
 
-func (*TaskCyclicityImpl) Daily(days uint64) *TaskCyclicityImpl {
+func NewTaskCyclicityDaily(days uint64) Tasker {
 	return &TaskCyclicityImpl{uuid: _uuid.Must(_uuid.NewV7()), interval: _time.Duration(days) * _time.Hour * 24, timeout: defaultTimeout, closeCh: make(chan es, 1)}
 }
 
-func (*TaskCyclicityImpl) Weekly(weeks uint64) *TaskCyclicityImpl {
+func NewTaskCyclicityWeekly(weeks uint64) Tasker {
 	return &TaskCyclicityImpl{uuid: _uuid.Must(_uuid.NewV7()), interval: _time.Duration(weeks) * _time.Hour * 24 * 7, timeout: defaultTimeout, closeCh: make(chan es, 1)}
 }
 
@@ -78,6 +75,10 @@ func (my *TaskCyclicityImpl) SetImmediately(immediately bool) Tasker {
 	my.immediately = immediately
 	return my
 }
+
+func (my *TaskCyclicityImpl) EnableImmediately() Tasker { return my.SetImmediately(true) }
+
+func (my *TaskCyclicityImpl) DisableImmediately() Tasker { return my.SetImmediately(false) }
 
 func (my *TaskCyclicityImpl) Immediately() bool { return my.immediately }
 
