@@ -51,7 +51,7 @@ func Test_WeekRuleMatch(t *_testing.T) {
 	tasker := _clocks.NewTaskWeek(loc).
 		AddRule(_clocks.EveryMonth, wom, weekday, triggerTime.Hour(), triggerTime.Minute(), triggerTime.Second()).
 		SetName("周规则匹配测试").
-		SetFn(func(_ _clocks.Tasker) {
+		SetHandler(func(_ _clocks.Tasker) {
 			atomic.AddInt32(&count, 1)
 			t.Logf("规则命中！当前时间: %s, 第%d周 %s", now.Format("2006-01-02 15:04:05"), wom, weekday)
 		})
@@ -84,7 +84,7 @@ func Test_WeekRuleNoMatch(t *_testing.T) {
 	tasker := _clocks.NewTaskWeek(loc).
 		AddRule(_clocks.EveryMonth, 5, _time.Monday, 0, 0, 0).
 		SetName("不匹配规则测试").
-		SetFn(func(_ _clocks.Tasker) {
+		SetHandler(func(_ _clocks.Tasker) {
 			atomic.AddInt32(&count, 1)
 		})
 
@@ -122,7 +122,7 @@ func Test_WeekMultiRules(t *_testing.T) {
 		// 不命中的规则：第5周周五 03:00:00
 		AddRule(_clocks.EveryMonth, 5, _time.Friday, 3, 0, 0).
 		SetName("多规则测试").
-		SetFn(func(tasker _clocks.Tasker) {
+		SetHandler(func(tasker _clocks.Tasker) {
 			atomic.AddInt32(&count, 1)
 			t.Logf("[%s] 规则命中，当前时间: %s", tasker.Name(), _time.Now().In(loc).Format("2006-01-02 15:04:05"))
 		})
@@ -187,7 +187,7 @@ func Test_WeekLastWeekRule(t *_testing.T) {
 	tasker := _clocks.NewTaskWeek(loc).
 		AddRule(_clocks.EveryMonth, _clocks.LastWeek, now.Weekday(), triggerTime.Hour(), triggerTime.Minute(), triggerTime.Second()).
 		SetName("LastWeek 规则测试").
-		SetFn(func(_ _clocks.Tasker) {
+		SetHandler(func(_ _clocks.Tasker) {
 			atomic.AddInt32(&count, 1)
 			t.Logf("LastWeek 规则命中！当前月份最后一周 = %d, 当前时间: %s", lastWom, now.Format("2006-01-02 15:04:05"))
 		})
@@ -212,7 +212,7 @@ func Test_WeekLastWeekRule(t *_testing.T) {
 // Test_WeekNoRules 验证未配置规则时 Begin 返回错误
 func Test_WeekNoRules(t *_testing.T) {
 	tasker := _clocks.NewTaskWeek(nil).
-		SetFn(func(_ _clocks.Tasker) {})
+		SetHandler(func(_ _clocks.Tasker) {})
 
 	err := tasker.Begin()
 	if err == nil {
@@ -253,7 +253,7 @@ func Test_WeekMonthFilter(t *_testing.T) {
 		// 指定为其他月份，即使周、星期、时刻都匹配也不应触发
 		AddRule(wrongMonth, wom, now.Weekday(), triggerTime.Hour(), triggerTime.Minute(), triggerTime.Second()).
 		SetName("月份过滤测试").
-		SetFn(func(_ _clocks.Tasker) {
+		SetHandler(func(_ _clocks.Tasker) {
 			atomic.AddInt32(&count, 1)
 		})
 
@@ -287,7 +287,7 @@ func Test_WeekSpecificMonthMatch(t *_testing.T) {
 		// 指定当前月份
 		AddRule(now.Month(), wom, now.Weekday(), triggerTime.Hour(), triggerTime.Minute(), triggerTime.Second()).
 		SetName("指定月份匹配测试").
-		SetFn(func(_ _clocks.Tasker) {
+		SetHandler(func(_ _clocks.Tasker) {
 			atomic.AddInt32(&count, 1)
 			t.Logf("指定月份规则命中！当前 %d 月，第%d周 %s", now.Month(), wom, now.Weekday())
 		})

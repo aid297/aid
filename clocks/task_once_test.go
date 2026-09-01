@@ -10,7 +10,7 @@ import (
 func Test_AfterNormal(t *_testing.T) {
 	if err := _clocks.NewTaskOnceAfter(3 * _time.Second).
 		SetTimeout(5 * _time.Second).
-		SetFn(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
+		SetHandler(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
 		Begin(); err != nil {
 		t.Fatalf("测试失败：%v", err)
 	}
@@ -21,13 +21,13 @@ func Test_AfterNormal(t *_testing.T) {
 func Test_AfterTimeout(t *_testing.T) {
 	err := _clocks.NewTaskOnceAfter(3 * _time.Second).
 		SetTimeout(1 * _time.Second).
-		SetFn(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
+		SetHandler(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
 		Begin()
-	if err != nil {
-		t.Errorf("测试失败：%v", err)
+	// 超时时间小于触发间隔，应返回超时错误
+	if err == nil {
+		t.Fatal("期望返回超时错误，但未返回")
 	}
-
-	t.Logf("测试结束")
+	t.Logf("符合预期：%v", err)
 }
 
 func Test_AtNormal(t *_testing.T) {
@@ -37,7 +37,7 @@ func Test_AtNormal(t *_testing.T) {
 	}
 	if err = _clocks.NewTaskOnceAt(_time.Now().In(loc).Add(3*_time.Second), loc).
 		SetTimeout(5 * _time.Second).
-		SetFn(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
+		SetHandler(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
 		Begin(); err != nil {
 		t.Errorf(" 测试失败：%v", err)
 	}
@@ -50,12 +50,13 @@ func Test_AtTimeout(t *_testing.T) {
 	if err != nil {
 		t.Fatalf("设置时区错误：%v", err)
 	}
-	if err = _clocks.NewTaskOnceAt(_time.Now().In(loc).Add(3*_time.Second), loc).
+	err = _clocks.NewTaskOnceAt(_time.Now().In(loc).Add(3*_time.Second), loc).
 		SetTimeout(1 * _time.Second).
-		SetFn(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
-		Begin(); err != nil {
-		t.Errorf(" 测试失败：%v", err)
+		SetHandler(func(_ _clocks.Tasker) { t.Logf("执行定时任务") }).
+		Begin()
+	// 超时时间小于触发间隔，应返回超时错误
+	if err == nil {
+		t.Fatal("期望返回超时错误，但未返回")
 	}
-
-	t.Logf("测试结束")
+	t.Logf("符合预期：%v", err)
 }

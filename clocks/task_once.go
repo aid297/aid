@@ -16,7 +16,7 @@ type TaskOnceImpl struct {
 	name     string
 	interval _time.Duration
 	timeout  _time.Duration
-	fn       func(tasker Tasker)
+	fn       TaskHandler
 	closeCh  chan es
 }
 
@@ -50,9 +50,9 @@ func (my *TaskOnceImpl) SetTimeout(timeout _time.Duration) Tasker {
 
 func (my *TaskOnceImpl) Timeout() _time.Duration { return my.timeout }
 
-func (my *TaskOnceImpl) SetFn(fn func(tasker Tasker)) Tasker { my.fn = fn; return my }
+func (my *TaskOnceImpl) SetHandler(fn TaskHandler) Tasker { my.fn = fn; return my }
 
-func (my *TaskOnceImpl) Fn() func(tasker Tasker) { return my.fn }
+func (my *TaskOnceImpl) Handler() TaskHandler { return my.fn }
 
 func (my *TaskOnceImpl) SetImmediately(_ bool) Tasker { return my }
 

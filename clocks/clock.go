@@ -6,7 +6,9 @@ import (
 
 	_uuid "github.com/google/uuid"
 
-	"github.com/aid297/aid/v2/anyMaps"
+	_anyMaps "github.com/aid297/aid/v2/anyMaps"
+
+	_cron "github.com/robfig/cron/v3"
 )
 
 var (
@@ -44,8 +46,8 @@ type (
 		Name() string
 		SetTimeout(timeout _time.Duration) Tasker
 		Timeout() _time.Duration
-		SetFn(fn func(tasker Tasker)) Tasker
-		Fn() func(tasker Tasker)
+		SetHandler(fn TaskHandler) Tasker
+		Handler() TaskHandler
 		SetImmediately(immediately bool) Tasker
 		EnableImmediately() Tasker
 		DisableImmediately() Tasker
@@ -54,17 +56,26 @@ type (
 		Stop() Tasker
 	}
 
+	TaskHandler func(tasker Tasker)
+	ErrHandler  func(tasker Tasker, err error)
+
 	ClockImpl struct {
 		taskers    map[_uuid.UUID]Tasker
 		errHandler func(tasker Tasker, err error)
+		cron       *_cron.Cron
 	}
 )
 
 func init() { OnceClock() }
 
-func OnceClock() *ClockImpl {
+func OnceClock(cronOpts ..._cron.Option) *ClockImpl {
 	clockOnce.Do(func() {
-		clockIns = &ClockImpl{taskers: make(map[_uuid.UUID]Tasker), errHandler: func(Tasker, error) {}}
+		clockIns = &ClockImpl{
+			taskers:    make(map[_uuid.UUID]Tasker),
+			errHandler: func(Tasker, error) {},
+			cron:       _cron.New(cronOpts...),
+		}
+		clockIns.cron.Start()
 	})
 	return clockIns
 }
@@ -100,7 +111,7 @@ func (*ClockImpl) AddTaskerAndBegin(tasker Tasker) Clock {
 }
 
 func (*ClockImpl) Tasker(uuid _uuid.UUID) Tasker {
-	clockLock.RUnlock()
+	clockLock.RLock()
 	defer clockLock.RUnlock()
 
 	return clockIns.taskers[uuid]
@@ -110,7 +121,7 @@ func (my *ClockImpl) Taskers() []Tasker {
 	clockLock.RLock()
 	defer clockLock.RUnlock()
 
-	return anyMaps.New(anyMaps.Map(my.taskers)).GetValues().ToSlice()
+	return _anyMaps.New(_anyMaps.Map(my.taskers)).GetValues().ToSlice()
 }
 
 func (*ClockImpl) DeleteTasker(uuids ..._uuid.UUID) Clock {

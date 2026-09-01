@@ -17,7 +17,7 @@ type (
 		name        string
 		interval    _time.Duration
 		timeout     _time.Duration
-		fn          func(tasker Tasker)
+		handler     TaskHandler
 		closeCh     chan es
 		immediately bool
 	}
@@ -67,9 +67,9 @@ func (my *TaskCyclicityImpl) SetTimeout(timeout _time.Duration) Tasker {
 
 func (my *TaskCyclicityImpl) Timeout() _time.Duration { return my.timeout }
 
-func (my *TaskCyclicityImpl) SetFn(fn func(tasker Tasker)) Tasker { my.fn = fn; return my }
+func (my *TaskCyclicityImpl) SetHandler(fn TaskHandler) Tasker { my.handler = fn; return my }
 
-func (my *TaskCyclicityImpl) Fn() func(tasker Tasker) { return my.fn }
+func (my *TaskCyclicityImpl) Handler() TaskHandler { return my.handler }
 
 func (my *TaskCyclicityImpl) SetImmediately(immediately bool) Tasker {
 	my.immediately = immediately
@@ -87,7 +87,7 @@ func (my *TaskCyclicityImpl) Do() {
 	defer cancel()
 
 	done := make(chan struct{})
-	go func() { defer close(done); my.fn(my) }()
+	go func() { defer close(done); my.handler(my) }()
 
 	select {
 	case <-ctx.Done():
@@ -97,7 +97,7 @@ func (my *TaskCyclicityImpl) Do() {
 }
 
 func (my *TaskCyclicityImpl) Begin() error {
-	if my.fn == nil {
+	if my.handler == nil {
 		return _errors.New("回调方法为空")
 	}
 

@@ -52,7 +52,7 @@ type TaskWeekImpl struct {
 	uuid        _uuid.UUID
 	name        string
 	timeout     _time.Duration
-	fn          func(tasker Tasker)
+	fn          TaskHandler
 	closeCh     chan es
 	loc         *_time.Location
 	rules       []WeekRule
@@ -119,9 +119,9 @@ func (my *TaskWeekImpl) SetTimeout(timeout _time.Duration) Tasker {
 
 func (my *TaskWeekImpl) Timeout() _time.Duration { return my.timeout }
 
-func (my *TaskWeekImpl) SetFn(fn func(tasker Tasker)) Tasker { my.fn = fn; return my }
+func (my *TaskWeekImpl) SetHandler(fn TaskHandler) Tasker { my.fn = fn; return my }
 
-func (my *TaskWeekImpl) Fn() func(tasker Tasker) { return my.fn }
+func (my *TaskWeekImpl) Handler() TaskHandler { return my.fn }
 
 func (my *TaskWeekImpl) SetImmediately(immediately bool) Tasker {
 	my.immediately = immediately
