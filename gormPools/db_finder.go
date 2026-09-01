@@ -452,6 +452,17 @@ func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret an
 	return my
 }
 
+func (my *FinderImpl) StatisticOnlyCondition(finderCondition *FinderCondition, ret any) Finder {
+	if finderCondition == nil {
+		my.db.Scan(ret)
+		return my
+	}
+
+	my.QueryUseCondition(finderCondition).GetDB().Scan(ret)
+
+	return my
+}
+
 func (my *FinderImpl) Error() error { return my.db.Error }
 
 // func (my *FinderImpl) finderNext() Finder {
