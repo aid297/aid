@@ -1,6 +1,7 @@
 package clocks
 
 import (
+	_context "context"
 	"sync"
 	_time "time"
 
@@ -35,7 +36,7 @@ type (
 		Begin(uuid _uuid.UUID)
 		close(uuid _uuid.UUID)
 		Close(uuid _uuid.UUID)
-		Boot() *ClockImpl
+		Boot(ctx _context.Context) *ClockImpl
 		Clean() *ClockImpl
 	}
 
@@ -75,7 +76,6 @@ func OnceClock(cronOpts ..._cron.Option) *ClockImpl {
 			errHandler: func(Tasker, error) {},
 			cron:       _cron.New(cronOpts...),
 		}
-		clockIns.cron.Start()
 	})
 	return clockIns
 }
@@ -168,13 +168,41 @@ func (*ClockImpl) Close(uuid _uuid.UUID) {
 	clockIns.close(uuid)
 }
 
-func (*ClockImpl) Boot() *ClockImpl {
+func (*ClockImpl) Boot(ctx _context.Context) *ClockImpl {
 	clockLock.RLock()
 	defer clockLock.RUnlock()
 
+	// 本次 Boot 启动的任务使用局部 WaitGroup 跟踪，关停时等待它们的在跑 handler 收尾；
+	// 不能用全局共享的 WaitGroup：一次 Boot 的 Wait 会与后续注册动作的 Add 并发，违反 WaitGroup 的使用约束
+	var wg sync.WaitGroup
 	for _, tasker := range clockIns.taskers {
-		clockIns.begin(tasker.UUID())
+		t := tasker
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := t.Begin(); err != nil {
+				clockIns.errHandler(t, err)
+			}
+		}()
 	}
+
+	go func() {
+		// 启动 cron 调度器（幂等，运行中直接返回）；cron 生命周期由 Boot 管理
+		clockIns.cron.Start()
+
+		// 等待上下文取消
+		<-ctx.Done()
+
+		// 第一步：优雅停止 cron——cron.Stop 返回的 context 在正在执行的回调全部结束后才 Done
+		<-clockIns.cron.Stop().Done()
+
+		// 第二步：注销全部任务——未触发/等待中的任务收到停止信号后立即退出，不再进入下一轮
+		// 注意：这里会停止所有已注册任务（含其他途径注册的），但 Boot 只等待自己启动的任务收尾
+		clockIns.Clean()
+
+		// 第三步：等待在跑任务收尾——正在执行的 handler 执行完（或达到 Timeout）后 Begin 返回，任务 goroutine 退出
+		wg.Wait()
+	}()
 
 	return clockIns
 }

@@ -9,7 +9,7 @@ type (
 		defaultErrorSplitChar ErrorSplitCharTag
 	}
 	GlobalExCheckFunc func(fieldName string, origin any) (err error)
-	ExCheckFunc       func(origin any) (errs error)
+	ExCheckFunc       func(origin any) (err error)
 
 	Validator interface {
 		DefaultSliceSplitChar(char SliceSplitCharTag) Validator

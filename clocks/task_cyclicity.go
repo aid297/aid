@@ -113,6 +113,13 @@ func (my *TaskCyclicityImpl) Begin() error {
 		case <-my.closeCh:
 			return nil
 		case <-ticker.C:
+			// 优先检查停止信号：select 的随机性可能让积压的 tick 抢先于停止信号被选中
+			select {
+			case <-my.closeCh:
+				return nil
+			default:
+			}
+
 			my.Do()
 		}
 	}

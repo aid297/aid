@@ -1,6 +1,7 @@
 package clocks_test
 
 import (
+	_context "context"
 	_syncAtomic "sync/atomic"
 	_testing "testing"
 	_time "time"
@@ -50,7 +51,7 @@ func Test_CyclicityTimeout(t *_testing.T) {
 	})
 
 	clock.AddTasker(tasker1)
-	clock.Boot()
+	clock.Boot(_context.Background())
 
 	clock.AddTaskerAndBegin(tasker2)
 

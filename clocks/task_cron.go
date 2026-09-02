@@ -58,9 +58,21 @@ func (my *TaskCronImpl) SetExpr(expr string) *TaskCronImpl { my.expr = expr; ret
 
 func (my *TaskCronImpl) Expr() string { return my.expr }
 
-func (my *TaskCronImpl) SetEntryID(entryID _cron.EntryID) Tasker { my.entryID = entryID; return my }
+func (my *TaskCronImpl) SetEntryID(entryID _cron.EntryID) Tasker {
+	my.mu.Lock()
+	defer my.mu.Unlock()
 
-func (my *TaskCronImpl) EntryID() _cron.EntryID { return my.entryID }
+	my.entryID = entryID
+
+	return my
+}
+
+func (my *TaskCronImpl) EntryID() _cron.EntryID {
+	my.mu.Lock()
+	defer my.mu.Unlock()
+
+	return my.entryID
+}
 
 func (my *TaskCronImpl) Begin() (err error) {
 	if my.handler == nil {

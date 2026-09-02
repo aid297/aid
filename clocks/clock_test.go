@@ -1,6 +1,7 @@
 package clocks_test
 
 import (
+	_context "context"
 	_testing "testing"
 	_time "time"
 
@@ -21,7 +22,7 @@ func Test_Clock_AfterNormal(t *_testing.T) {
 	clock.
 		AddTasker(tasker).
 		SetErrHandler(func(tasker _clocks.Tasker, err error) { t.Errorf("定时任务：%v 执行失败：%v", tasker, err) }).
-		Boot()
+		Boot(_context.Background())
 
 	_time.Sleep(4 * _time.Second)
 	t.Log("测试完成")
@@ -51,7 +52,7 @@ func Test_Clock_AfterTimeout(t *_testing.T) {
 			}
 			t.Errorf("定时任务：%v 执行失败：%v", tasker, err)
 		}).
-		Boot()
+		Boot(_context.Background())
 
 	_time.Sleep(4 * _time.Second)
 	t.Log("测试完成")

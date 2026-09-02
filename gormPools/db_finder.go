@@ -39,6 +39,7 @@ type (
 		FindUseMap(queries map[string][]any, preloads []string, orders []string, page, size int, ret any) Finder
 		FindUseCondition(finderCondition *FinderCondition, page, size int, ret any) Finder
 		FindOnlyCondition(finderCondition *FinderCondition, ret any) Finder
+		StatisticOnlyCondition(finderCondition *FinderCondition, ret any) Finder
 		Error() error
 		// finderNext() Finder
 	}
@@ -452,6 +453,7 @@ func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret an
 	return my
 }
 
+// StatisticOnlyCondition 自动填充查询条件并统计
 func (my *FinderImpl) StatisticOnlyCondition(finderCondition *FinderCondition, ret any) Finder {
 	if finderCondition == nil {
 		my.db.Scan(ret)
