@@ -8,7 +8,6 @@ import (
 
 type (
 	Retry interface {
-		New(attrs ...RetryAttr) Retry
 		Set(attrs ...RetryAttr) Retry
 		Linear(attempts uint) error
 		Exponent(attempts uint) error
@@ -28,9 +27,6 @@ type (
 func NewRetry(attrs ...RetryAttr) Retry {
 	return (&RetryImpl{fn: nil, ctx: _context.TODO()}).Set(attrs...)
 }
-
-// New 实例化
-func (*RetryImpl) New(attrs ...RetryAttr) Retry { return NewRetry(attrs...) }
 
 // Set 设置属性
 func (my *RetryImpl) Set(attrs ...RetryAttr) Retry {
