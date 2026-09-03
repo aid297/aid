@@ -61,23 +61,24 @@ func TestCopyNestedStruct(t *testing.T) {
 
 	structs.Copy(src, dst)
 
+	// 不递归：嵌套结构体整体覆盖，src原有的Slice一并被替换
 	if src.Inner.Name != "dst内部" || src.Inner.Age != 20 {
-		t.Errorf("嵌套结构体应递归替换，实际 %+v", src.Inner)
+		t.Errorf("嵌套结构体应整体覆盖，实际 %+v", src.Inner)
 	}
 	if len(src.Inner.Slice) != 2 || src.Inner.Slice[0] != 9 || src.Inner.Slice[1] != 9 {
-		t.Errorf("嵌套结构中的slice字段应整体覆盖，实际 %v", src.Inner.Slice)
+		t.Errorf("嵌套结构体整体覆盖时slice应一并替换，实际 %v", src.Inner.Slice)
 	}
 }
 
 func TestCopyNestedPtr(t *testing.T) {
-	t.Run("双方非nil时递归", func(t *testing.T) {
+	t.Run("非nil时整体覆盖（浅拷贝，指向同一地址）", func(t *testing.T) {
 		src := &srcStruct{Ptr: &inner{Name: "src指针", Age: 1}}
 		dst := dstStruct{Ptr: &inner{Name: "dst指针", Age: 2}}
 
 		structs.Copy(src, dst)
 
-		if src.Ptr.Name != "dst指针" || src.Ptr.Age != 2 {
-			t.Errorf("嵌套指针应递归替换，实际 %+v", src.Ptr)
+		if src.Ptr != dst.Ptr {
+			t.Errorf("不递归：指针字段应整体覆盖为dst的指针（同一地址），实际 %+v", src.Ptr)
 		}
 	})
 
@@ -116,8 +117,8 @@ func TestCopyMultiLevelPtr(t *testing.T) {
 
 	structs.Copy(src, dst)
 
-	if src.PtrPtr == nil || (*src.PtrPtr).Name != "dst多级" || (*src.PtrPtr).Age != 2 {
-		t.Errorf("多级指针应递归替换，实际 %+v", src.PtrPtr)
+	if src.PtrPtr != dst.PtrPtr {
+		t.Errorf("不递归：多级指针字段应整体覆盖（同一地址），实际 %v", src.PtrPtr)
 	}
 }
 
