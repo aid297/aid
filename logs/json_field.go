@@ -2,52 +2,37 @@ package logs
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+
+	"github.com/bytedance/sonic"
+	"go.uber.org/zap/zapcore"
 )
 
-var _ JSONStringer = (*JSONStringImpl)(nil)
+var _ JSONStringer = (*JSONStringerImpl)(nil)
 
 type (
-	JSONStringer interface {
-		formatValue(v any, indent string, depth int) string
-		formatMap(m map[string]any, indent string, depth int) string
-		formatArray(arr []any, indent string, depth int) string
-		String() string
-		Error() error
-		Value() any
-		Raw() string
-	}
+	JSONStringer interface{}
 
-	// JSONStringImpl 是一个用于日志的结构化 JSON 字段类型
-	// 它会接收 JSON 字符串并在日志中以格式化后的结构显示
-	JSONStringImpl struct {
-		rawData   string // 原始 JSON 字符串
-		parsed    any    // 解析后的数据
-		formatStr string // 格式化后的字符串
-		error     error  // 解析错误
+	JSONStringerImpl struct {
+		rawData   string
+		parsed    any
+		formatStr string
+		err       error
 	}
 )
 
-// JSONString 从 JSON 字符串创建 JSONStringImpl
-// 如果字符串不是有效的 JSON,会保留原始字符串并记录错误
-func JSONString(jsonStr string) *JSONStringImpl {
-	if jsonStr == "" {
-		return &JSONStringImpl{
-			rawData:   "",
-			formatStr: "",
-		}
+// JSONString 从 JSON 字符串创建 JSONStringerImpl
+func JSONString(raw string) *JSONStringerImpl {
+	if raw == "" {
+		return &JSONStringerImpl{}
 	}
 
-	my := &JSONStringImpl{
-		rawData: jsonStr,
-	}
+	my := &JSONStringerImpl{rawData: raw}
 
-	// 尝试解析 JSON
 	var temp any
-	if err := json.Unmarshal([]byte(jsonStr), &temp); err != nil {
-		my.error = err
-		my.formatStr = jsonStr // 解析失败时显示原始字符串
+	if err := sonic.Unmarshal([]byte(raw), &temp); err != nil {
+		my.err = err
+		my.formatStr = raw
 		return my
 	}
 
@@ -56,9 +41,48 @@ func JSONString(jsonStr string) *JSONStringImpl {
 	return my
 }
 
+// MarshalLog 实现 zapcore.ObjectMarshaler 接口
+// 这是让类型支持 zap 的标准方式
+func (my *JSONStringerImpl) MarshalLog(enc zapcore.ObjectEncoder) error {
+	if my.err != nil {
+		enc.AddString("json", fmt.Sprintf("[ERROR: %v] %s", my.err, my.rawData))
+		return nil
+	}
+
+	if my.parsed != nil {
+		enc.AddString("json", my.formatStr)
+	} else {
+		enc.AddString("json", "")
+	}
+	return nil
+}
+
+// String 返回格式化字符串
+func (my *JSONStringerImpl) String() string {
+	if my.err != nil {
+		return fmt.Sprintf("[JSON Parse Error: %v] %s", my.err, my.rawData)
+	}
+	return my.formatStr
+}
+
+// Value 返回解析后的值
+func (my *JSONStringerImpl) Value() any {
+	return my.parsed
+}
+
+// Raw 返回原始字符串
+func (my *JSONStringerImpl) Raw() string {
+	return my.rawData
+}
+
+// Error 返回解析错误
+func (my *JSONStringerImpl) Error() error {
+	return my.err
+}
+
 // formatValue 递归格式化 JSON 值
-func (my *JSONStringImpl) formatValue(v any, indent string, depth int) string {
-	if depth > 10 { // 防止过深的嵌套
+func (my *JSONStringerImpl) formatValue(v any, indent string, depth int) string {
+	if depth > 10 {
 		return "{...}"
 	}
 
@@ -70,7 +94,6 @@ func (my *JSONStringImpl) formatValue(v any, indent string, depth int) string {
 	case string:
 		return fmt.Sprintf("\"%s\"", val)
 	case float64:
-		// 处理数字类型(JSON unmarshal后数字都是float64)
 		if val == float64(int64(val)) {
 			return fmt.Sprintf("%d", int64(val))
 		}
@@ -84,17 +107,16 @@ func (my *JSONStringImpl) formatValue(v any, indent string, depth int) string {
 	}
 }
 
-// formatMap 格式化对象
-func (my *JSONStringImpl) formatMap(m map[string]any, indent string, depth int) string {
+func (my *JSONStringerImpl) formatMap(m map[string]any, indent string, depth int) string {
 	if len(m) == 0 {
 		return "{}"
 	}
 
-	var buf bytes.Buffer
+	buf := new(bytes.Buffer)
 	buf.WriteString("{\n")
 	nextIndent := indent + "  "
-
 	idx := 0
+
 	for k, v := range m {
 		idx++
 		buf.WriteString(nextIndent)
@@ -111,20 +133,19 @@ func (my *JSONStringImpl) formatMap(m map[string]any, indent string, depth int) 
 	return buf.String()
 }
 
-// formatArray 格式化数组
-func (my *JSONStringImpl) formatArray(arr []any, indent string, depth int) string {
+func (my *JSONStringerImpl) formatArray(arr []any, indent string, depth int) string {
 	if len(arr) == 0 {
 		return "[]"
 	}
 
-	var buf bytes.Buffer
+	buf := new(bytes.Buffer)
 	buf.WriteString("[\n")
 	nextIndent := indent + "  "
 
-	for idx, v := range arr {
+	for i, v := range arr {
 		buf.WriteString(nextIndent)
 		buf.WriteString(my.formatValue(v, nextIndent, depth+1))
-		if idx < len(arr)-1 {
+		if i < len(arr)-1 {
 			buf.WriteString(",")
 		}
 		buf.WriteString("\n")
@@ -133,30 +154,4 @@ func (my *JSONStringImpl) formatArray(arr []any, indent string, depth int) strin
 	buf.WriteString(indent)
 	buf.WriteString("]")
 	return buf.String()
-}
-
-// String 返回格式化的 JSON 字符串,用于日志输出
-func (my *JSONStringImpl) String() string {
-	if my.error != nil {
-		return fmt.Sprintf("[JSON Parse Error: %v] %s", my.error, my.rawData)
-	}
-	if my.formatStr == "" {
-		return ""
-	}
-	return my.formatStr
-}
-
-// Error 返回解析错误(如果有)
-func (my *JSONStringImpl) Error() error {
-	return my.error
-}
-
-// Value 返回原始值,可用于进一步处理
-func (my *JSONStringImpl) Value() any {
-	return my.parsed
-}
-
-// Raw 返回原始 JSON 字符串
-func (my *JSONStringImpl) Raw() string {
-	return my.rawData
 }
