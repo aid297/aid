@@ -8,8 +8,6 @@ import (
 	_uuid "github.com/google/uuid"
 
 	_anyMaps "github.com/aid297/aid/v2/anyMaps"
-
-	_cron "github.com/robfig/cron/v3"
 )
 
 var (
@@ -63,18 +61,16 @@ type (
 	ClockImpl struct {
 		taskers    map[_uuid.UUID]Tasker
 		errHandler func(tasker Tasker, err error)
-		cron       *_cron.Cron
 	}
 )
 
 func init() { OnceClock() }
 
-func OnceClock(cronOpts ..._cron.Option) *ClockImpl {
+func OnceClock() *ClockImpl {
 	clockOnce.Do(func() {
 		clockIns = &ClockImpl{
 			taskers:    make(map[_uuid.UUID]Tasker),
 			errHandler: func(Tasker, error) {},
-			cron:       _cron.New(cronOpts...),
 		}
 	})
 	return clockIns
@@ -187,20 +183,14 @@ func (*ClockImpl) Boot(ctx _context.Context) *ClockImpl {
 	}
 
 	go func() {
-		// 启动 cron 调度器（幂等，运行中直接返回）；cron 生命周期由 Boot 管理
-		clockIns.cron.Start()
-
 		// 等待上下文取消
 		<-ctx.Done()
 
-		// 第一步：优雅停止 cron——cron.Stop 返回的 context 在正在执行的回调全部结束后才 Done
-		<-clockIns.cron.Stop().Done()
-
-		// 第二步：注销全部任务——未触发/等待中的任务收到停止信号后立即退出，不再进入下一轮
+		// 注销全部任务——未触发/等待中的任务收到停止信号后立即退出，不再进入下一轮
 		// 注意：这里会停止所有已注册任务（含其他途径注册的），但 Boot 只等待自己启动的任务收尾
 		clockIns.Clean()
 
-		// 第三步：等待在跑任务收尾——正在执行的 handler 执行完（或达到 Timeout）后 Begin 返回，任务 goroutine 退出
+		// 等待在跑任务收尾——正在执行的 handler 执行完（或达到 Timeout）后 Begin 返回，任务 goroutine 退出
 		wg.Wait()
 	}()
 
