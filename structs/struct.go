@@ -79,24 +79,67 @@ func (my *Struct) cover(skip bool, fields []string) {
 			continue // 未导出字段无法覆盖
 		}
 
-		if isNestedStruct(srcField.Type()) {
-			continue // 嵌套结构体字段（非time.Time）直接跳过，避免浅拷贝共享底层对象
-		}
-
 		var dstField = my.dstValue.FieldByName(fieldName)
-		if !dstField.IsValid() || dstField.Type() != srcField.Type() {
-			continue // dst没有同名字段或类型不一致
+		if !dstField.IsValid() {
+			continue // dst没有同名字段
 		}
 
-		srcField.Set(dstField) // 同名同类型字段整体覆盖（浅拷贝，不递归）
+		if dstField.Type() == srcField.Type() {
+			if isNestedStruct(srcField.Type()) {
+				continue // 嵌套结构体字段（非time.Time）直接跳过，避免浅拷贝共享底层对象
+			}
+
+			srcField.Set(dstField) // 类型完全一致：整体覆盖（浅拷贝，不递归）
+			continue
+		}
+
+		my.coverByDeref(srcField, dstField) // 类型不一致：尝试指针解引用匹配
 	}
 }
 
-// isNestedStruct 判断字段类型是否是嵌套结构体（非time.Time），指针会解引用到底后判断
-func isNestedStruct(fieldType reflect.Type) bool {
+// coverByDeref 指针/值双向解引用覆盖：当src与dst的同名字段一方是指针、另一方是值（解引用到底后类型相同）时生效
+// src为*T、dst为T时把dst的值写入src指向的对象（src为nil则逐层新建独立对象）；
+// src为T、dst为*T时用dst指向的值覆盖src（dst为nil则用零值覆盖）
+func (my *Struct) coverByDeref(srcField, dstField reflect.Value) {
+	if derefType(srcField.Type()) != derefType(dstField.Type()) {
+		return // 解引用到底后类型仍不同，无法匹配
+	}
+
+	// 归一化src：逐层解引用，遇到nil则新建独立对象并让指针指向它
+	var srcTarget = srcField
+	for srcTarget.Kind() == reflect.Pointer {
+		if srcTarget.IsNil() {
+			var newPtr = reflect.New(srcTarget.Type().Elem())
+			srcTarget.Set(newPtr)
+		}
+		srcTarget = srcTarget.Elem()
+	}
+
+	// 归一化dst：逐层解引用，遇到nil则取零值（dst侧只读，不新建对象）
+	var dstTarget = dstField
+	for dstTarget.Kind() == reflect.Pointer {
+		if dstTarget.IsNil() {
+			dstTarget = reflect.Zero(dstTarget.Type().Elem())
+			break
+		}
+		dstTarget = dstTarget.Elem()
+	}
+
+	srcTarget.Set(dstTarget)
+}
+
+// derefType 返回解引用到底后的类型
+func derefType(fieldType reflect.Type) reflect.Type {
 	for fieldType.Kind() == reflect.Pointer {
 		fieldType = fieldType.Elem()
 	}
 
-	return fieldType.Kind() == reflect.Struct && fieldType != timeType
+	return fieldType
+}
+
+// isNestedStruct 判断字段类型是否是嵌套结构体（非time.Time），指针会解引用到底后判断
+func isNestedStruct(fieldType reflect.Type) bool {
+	var finalType = derefType(fieldType)
+
+	return finalType.Kind() == reflect.Struct && finalType != timeType
 }
