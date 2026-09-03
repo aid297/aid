@@ -2,51 +2,76 @@ package structs
 
 import (
 	"reflect"
+	"slices"
 	"time"
 )
 
 var timeType = reflect.TypeFor[time.Time]()
 
-// Copy 使用 dst 的字段覆盖 src 中同名字段（要求字段类型一致），仅处理第一层字段，不做递归
-// 嵌套结构体字段（非time.Time，含指针形式）一律直接跳过；skipFields 中列出的第一层字段名也会被跳过
-// src 必须是非 nil 的结构体指针，否则 panic；dst 可为结构体值或结构体指针
-func Copy(src, dst any, skipFields ...string) {
+type (
+	// Struct 结构体字段覆盖器：使用 dst 的字段覆盖 src 中同名字段（要求字段类型一致）
+	Struct struct {
+		srcValue reflect.Value
+		dstValue reflect.Value
+	}
+)
+
+// NewStruct 实例化：src 必须是非 nil 的结构体指针（否则 panic）；dst 可为结构体值或结构体指针
+func NewStruct(src, dst any) *Struct {
 	var (
 		srcValue = reflect.ValueOf(src)
 		dstValue = reflect.ValueOf(dst)
 	)
 
 	if srcValue.Kind() != reflect.Pointer || srcValue.IsNil() {
-		panic("structs.Copy: src必须是结构体指针")
+		panic("structs.NewStruct: src必须是结构体指针")
 	}
 
 	if srcValue.Elem().Kind() != reflect.Struct {
-		panic("structs.Copy: src必须是结构体指针")
+		panic("structs.NewStruct: src必须是结构体指针")
 	}
 
-	if dstValue.Kind() == reflect.Pointer {
-		if dstValue.IsNil() {
-			return
-		}
+	if dstValue.Kind() == reflect.Pointer && !dstValue.IsNil() {
 		dstValue = dstValue.Elem()
 	}
 
-	if dstValue.Kind() != reflect.Struct {
-		return
-	}
-
-	copyFields(srcValue.Elem(), dstValue, skipFields)
+	return &Struct{srcValue: srcValue, dstValue: dstValue}
 }
 
-// copyFields 遍历 src 的可设置字段，用 dst 中同名同类型字段整体覆盖
-func copyFields(src, dst reflect.Value, skipFields []string) {
-	var srcType = src.Type()
+// Cover 覆盖所有符合条件的字段（同名同类型、非嵌套结构体、可设置）
+func (my *Struct) Cover() *Struct {
+	my.cover(true, nil)
+	return my
+}
+
+// CoverBySkip 黑名单方式覆盖：跳过 skipFields 中列出的第一层字段，覆盖其余符合条件的字段
+func (my *Struct) CoverBySkip(skipFields ...string) *Struct {
+	my.cover(true, skipFields)
+	return my
+}
+
+// CoverByAssign 白名单方式覆盖：仅覆盖 assignFields 中列出的第一层字段（仍需同名同类型等条件）
+func (my *Struct) CoverByAssign(assignFields ...string) *Struct {
+	my.cover(false, assignFields)
+	return my
+}
+
+// cover 覆盖核心：skip 为 true 时 fields 是黑名单，为 false 时 fields 是白名单
+func (my *Struct) cover(skip bool, fields []string) {
+	if my.dstValue.Kind() != reflect.Struct {
+		return // dst为nil指针或非结构体时不做任何事
+	}
+
+	var (
+		src     = my.srcValue.Elem()
+		srcType = src.Type()
+	)
 
 	for i := 0; i < srcType.NumField(); i++ {
 		var fieldName = srcType.Field(i).Name
 
-		if inSlice(fieldName, skipFields) {
-			continue // 跳过字段列表中的字段
+		if slices.Contains(fields, fieldName) == skip {
+			continue // 黑名单：列表中的跳过；白名单：不在列表中的跳过
 		}
 
 		var srcField = src.Field(i)
@@ -58,7 +83,7 @@ func copyFields(src, dst reflect.Value, skipFields []string) {
 			continue // 嵌套结构体字段（非time.Time）直接跳过，避免浅拷贝共享底层对象
 		}
 
-		var dstField = dst.FieldByName(fieldName)
+		var dstField = my.dstValue.FieldByName(fieldName)
 		if !dstField.IsValid() || dstField.Type() != srcField.Type() {
 			continue // dst没有同名字段或类型不一致
 		}
@@ -74,15 +99,4 @@ func isNestedStruct(fieldType reflect.Type) bool {
 	}
 
 	return fieldType.Kind() == reflect.Struct && fieldType != timeType
-}
-
-// inSlice 判断字符串是否在切片中
-func inSlice(target string, values []string) bool {
-	for idx := range values {
-		if values[idx] == target {
-			return true
-		}
-	}
-
-	return false
 }
