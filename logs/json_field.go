@@ -5,13 +5,20 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var _ JSONStringer = (*JSONStringerImpl)(nil)
 
 type (
-	JSONStringer interface{}
+	JSONStringer interface {
+		MarshalLogObject(enc zapcore.ObjectEncoder) error
+		String() string
+		Value() any
+		Raw() string
+		Error() error
+	}
 
 	JSONStringerImpl struct {
 		rawData   string
@@ -22,9 +29,9 @@ type (
 )
 
 // JSONString 从 JSON 字符串创建 JSONStringerImpl
-func JSONString(raw string) *JSONStringerImpl {
+func JSONString(key, raw string) zap.Field {
 	if raw == "" {
-		return &JSONStringerImpl{}
+		return zap.Object(key, &JSONStringerImpl{})
 	}
 
 	my := &JSONStringerImpl{rawData: raw}
@@ -33,17 +40,17 @@ func JSONString(raw string) *JSONStringerImpl {
 	if err := sonic.Unmarshal([]byte(raw), &temp); err != nil {
 		my.err = err
 		my.formatStr = raw
-		return my
+		return zap.Object(key, my)
 	}
 
 	my.parsed = temp
 	my.formatStr = my.formatValue(temp, "", 0)
-	return my
+	return zap.Object(key, my)
 }
 
-// MarshalLog 实现 zapcore.ObjectMarshaler 接口
+// MarshalLogObject 实现 zapcore.ObjectMarshaler 接口
 // 这是让类型支持 zap 的标准方式
-func (my *JSONStringerImpl) MarshalLog(enc zapcore.ObjectEncoder) error {
+func (my *JSONStringerImpl) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 	if my.err != nil {
 		enc.AddString("json", fmt.Sprintf("[ERROR: %v] %s", my.err, my.rawData))
 		return nil
