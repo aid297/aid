@@ -56,20 +56,20 @@ const (
 	EncoderTypeJson    ZapLogEncoderType = "JSON"
 )
 
-func (zapLog *ZapLog) SetLevel(level zapcore.Level) (err error) { zapLog.Level = level; return nil }
-func (zapLog *ZapLog) SetFilename(filename string) (err error) {
-	zapLog.Filename = filename
+func (my *ZapLog) SetLevel(level zapcore.Level) (err error) { my.Level = level; return nil }
+func (my *ZapLog) SetFilename(filename string) (err error) {
+	my.Filename = filename
 	return nil
 }
-func (zapLog *ZapLog) SetMaxSize(maxSize int) (err error) { zapLog.MaxSize = maxSize; return nil }
-func (zapLog *ZapLog) SetMaxBackup(maxBackup int) (err error) {
-	zapLog.MaxBackup = maxBackup
+func (my *ZapLog) SetMaxSize(maxSize int) (err error) { my.MaxSize = maxSize; return nil }
+func (my *ZapLog) SetMaxBackup(maxBackup int) (err error) {
+	my.MaxBackup = maxBackup
 	return nil
 }
-func (zapLog *ZapLog) SetMaxDay(maxDay int) (err error)      { zapLog.MaxDay = maxDay; return nil }
-func (zapLog *ZapLog) SetCompress(compress bool) (err error) { zapLog.Compress = compress; return nil }
-func (zapLog *ZapLog) SetInConsole(inConsole bool) (err error) {
-	zapLog.InConsole = inConsole
+func (my *ZapLog) SetMaxDay(maxDay int) (err error)      { my.MaxDay = maxDay; return nil }
+func (my *ZapLog) SetCompress(compress bool) (err error) { my.Compress = compress; return nil }
+func (my *ZapLog) SetInConsole(inConsole bool) (err error) {
+	my.InConsole = inConsole
 	return nil
 }
 
@@ -77,17 +77,17 @@ func (zapLog *ZapLog) SetInConsole(inConsole bool) (err error) {
 //		zapLog.Extension = extension
 //		return nil
 //	}
-func (zapLog *ZapLog) SetEncoderType(encoderType ZapLogEncoderType) (err error) {
-	zapLog.EncoderType = encoderType
+func (my *ZapLog) SetEncoderType(encoderType ZapLogEncoderType) (err error) {
+	my.EncoderType = encoderType
 	return nil
 }
-func (zapLog *ZapLog) GetLevel() zapcore.Level { return zapLog.Level }
-func (zapLog *ZapLog) GetFilename() string     { return zapLog.Filename }
-func (zapLog *ZapLog) GetMaxSize() int         { return zapLog.MaxSize }
-func (zapLog *ZapLog) GetMaxBackup() int       { return zapLog.MaxBackup }
-func (zapLog *ZapLog) GetMaxDay() int          { return zapLog.MaxDay }
-func (zapLog *ZapLog) GetCompress() bool       { return zapLog.Compress }
-func (zapLog *ZapLog) GetInConsole() bool      { return zapLog.InConsole }
+func (my *ZapLog) GetLevel() zapcore.Level { return my.Level }
+func (my *ZapLog) GetFilename() string     { return my.Filename }
+func (my *ZapLog) GetMaxSize() int         { return my.MaxSize }
+func (my *ZapLog) GetMaxBackup() int       { return my.MaxBackup }
+func (my *ZapLog) GetMaxDay() int          { return my.MaxDay }
+func (my *ZapLog) GetCompress() bool       { return my.Compress }
+func (my *ZapLog) GetInConsole() bool      { return my.InConsole }
 
 type dailyRotateWriteSyncer struct {
 	mu          sync.Mutex

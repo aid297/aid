@@ -1,0 +1,4 @@
+2026-09-03 09:36:27.231	info	/Users/yujizhou/development/projects/go/aid/logs/zap_log_test.go:33	test-info	{"a": "b"}
+2026-09-03 09:36:27.231	debug	/Users/yujizhou/development/projects/go/aid/logs/zap_log_test.go:34	test-debug	{"c": "d"}
+2026-09-03 09:36:27.231	warn	/Users/yujizhou/development/projects/go/aid/logs/zap_log_test.go:35	test-warning	{"any": ["haha","hehe",1,2,3,4]}
+2026-09-03 09:36:27.232	error	/Users/yujizhou/development/projects/go/aid/logs/zap_log_test.go:36	test-error	{"errors": [{"error": "err1"}, {"error": "err2"}, {"error": "err3"}]}
