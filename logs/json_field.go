@@ -1,20 +1,33 @@
 package logs
 
 import (
-	"github.com/bytedance/sonic"
-	"go.uber.org/zap"
+	_sonic "github.com/bytedance/sonic"
+	_zap "go.uber.org/zap"
 )
 
-// JSONString 从 JSON 字符串创建 JSONStringerImpl
-func JSONString(key, raw string) zap.Field {
+// JSONString 从 JSON 字符串创建 zap.Field
+func JSONString(key, raw string) _zap.Field {
 	if raw == "" {
-		return zap.String(key, "")
+		return _zap.String(key, raw)
 	}
 
 	var data any
-	if err := sonic.Unmarshal([]byte(raw), &data); err != nil {
-		return zap.String(key, raw)
+	if err := _sonic.UnmarshalString(raw, &data); err != nil {
+		return _zap.String(key, raw)
 	}
 
-	return zap.Any(key, data)
+	return _zap.Any(key, data)
+}
+
+func JSONBytes(key string, raw []byte) _zap.Field {
+	if len(raw) == 0 {
+		return _zap.Binary(key, raw)
+	}
+
+	var data any
+	if err := _sonic.Unmarshal(raw, &data); err != nil {
+		return _zap.Binary(key, raw)
+	}
+
+	return _zap.Any(key, data)
 }
