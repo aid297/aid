@@ -50,7 +50,7 @@ func (my *Struct[T]) CoverByAssign(assignFields ...string) T {
 }
 
 // cover 覆盖核心：skip 为 true 时 fields 是黑名单，为 false 时 fields 是白名单；在src副本上执行覆盖并返回
-func (my *Struct[T]) cover(skip bool, fields []string) any {
+func (my *Struct[T]) cover(skip bool, fields []string) T {
 	// src以值传入，先拷贝到可设置的副本上再修改，返回值即为修改后的src
 	var src = reflect.New(my.srcValue.Type()).Elem()
 	src.Set(my.srcValue)
