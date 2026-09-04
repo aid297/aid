@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"fmt"
 	"reflect"
 	"slices"
 	"time"
@@ -33,11 +34,6 @@ func NewStruct[T any](src T, dst any) *Struct[T] {
 	}
 
 	return &Struct[T]{srcValue: srcValue, dstValue: dstValue}
-}
-
-// Cover 覆盖所有符合条件的字段（同名同类型、非嵌套结构体、可设置），返回修改后的src
-func (my *Struct[T]) Cover() *Struct[T] {
-	return my.cover(true, nil)
 }
 
 // CoverBySkip 黑名单方式覆盖：跳过 skipFields 中列出的第一层字段，覆盖其余符合条件的字段，返回修改后的src
@@ -96,6 +92,57 @@ func (my *Struct[T]) Value() T { return my.dst }
 
 func (my *Struct[T]) Pointer() *T { return &my.dst }
 
+// CompareBySkip 黑名单方式比较：跳过 skipFields 中列出的第一层字段，比较其余同名同类型字段的值内容，返回存在差异的字段记录
+func (my *Struct[T]) CompareBySkip(skipFields ...string) []string {
+	return my.compare(true, skipFields)
+}
+
+// CompareByAssign 白名单方式比较：仅比较 assignFields 中列出的第一层字段（仍需同名、解引用后同类型等条件），返回存在差异的字段记录
+func (my *Struct[T]) CompareByAssign(assignFields ...string) []string {
+	return my.compare(false, assignFields)
+}
+
+// compare 比较核心：逐字段比较src与dst的值内容（指针解引用取值，nil指针取零值，结构体及其指针跳过），返回差异记录，格式为"name标签值(或字段名):src的字段值 -> dst的字段值"
+func (my *Struct[T]) compare(skip bool, fields []string) []string {
+	var diffs []string
+	var srcType = my.srcValue.Type()
+
+	for i := 0; i < srcType.NumField(); i++ {
+		var field = srcType.Field(i)
+		var fieldName = field.Name
+
+		if slices.Contains(fields, fieldName) == skip {
+			continue // 黑名单：列表中的跳过；白名单：不在列表中的跳过
+		}
+
+		if !field.IsExported() {
+			continue // 未导出字段不比较
+		}
+
+		var dstField = my.dstValue.FieldByName(fieldName)
+		if !dstField.IsValid() || !dstField.CanInterface() {
+			continue // dst没有同名字段或字段不可导出
+		}
+
+		var srcField = my.srcValue.Field(i)
+		if isNestedStruct(srcField.Type()) || isNestedStruct(dstField.Type()) {
+			continue // 结构体或结构体指针字段（非time.Time）跳过
+		}
+
+		if derefType(srcField.Type()) != derefType(dstField.Type()) {
+			continue // 解引用到底后类型仍不同，无法比较
+		}
+
+		var srcValue = derefValue(srcField)
+		var dstValue = derefValue(dstField)
+		if !srcValue.Equal(dstValue) {
+			diffs = append(diffs, fieldNameOf(field)+":"+fmt.Sprint(srcValue.Interface())+" -> "+fmt.Sprint(dstValue.Interface()))
+		}
+	}
+
+	return diffs
+}
+
 // coverByDeref 指针/值双向解引用覆盖：当src与dst的同名字段一方是指针、另一方是值（解引用到底后类型相同）时生效
 // src为*T、dst为T时把dst的值写入src指向的对象（src为nil则逐层新建独立对象）；
 // src为T、dst为*T时用dst指向的值覆盖src（dst为nil则用零值覆盖）
@@ -134,6 +181,27 @@ func derefType(fieldType reflect.Type) reflect.Type {
 	}
 
 	return fieldType
+}
+
+// derefValue 解引用到底取值：逐层解引用指针，遇到nil指针取对应元素类型的零值
+func derefValue(fieldValue reflect.Value) reflect.Value {
+	for fieldValue.Kind() == reflect.Pointer {
+		if fieldValue.IsNil() {
+			return reflect.Zero(fieldValue.Type().Elem())
+		}
+		fieldValue = fieldValue.Elem()
+	}
+
+	return fieldValue
+}
+
+// fieldNameOf 取字段显示名：优先读tag name的值，没有则直接用字段名
+func fieldNameOf(field reflect.StructField) string {
+	if name := field.Tag.Get("name"); name != "" {
+		return name
+	}
+
+	return field.Name
 }
 
 // isNestedStruct 判断字段类型是否是嵌套结构体（非time.Time），指针会解引用到底后判断
