@@ -10,14 +10,14 @@ var timeType = reflect.TypeFor[time.Time]()
 
 type (
 	// Struct 结构体字段覆盖器：使用 dst 的字段覆盖 src 中同名字段（要求字段类型一致）
-	Struct struct {
+	Struct[T any] struct {
 		srcValue reflect.Value
 		dstValue reflect.Value
 	}
 )
 
 // NewStruct 实例化：src 与 dst 都必须是非 nil 的结构体值（传指针或其他类型会 panic）
-func NewStruct(src, dst any) *Struct {
+func NewStruct[T any](src, dst any) *Struct[T] {
 	var (
 		srcValue = reflect.ValueOf(src)
 		dstValue = reflect.ValueOf(dst)
@@ -31,26 +31,26 @@ func NewStruct(src, dst any) *Struct {
 		panic("structs.NewStruct: dst必须是非指针的结构体")
 	}
 
-	return &Struct{srcValue: srcValue, dstValue: dstValue}
+	return &Struct[T]{srcValue: srcValue, dstValue: dstValue}
 }
 
 // Cover 覆盖所有符合条件的字段（同名同类型、非嵌套结构体、可设置），返回修改后的src
-func (my *Struct) Cover() any {
+func (my *Struct[T]) Cover() T {
 	return my.cover(true, nil)
 }
 
 // CoverBySkip 黑名单方式覆盖：跳过 skipFields 中列出的第一层字段，覆盖其余符合条件的字段，返回修改后的src
-func (my *Struct) CoverBySkip(skipFields ...string) any {
+func (my *Struct[T]) CoverBySkip(skipFields ...string) T {
 	return my.cover(true, skipFields)
 }
 
 // CoverByAssign 白名单方式覆盖：仅覆盖 assignFields 中列出的第一层字段（仍需同名同类型等条件），返回修改后的src
-func (my *Struct) CoverByAssign(assignFields ...string) any {
+func (my *Struct[T]) CoverByAssign(assignFields ...string) T {
 	return my.cover(false, assignFields)
 }
 
 // cover 覆盖核心：skip 为 true 时 fields 是黑名单，为 false 时 fields 是白名单；在src副本上执行覆盖并返回
-func (my *Struct) cover(skip bool, fields []string) any {
+func (my *Struct[T]) cover(skip bool, fields []string) any {
 	// src以值传入，先拷贝到可设置的副本上再修改，返回值即为修改后的src
 	var src = reflect.New(my.srcValue.Type()).Elem()
 	src.Set(my.srcValue)
@@ -92,7 +92,7 @@ func (my *Struct) cover(skip bool, fields []string) any {
 // coverByDeref 指针/值双向解引用覆盖：当src与dst的同名字段一方是指针、另一方是值（解引用到底后类型相同）时生效
 // src为*T、dst为T时把dst的值写入src指向的对象（src为nil则逐层新建独立对象）；
 // src为T、dst为*T时用dst指向的值覆盖src（dst为nil则用零值覆盖）
-func (my *Struct) coverByDeref(srcField, dstField reflect.Value) {
+func (my *Struct[T]) coverByDeref(srcField, dstField reflect.Value) {
 	if derefType(srcField.Type()) != derefType(dstField.Type()) {
 		return // 解引用到底后类型仍不同，无法匹配
 	}
