@@ -13,6 +13,7 @@ type (
 	Struct[T any] struct {
 		srcValue reflect.Value
 		dstValue reflect.Value
+		dst      T
 	}
 )
 
@@ -35,22 +36,22 @@ func NewStruct[T any](src T, dst any) *Struct[T] {
 }
 
 // Cover 覆盖所有符合条件的字段（同名同类型、非嵌套结构体、可设置），返回修改后的src
-func (my *Struct[T]) Cover() T {
+func (my *Struct[T]) Cover() *Struct[T] {
 	return my.cover(true, nil)
 }
 
 // CoverBySkip 黑名单方式覆盖：跳过 skipFields 中列出的第一层字段，覆盖其余符合条件的字段，返回修改后的src
-func (my *Struct[T]) CoverBySkip(skipFields ...string) T {
+func (my *Struct[T]) CoverBySkip(skipFields ...string) *Struct[T] {
 	return my.cover(true, skipFields)
 }
 
 // CoverByAssign 白名单方式覆盖：仅覆盖 assignFields 中列出的第一层字段（仍需同名同类型等条件），返回修改后的src
-func (my *Struct[T]) CoverByAssign(assignFields ...string) T {
+func (my *Struct[T]) CoverByAssign(assignFields ...string) *Struct[T] {
 	return my.cover(false, assignFields)
 }
 
 // cover 覆盖核心：skip 为 true 时 fields 是黑名单，为 false 时 fields 是白名单；在src副本上执行覆盖并返回
-func (my *Struct[T]) cover(skip bool, fields []string) T {
+func (my *Struct[T]) cover(skip bool, fields []string) *Struct[T] {
 	// src以值传入，先拷贝到可设置的副本上再修改，返回值即为修改后的src
 	var src = reflect.New(my.srcValue.Type()).Elem()
 	src.Set(my.srcValue)
@@ -86,8 +87,14 @@ func (my *Struct[T]) cover(skip bool, fields []string) T {
 		my.coverByDeref(srcField, dstField) // 类型不一致：尝试指针解引用匹配
 	}
 
-	return src.Interface().(T) // src副本由src的类型构造，断言回T必定成功
+	my.dst = src.Interface().(T) // src副本由src的类型构造，断言回T必定成功
+
+	return my
 }
+
+func (my *Struct[T]) Value() T { return my.dst }
+
+func (my *Struct[T]) Pointer() *T { return &my.dst }
 
 // coverByDeref 指针/值双向解引用覆盖：当src与dst的同名字段一方是指针、另一方是值（解引用到底后类型相同）时生效
 // src为*T、dst为T时把dst的值写入src指向的对象（src为nil则逐层新建独立对象）；
