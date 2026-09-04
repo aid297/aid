@@ -16,8 +16,8 @@ type (
 	}
 )
 
-// NewStruct 实例化：src 与 dst 都必须是非 nil 的结构体值（传指针或其他类型会 panic）
-func NewStruct[T any](src, dst any) *Struct[T] {
+// NewStruct 实例化：src 与 dst 都必须是非 nil 的结构体值（传指针或其他类型会 panic）；T 由 src 推断，dst 可为不同结构体类型
+func NewStruct[T any](src T, dst any) *Struct[T] {
 	var (
 		srcValue = reflect.ValueOf(src)
 		dstValue = reflect.ValueOf(dst)
@@ -86,7 +86,7 @@ func (my *Struct[T]) cover(skip bool, fields []string) T {
 		my.coverByDeref(srcField, dstField) // 类型不一致：尝试指针解引用匹配
 	}
 
-	return src.Interface()
+	return src.Interface().(T) // src副本由src的类型构造，断言回T必定成功
 }
 
 // coverByDeref 指针/值双向解引用覆盖：当src与dst的同名字段一方是指针、另一方是值（解引用到底后类型相同）时生效
