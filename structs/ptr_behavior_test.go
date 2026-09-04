@@ -35,7 +35,7 @@ func TestCoverByDeref(t *testing.T) {
 	dstName := "dst名字"
 	dstAge := 99
 
-	src := &ptrSrcStruct{
+	src := ptrSrcStruct{
 		Tag:  ptr("srcTag"),
 		Num:  ptr(1),
 		Name: "src名字",
@@ -53,7 +53,7 @@ func TestCoverByDeref(t *testing.T) {
 		Birthday: time.Now(),
 	}
 
-	structs.NewStruct(src, dst).Cover()
+	src = structs.NewStruct(src, dst).Cover().(ptrSrcStruct)
 
 	t.Run("src指针_dst值_解引用覆盖", func(t *testing.T) {
 		if *src.Tag != "dstTag" {
@@ -103,10 +103,10 @@ func TestCoverByDeref(t *testing.T) {
 
 func TestCoverByDerefDstNil(t *testing.T) {
 	t.Run("dst为nil指针时用零值覆盖", func(t *testing.T) {
-		src := &ptrSrcStruct{Name: "src名字", Age: 20}
+		src := ptrSrcStruct{Name: "src名字", Age: 20}
 		dst := ptrDstStruct{} // Name和Age都是nil指针
 
-		structs.NewStruct(src, dst).Cover()
+		src = structs.NewStruct(src, dst).Cover().(ptrSrcStruct)
 
 		if src.Name != "" {
 			t.Errorf("dst为nil指针时应用零值覆盖，期望空字符串，实际 %s", src.Name)
@@ -125,10 +125,10 @@ func TestCoverByDerefTypeMismatch(t *testing.T) {
 		Num *string // 解引用到底类型不同
 	}
 
-	src := &mismatchSrc{Num: ptr(1)}
+	src := mismatchSrc{Num: ptr(1)}
 	dst := mismatchDst{Num: ptr("dst")}
 
-	structs.NewStruct(src, dst).Cover()
+	src = structs.NewStruct(src, dst).Cover().(mismatchSrc)
 
 	if *src.Num != 1 {
 		t.Errorf("解引用到底类型不同时不应覆盖，期望 1，实际 %d", *src.Num)

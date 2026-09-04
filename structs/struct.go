@@ -16,56 +16,46 @@ type (
 	}
 )
 
-// NewStruct 实例化：src 必须是非 nil 的结构体指针（否则 panic）；dst 可为结构体值或结构体指针
+// NewStruct 实例化：src 与 dst 都必须是非 nil 的结构体值（传指针或其他类型会 panic）
 func NewStruct(src, dst any) *Struct {
 	var (
 		srcValue = reflect.ValueOf(src)
 		dstValue = reflect.ValueOf(dst)
 	)
 
-	if srcValue.Kind() != reflect.Pointer || srcValue.IsNil() {
-		panic("structs.NewStruct: src必须是结构体指针")
+	if srcValue.Kind() == reflect.Pointer || srcValue.Kind() != reflect.Struct {
+		panic("structs.NewStruct: src必须是非指针的结构体")
 	}
 
-	if srcValue.Elem().Kind() != reflect.Struct {
-		panic("structs.NewStruct: src必须是结构体指针")
-	}
-
-	if dstValue.Kind() == reflect.Pointer && !dstValue.IsNil() {
-		dstValue = dstValue.Elem()
+	if dstValue.Kind() == reflect.Pointer || dstValue.Kind() != reflect.Struct {
+		panic("structs.NewStruct: dst必须是非指针的结构体")
 	}
 
 	return &Struct{srcValue: srcValue, dstValue: dstValue}
 }
 
-// Cover 覆盖所有符合条件的字段（同名同类型、非嵌套结构体、可设置）
-func (my *Struct) Cover() *Struct {
-	my.cover(true, nil)
-	return my
+// Cover 覆盖所有符合条件的字段（同名同类型、非嵌套结构体、可设置），返回修改后的src
+func (my *Struct) Cover() any {
+	return my.cover(true, nil)
 }
 
-// CoverBySkip 黑名单方式覆盖：跳过 skipFields 中列出的第一层字段，覆盖其余符合条件的字段
-func (my *Struct) CoverBySkip(skipFields ...string) *Struct {
-	my.cover(true, skipFields)
-	return my
+// CoverBySkip 黑名单方式覆盖：跳过 skipFields 中列出的第一层字段，覆盖其余符合条件的字段，返回修改后的src
+func (my *Struct) CoverBySkip(skipFields ...string) any {
+	return my.cover(true, skipFields)
 }
 
-// CoverByAssign 白名单方式覆盖：仅覆盖 assignFields 中列出的第一层字段（仍需同名同类型等条件）
-func (my *Struct) CoverByAssign(assignFields ...string) *Struct {
-	my.cover(false, assignFields)
-	return my
+// CoverByAssign 白名单方式覆盖：仅覆盖 assignFields 中列出的第一层字段（仍需同名同类型等条件），返回修改后的src
+func (my *Struct) CoverByAssign(assignFields ...string) any {
+	return my.cover(false, assignFields)
 }
 
-// cover 覆盖核心：skip 为 true 时 fields 是黑名单，为 false 时 fields 是白名单
-func (my *Struct) cover(skip bool, fields []string) {
-	if my.dstValue.Kind() != reflect.Struct {
-		return // dst为nil指针或非结构体时不做任何事
-	}
+// cover 覆盖核心：skip 为 true 时 fields 是黑名单，为 false 时 fields 是白名单；在src副本上执行覆盖并返回
+func (my *Struct) cover(skip bool, fields []string) any {
+	// src以值传入，先拷贝到可设置的副本上再修改，返回值即为修改后的src
+	var src = reflect.New(my.srcValue.Type()).Elem()
+	src.Set(my.srcValue)
 
-	var (
-		src     = my.srcValue.Elem()
-		srcType = src.Type()
-	)
+	var srcType = src.Type()
 
 	for i := 0; i < srcType.NumField(); i++ {
 		var fieldName = srcType.Field(i).Name
@@ -95,6 +85,8 @@ func (my *Struct) cover(skip bool, fields []string) {
 
 		my.coverByDeref(srcField, dstField) // 类型不一致：尝试指针解引用匹配
 	}
+
+	return src.Interface()
 }
 
 // coverByDeref 指针/值双向解引用覆盖：当src与dst的同名字段一方是指针、另一方是值（解引用到底后类型相同）时生效
