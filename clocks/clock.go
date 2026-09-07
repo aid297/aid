@@ -27,7 +27,7 @@ type (
 		SetErrHandler(errHandler func(tasker Tasker, err error)) Clock
 		AddTasker(taskers ...Tasker) Clock
 		AddTaskerAndBegin(tasker Tasker) Clock
-		TaskerByID(uuid _uuid.UUID) Tasker
+		TaskerByUUID(uuid _uuid.UUID) Tasker
 		TaskersMap() []Tasker
 		TaskerByName(name string) Tasker
 		DeleteTasker(uuids ..._uuid.UUID) Clock
@@ -107,7 +107,7 @@ func (*ClockImpl) AddTaskerAndBegin(tasker Tasker) Clock {
 	return clockIns
 }
 
-func (*ClockImpl) TaskerByID(uuid _uuid.UUID) Tasker {
+func (*ClockImpl) TaskerByUUID(uuid _uuid.UUID) Tasker {
 	clockLock.RLock()
 	defer clockLock.RUnlock()
 
