@@ -27,8 +27,9 @@ type (
 		SetErrHandler(errHandler func(tasker Tasker, err error)) Clock
 		AddTasker(taskers ...Tasker) Clock
 		AddTaskerAndBegin(tasker Tasker) Clock
-		Tasker(uuid _uuid.UUID) Tasker
-		Taskers() []Tasker
+		TaskerByID(uuid _uuid.UUID) Tasker
+		TaskersMap() []Tasker
+		TaskerByName(name string) Tasker
 		DeleteTasker(uuids ..._uuid.UUID) Clock
 		begin(uuid _uuid.UUID)
 		Begin(uuid _uuid.UUID)
@@ -106,18 +107,31 @@ func (*ClockImpl) AddTaskerAndBegin(tasker Tasker) Clock {
 	return clockIns
 }
 
-func (*ClockImpl) Tasker(uuid _uuid.UUID) Tasker {
+func (*ClockImpl) TaskerByID(uuid _uuid.UUID) Tasker {
 	clockLock.RLock()
 	defer clockLock.RUnlock()
 
 	return clockIns.taskers[uuid]
 }
 
-func (my *ClockImpl) Taskers() []Tasker {
+func (my *ClockImpl) TaskersMap() []Tasker {
 	clockLock.RLock()
 	defer clockLock.RUnlock()
 
 	return _anyMaps.New(_anyMaps.Map(my.taskers)).GetValues().ToSlice()
+}
+
+func (my *ClockImpl) TaskerByName(name string) Tasker {
+	clockLock.RLock()
+	defer clockLock.RUnlock()
+
+	for key := range my.taskers {
+		if name == my.taskers[key].Name() {
+			return my.taskers[key]
+		}
+	}
+
+	return nil
 }
 
 func (*ClockImpl) DeleteTasker(uuids ..._uuid.UUID) Clock {
