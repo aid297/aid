@@ -4,22 +4,22 @@ import (
 	"sync"
 	"time"
 
-	`github.com/aid297/aid/v2/anySlices`
-	`github.com/aid297/aid/v2/operations`
+	"github.com/aid297/aid/v2/anySlices"
+	"github.com/aid297/aid/v2/operations"
 )
 
 type (
 	CoroutineGrouper[T any] interface {
 		New(limit uint16) CoroutineGrouper[T]
-		SetFunc(funcs ...Func[T]) CoroutineGrouper[T]
+		SetFunc(handlers ...Func[T]) CoroutineGrouper[T]
 		SetRetry(opts ...CoroutineGroupRetryAttr) CoroutineGrouper[T]
-		GO(funcs ...Func[T]) anySlices.AnySlicer[Result[T]]
+		GO(handlers ...Func[T]) anySlices.AnySlicer[Result[T]]
 		GOBatch(total, capacities int, fn func(batch, capacity uint) (result Result[T])) (anySlices.AnySlicer[Result[T]], error)
 	}
 
 	CoroutineGroupImpl[T any] struct {
 		sem        chan struct{}
-		funcs      []Func[T]
+		handers    []Func[T]
 		batches    uint
 		capacities uint
 		retry      *RetryConfig
@@ -62,8 +62,8 @@ func New[T any](limit uint16, attrs ...CoroutineGroupRetryAttr) CoroutineGrouper
 
 func (my *CoroutineGroupImpl[T]) New(limit uint16) CoroutineGrouper[T] { return New[T](limit) }
 
-func (my *CoroutineGroupImpl[T]) SetFunc(funcs ...Func[T]) CoroutineGrouper[T] {
-	my.funcs = append(my.funcs, funcs...)
+func (my *CoroutineGroupImpl[T]) SetFunc(handlers ...Func[T]) CoroutineGrouper[T] {
+	my.handers = append(my.handers, handlers...)
 	return my
 }
 
@@ -132,25 +132,25 @@ func (my *CoroutineGroupImpl[T]) executeWithTimeout(fn Func[T], timeout time.Dur
 }
 
 // GO 批量执行
-func (my *CoroutineGroupImpl[T]) GO(funcs ...Func[T]) anySlices.AnySlicer[Result[T]] {
+func (my *CoroutineGroupImpl[T]) GO(handlers ...Func[T]) anySlices.AnySlicer[Result[T]] {
 	var (
 		wg      = sync.WaitGroup{}
-		results = anySlices.New(anySlices.Cap[Result[T]](len(funcs)))
+		results = anySlices.New(anySlices.Cap[Result[T]](len(handlers)))
 	)
 
-	if len(my.funcs) == 0 {
+	if len(my.handers) == 0 {
 		return results
 	}
-	my.funcs = funcs
+	my.handers = handlers
 
-	for idx := range my.funcs {
+	for idx := range my.handers {
 		wg.Add(1)
 		my.sem <- struct{}{}
 		go func(idx int) {
 			defer wg.Done()
 			defer func() { <-my.sem }()
 			results.Lock()
-			results.Append(my.executeWithRetry(funcs[idx]))
+			results.Append(my.executeWithRetry(handlers[idx]))
 			results.Unlock()
 		}(idx)
 	}

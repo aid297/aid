@@ -156,8 +156,8 @@ func (my *SM4) Decrypt(cipherText []byte) ([]byte, error) {
 	}
 }
 
-// EcryptBase64 加密：通过原始内容，返回 base64 编码的密文
-func (my SM4) EncryptBase64(plainText []byte) (string, error) {
+// EncryptBase64 加密：通过原始内容，返回 base64 编码的密文
+func (my *SM4) EncryptBase64(plainText []byte) (string, error) {
 	cipherText, err := my.Encrypt(plainText)
 	if err != nil {
 		return "", err
@@ -493,7 +493,7 @@ func (my *SM4) decryptCBCStream(in io.Reader, out io.Writer) error {
 }
 
 // encryptCBCFile 加密文件
-func (my *SM4) encryptCBCFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) encryptCBCFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -517,7 +517,7 @@ func (my *SM4) encryptCBCFile(plainFile, outFile string, asymm secrets.Asymmetri
 
 	// 3. 用 非对称 公钥加密 对称 密钥和 IV（共 32 字节）
 	sm4KeyAndIV = append(my.key, my.iv...)
-	if encryptedKeyStr, err = asymm.Encrypt(sm4KeyAndIV); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(sm4KeyAndIV); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr) // base64 字符串转字节
@@ -534,7 +534,7 @@ func (my *SM4) encryptCBCFile(plainFile, outFile string, asymm secrets.Asymmetri
 }
 
 // decryptCBCFile 解密文件
-func (my *SM4) decryptCBCFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) decryptCBCFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -563,7 +563,7 @@ func (my *SM4) decryptCBCFile(cipherFile, outFile string, asymm secrets.Asymmetr
 	fileCipher = data[2+keyLen:]
 
 	// 3. 非对称私钥解密 对称 key 和 IV
-	if sm4KeyAndIV, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if sm4KeyAndIV, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(sm4KeyAndIV) != 32 {
@@ -581,7 +581,7 @@ func (my *SM4) decryptCBCFile(cipherFile, outFile string, asymm secrets.Asymmetr
 }
 
 // encryptCBCLargeFile 用 非对称+对称 流式加密大文件（TB级）
-func (my *SM4) encryptCBCLargeFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) encryptCBCLargeFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -601,7 +601,7 @@ func (my *SM4) encryptCBCLargeFile(plainFile, outFile string, asymm secrets.Asym
 	defer func() { _ = outF.Close() }()
 
 	sm4KeyAndIV = append(my.key, my.iv...)
-	if encryptedKeyStr, err = asymm.Encrypt(sm4KeyAndIV); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(sm4KeyAndIV); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -620,7 +620,7 @@ func (my *SM4) encryptCBCLargeFile(plainFile, outFile string, asymm secrets.Asym
 }
 
 // decryptCBCLargeFile 用 非对称+对称 流式解密大文件（TB级）
-func (my *SM4) decryptCBCLargeFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) decryptCBCLargeFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -654,7 +654,7 @@ func (my *SM4) decryptCBCLargeFile(cipherFile, outFile string, asymm secrets.Asy
 	}
 	encryptedKeyBase64 = string(encryptedKeyBytes)
 
-	if sm4KeyAndIV, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if sm4KeyAndIV, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(sm4KeyAndIV) != 32 {
@@ -968,64 +968,64 @@ func (my *SM4) DecryptStream(in io.Reader, out io.Writer) error {
 }
 
 // EncryptFile 加密文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *SM4) EncryptFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) EncryptFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
-		return my.encryptECBFile(plainFile, outFile, asymm)
+		return my.encryptECBFile(plainFile, outFile, asymmetric)
 	case "CBC":
-		return my.encryptCBCFile(plainFile, outFile, asymm)
+		return my.encryptCBCFile(plainFile, outFile, asymmetric)
 	case "CTR":
-		return my.encryptCTRFile(plainFile, outFile, asymm)
+		return my.encryptCTRFile(plainFile, outFile, asymmetric)
 	case "GCM":
-		return my.encryptGCMFile(plainFile, outFile, asymm)
+		return my.encryptGCMFile(plainFile, outFile, asymmetric)
 	default:
 		return errors.New("对称加密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
 // DecryptFile 解密文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *SM4) DecryptFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) DecryptFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
-		return my.decryptECBFile(cipherFile, outFile, asymm)
+		return my.decryptECBFile(cipherFile, outFile, asymmetric)
 	case "CBC":
-		return my.decryptCBCFile(cipherFile, outFile, asymm)
+		return my.decryptCBCFile(cipherFile, outFile, asymmetric)
 	case "CTR":
-		return my.decryptCTRFile(cipherFile, outFile, asymm)
+		return my.decryptCTRFile(cipherFile, outFile, asymmetric)
 	case "GCM":
-		return my.decryptGCMFile(cipherFile, outFile, asymm)
+		return my.decryptGCMFile(cipherFile, outFile, asymmetric)
 	default:
 		return errors.New("对称解密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
 // EncryptLargeFile 加密大文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *SM4) EncryptLargeFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) EncryptLargeFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
-		return my.encryptECBLargeFile(plainFile, outFile, asymm)
+		return my.encryptECBLargeFile(plainFile, outFile, asymmetric)
 	case "CBC":
-		return my.encryptCBCLargeFile(plainFile, outFile, asymm)
+		return my.encryptCBCLargeFile(plainFile, outFile, asymmetric)
 	case "CTR":
-		return my.encryptCTRLargeFile(plainFile, outFile, asymm)
+		return my.encryptCTRLargeFile(plainFile, outFile, asymmetric)
 	case "GCM":
-		return my.encryptGCMLargeFile(plainFile, outFile, asymm)
+		return my.encryptGCMLargeFile(plainFile, outFile, asymmetric)
 	default:
 		return errors.New("对称加密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
 // DecryptLargeFile 解密大文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *SM4) DecryptLargeFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) DecryptLargeFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
-		return my.decryptECBLargeFile(cipherFile, outFile, asymm)
+		return my.decryptECBLargeFile(cipherFile, outFile, asymmetric)
 	case "CBC":
-		return my.decryptCBCLargeFile(cipherFile, outFile, asymm)
+		return my.decryptCBCLargeFile(cipherFile, outFile, asymmetric)
 	case "CTR":
-		return my.decryptCTRLargeFile(cipherFile, outFile, asymm)
+		return my.decryptCTRLargeFile(cipherFile, outFile, asymmetric)
 	case "GCM":
-		return my.decryptGCMLargeFile(cipherFile, outFile, asymm)
+		return my.decryptGCMLargeFile(cipherFile, outFile, asymmetric)
 	default:
 		return errors.New("对称解密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
@@ -1213,7 +1213,7 @@ func (my *SM4) decryptGCMStream(in io.Reader, out io.Writer) error {
 }
 
 // encryptCTRFile CTR 加密文件
-func (my *SM4) encryptCTRFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) encryptCTRFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -1236,7 +1236,7 @@ func (my *SM4) encryptCTRFile(plainFile, outFile string, asymm secrets.Asymmetri
 	// CTR 使用 16 字节 nonce
 	nonce := fileCipher[:16]
 	sm4KeyAndNonce = append(my.key, nonce...)
-	if encryptedKeyStr, err = asymm.Encrypt(sm4KeyAndNonce); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(sm4KeyAndNonce); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -1256,7 +1256,7 @@ func (my *SM4) encryptCTRFile(plainFile, outFile string, asymm secrets.Asymmetri
 }
 
 // decryptCTRFile CTR 解密文件
-func (my *SM4) decryptCTRFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) decryptCTRFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -1282,7 +1282,7 @@ func (my *SM4) decryptCTRFile(cipherFile, outFile string, asymm secrets.Asymmetr
 	encryptedKeyBase64 = string(data[2 : 2+keyLen])
 	fileCipher = data[2+keyLen:]
 
-	if sm4KeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if sm4KeyAndNonce, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(sm4KeyAndNonce) != 16+16 {
@@ -1299,7 +1299,7 @@ func (my *SM4) decryptCTRFile(cipherFile, outFile string, asymm secrets.Asymmetr
 }
 
 // encryptGCMFile GCM 加密文件
-func (my *SM4) encryptGCMFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) encryptGCMFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -1322,7 +1322,7 @@ func (my *SM4) encryptGCMFile(plainFile, outFile string, asymm secrets.Asymmetri
 	// GCM 使用 12 字节 nonce
 	nonce := fileCipher[:12]
 	sm4KeyAndNonce = append(my.key, nonce...)
-	if encryptedKeyStr, err = asymm.Encrypt(sm4KeyAndNonce); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(sm4KeyAndNonce); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -1342,7 +1342,7 @@ func (my *SM4) encryptGCMFile(plainFile, outFile string, asymm secrets.Asymmetri
 }
 
 // decryptGCMFile GCM 解密文件
-func (my *SM4) decryptGCMFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) decryptGCMFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -1368,7 +1368,7 @@ func (my *SM4) decryptGCMFile(cipherFile, outFile string, asymm secrets.Asymmetr
 	encryptedKeyBase64 = string(data[2 : 2+keyLen])
 	fileCipher = data[2+keyLen:]
 
-	if sm4KeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if sm4KeyAndNonce, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(sm4KeyAndNonce) != 16+12 {
@@ -1385,7 +1385,7 @@ func (my *SM4) decryptGCMFile(cipherFile, outFile string, asymm secrets.Asymmetr
 }
 
 // encryptCTRLargeFile 用 SM2+SM4 CTR 流式加密大文件（TB级）
-func (my *SM4) encryptCTRLargeFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) encryptCTRLargeFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -1412,7 +1412,7 @@ func (my *SM4) encryptCTRLargeFile(plainFile, outFile string, asymm secrets.Asym
 	}
 
 	sm4KeyAndNonce = append(my.key, nonce...)
-	if encryptedKeyStr, err = asymm.Encrypt(sm4KeyAndNonce); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(sm4KeyAndNonce); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -1437,7 +1437,7 @@ func (my *SM4) encryptCTRLargeFile(plainFile, outFile string, asymm secrets.Asym
 }
 
 // decryptCTRLargeFile 用 SM2+SM4 CTR 流式解密大文件（TB级）
-func (my *SM4) decryptCTRLargeFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) decryptCTRLargeFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -1471,7 +1471,7 @@ func (my *SM4) decryptCTRLargeFile(cipherFile, outFile string, asymm secrets.Asy
 	}
 	encryptedKeyBase64 = string(encryptedKeyBytes)
 
-	if sm4KeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if sm4KeyAndNonce, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(sm4KeyAndNonce) != 16+16 {
@@ -1484,7 +1484,7 @@ func (my *SM4) decryptCTRLargeFile(cipherFile, outFile string, asymm secrets.Asy
 }
 
 // encryptGCMLargeFile 用 SM2+SM4 GCM 流式加密大文件（TB级）
-func (my *SM4) encryptGCMLargeFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) encryptGCMLargeFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -1510,7 +1510,7 @@ func (my *SM4) encryptGCMLargeFile(plainFile, outFile string, asymm secrets.Asym
 	}
 
 	sm4KeyAndNonce = append(my.key, nonce...)
-	if encryptedKeyStr, err = asymm.Encrypt(sm4KeyAndNonce); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(sm4KeyAndNonce); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -1535,7 +1535,7 @@ func (my *SM4) encryptGCMLargeFile(plainFile, outFile string, asymm secrets.Asym
 }
 
 // decryptGCMLargeFile 用 SM2+SM4 GCM 流式解密大文件（TB级）
-func (my *SM4) decryptGCMLargeFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *SM4) decryptGCMLargeFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -1569,7 +1569,7 @@ func (my *SM4) decryptGCMLargeFile(cipherFile, outFile string, asymm secrets.Asy
 	}
 	encryptedKeyBase64 = string(encryptedKeyBytes)
 
-	if sm4KeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if sm4KeyAndNonce, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(sm4KeyAndNonce) != 16+12 {

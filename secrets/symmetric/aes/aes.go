@@ -171,7 +171,7 @@ func (my *AES) Decrypt(cipherText []byte) ([]byte, error) {
 	}
 }
 
-// EcryptBase64 加密：通过原始内容，返回 base64 编码的密文
+// EncryptBase64 加密：通过原始内容，返回 base64 编码的密文
 func (my *AES) EncryptBase64(plainText []byte) (string, error) {
 	cipherText, err := my.Encrypt(plainText)
 	if err != nil {
@@ -619,12 +619,12 @@ func (my *AES) encryptCBCLargeFile(plainFile, outFile string, asymmetric secrets
 	if inF, err = os.Open(plainFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	aesKeyAndIV = append(my.key, my.iv...)
 	if encryptedKeyStr, err = asymmetric.Encrypt(aesKeyAndIV); err != nil {
@@ -663,12 +663,12 @@ func (my *AES) decryptCBCLargeFile(cipherFile, outFile string, asymmetric secret
 	if inF, err = os.Open(cipherFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	head := make([]byte, 1)
 	if _, err = io.ReadFull(inF, head); err != nil {
@@ -932,12 +932,12 @@ func (my *AES) encryptECBLargeFile(plainFile, outFile string, asymmetric secrets
 	if inF, err = os.Open(plainFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	if encryptedKeyStr, err = asymmetric.Encrypt(my.key); err != nil {
 		return err
@@ -974,12 +974,12 @@ func (my *AES) decryptECBLargeFile(cipherFile, outFile string, asymmetric secret
 	if inF, err = os.Open(cipherFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	head := make([]byte, 1)
 	if _, err = io.ReadFull(inF, head); err != nil {
@@ -1061,64 +1061,64 @@ func (my *AES) DecryptStream(in io.Reader, out io.Writer) error {
 }
 
 // EncryptFile 加密文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AES) EncryptFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) EncryptFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
-		return my.encryptECBFile(plainFile, outFile, asymm)
+		return my.encryptECBFile(plainFile, outFile, asymmetric)
 	case "CBC":
-		return my.encryptCBCFile(plainFile, outFile, asymm)
+		return my.encryptCBCFile(plainFile, outFile, asymmetric)
 	case "CTR":
-		return my.encryptCTRFile(plainFile, outFile, asymm)
+		return my.encryptCTRFile(plainFile, outFile, asymmetric)
 	case "GCM":
-		return my.encryptGCMFile(plainFile, outFile, asymm)
+		return my.encryptGCMFile(plainFile, outFile, asymmetric)
 	default:
 		return errors.New("对称加密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
 // DecryptFile 解密文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AES) DecryptFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) DecryptFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
-		return my.decryptECBFile(cipherFile, outFile, asymm)
+		return my.decryptECBFile(cipherFile, outFile, asymmetric)
 	case "CBC":
-		return my.decryptCBCFile(cipherFile, outFile, asymm)
+		return my.decryptCBCFile(cipherFile, outFile, asymmetric)
 	case "CTR":
-		return my.decryptCTRFile(cipherFile, outFile, asymm)
+		return my.decryptCTRFile(cipherFile, outFile, asymmetric)
 	case "GCM":
-		return my.decryptGCMFile(cipherFile, outFile, asymm)
+		return my.decryptGCMFile(cipherFile, outFile, asymmetric)
 	default:
 		return errors.New("对称解密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
 // EncryptLargeFile 加密大文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AES) EncryptLargeFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) EncryptLargeFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
-		return my.encryptECBLargeFile(plainFile, outFile, asymm)
+		return my.encryptECBLargeFile(plainFile, outFile, asymmetric)
 	case "CBC":
-		return my.encryptCBCLargeFile(plainFile, outFile, asymm)
+		return my.encryptCBCLargeFile(plainFile, outFile, asymmetric)
 	case "CTR":
-		return my.encryptCTRLargeFile(plainFile, outFile, asymm)
+		return my.encryptCTRLargeFile(plainFile, outFile, asymmetric)
 	case "GCM":
-		return my.encryptGCMLargeFile(plainFile, outFile, asymm)
+		return my.encryptGCMLargeFile(plainFile, outFile, asymmetric)
 	default:
 		return errors.New("对称加密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
 }
 
 // DecryptLargeFile 解密大文件（根据 Algorithm 选择 ECB/CBC/CTR/GCM）
-func (my *AES) DecryptLargeFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) DecryptLargeFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	switch strings.ToUpper(my.algorithm) {
 	case "ECB":
-		return my.decryptECBLargeFile(cipherFile, outFile, asymm)
+		return my.decryptECBLargeFile(cipherFile, outFile, asymmetric)
 	case "CBC":
-		return my.decryptCBCLargeFile(cipherFile, outFile, asymm)
+		return my.decryptCBCLargeFile(cipherFile, outFile, asymmetric)
 	case "CTR":
-		return my.decryptCTRLargeFile(cipherFile, outFile, asymm)
+		return my.decryptCTRLargeFile(cipherFile, outFile, asymmetric)
 	case "GCM":
-		return my.decryptGCMLargeFile(cipherFile, outFile, asymm)
+		return my.decryptGCMLargeFile(cipherFile, outFile, asymmetric)
 	default:
 		return errors.New("对称解密算法目前只支持：ECB/CBC/CTR/GCM")
 	}
@@ -1307,7 +1307,7 @@ func (my *AES) decryptGCMStream(in io.Reader, out io.Writer) error {
 }
 
 // encryptCTRFile CTR 加密文件
-func (my *AES) encryptCTRFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) encryptCTRFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -1330,7 +1330,7 @@ func (my *AES) encryptCTRFile(plainFile, outFile string, asymm secrets.Asymmetri
 	// CTR 使用 16 字节 nonce
 	nonce := fileCipher[:16]
 	aesKeyAndNonce = append(my.key, nonce...)
-	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndNonce); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(aesKeyAndNonce); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -1353,7 +1353,7 @@ func (my *AES) encryptCTRFile(plainFile, outFile string, asymm secrets.Asymmetri
 }
 
 // decryptCTRFile CTR 解密文件
-func (my *AES) decryptCTRFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) decryptCTRFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -1392,7 +1392,7 @@ func (my *AES) decryptCTRFile(cipherFile, outFile string, asymm secrets.Asymmetr
 	encryptedKeyBase64 = string(data[offset : offset+keyLen])
 	fileCipher = data[offset+keyLen:]
 
-	if aesKeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if aesKeyAndNonce, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(aesKeyAndNonce) != keySize+16 {
@@ -1409,7 +1409,7 @@ func (my *AES) decryptCTRFile(cipherFile, outFile string, asymm secrets.Asymmetr
 }
 
 // encryptGCMFile GCM 加密文件
-func (my *AES) encryptGCMFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) encryptGCMFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		plainData         []byte
@@ -1432,7 +1432,7 @@ func (my *AES) encryptGCMFile(plainFile, outFile string, asymm secrets.Asymmetri
 	// GCM 使用 12 字节 nonce
 	nonce := fileCipher[:12]
 	aesKeyAndNonce = append(my.key, nonce...)
-	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndNonce); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(aesKeyAndNonce); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -1455,7 +1455,7 @@ func (my *AES) encryptGCMFile(plainFile, outFile string, asymm secrets.Asymmetri
 }
 
 // decryptGCMFile GCM 解密文件
-func (my *AES) decryptGCMFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) decryptGCMFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		data               []byte
@@ -1494,7 +1494,7 @@ func (my *AES) decryptGCMFile(cipherFile, outFile string, asymm secrets.Asymmetr
 	encryptedKeyBase64 = string(data[offset : offset+keyLen])
 	fileCipher = data[offset+keyLen:]
 
-	if aesKeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if aesKeyAndNonce, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(aesKeyAndNonce) != keySize+12 {
@@ -1511,7 +1511,7 @@ func (my *AES) decryptGCMFile(cipherFile, outFile string, asymm secrets.Asymmetr
 }
 
 // encryptCTRLargeFile 用 SM2+AES CTR 流式加密大文件（TB级）
-func (my *AES) encryptCTRLargeFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) encryptCTRLargeFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -1524,12 +1524,12 @@ func (my *AES) encryptCTRLargeFile(plainFile, outFile string, asymm secrets.Asym
 	if inF, err = os.Open(plainFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	// 生成随机 16 字节 nonce
 	nonce = make([]byte, 16)
@@ -1538,7 +1538,7 @@ func (my *AES) encryptCTRLargeFile(plainFile, outFile string, asymm secrets.Asym
 	}
 
 	aesKeyAndNonce = append(my.key, nonce...)
-	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndNonce); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(aesKeyAndNonce); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -1563,7 +1563,7 @@ func (my *AES) encryptCTRLargeFile(plainFile, outFile string, asymm secrets.Asym
 }
 
 // decryptCTRLargeFile 用 SM2+AES CTR 流式解密大文件（TB级）
-func (my *AES) decryptCTRLargeFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) decryptCTRLargeFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -1577,12 +1577,12 @@ func (my *AES) decryptCTRLargeFile(cipherFile, outFile string, asymm secrets.Asy
 	if inF, err = os.Open(cipherFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	head := make([]byte, 1)
 	if _, err = io.ReadFull(inF, head); err != nil {
@@ -1621,7 +1621,7 @@ func (my *AES) decryptCTRLargeFile(cipherFile, outFile string, asymm secrets.Asy
 	}
 	encryptedKeyBase64 = string(encryptedKeyBytes)
 
-	if aesKeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if aesKeyAndNonce, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(aesKeyAndNonce) != keySize+16 {
@@ -1634,7 +1634,7 @@ func (my *AES) decryptCTRLargeFile(cipherFile, outFile string, asymm secrets.Asy
 }
 
 // encryptGCMLargeFile 用 SM2+AES GCM 流式加密大文件（TB级）
-func (my *AES) encryptGCMLargeFile(plainFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) encryptGCMLargeFile(plainFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err               error
 		inF, outF         *os.File
@@ -1646,12 +1646,12 @@ func (my *AES) encryptGCMLargeFile(plainFile, outFile string, asymm secrets.Asym
 	if inF, err = os.Open(plainFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	// 生成随机 nonce
 	nonce := make([]byte, 12)
@@ -1660,7 +1660,7 @@ func (my *AES) encryptGCMLargeFile(plainFile, outFile string, asymm secrets.Asym
 	}
 
 	aesKeyAndNonce = append(my.key, nonce...)
-	if encryptedKeyStr, err = asymm.Encrypt(aesKeyAndNonce); err != nil {
+	if encryptedKeyStr, err = asymmetric.Encrypt(aesKeyAndNonce); err != nil {
 		return err
 	}
 	encryptedKeyBytes = []byte(encryptedKeyStr)
@@ -1685,7 +1685,7 @@ func (my *AES) encryptGCMLargeFile(plainFile, outFile string, asymm secrets.Asym
 }
 
 // decryptGCMLargeFile 用 SM2+AES GCM 流式解密大文件（TB级）
-func (my *AES) decryptGCMLargeFile(cipherFile, outFile string, asymm secrets.Asymmetric) error {
+func (my *AES) decryptGCMLargeFile(cipherFile, outFile string, asymmetric secrets.Asymmetric) error {
 	var (
 		err                error
 		inF, outF          *os.File
@@ -1699,12 +1699,12 @@ func (my *AES) decryptGCMLargeFile(cipherFile, outFile string, asymm secrets.Asy
 	if inF, err = os.Open(cipherFile); err != nil {
 		return err
 	}
-	defer inF.Close()
+	defer func() { _ = inF.Close() }()
 
 	if outF, err = os.Create(outFile); err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	head := make([]byte, 1)
 	if _, err = io.ReadFull(inF, head); err != nil {
@@ -1743,7 +1743,7 @@ func (my *AES) decryptGCMLargeFile(cipherFile, outFile string, asymm secrets.Asy
 	}
 	encryptedKeyBase64 = string(encryptedKeyBytes)
 
-	if aesKeyAndNonce, err = asymm.Decrypt(encryptedKeyBase64); err != nil {
+	if aesKeyAndNonce, err = asymmetric.Decrypt(encryptedKeyBase64); err != nil {
 		return err
 	}
 	if len(aesKeyAndNonce) != keySize+12 {
