@@ -55,7 +55,7 @@ func (my *CheckerImpl) ErrorToString(limit string) (ret string) {
 }
 
 func (my *CheckerImpl) Validate(exCheckFns ...ExCheckFunc) Checker {
-	fieldInfos := getStructFieldInfos(my.data, "")
+	fieldInfos := getStructFieldInfos(my.data, nil)
 	for _, fieldInfo := range fieldInfos {
 		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
 			my.wrongs = append(my.wrongs, wrongs...)
@@ -174,7 +174,18 @@ func callExCheckFn(fn ExCheckFunc, data any) error {
 	return first.Interface().(error)
 }
 
-func getStructFieldInfos(s any, parentName string) []FieldInfo {
+// joinParentNames 生成子级递归使用的完整父路径。
+// 会拷贝一份新的底层数组，避免与调用方共享 append 之后的容量导致的数据串扰。
+func joinParentNames(parentNames []string, name string) []string {
+	out := make([]string, len(parentNames), len(parentNames)+1)
+	copy(out, parentNames)
+	if name != "" {
+		out = append(out, name)
+	}
+	return out
+}
+
+func getStructFieldInfos(s any, parentNames []string) []FieldInfo {
 	v := reflect.ValueOf(s)
 	// 防止 nil 接口或 nil 指针导致 panic
 	if !v.IsValid() {
@@ -219,7 +230,8 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				if actualKind == reflect.Struct &&
 					actualType != reflect.TypeOf(time.Time{}) &&
 					actualType != reflect.TypeOf(&time.Time{}) {
-					infos = append(infos, getStructFieldInfos(fieldValue.Interface(), parentName)...)
+					// 无 v-rule 的嵌套/嵌入 struct 视为透明层，保持外层路径不变
+					infos = append(infos, getStructFieldInfos(fieldValue.Interface(), parentNames)...)
 				}
 				continue
 			}
@@ -252,6 +264,10 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 				value = fieldValue.Convert(elemKindToType(elemKind)).Interface()
 			}
 
+			// 当前字段的完整路径 = 祖先链 + 当前 vNameTag
+			// 用于自身 VNameTags 以及向子级递归时传递
+			selfPath := joinParentNames(parentNames, vNameTag)
+
 			// 如果是切片或数组，需要判断是否是基础类型还是 struct 或更深的切片或数组
 			switch elemKind {
 			case reflect.Slice, reflect.Array:
@@ -271,7 +287,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 					IsNil:     isNil,
 					IsZero:    fieldValue.IsZero(),
 					VRuleTags: anySlices.NewList(strings.Split(vRuleTag, ")(")),
-					VNameTags: anySlices.NewItems(parentName, vNameTag).RemoveEmpty(),
+					VNameTags: anySlices.NewItems(selfPath...).RemoveEmpty(),
 				})
 
 				// 检查数组/切片的元素类型是否是基础类型
@@ -287,7 +303,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 							}
 							infos = append(
 								infos,
-								getStructFieldInfos(elemValue.Interface(), vNameTag)...,
+								getStructFieldInfos(elemValue.Interface(), selfPath)...,
 							)
 						}
 					} else {
@@ -301,7 +317,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 							infos,
 							getStructFieldInfos(
 								reflect.Zero(zeroType).Interface(),
-								vNameTag,
+								selfPath,
 							)...,
 						)
 					}
@@ -314,7 +330,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 						getStructFieldInfos(
 							operations.NewTernary(operations.TrueFn(reflect.Zero(elemType).Interface), operations.FalseValue(value)).
 								GetByValue(isPtr && isNil),
-							vNameTag,
+							selfPath,
 						)...,
 					)
 				}
@@ -332,7 +348,7 @@ func getStructFieldInfos(s any, parentName string) []FieldInfo {
 					IsNil:     isNil,
 					IsZero:    fieldValue.IsZero(),
 					VRuleTags: anySlices.NewList(strings.Split(vRuleTag, ")(")),
-					VNameTags: anySlices.NewItems(parentName, vNameTag).RemoveEmpty(),
+					VNameTags: anySlices.NewItems(selfPath...).RemoveEmpty(),
 				})
 			}
 		}
