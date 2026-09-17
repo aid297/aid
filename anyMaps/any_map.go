@@ -10,68 +10,11 @@ import (
 	"github.com/aid297/aid/v2/anySlices"
 )
 
-var _ AnyMapper[string, any] = (*AnyMap[string, any])(nil)
-
 type (
-	AnyMapper[K comparable, V any] interface {
-		SetAttrs(attrs ...AnyMapperAttr[K, V]) AnyMapper[K, V]
-		SetData(data map[K]V) AnyMapper[K, V]
-		SetDatum(k K, v V) AnyMapper[K, V]
-		SetDataCap(cap int) AnyMapper[K, V]
-		SetKeys(keys anySlices.AnySlicer[K]) AnyMapper[K, V]
-		AppendKey(k K) AnyMapper[K, V]
-		SetValues(values anySlices.AnySlicer[V]) AnyMapper[K, V]
-		AppendValue(v V) AnyMapper[K, V]
-		Lock() AnyMapper[K, V]
-		Unlock() AnyMapper[K, V]
-		RLock() AnyMapper[K, V]
-		RUnlock() AnyMapper[K, V]
-		Copy() AnyMapper[K, V]
-		ToString() string
-		ToMap() map[K]V
-		ToOrderlyMap() anySlices.AnySlicer[AnyMapOrderlyItem[K, V]]
-		IsEmpty() bool
-		IsNotEmpty() bool
-		Has(key K) bool
-		SetValue(k K, v V) AnyMapper[K, V]
-		GetValueByKey(key K) (V, bool)
-		GetValuesByKeys(keys ...K) anySlices.AnySlicer[V]
-		GetKeyByValue(value V) (K, bool)
-		GetKeysByValues(values ...V) anySlices.AnySlicer[K]
-		HasKey(key K) bool
-		HasKeys(keys ...K) bool
-		HasValue(value V) bool
-		HasValues(values ...V) bool
-		HasKeyDefault(key K, existFn func(v V) V, notExistFn func() V) AnyMapper[K, V]
-		GetKeys() anySlices.AnySlicer[K]
-		GetValues() anySlices.AnySlicer[V]
-		Length() int
-		LengthNotEmpty() int
-		Filter(fn func(item V) bool) AnyMapper[K, V]
-		RemoveEmpty() AnyMapper[K, V]
-		Join(sep string) string
-		JoinNotEmpty(sep string) string
-		InKey(keys ...K) bool
-		NotInKey(keys ...K) bool
-		InValue(values ...V) bool
-		NotInValue(values ...V) bool
-		AllEmpty() bool
-		AnyEmpty() bool
-		RemoveByKey(key K) AnyMapper[K, V]
-		RemoveByKeys(keys ...K) AnyMapper[K, V]
-		RemoveByValue(value V) AnyMapper[K, V]
-		RemoveByValues(values ...V) AnyMapper[K, V]
-		Every(fn func(key K, value V) V) AnyMapper[K, V]
-		Each(fn func(key K, value V)) AnyMapper[K, V]
-		Clean() AnyMapper[K, V]
-		MarshalJSON() ([]byte, error)
-		UnmarshalJSON(data []byte) error
-	}
-
 	AnyMap[K comparable, V any] struct {
 		data   map[K]V
-		keys   anySlices.AnySlicer[K]
-		values anySlices.AnySlicer[V]
+		keys   *anySlices.AnySlice[K]
+		values *anySlices.AnySlice[V]
 		mu     sync.RWMutex
 	}
 
@@ -82,12 +25,23 @@ type (
 )
 
 // New 创建一个 AnyMap 实例
-func New[K comparable, V any](attrs ...AnyMapperAttr[K, V]) AnyMapper[K, V] {
+func New[K comparable, V any](attrs ...AnyMapperAttr[K, V]) *AnyMap[K, V] {
 	return (&AnyMap[K, V]{mu: sync.RWMutex{}, data: make(map[K]V), keys: anySlices.New[K](), values: anySlices.New[V]()}).SetAttrs(attrs...)
 }
 
+// Zip 组合键值对为一个新的有序map
+func Zip[K comparable, V any](keys []K, values []V) *AnyMap[K, V] {
+	d := New[K, V]()
+
+	for idx, key := range keys {
+		d = d.SetValue(key, values[idx])
+	}
+
+	return d
+}
+
 // SetAttrs 设置属性
-func (my *AnyMap[K, V]) SetAttrs(attrs ...AnyMapperAttr[K, V]) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) SetAttrs(attrs ...AnyMapperAttr[K, V]) *AnyMap[K, V] {
 	my.mu.Lock()
 	defer my.mu.Unlock()
 
@@ -99,13 +53,13 @@ func (my *AnyMap[K, V]) SetAttrs(attrs ...AnyMapperAttr[K, V]) AnyMapper[K, V] {
 }
 
 // SetData 设置字典键值对
-func (my *AnyMap[K, V]) SetData(data map[K]V) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) SetData(data map[K]V) *AnyMap[K, V] {
 	my.data = data
 	return my
 }
 
 // SetDatum 设置字典的单个键值对
-func (my *AnyMap[K, V]) SetDatum(k K, v V) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) SetDatum(k K, v V) *AnyMap[K, V] {
 	if my.data == nil {
 		my.data = make(map[K]V)
 	}
@@ -117,62 +71,62 @@ func (my *AnyMap[K, V]) SetDatum(k K, v V) AnyMapper[K, V] {
 }
 
 // SetDataCap 设置字典数据容量
-func (my *AnyMap[K, V]) SetDataCap(cap int) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) SetDataCap(cap int) *AnyMap[K, V] {
 	my.data = make(map[K]V, cap)
 	return my
 }
 
 // SetKeys 设置字典的键列表
-func (my *AnyMap[K, V]) SetKeys(keys anySlices.AnySlicer[K]) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) SetKeys(keys *anySlices.AnySlice[K]) *AnyMap[K, V] {
 	my.keys = keys
 	return my
 }
 
 // AppendKey 向字典的键列表追加一个键
-func (my *AnyMap[K, V]) AppendKey(k K) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) AppendKey(k K) *AnyMap[K, V] {
 	my.keys = my.keys.Append(k)
 	return my
 }
 
 // SetValues 设置字典的值列表
-func (my *AnyMap[K, V]) SetValues(values anySlices.AnySlicer[V]) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) SetValues(values *anySlices.AnySlice[V]) *AnyMap[K, V] {
 	my.values = values
 	return my
 }
 
 // AppendValue 向字典的值列表追加一个值
-func (my *AnyMap[K, V]) AppendValue(v V) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) AppendValue(v V) *AnyMap[K, V] {
 	my.values = my.values.Append(v)
 	return my
 }
 
-func (my *AnyMap[K, V]) Lock() AnyMapper[K, V] {
+func (my *AnyMap[K, V]) Lock() *AnyMap[K, V] {
 	my.mu.Lock()
 	return my
 }
 
-func (my *AnyMap[K, V]) Unlock() AnyMapper[K, V] {
+func (my *AnyMap[K, V]) Unlock() *AnyMap[K, V] {
 	my.mu.Unlock()
 	return my
 }
 
-func (my *AnyMap[K, V]) RLock() AnyMapper[K, V] {
+func (my *AnyMap[K, V]) RLock() *AnyMap[K, V] {
 	my.mu.RLock()
 	return my
 }
 
-func (my *AnyMap[K, V]) RUnlock() AnyMapper[K, V] {
+func (my *AnyMap[K, V]) RUnlock() *AnyMap[K, V] {
 	my.mu.RUnlock()
 	return my
 }
 
-func (my *AnyMap[K, V]) Copy() AnyMapper[K, V] { return New(Map(my.data)) }
+func (my *AnyMap[K, V]) Copy() *AnyMap[K, V] { return New(Map(my.data)) }
 
 func (my *AnyMap[K, V]) ToString() string { return fmt.Sprintf("%v", my.data) }
 
 func (my *AnyMap[K, V]) ToMap() map[K]V { return my.data }
 
-func (my *AnyMap[K, V]) ToOrderlyMap() anySlices.AnySlicer[AnyMapOrderlyItem[K, V]] {
+func (my *AnyMap[K, V]) ToOrderlyMap() *anySlices.AnySlice[AnyMapOrderlyItem[K, V]] {
 	res := anySlices.New(anySlices.Cap[AnyMapOrderlyItem[K, V]](len(my.data)))
 
 	if my.Length() == 0 {
@@ -196,7 +150,7 @@ func (my *AnyMap[K, V]) Has(key K) bool {
 	return ok
 }
 
-func (my *AnyMap[K, V]) SetValue(k K, v V) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) SetValue(k K, v V) *AnyMap[K, V] {
 	if my.keys.In(k) {
 		idx := my.keys.GetIndexByValue(k)
 		my.keys = my.keys.SetValue(idx, k)
@@ -215,7 +169,7 @@ func (my *AnyMap[K, V]) GetValueByKey(key K) (V, bool) {
 	return v, ok
 }
 
-func (my *AnyMap[K, V]) GetValuesByKeys(keys ...K) anySlices.AnySlicer[V] {
+func (my *AnyMap[K, V]) GetValuesByKeys(keys ...K) *anySlices.AnySlice[V] {
 	res := anySlices.New(anySlices.Cap[V](len(keys)))
 
 	for idx := range keys {
@@ -237,7 +191,7 @@ func (my *AnyMap[K, V]) GetKeyByValue(value V) (K, bool) {
 	return k, false
 }
 
-func (my *AnyMap[K, V]) GetKeysByValues(values ...V) anySlices.AnySlicer[K] {
+func (my *AnyMap[K, V]) GetKeysByValues(values ...V) *anySlices.AnySlice[K] {
 	res := anySlices.New(anySlices.Cap[K](len(values)))
 
 	for idx := range values {
@@ -263,22 +217,22 @@ func (my *AnyMap[K, V]) HasValue(value V) bool { return my.values.In(value) }
 
 func (my *AnyMap[K, V]) HasValues(values ...V) bool { return my.values.In(values...) }
 
-func (my *AnyMap[K, V]) HasKeyDefault(key K, existFn func(v V) V, notExistFn func() V) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) HasKeyDefault(key K, existFn func(v V) V, notExistFn func() V) *AnyMap[K, V] {
 	if v, e := my.GetValueByKey(key); e {
 		return my.SetValue(key, existFn(v))
 	}
 	return my.SetValue(key, notExistFn())
 }
 
-func (my *AnyMap[K, V]) GetKeys() anySlices.AnySlicer[K] { return my.keys }
+func (my *AnyMap[K, V]) GetKeys() *anySlices.AnySlice[K] { return my.keys }
 
-func (my *AnyMap[K, V]) GetValues() anySlices.AnySlicer[V] { return my.values }
+func (my *AnyMap[K, V]) GetValues() *anySlices.AnySlice[V] { return my.values }
 
 func (my *AnyMap[K, V]) Length() int { return len(my.data) }
 
 func (my *AnyMap[K, V]) LengthNotEmpty() int { return my.Copy().RemoveEmpty().Length() }
 
-func (my *AnyMap[K, V]) Filter(fn func(item V) bool) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) Filter(fn func(item V) bool) *AnyMap[K, V] {
 	res := New(Cap[K, V](my.Length()))
 
 	for idx := range my.values.ToSlice() {
@@ -294,7 +248,7 @@ func (my *AnyMap[K, V]) Filter(fn func(item V) bool) AnyMapper[K, V] {
 	return my
 }
 
-func (my *AnyMap[K, V]) RemoveEmpty() AnyMapper[K, V] {
+func (my *AnyMap[K, V]) RemoveEmpty() *AnyMap[K, V] {
 	return my.Filter(func(item V) bool {
 		ref := reflect.ValueOf(item)
 
@@ -327,7 +281,7 @@ func (my *AnyMap[K, V]) AllEmpty() bool { return my.values.AllEmpty() }
 
 func (my *AnyMap[K, V]) AnyEmpty() bool { return my.values.AnyEmpty() }
 
-func (my *AnyMap[K, V]) RemoveByKey(key K) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) RemoveByKey(key K) *AnyMap[K, V] {
 	if my.keys.In(key) {
 		idx := my.keys.GetIndexByValue(key)
 		my.keys = my.keys.RemoveByIndex(idx)
@@ -346,7 +300,7 @@ func (my *AnyMap[K, V]) RemoveByKey(key K) AnyMapper[K, V] {
 	return my
 }
 
-func (my *AnyMap[K, V]) RemoveByKeys(keys ...K) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) RemoveByKeys(keys ...K) *AnyMap[K, V] {
 	for idx := range keys {
 		my.RemoveByKey(keys[idx])
 	}
@@ -354,7 +308,7 @@ func (my *AnyMap[K, V]) RemoveByKeys(keys ...K) AnyMapper[K, V] {
 	return my
 }
 
-func (my *AnyMap[K, V]) RemoveByValue(value V) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) RemoveByValue(value V) *AnyMap[K, V] {
 	if my.values.In(value) {
 		idx := my.values.GetIndexByValue(value)
 		my.keys = my.keys.RemoveByIndex(idx)
@@ -373,7 +327,7 @@ func (my *AnyMap[K, V]) RemoveByValue(value V) AnyMapper[K, V] {
 	return my
 }
 
-func (my *AnyMap[K, V]) RemoveByValues(values ...V) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) RemoveByValues(values ...V) *AnyMap[K, V] {
 	for idx := range values {
 		my.RemoveByValue(values[idx])
 	}
@@ -381,7 +335,7 @@ func (my *AnyMap[K, V]) RemoveByValues(values ...V) AnyMapper[K, V] {
 	return my
 }
 
-func (my *AnyMap[K, V]) Every(fn func(key K, value V) V) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) Every(fn func(key K, value V) V) *AnyMap[K, V] {
 	for idx := range my.keys.ToSlice() {
 		k := my.keys.GetValue(idx)
 		v := my.values.GetValue(idx)
@@ -392,7 +346,7 @@ func (my *AnyMap[K, V]) Every(fn func(key K, value V) V) AnyMapper[K, V] {
 	return my
 }
 
-func (my *AnyMap[K, V]) Each(fn func(key K, value V)) AnyMapper[K, V] {
+func (my *AnyMap[K, V]) Each(fn func(key K, value V)) *AnyMap[K, V] {
 	for idx := range my.keys.ToSlice() {
 		k := my.keys.GetValue(idx)
 		v := my.values.GetValue(idx)
@@ -402,7 +356,7 @@ func (my *AnyMap[K, V]) Each(fn func(key K, value V)) AnyMapper[K, V] {
 	return my
 }
 
-func (my *AnyMap[K, V]) Clean() AnyMapper[K, V] {
+func (my *AnyMap[K, V]) Clean() *AnyMap[K, V] {
 	my.keys.Clean()
 	my.values.Clean()
 	my.data = make(map[K]V)
@@ -415,23 +369,12 @@ func (my *AnyMap[K, V]) MarshalJSON() ([]byte, error) { return sonic.Marshal(&my
 // UnmarshalJSON 实现接口：json反序列化
 func (my *AnyMap[K, V]) UnmarshalJSON(data []byte) error { return sonic.Unmarshal(data, &my.data) }
 
-// Cast 转换所有值并创建新 AsnyMapper
-func Cast[K comparable, SRC, DST any](src AnyMapper[K, SRC], fn func(key K, value SRC) DST) AnyMapper[K, DST] {
+// Cast 转换所有值并创建新 AnyMap
+func (my *AnyMap[K, V]) Cast[DST any](fn func(key K, value V) DST) *AnyMap[K, DST] {
 	d := New[K, DST]()
 
-	for key, value := range src.ToMap() {
+	for key, value := range my.data {
 		d = d.SetValue(key, fn(key, value))
-	}
-
-	return d
-}
-
-// Zip 组合键值对为一个新的有序map
-func Zip[K comparable, V any](keys []K, values []V) AnyMapper[K, V] {
-	d := New[K, V]()
-
-	for idx, key := range keys {
-		d = d.SetValue(key, values[idx])
 	}
 
 	return d

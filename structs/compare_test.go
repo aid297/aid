@@ -40,7 +40,7 @@ func TestCompareBySkip(t *testing.T) {
 		InnerPtr: &inner{Name: "dst指针"},
 	}
 
-	diffs := structs.NewStruct(src, dst).CompareBySkip()
+	diffs := structs.NewStruct(src).CompareBySkip(dst)
 
 	// Name有差异；Age为nil指针取零值0与20不同；Tag为nil指针取零值""与"dstTag"不同；Count相同不记录；Inner/InnerPtr跳过
 	var expect = []string{"名称:src名字 -> dst名字", "年龄:0 -> 20", "Tag: -> dstTag"}
@@ -53,7 +53,7 @@ func TestCompareBySkipBlacklist(t *testing.T) {
 	src := cmpSrc{Name: "src名字"}
 	dst := cmpDst{Name: "dst名字", Age: 20}
 
-	diffs := structs.NewStruct(src, dst).CompareBySkip("Name")
+	diffs := structs.NewStruct(src).CompareBySkip(dst, "Name")
 
 	// 黑名单中的Name被跳过，只记录Age（src为nil指针取零值0）
 	var expect = []string{"年龄:0 -> 20"}
@@ -66,7 +66,7 @@ func TestCompareByAssign(t *testing.T) {
 	src := cmpSrc{Name: "src名字"}
 	dst := cmpDst{Name: "dst名字", Age: 20}
 
-	diffs := structs.NewStruct(src, dst).CompareByAssign("Name")
+	diffs := structs.NewStruct(src).CompareByAssign(dst, "Name")
 
 	// 白名单外的Age不比较，只记录Name
 	var expect = []string{"名称:src名字 -> dst名字"}
@@ -80,7 +80,7 @@ func TestCompareAllEqual(t *testing.T) {
 		src := cmpSrc{Name: "相同", Count: 1}
 		dst := cmpDst{Name: "相同", Count: 1}
 
-		if diffs := structs.NewStruct(src, dst).CompareBySkip(); diffs != nil {
+		if diffs := structs.NewStruct(src).CompareBySkip(dst); diffs != nil {
 			t.Errorf("全部相同时应无差异记录，实际 %v", diffs)
 		}
 	})
@@ -89,7 +89,7 @@ func TestCompareAllEqual(t *testing.T) {
 		src := cmpSrc{}                // Age/Tag均为nil指针
 		dst := cmpDst{Age: 0, Tag: ""} // 零值
 
-		if diffs := structs.NewStruct(src, dst).CompareBySkip(); diffs != nil {
+		if diffs := structs.NewStruct(src).CompareBySkip(dst); diffs != nil {
 			t.Errorf("nil指针取零值后相同应无差异记录，实际 %v", diffs)
 		}
 	})
@@ -98,7 +98,7 @@ func TestCompareAllEqual(t *testing.T) {
 		src := cmpSrc{}
 		var dst cmpDst
 
-		if diffs := structs.NewStruct(src, dst).CompareBySkip(); diffs != nil {
+		if diffs := structs.NewStruct(src).CompareBySkip(dst); diffs != nil {
 			t.Errorf("两侧nil指针应无差异记录，实际 %v", diffs)
 		}
 	})
@@ -108,7 +108,7 @@ func TestComparePointerValue(t *testing.T) {
 	src := cmpSrc{Age: ptr(10), Tag: ptr("srcTag")}
 	dst := cmpDst{Age: 10, Tag: "dstTag"}
 
-	diffs := structs.NewStruct(src, dst).CompareBySkip()
+	diffs := structs.NewStruct(src).CompareBySkip(dst)
 
 	// Age指针解引用后10与10相同不记录；Tag解引用后不同记录src与dst的值
 	var expect = []string{"Tag:srcTag -> dstTag"}
@@ -122,7 +122,7 @@ func TestCompareTime(t *testing.T) {
 	src := cmpSrc{Birthday: &now}
 	dst := cmpDst{Birthday: now.Add(time.Hour)}
 
-	diffs := structs.NewStruct(src, dst).CompareByAssign("Birthday")
+	diffs := structs.NewStruct(src).CompareByAssign(dst, "Birthday")
 
 	if len(diffs) != 1 || !strings.HasPrefix(diffs[0], "Birthday:") {
 		t.Errorf("time.Time字段应参与比较并记录dst值，实际 %v", diffs)
@@ -133,7 +133,7 @@ func TestCompareNotModifyInput(t *testing.T) {
 	src := cmpSrc{Name: "src名字", Age: ptr(10)}
 	dst := cmpDst{Name: "dst名字", Age: 20}
 
-	structs.NewStruct(src, dst).CompareBySkip()
+	structs.NewStruct(src).CompareBySkip(dst)
 
 	if src.Name != "src名字" || *src.Age != 10 {
 		t.Errorf("比较操作不应修改入参src，实际 %s %d", src.Name, *src.Age)
@@ -151,7 +151,7 @@ func TestCompareTypeMismatch(t *testing.T) {
 	src := mismatchSrc{Num: ptr(1)}
 	dst := mismatchDst{Num: ptr("dst")}
 
-	if diffs := structs.NewStruct(src, dst).CompareBySkip(); diffs != nil {
+	if diffs := structs.NewStruct(src).CompareBySkip(dst); diffs != nil {
 		t.Errorf("解引用到底类型不同时不应比较，实际 %v", diffs)
 	}
 }

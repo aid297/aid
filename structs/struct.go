@@ -19,30 +19,35 @@ type (
 )
 
 // NewStruct 实例化：src 与 dst 都必须是非 nil 的结构体值（传指针或其他类型会 panic）；T 由 src 推断，dst 可为不同结构体类型
-func NewStruct[T any](src T, dst any) *Struct[T] {
+func NewStruct[T any](src T) *Struct[T] {
 	var (
 		srcValue = reflect.ValueOf(src)
-		dstValue = reflect.ValueOf(dst)
 	)
 
 	if srcValue.Kind() == reflect.Pointer || srcValue.Kind() != reflect.Struct {
 		panic("structs.NewStruct: src必须是非指针的结构体")
 	}
 
+	return &Struct[T]{srcValue: srcValue}
+}
+
+// CoverBySkip 黑名单方式覆盖：跳过 skipFields 中列出的第一层字段，覆盖其余符合条件的字段，返回修改后的src
+func (my *Struct[T]) CoverBySkip(dst any, skipFields ...string) *Struct[T] {
+	dstValue := reflect.ValueOf(dst)
 	if dstValue.Kind() == reflect.Pointer || dstValue.Kind() != reflect.Struct {
 		panic("structs.NewStruct: dst必须是非指针的结构体")
 	}
 
-	return &Struct[T]{srcValue: srcValue, dstValue: dstValue}
-}
-
-// CoverBySkip 黑名单方式覆盖：跳过 skipFields 中列出的第一层字段，覆盖其余符合条件的字段，返回修改后的src
-func (my *Struct[T]) CoverBySkip(skipFields ...string) *Struct[T] {
 	return my.cover(true, skipFields)
 }
 
 // CoverByAssign 白名单方式覆盖：仅覆盖 assignFields 中列出的第一层字段（仍需同名同类型等条件），返回修改后的src
-func (my *Struct[T]) CoverByAssign(assignFields ...string) *Struct[T] {
+func (my *Struct[T]) CoverByAssign(dst any, assignFields ...string) *Struct[T] {
+	dstValue := reflect.ValueOf(dst)
+	if dstValue.Kind() == reflect.Pointer || dstValue.Kind() != reflect.Struct {
+		panic("structs.NewStruct: dst必须是非指针的结构体")
+	}
+
 	return my.cover(false, assignFields)
 }
 
@@ -93,12 +98,21 @@ func (my *Struct[T]) Value() T { return my.dst }
 func (my *Struct[T]) Pointer() *T { return &my.dst }
 
 // CompareBySkip 黑名单方式比较：跳过 skipFields 中列出的第一层字段，比较其余同名同类型字段的值内容，返回存在差异的字段记录
-func (my *Struct[T]) CompareBySkip(skipFields ...string) []string {
+func (my *Struct[T]) CompareBySkip(dst any, skipFields ...string) []string {
+	dstValue := reflect.ValueOf(dst)
+	if dstValue.Kind() == reflect.Pointer || dstValue.Kind() != reflect.Struct {
+		panic("structs.NewStruct: dst必须是非指针的结构体")
+	}
+
 	return my.compare(true, skipFields)
 }
 
 // CompareByAssign 白名单方式比较：仅比较 assignFields 中列出的第一层字段（仍需同名、解引用后同类型等条件），返回存在差异的字段记录
-func (my *Struct[T]) CompareByAssign(assignFields ...string) []string {
+func (my *Struct[T]) CompareByAssign(dst any, assignFields ...string) []string {
+	dstValue := reflect.ValueOf(dst)
+	if dstValue.Kind() == reflect.Pointer || dstValue.Kind() != reflect.Struct {
+		panic("structs.NewStruct: dst必须是非指针的结构体")
+	}
 	return my.compare(false, assignFields)
 }
 
