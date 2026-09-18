@@ -15,7 +15,7 @@ type (
 		onSendMsgWrong    func(insName, clientName string, err error)
 		onCloseWrong      func(insName, clientName string, err error)
 		onReceiveMsgWrong func(insName, clientName string, prototypeMsg []byte, err error)
-		clientInsList     anyMaps.AnyMapper[string, *ClientIns]
+		clientInsList     *anyMaps.AnyMap[string, *ClientIns]
 		Error             error
 	}
 )

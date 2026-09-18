@@ -24,7 +24,7 @@ type (
 	// MapLock 字典锁：一个锁的集合
 	MapLock struct {
 		lock  sync.RWMutex
-		locks anyMaps.AnyMapper[string, *itemLock]
+		locks *anyMaps.AnyMap[string, *itemLock]
 	}
 
 	// 锁项：一个集合锁中的每一项，包含：锁状态、锁值、超时时间、定时器

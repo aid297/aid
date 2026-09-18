@@ -23,8 +23,8 @@ type (
 		onCloseConnWrong  func(*websocket.Conn, error)
 		onSendMsgWrong    func(*websocket.Conn, error)
 		onPing            func(*websocket.Conn)
-		serverInsList     anyMaps.AnyMapper[string, *ServerIns]
-		router            anyMaps.AnyMapper[string, func(ws *websocket.Conn)]
+		serverInsList     *anyMaps.AnyMap[string, *ServerIns]
+		router            *anyMaps.AnyMap[string, func(ws *websocket.Conn)]
 	}
 
 	// ServerIns websocket服务端实例

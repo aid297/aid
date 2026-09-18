@@ -19,7 +19,7 @@ type (
 		status                          WebsocketConnStatus
 		closeChan                       chan struct{}
 		receiveMessageChan              chan []byte
-		asyncReceiveCallbackDict        anyMaps.AnyMapper[string, clientCallbackFn]
+		asyncReceiveCallbackDict        *anyMaps.AnyMap[string, clientCallbackFn]
 		syncMessageTimeout              time.Duration
 		heart                           *time.Ticker
 		heartCallback                   clientHeartFn

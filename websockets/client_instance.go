@@ -6,7 +6,7 @@ import (
 
 type ClientInstance struct {
 	name        string
-	connections anyMaps.AnyMapper[string, *Client]
+	connections *anyMaps.AnyMap[string, *Client]
 }
 
 var ClientInstanceApp ClientInstance

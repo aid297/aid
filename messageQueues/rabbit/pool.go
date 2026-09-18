@@ -8,7 +8,7 @@ import (
 
 type (
 	Pool struct {
-		rabbitConns anyMaps.AnyMapper[string, *Rabbit]
+		rabbitConns *anyMaps.AnyMap[string, *Rabbit]
 	}
 )
 

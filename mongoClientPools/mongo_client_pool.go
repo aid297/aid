@@ -8,7 +8,7 @@ import (
 )
 
 type MongoClientPool struct {
-	clients anyMaps.AnyMapper[string, *MongoClient]
+	clients *anyMaps.AnyMap[string, *MongoClient]
 }
 
 var (

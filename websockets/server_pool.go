@@ -13,8 +13,8 @@ import (
 
 type (
 	ServerPool struct {
-		connections             anyMaps.AnyMapper[string, *Server]
-		addrToAuth              anyMaps.AnyMapper[string, string]
+		connections             *anyMaps.AnyMap[string, *Server]
+		addrToAuth              *anyMaps.AnyMap[string, string]
 		onConnectionFail        serverConnectionFailFn
 		onConnectionSuccess     serverConnectionSuccessFn
 		onSendMessageSuccess    serverSendMessageSuccessFn

@@ -14,7 +14,7 @@ import (
 // Reader Excel读取器
 type Reader struct {
 	Err         error
-	data        anyMaps.AnyMapper[uint64, anySlices.AnySlicer[string]]
+	data        *anyMaps.AnyMap[uint64, anySlices.AnySlicer[string]]
 	excel       *excelize.File
 	sheetName   string
 	originalRow int
@@ -57,11 +57,11 @@ func (my *Reader) AutoReadBySheetName(sheetName string, filename ...any) *Reader
 }
 
 // Data 获取数据：有序字典
-func (my *Reader) Data() anyMaps.AnyMapper[uint64, anySlices.AnySlicer[string]] { return my.data }
+func (my *Reader) Data() *anyMaps.AnyMap[uint64, anySlices.AnySlicer[string]] { return my.data }
 
 // DataWithTitle 获取数据：带有title的有序字典
-func (my *Reader) DataWithTitle() (anyMaps.AnyMapper[uint64, anyMaps.AnyMapper[string, string]], error) {
-	newDict := anyMaps.New[uint64, anyMaps.AnyMapper[string, string]]()
+func (my *Reader) DataWithTitle() (*anyMaps.AnyMap[uint64, *anyMaps.AnyMap[string, string]], error) {
+	newDict := anyMaps.New[uint64, *anyMaps.AnyMap[string, string]]()
 
 	for idx, value := range my.data.ToMap() {
 		newDict.SetDatum(idx, anyMaps.Zip(my.titles.ToSlice(), value.ToSlice()))

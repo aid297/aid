@@ -7,7 +7,7 @@ import (
 )
 
 type ClientInstancePool struct {
-	pool anyMaps.AnyMapper[string, *ClientInstance]
+	pool *anyMaps.AnyMap[string, *ClientInstance]
 }
 
 var (

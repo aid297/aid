@@ -8,7 +8,7 @@ import (
 
 type Pool struct {
 	err  error
-	pool anyMaps.AnyMapper[string, *Client]
+	pool *anyMaps.AnyMap[string, *Client]
 	lock sync.RWMutex
 }
 

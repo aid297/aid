@@ -129,7 +129,7 @@ func ReadDemo(filename string) {
 		str.NewTerminalLog("err: %v").Error(err)
 	}
 
-	excelData.Each(func(key uint64, value anyMaps.AnyMapper[string, string]) {
+	excelData.Each(func(key uint64, value *anyMaps.AnyMap[string, string]) {
 		username, _ := value.GetValueByKey("username")
 		nickname, _ := value.GetValueByKey("nickname")
 		score, _ := value.GetValueByKey("score")

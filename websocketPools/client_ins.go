@@ -12,7 +12,7 @@ import (
 // ClientIns websocket 客户端链接实例
 type ClientIns struct {
 	Name    string
-	Clients anyMaps.AnyMapper[string, *Client]
+	Clients *anyMaps.AnyMap[string, *Client]
 }
 
 // New 实例化：websocket客户端实例
