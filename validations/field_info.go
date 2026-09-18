@@ -33,6 +33,12 @@ func (my FieldInfo) Wrongs() []error { return my.wrongs }
 func (my FieldInfo) getName() string { return my.VNameTags.Join(".") }
 
 func (my FieldInfo) Check() FieldInfo {
+	// 非必填的 nil 指针：视为允许为空，跳过所有规则校验。
+	// 必填字段的空值由各 checkXxx 内部的 required 逻辑负责报错。
+	if my.IsPtr && my.IsNil && !getRuleRequired(my.VRuleTags) {
+		return my
+	}
+
 	switch my.Kind {
 	case reflect.String:
 		return my.checkString()

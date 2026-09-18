@@ -11,8 +11,9 @@ import (
 
 type (
 	UserRequest struct {
-		Firstname string `v-rule:"(required)(min>10)" v-name:"姓"`
-		Lastname  string `v-rule:"in:,三,四" v-name:"名"`
+		Firstname string  `v-rule:"(required)(min>10)" v-name:"姓"`
+		Lastname  string  `v-rule:"in:,三,四" v-name:"名"`
+		ID        *string `v-rule:"(max<=255)" v-name:"ID"`
 	}
 )
 
@@ -73,4 +74,19 @@ func Test3(t *testing.T) {
 	}
 
 	t.Logf("完成")
+}
+
+func Test4(t *testing.T) {
+	ur := &UserRequest{
+		Firstname: "张张张张张张张张张张张张张",
+		Lastname:  "四",
+		ID:        nil,
+	}
+
+	checker := validations.Once().Checker(ur).Validate()
+	if checker.Invalid() {
+		t.Fatalf("验证不通过：%v", checker.Error())
+	}
+
+	t.Logf("验证通过")
 }
