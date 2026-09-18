@@ -140,10 +140,14 @@ func BinaryFromAny(other any) (BinaryUUID, error) {
 		if val.IsNil() {
 			return empty, errors.New("ID为空")
 		}
+
+		return val, nil
 	case *BinaryUUID:
 		if val == nil || val.IsNil() {
 			return empty, errors.New("ID为空")
 		}
+
+		return *val, nil
 	case string:
 		if val == "" {
 			return empty, errors.New("ID为空")
@@ -166,6 +170,8 @@ func BinaryFromAny(other any) (BinaryUUID, error) {
 		if val == nil || len(*val) != 16 {
 			return empty, errors.New("ID为空")
 		}
+
+		return BinaryFromBytes(*val)
 	case uuid.UUID:
 		u := BinaryFromUUID(val)
 		if u.IsNil() {
