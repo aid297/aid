@@ -3,6 +3,7 @@ package mysqlPool
 import (
 	"bytes"
 	"database/sql/driver"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -36,7 +37,14 @@ func (b BinaryUUID) Value() (driver.Value, error) {
 	return b[:], nil
 }
 
-func (b BinaryUUID) Equal(something BinaryUUID) bool { return bytes.Equal(b[:], something[:]) }
+func (b BinaryUUID) Equal(other any) bool {
+	u, err := BinaryFromAny(other)
+	if err != nil {
+		return false
+	}
+
+	return bytes.Equal(b[:], u[:])
+}
 
 func (b BinaryUUID) NotEqual(something BinaryUUID) bool { return !b.Equal(something) }
 
@@ -123,3 +131,62 @@ func MustBinaryFromBytes(data []uint8) BinaryUUID {
 
 // NewBinaryUUIDV7 生成新的 UUIDv7 并返回 BinaryUUID
 func NewBinaryUUIDV7() BinaryUUID { return BinaryFromUUID(uuid.Must(uuid.NewV7())) }
+
+func BinaryFromAny(other any) (BinaryUUID, error) {
+	var empty BinaryUUID
+
+	switch val := other.(type) {
+	case BinaryUUID:
+		if val.IsNil() {
+			return empty, errors.New("ID为空")
+		}
+	case *BinaryUUID:
+		if val == nil || val.IsNil() {
+			return empty, errors.New("ID为空")
+		}
+	case string:
+		if val == "" {
+			return empty, errors.New("ID为空")
+		}
+
+		return BinaryFromString(val)
+	case *string:
+		if val == nil || *val == "" {
+			return empty, errors.New("ID为空")
+		}
+
+		return BinaryFromString(*val)
+	case []byte:
+		if len(val) != 16 {
+			return empty, errors.New("ID为空")
+		}
+
+		return BinaryFromBytes(val)
+	case *[]byte:
+		if val == nil || len(*val) != 16 {
+			return empty, errors.New("ID为空")
+		}
+	case uuid.UUID:
+		u := BinaryFromUUID(val)
+		if u.IsNil() {
+			return empty, errors.New("ID为空")
+		}
+
+		return u, nil
+	case *uuid.UUID:
+		if val == nil {
+			return empty, errors.New("ID为空")
+		}
+
+		u := BinaryFromUUID(*val)
+		if u.IsNil() {
+			return empty, errors.New("ID为空")
+		}
+
+		return u, nil
+	default:
+		return empty, errors.New("类型错误")
+	}
+
+	return empty, errors.New("类型错误")
+}
