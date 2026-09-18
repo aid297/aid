@@ -46,7 +46,7 @@ func (b BinaryUUID) Equal(other any) bool {
 	return bytes.Equal(b[:], u[:])
 }
 
-func (b BinaryUUID) NotEqual(something BinaryUUID) bool { return !b.Equal(something) }
+func (b BinaryUUID) NotEqual(something any) bool { return !b.Equal(something) }
 
 // Scan 实现 sql.Scanner，从数据库读取 16 字节二进制或字符串
 func (b *BinaryUUID) Scan(src any) error {
