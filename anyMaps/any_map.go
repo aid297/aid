@@ -415,7 +415,7 @@ func (my *AnyMap[K, V]) MarshalJSON() ([]byte, error) { return sonic.Marshal(&my
 // UnmarshalJSON 实现接口：json反序列化
 func (my *AnyMap[K, V]) UnmarshalJSON(data []byte) error { return sonic.Unmarshal(data, &my.data) }
 
-// Cast 转换所有值并创建新 AsnyMapper
+// Cast 转换所有值并创建新 AnyMapper
 func Cast[K comparable, SRC, DST any](src AnyMapper[K, SRC], fn func(key K, value SRC) DST) AnyMapper[K, DST] {
 	d := New[K, DST]()
 

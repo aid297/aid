@@ -56,9 +56,23 @@ func (my *CheckerImpl) ErrorToString(limit string) (ret string) {
 
 func (my *CheckerImpl) Validate(exCheckFns ...ExCheckFunc) Checker {
 	fieldInfos := getStructFieldInfos(my.data, nil)
-	for _, fieldInfo := range fieldInfos {
-		if wrongs := fieldInfo.Check().Wrongs(); len(wrongs) > 0 {
+	for i := range fieldInfos {
+		fieldInfos[i] = fieldInfos[i].Check()
+		if wrongs := fieldInfos[i].Wrongs(); len(wrongs) > 0 {
 			my.wrongs = append(my.wrongs, wrongs...)
+		}
+	}
+
+	// 跨字段校验：检测 CrossValidator 接口 → 解析规则 → 逐条评估
+	infoMap := make(map[string]FieldInfo, len(fieldInfos))
+	for _, fi := range fieldInfos {
+		infoMap[fi.getName()] = fi
+	}
+	if cv, ok := my.data.(CrossValidator); ok {
+		for _, rule := range parseCrossRules(cv.Cross()) {
+			if err := evalCrossRule(rule, infoMap); err != nil {
+				my.wrongs = append(my.wrongs, err)
+			}
 		}
 	}
 
@@ -323,8 +337,25 @@ func getStructFieldInfos(s any, parentNames []string) []FieldInfo {
 					}
 				}
 			case reflect.Struct:
-				if elemType != reflect.TypeOf(time.Time{}) &&
-					elemType != reflect.TypeOf(&time.Time{}) { // 如果不是时间类型则递归 struct
+				if elemType == reflect.TypeOf(time.Time{}) ||
+					elemType == reflect.TypeOf(&time.Time{}) {
+					// time.Time 作为叶子字段，创建 FieldInfo 用于校验
+					vRuleTag = strings.TrimLeft(vRuleTag, "(")
+					vRuleTag = strings.TrimRight(vRuleTag, ")")
+
+					infos = append(infos, FieldInfo{
+						Name:      field.Name,
+						Value:     value,
+						RefValue:  fieldValue,
+						Kind:      elemKind,
+						Type:      elemType,
+						IsPtr:     isPtr,
+						IsNil:     isNil,
+						IsZero:    fieldValue.IsZero(),
+						VRuleTags: anySlices.NewList(strings.Split(vRuleTag, ")(")),
+						VNameTags: anySlices.NewItems(selfPath...).RemoveEmpty(),
+					})
+				} else { // 非 time.Time 的 struct 递归处理
 					infos = append(
 						infos,
 						getStructFieldInfos(
