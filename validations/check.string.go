@@ -38,7 +38,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：required、[bool|datetime|date|timers]、str-timers>、str-timers>=、str-timers<、str-timers<=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
+// checkString 检查字符串，支持：tb、tl、tr、required、[bool|datetime|date|timers]、str-timers>、str-timers>=、str-timers<、str-timers<=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		err                    error
@@ -71,6 +71,9 @@ func (my FieldInfo) checkString() FieldInfo {
 		my.wrongs = append(my.wrongs, fmt.Errorf("『%s』 %w 期望：字符串", my.getName(), ErrInvalidType))
 		return my
 	}
+
+	my.trimString()
+	value = my.Value.(string)
 
 	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
 		if strings.HasPrefix(rule, "str-time") || strings.HasPrefix(rule, "text-time") {
@@ -214,4 +217,40 @@ func (my FieldInfo) checkString() FieldInfo {
 	})
 
 	return my
+}
+
+// trimString 根据 v-rule 中的 tb/tl/tr 规则裁剪字符串值，并写回原字段（字段可寻址时）。
+func (my *FieldInfo) trimString() {
+	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
+		side, cutset, ok := getRuleTrim(rule)
+		if !ok {
+			return
+		}
+
+		value, isStr := my.Value.(string)
+		if !isStr {
+			return
+		}
+
+		var trimmed string
+		switch {
+		case len(cutset) == 0:
+			trimmed = strings.TrimSpace(value)
+		case side == "tb":
+			trimmed = strings.Trim(value, string(cutset))
+		case side == "tl":
+			trimmed = strings.TrimLeft(value, string(cutset))
+		case side == "tr":
+			trimmed = strings.TrimRight(value, string(cutset))
+		}
+
+		if trimmed != value {
+			my.Value = trimmed
+			if my.RefValue.CanSet() {
+				my.RefValue.SetString(trimmed)
+			}
+		}
+
+		return
+	})
 }

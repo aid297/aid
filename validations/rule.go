@@ -1,6 +1,7 @@
 package validations
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,6 +12,36 @@ import (
 )
 
 func getRuleRequired(rules anySlices.AnySlicer[string]) bool { return rules.In("required", "!") }
+
+// getRuleTrim 解析裁剪规则：tb/tl/tr，可带自定义字符集 {a|b|c}。
+// 无字符集时表示清理全部 Unicode 空白（含全角空格）。
+func getRuleTrim(rule string) (side string, cutset []rune, ok bool) {
+	for _, side = range []string{"tb", "tl", "tr"} {
+		if rule == side {
+			return side, nil, true
+		}
+
+		if rest, found := strings.CutPrefix(rule, side+"{"); found && strings.HasSuffix(rest, "}") {
+			for _, item := range strings.Split(strings.TrimSuffix(rest, "}"), "|") {
+				if item == "" {
+					continue
+				}
+				cutset = append(cutset, []rune(unescapeTrimItem(item))...)
+			}
+			return side, cutset, true
+		}
+	}
+
+	return "", nil, false
+}
+
+// unescapeTrimItem 解析字符集条目中的转义序列（\t、\n 等），解析失败时按字面量处理。
+func unescapeTrimItem(item string) string {
+	if unquoted, err := strconv.Unquote(`"` + item + `"`); err == nil {
+		return unquoted
+	}
+	return item
+}
 
 func getRuleExFnNames(rule string) (exFnNames []string) {
 	var (
