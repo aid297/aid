@@ -77,3 +77,21 @@ func TestTrimNoChange(t *testing.T) {
 		t.Errorf("All = %q, 期望 %q", form.All, "a")
 	}
 }
+
+func TestTrimRequired(t *testing.T) {
+	type T struct {
+		A string  `v-rule:"(required)(tb)" v-name:"A"`
+		B *string `v-rule:"(required)(tb)" v-name:"B"`
+	}
+
+	right := " 　\t\n"
+	form := &T{A: " 　\t\n", B: &right}
+
+	checker := validations.Once().Checker(form).Validate()
+	if !checker.Invalid() {
+		t.Fatalf("期望验证不通过：A、B 裁剪后为空串，required 应报错")
+	}
+	for _, wrong := range checker.Errors() {
+		t.Logf("%v", wrong)
+	}
+}

@@ -57,14 +57,9 @@ func (my FieldInfo) checkString() FieldInfo {
 		return my
 	}
 
-	if getRuleRequired(my.VRuleTags) {
-		if my.IsPtr && (my.IsNil || my.IsZero) {
-			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
-			return my
-		} else if !my.IsPtr && my.IsZero {
-			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrNotEmpty)}
-			return my
-		}
+	if getRuleRequired(my.VRuleTags) && my.IsPtr && my.IsNil {
+		my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
+		return my
 	}
 
 	if value, ok = my.Value.(string); !ok {
@@ -74,6 +69,15 @@ func (my FieldInfo) checkString() FieldInfo {
 
 	my.trimString()
 	value = my.Value.(string)
+
+	if getRuleRequired(my.VRuleTags) && value == "" {
+		if my.IsPtr {
+			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrRequired)}
+		} else {
+			my.wrongs = []error{fmt.Errorf("『%s』 %w", my.getName(), ErrNotEmpty)}
+		}
+		return my
+	}
 
 	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
 		if strings.HasPrefix(rule, "str-time") || strings.HasPrefix(rule, "text-time") {
