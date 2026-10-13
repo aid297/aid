@@ -425,9 +425,7 @@ func (my *FinderImpl) FindUseMap(queries map[string][]any, preloads []string, or
 
 	my.QueryUseMap(queries).TryPagination(page, size).TryOrder(orders...).Find(ret, preloads...)
 
-	if !my.needPagination {
-		my.total = int64(len(ret.([]any)))
-	}
+	my.total = sliceLen(ret)
 
 	return my
 }
@@ -443,9 +441,7 @@ func (my *FinderImpl) FindUseCondition(finderCondition *FinderCondition, page, s
 
 	my.QueryUseCondition(finderCondition).TryPagination(page, size).Find(ret)
 
-	if !my.needPagination {
-		my.total = int64(len(ret.([]any)))
-	}
+	my.total = sliceLen(ret)
 
 	return my
 }
@@ -461,9 +457,7 @@ func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret an
 
 	my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.PageSize).Find(ret)
 
-	if !my.needPagination {
-		my.total = int64(len(ret.([]any)))
-	}
+	my.total = sliceLen(ret)
 
 	return my
 }
@@ -478,6 +472,17 @@ func (my *FinderImpl) StatisticOnlyCondition(finderCondition *FinderCondition, r
 	my.QueryUseCondition(finderCondition).GetDB().Scan(ret)
 
 	return my
+}
+
+func sliceLen(ret any) int64 {
+	v := reflect.ValueOf(ret)
+	if v.Kind() == reflect.Pointer && !v.IsNil() {
+		v = v.Elem()
+	}
+	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+		return int64(v.Len())
+	}
+	return 0
 }
 
 func (my *FinderImpl) Error() error { return my.db.Error }
