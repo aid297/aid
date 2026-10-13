@@ -424,6 +424,11 @@ func (my *FinderImpl) FindUseMap(queries map[string][]any, preloads []string, or
 	my.needPagination = page > 0 && size > 0
 
 	my.QueryUseMap(queries).TryPagination(page, size).TryOrder(orders...).Find(ret, preloads...)
+
+	if !my.needPagination {
+		my.total = int64(len(ret.([]any)))
+	}
+
 	return my
 }
 
@@ -437,6 +442,11 @@ func (my *FinderImpl) FindUseCondition(finderCondition *FinderCondition, page, s
 	my.needPagination = page > 0 && size > 0
 
 	my.QueryUseCondition(finderCondition).TryPagination(page, size).Find(ret)
+
+	if !my.needPagination {
+		my.total = int64(len(ret.([]any)))
+	}
+
 	return my
 }
 
@@ -450,6 +460,11 @@ func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret an
 	my.needPagination = finderCondition.Page > 0 && finderCondition.PageSize > 0
 
 	my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.PageSize).Find(ret)
+
+	if !my.needPagination {
+		my.total = int64(len(ret.([]any)))
+	}
+
 	return my
 }
 
@@ -466,9 +481,3 @@ func (my *FinderImpl) StatisticOnlyCondition(finderCondition *FinderCondition, r
 }
 
 func (my *FinderImpl) Error() error { return my.db.Error }
-
-// func (my *FinderImpl) finderNext() Finder {
-
-// 	my.total = operations.NewTernary(operations.TrueValue[int64](0), operations.FalseValue(my.total)).GetByValue(my.total == -1)
-// 	return my
-// }
