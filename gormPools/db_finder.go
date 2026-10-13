@@ -425,7 +425,9 @@ func (my *FinderImpl) FindUseMap(queries map[string][]any, preloads []string, or
 
 	my.QueryUseMap(queries).TryPagination(page, size).TryOrder(orders...).Find(ret, preloads...)
 
-	my.total = sliceLen(ret)
+	if !my.needPagination {
+		my.total = sliceLen(ret)
+	}
 
 	return my
 }
@@ -441,7 +443,9 @@ func (my *FinderImpl) FindUseCondition(finderCondition *FinderCondition, page, s
 
 	my.QueryUseCondition(finderCondition).TryPagination(page, size).Find(ret)
 
-	my.total = sliceLen(ret)
+	if !my.needPagination {
+		my.total = sliceLen(ret)
+	}
 
 	return my
 }
@@ -457,7 +461,9 @@ func (my *FinderImpl) FindOnlyCondition(finderCondition *FinderCondition, ret an
 
 	my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.PageSize).Find(ret)
 
-	my.total = sliceLen(ret)
+	if !my.needPagination {
+		my.total = sliceLen(ret)
+	}
 
 	return my
 }
