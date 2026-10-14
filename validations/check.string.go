@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/aid297/aid/v2/anyMaps"
@@ -38,7 +39,7 @@ var (
 	}
 )
 
-// checkString 检查字符串，支持：tb、tl、tr、required、[bool|datetime|date|timers]、str-timers>、str-timers>=、str-timers<、str-timers<=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
+// checkString 检查字符串，支持：tb、tl、tr、nt、required、[bool|datetime|date|timers]、str-timers>、str-timers>=、str-timers<、str-timers<=、min>、min>=、max<、max<=、in==、in!=、size==、size!=, ex:
 func (my FieldInfo) checkString() FieldInfo {
 	var (
 		err                    error
@@ -224,37 +225,60 @@ func (my FieldInfo) checkString() FieldInfo {
 }
 
 // trimString 根据 v-rule 中的 tb/tl/tr 规则裁剪字符串值，并写回原字段（字段可寻址时）。
+// 若未声明任何裁剪规则且未声明 nt（不清理），则默认按 tb 处理（清理两端全部 Unicode 空白）。
 func (my *FieldInfo) trimString() {
+	var hasTrimRule bool
+
 	my.VRuleTags.Each(func(_ int, rule string) (isBreak bool) {
 		side, cutset, ok := getRuleTrim(rule)
 		if !ok {
 			return
 		}
 
-		value, isStr := my.Value.(string)
-		if !isStr {
-			return
-		}
-
-		var trimmed string
-		switch {
-		case len(cutset) == 0:
-			trimmed = strings.TrimSpace(value)
-		case side == "tb":
-			trimmed = strings.Trim(value, string(cutset))
-		case side == "tl":
-			trimmed = strings.TrimLeft(value, string(cutset))
-		case side == "tr":
-			trimmed = strings.TrimRight(value, string(cutset))
-		}
-
-		if trimmed != value {
-			my.Value = trimmed
-			if my.RefValue.CanSet() {
-				my.RefValue.SetString(trimmed)
-			}
-		}
+		hasTrimRule = true
+		my.applyTrim(side, cutset)
 
 		return
 	})
+
+	if !hasTrimRule && !my.VRuleTags.In("nt") {
+		my.applyTrim("tb", nil)
+	}
+}
+
+// applyTrim 按指定方向与字符集裁剪字符串值，并写回原字段（字段可寻址时）。
+func (my *FieldInfo) applyTrim(side string, cutset []rune) {
+	value, isStr := my.Value.(string)
+	if !isStr {
+		return
+	}
+
+	var trimmed string
+	switch side {
+	case "tb":
+		if len(cutset) == 0 {
+			trimmed = strings.TrimSpace(value)
+		} else {
+			trimmed = strings.Trim(value, string(cutset))
+		}
+	case "tl":
+		if len(cutset) == 0 {
+			trimmed = strings.TrimLeftFunc(value, unicode.IsSpace)
+		} else {
+			trimmed = strings.TrimLeft(value, string(cutset))
+		}
+	case "tr":
+		if len(cutset) == 0 {
+			trimmed = strings.TrimRightFunc(value, unicode.IsSpace)
+		} else {
+			trimmed = strings.TrimRight(value, string(cutset))
+		}
+	}
+
+	if trimmed != value {
+		my.Value = trimmed
+		if my.RefValue.CanSet() {
+			my.RefValue.SetString(trimmed)
+		}
+	}
 }

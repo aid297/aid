@@ -95,3 +95,60 @@ func TestTrimRequired(t *testing.T) {
 		t.Logf("%v", wrong)
 	}
 }
+
+func TestTrimDefault(t *testing.T) {
+	type T struct {
+		A string  `v-rule:"(min>=1)" v-name:"A"`
+		B *string `v-rule:"(min>=1)" v-name:"B"`
+	}
+
+	b := " 　\t\nb 　\t\n"
+	form := &T{A: "  a b　", B: &b}
+
+	checker := validations.Once().Checker(form).Validate()
+	if checker.Invalid() {
+		t.Fatalf("期望验证通过：%v", checker.Errors())
+	}
+
+	if expect := "a b"; form.A != expect {
+		t.Errorf("A = %q, 期望 %q（未声明裁剪规则时应默认按 (tb) 清理）", form.A, expect)
+	}
+	if form.B == nil {
+		t.Fatal("B 不应为 nil")
+	}
+	if expect := "b"; *form.B != expect {
+		t.Errorf("B = %q, 期望 %q（*string 未声明裁剪规则时应默认按 (tb) 清理）", *form.B, expect)
+	}
+}
+
+func TestTrimNoTrim(t *testing.T) {
+	type T struct {
+		Keep      string  `v-rule:"(nt)" v-name:"不清理"`
+		KeepPtr   *string `v-rule:"(nt)" v-name:"指针不清理"`
+		KeepEmpty string  `v-rule:"(required)(nt)" v-name:"必填不清理"`
+		Explicit  string  `v-rule:"(nt)(tl)" v-name:"显式规则优先"`
+	}
+
+	keepPtr := " 　b "
+	form := &T{
+		Keep:      "  a 　",
+		KeepPtr:   &keepPtr,
+		KeepEmpty: " 　",
+		Explicit:  "  a  ",
+	}
+
+	checker := validations.Once().Checker(form).Validate()
+	if checker.Invalid() {
+		t.Fatalf("期望验证通过：KeepEmpty 带 (nt) 不清理，required 不应报错：%v", checker.Errors())
+	}
+
+	if expect := "  a 　"; form.Keep != expect {
+		t.Errorf("Keep = %q, 期望 %q（(nt) 不应清理）", form.Keep, expect)
+	}
+	if expect := " 　b "; *form.KeepPtr != expect {
+		t.Errorf("KeepPtr = %q, 期望 %q（(nt) 不应清理）", *form.KeepPtr, expect)
+	}
+	if expect := "a  "; form.Explicit != expect {
+		t.Errorf("Explicit = %q, 期望 %q（(nt) 与显式 (tl) 同时存在时显式规则优先）", form.Explicit, expect)
+	}
+}
