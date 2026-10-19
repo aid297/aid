@@ -144,6 +144,33 @@ func Test_WeekMultiRules(t *_testing.T) {
 	t.Logf("测试通过，多规则场景触发 %d 次", count)
 }
 
+// Test_IsLastWeekdayOfMonth 验证判断某日是否为当月最后一个指定星期几
+func Test_IsLastWeekdayOfMonth(t *_testing.T) {
+	loc := _time.UTC
+	cases := []struct {
+		date _time.Time
+		want bool
+		desc string
+	}{
+		// 2026-10: 最后一个周一是 10/26，最后一个是周六 10/31
+		{_time.Date(2026, 10, 26, 0, 0, 0, 0, loc), true, "10月最后一个周一"},
+		{_time.Date(2026, 10, 19, 0, 0, 0, 0, loc), false, "10月倒数第二个周一"},
+		{_time.Date(2026, 10, 31, 0, 0, 0, 0, loc), true, "10月最后一个周六"},
+		{_time.Date(2026, 10, 24, 0, 0, 0, 0, loc), false, "10月倒数第二个周六"},
+		// 2026-02: 最后一个周一是 2/23
+		{_time.Date(2026, 2, 23, 0, 0, 0, 0, loc), true, "2月最后一个周一"},
+		{_time.Date(2026, 2, 16, 0, 0, 0, 0, loc), false, "2月倒数第二个周一"},
+	}
+
+	for _, c := range cases {
+		got := _clocks.IsLastWeekdayOfMonth(c.date)
+		if got != c.want {
+			t.Errorf("IsLastWeekdayOfMonth(%s %s) = %v, want %v (%s)",
+				c.date.Format("2006-01-02"), c.date.Weekday(), got, c.want, c.desc)
+		}
+	}
+}
+
 // Test_LastWeekOfMonth 验证 lastWeekOfMonth 工具函数：不同月份天数不同，最后一周可能是4或5
 func Test_LastWeekOfMonth(t *_testing.T) {
 	loc := _time.UTC

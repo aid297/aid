@@ -12,7 +12,7 @@ import (
 var _ Tasker = (*TaskWeekImpl)(nil)
 
 const (
-	// LastWeek 表示月份最后一周：在只有4周的月份等价于第4周，在有5周的月份等价于第5周
+	// LastWeek 表示当月最后一个指定的星期几（如"最后一个周一"），而非按固定7天分段划分的最后一周
 	LastWeek = -1
 )
 
@@ -25,12 +25,12 @@ var (
 //
 // Month: 指定生效月份（_time.January ~ _time.December）；EveryMonth（0）表示每月都生效
 // WeekOfMonth: 1-5 表示月份的第几周（第1周=1-7日，第2周=8-14日，以此类推）；
-// 传 LastWeek（-1）表示月份最后一周，自动适配当月实际周数（4或5）
+// 传 LastWeek（-1）表示当月最后一个该星期几（如"最后一个周一"），而非按固定7天分段划分
 // Weekday: 星期几（_time.Sunday ~ _time.Saturday）
 // Hour/Minute/Second: 触发时刻
 type WeekRule struct {
 	Month       _time.Month   // 生效月份（1-12），EveryMonth（0）表示每月
-	WeekOfMonth int           // 第几周（1-5），LastWeek（-1）表示最后一周
+	WeekOfMonth int           // 第几周（1-5），LastWeek（-1）表示当月最后一个该星期几
 	Weekday     _time.Weekday // 星期几
 	Hour        int           // 时（0-23）
 	Minute      int           // 分（0-59）
@@ -40,6 +40,12 @@ type WeekRule struct {
 // WeekOfMonthOf 根据日期计算当前是月份的第几周（第1-7日为第1周，第8-14日为第2周，以此类推）
 func WeekOfMonthOf(t _time.Time) int {
 	return (t.Day()-1)/7 + 1
+}
+
+// IsLastWeekdayOfMonth 判断给定日期是否是该月最后一个指定的星期几
+func IsLastWeekdayOfMonth(t _time.Time) bool {
+	next := t.AddDate(0, 0, 7)
+	return next.Month() != t.Month()
 }
 
 // LastWeekOfMonth 计算指定日期所在月份共有几周（返回 4 或 5）
@@ -76,7 +82,7 @@ func NewTaskWeek(loc *_time.Location) *TaskWeekImpl {
 // AddRule 添加一条触发规则：month 月的第 weekOfMonth 周的 weekday 在 hour:minute:second 触发
 //
 // month 取值范围：_time.January ~ _time.December 或 EveryMonth（0）表示每月都生效
-// weekOfMonth 取值范围：1-5 或 LastWeek（-1）表示最后一周
+// weekOfMonth 取值范围：1-5 或 LastWeek（-1）表示当月最后一个该星期几
 func (my *TaskWeekImpl) AddRule(month _time.Month, weekOfMonth int, weekday _time.Weekday, hour, minute, second int) *TaskWeekImpl {
 	if month < _time.January || month > _time.December {
 		month = EveryMonth
@@ -151,24 +157,25 @@ func (my *TaskWeekImpl) Do() {
 // matchRule 检查当前时间是否命中某条规则，返回命中的规则指针（未命中返回 nil）
 func (my *TaskWeekImpl) matchRule(now _time.Time) *WeekRule {
 	wom := WeekOfMonthOf(now)
-	lastWom := LastWeekOfMonth(now)
 	curMonth := now.Month()
 	for idx := range my.rules {
 		r := &my.rules[idx]
-		// 月份匹配：EveryMonth 表示不限制月份
 		if r.Month != EveryMonth && r.Month != curMonth {
 			continue
 		}
-		// LastWeek 动态解析为当月实际最后一周
-		ruleWom := r.WeekOfMonth
-		if ruleWom == LastWeek {
-			ruleWom = lastWom
+		if r.Weekday != now.Weekday() ||
+			r.Hour != now.Hour() ||
+			r.Minute != now.Minute() ||
+			r.Second != now.Second() {
+			continue
 		}
-		if ruleWom == wom &&
-			r.Weekday == now.Weekday() &&
-			r.Hour == now.Hour() &&
-			r.Minute == now.Minute() &&
-			r.Second == now.Second() {
+		if r.WeekOfMonth == LastWeek {
+			if IsLastWeekdayOfMonth(now) {
+				return r
+			}
+			continue
+		}
+		if r.WeekOfMonth == wom {
 			return r
 		}
 	}
