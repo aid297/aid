@@ -1,6 +1,7 @@
 package validations
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -48,7 +49,11 @@ func (my *CheckerImpl) Error() error {
 
 func (my *CheckerImpl) ErrorToString(limit string) (ret string) {
 	if len(my.wrongs) > 0 {
-		ret = anySlices.FillFunc(my.wrongs, func(idx int, value error) string { return value.Error() }).JoinNotEmpty(string(validatorExIns.defaultErrorSplitChar))
+		splitChar := ConsoleErrorSplitChar
+		if validatorExIns != nil {
+			splitChar = validatorExIns.defaultErrorSplitChar
+		}
+		ret = anySlices.FillFunc(my.wrongs, func(idx int, value error) string { return value.Error() }).JoinNotEmpty(string(splitChar))
 	}
 
 	return
@@ -103,6 +108,14 @@ func WithGin[T any](c *gin.Context, exCheckFns ...ExCheckFunc) (form T, checker 
 	}
 
 	if err := c.ShouldBind(&form); err != nil {
+		var unmarshalErr *json.UnmarshalTypeError
+		if errors.As(err, &unmarshalErr) {
+			fieldName := unmarshalErr.Field
+			expectedType := unmarshalErr.Type.String()
+			checker = &CheckerImpl{wrongs: []error{fmt.Errorf("参数格式解析错误(%s)：应为%s类型", fieldName, expectedType)}}
+			return
+		}
+
 		re := regexp.MustCompile(`field\s+(\S+)\s+of`)
 		matches := re.FindStringSubmatch(err.Error())
 		fieldName := ""
