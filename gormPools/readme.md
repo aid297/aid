@@ -156,6 +156,13 @@
    ```
 
 4. 高级用法：`FinderCondition`
+   
+   **安全机制**：`FinderCondition` 来自前端时存在 SQL 注入风险，已内置防护：
+   - `Table` 字段被忽略，表名永远由服务端模型（`db.Model(...)`）决定
+   - `raw`、`join` 系列操作符在前端 condition 路径直接拒绝并返回错误
+   - 字段名必须匹配 `^[a-zA-Z_][a-zA-Z0-9_.]*$`，排序仅允许 `字段` / `字段 asc|desc`
+   - 服务端在调用前填充 `AllowFields`（`json:"-"`，客户端无法注入）后，字段/排序还会做白名单校验；未填充时仅做格式校验
+   - 校验失败通过 `Error()` 返回明确错误，不再拼接 SQL
    ```go
    package main
    

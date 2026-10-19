@@ -1,7 +1,10 @@
 package gormPools
 
 import (
+	"fmt"
 	"reflect"
+	"regexp"
+	"strings"
 
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
@@ -53,12 +56,13 @@ type (
 
 	// FinderCondition 查询条件
 	FinderCondition struct {
-		Table    *string  `json:"table,omitempty"`
-		Queries  []Query  `json:"queries,omitempty"`   // 查询条件
-		Orders   []string `json:"orders,omitempty"`    // 排序
-		Preloads []string `json:"preloads,omitempty"`  // 预加载
-		Page     int      `json:"page,omitempty"`      // 页码
-		PageSize int      `json:"page_size,omitempty"` // 页容量
+		Table       *string  `json:"table,omitempty"`     // 已忽略：表名由服务端模型决定，不再参与SQL拼接
+		Queries     []Query  `json:"queries,omitempty"`   // 查询条件
+		Orders      []string `json:"orders,omitempty"`    // 排序
+		Preloads    []string `json:"preloads,omitempty"`  // 预加载
+		Page        int      `json:"page,omitempty"`      // 页码
+		PageSize    int      `json:"page_size,omitempty"` // 页容量
+		AllowFields []string `json:"-"`                   // 字段白名单：由服务端在调用前填充，客户端不可注入；为空时仅做标识符格式校验
 	}
 
 	// Condition 查询
@@ -76,6 +80,55 @@ type (
 )
 
 func NewFinder(db *gorm.DB) Finder { return &FinderImpl{db: db} }
+
+var fieldNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_.]*$`)
+
+// allowSet 将白名单转为集合，白名单为空时返回 nil 表示仅做格式校验
+func (fc *FinderCondition) allowSet() map[string]struct{} {
+	if len(fc.AllowFields) == 0 {
+		return nil
+	}
+
+	set := make(map[string]struct{}, len(fc.AllowFields))
+	for _, field := range fc.AllowFields {
+		set[field] = struct{}{}
+	}
+
+	return set
+}
+
+// validateFieldName 校验字段名：必须匹配标识符格式，且在白名单内（白名单启用时）
+func validateFieldName(field string, allow map[string]struct{}) error {
+	if !fieldNamePattern.MatchString(field) {
+		return fmt.Errorf("gormPools: 非法字段名 %q", field)
+	}
+
+	if allow != nil {
+		if _, ok := allow[field]; !ok {
+			return fmt.Errorf("gormPools: 字段 %q 不在允许的字段白名单内", field)
+		}
+	}
+
+	return nil
+}
+
+// validateOrder 校验排序：仅允许 "字段" 或 "字段 asc/desc"，字段需通过白名单校验
+func validateOrder(order string, allow map[string]struct{}) error {
+	parts := strings.Fields(order)
+	if len(parts) == 0 || len(parts) > 2 {
+		return fmt.Errorf("gormPools: 非法排序 %q", order)
+	}
+
+	if err := validateFieldName(parts[0], allow); err != nil {
+		return err
+	}
+
+	if len(parts) == 2 && !strings.EqualFold(parts[1], "asc") && !strings.EqualFold(parts[1], "desc") {
+		return fmt.Errorf("gormPools: 非法排序方向 %q", order)
+	}
+
+	return nil
+}
 
 // // New 实例化：查询帮助器
 // func (*FinderImpl) New(db *gorm.DB) *FinderImpl { return &FinderImpl{db: db} }
@@ -120,6 +173,11 @@ func (my *FinderImpl) TryPagination(page, size int) Finder {
 // TryOrder 尝试排序
 func (my *FinderImpl) TryOrder(orders ...string) Finder {
 	for _, order := range orders {
+		if err := validateOrder(order, nil); err != nil {
+			my.db.AddError(err)
+			return my
+		}
+
 		my.db.Order(order)
 	}
 
@@ -353,21 +411,36 @@ func (my *FinderImpl) QueryUseMap(queries map[string][]any) Finder {
 }
 
 // QueryUseCondition 从请求体中获取查询条件
+// Table 字段被忽略：表名由服务端模型决定
+// 启用 AllowFields 白名单时，字段名/排序字段必须在白名单内；raw、join 操作符一律拒绝
 func (my *FinderImpl) QueryUseCondition(finderCondition *FinderCondition) Finder {
 	if finderCondition == nil {
 		return my
 	}
 
-	// 设置表名
-	if finderCondition.Table != nil && *finderCondition.Table != "" {
-		my.db.Table(*finderCondition.Table)
-	}
+	allow := finderCondition.allowSet()
 
 	// 设置查询条件
 	if len(finderCondition.Queries) > 0 {
 		for idx := range finderCondition.Queries {
 			for _, condition := range finderCondition.Queries[idx].Conditions {
 				if condition.Key != "" && len(condition.Values) > 0 {
+					switch condition.Operator {
+					case "join", "left join", "right join", "inner join", "outer join":
+						// 前端 condition 路径禁止 join：连接条件应由服务端代码构造
+						my.db.AddError(fmt.Errorf("gormPools: 查询条件不支持 %q 操作符，请由服务端构造连接查询", condition.Operator))
+						return my
+					case "raw":
+						// 前端 condition 路径禁止 raw：原生 SQL 不做参数化
+						my.db.AddError(fmt.Errorf("gormPools: 查询条件不支持 \"raw\" 操作符，请由服务端构造原生查询"))
+						return my
+					}
+
+					if err := validateFieldName(condition.Key, allow); err != nil {
+						my.db.AddError(err)
+						return my
+					}
+
 					switch condition.Operator {
 					case "=", ">", "<", "!=", "<=", ">=", "<>":
 						// {key:"fieldName", operator:"=", values:["value"]}
@@ -393,13 +466,6 @@ func (my *FinderImpl) QueryUseCondition(finderCondition *FinderCondition) Finder
 						// {key:"fieldName", operator:"%like", values:["value"]}
 						// my.TryQuery(*query.Option, fmt.Sprintf("%s like ?", condition.Key), fmt.Sprintf("%%%s", condition.Values[0]))
 						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString("%", cast.ToString(condition.Values[0])))
-					case "join", "left join", "right join", "inner join", "outer join":
-						// {key:"otherName o", operator:"join", values["o.xxx = tableName.xxx where xxx = ? and yyy = ?","xxx-value","yyy-value"]}
-						// my.TryQuery(*query.Option, fmt.Sprintf("%s %s", condition.Operator, condition.Key), condition.Values...)
-						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Operator, condition.Key), condition.Values...)
-					case "raw":
-						// {key:"fieldName", operator:"raw", values:["> ?", 100]}
-						my.TryQuery(finderCondition.Queries[idx].Option, condition.Key, condition.Values...)
 					}
 				}
 			}
@@ -407,6 +473,13 @@ func (my *FinderImpl) QueryUseCondition(finderCondition *FinderCondition) Finder
 	}
 
 	// 设置排序
+	for _, order := range finderCondition.Orders {
+		if err := validateOrder(order, allow); err != nil {
+			my.db.AddError(err)
+			return my
+		}
+	}
+
 	if len(finderCondition.Orders) > 0 {
 		my.TryOrder(finderCondition.Orders...)
 	}
