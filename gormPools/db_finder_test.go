@@ -30,6 +30,27 @@ func TestValidateFieldName(t *testing.T) {
 	}
 }
 
+func TestEscapeLikeValue(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"abc", "abc"},         // 无通配符，原样返回
+		{"100%", `100\%`},      // % 转义
+		{"a_b", `a\_b`},        // _ 转义
+		{`a\b`, `a\\b`},        // \ 转义
+		{"%", `\%`},            // 单个 %
+		{"%", `\%`},            // 全通配符攻击样例
+		{`abc\`, `abc\\`},      // 尾部反斜杠：原先会吃掉拼接的 %，转义后语义正确
+		{`%\_%`, `\%\\\_\%`},   // 混合攻击样例：依次转义 %、\、_、%
+		{"中文like值", "中文like值"}, // 非通配符字符不受影响
+		{"", ""},               // 空值
+	}
+
+	for _, c := range cases {
+		if got := EscapeLikeValue(c.in); got != c.want {
+			t.Errorf("EscapeLikeValue(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
 func TestValidateOrder(t *testing.T) {
 	allow := map[string]struct{}{"created_at": {}, "id": {}}
 

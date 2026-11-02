@@ -83,6 +83,17 @@ func NewFinder(db *gorm.DB) Finder { return &FinderImpl{db: db} }
 
 var fieldNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_.]*$`)
 
+var likeWildcardPattern = regexp.MustCompile(`[%_\\]`)
+
+// EscapeLikeValue 转义 like 值中的通配符 %、_ 与转义符 \
+// 前端传入的模糊查询值必须先转义，否则用户可自行控制通配符：
+// 1. 传入 % 会使右模糊（like%）退化为全列匹配，索引失效引发全表扫描
+// 2. 传入 \ 会吃掉拼接的 %，篡改匹配语义（MySQL/PG 中 \ 为默认转义符）
+// 配套 SQL 必须声明 escape '\'（MySQL/PG 与默认一致，SQL Server 无默认转义符必须显式声明）
+func EscapeLikeValue(value string) string {
+	return likeWildcardPattern.ReplaceAllString(value, `\$0`)
+}
+
 // allowSet 将白名单转为集合，白名单为空时返回 nil 表示仅做格式校验
 func (fc *FinderCondition) allowSet() map[string]struct{} {
 	if len(fc.AllowFields) == 0 {
@@ -456,16 +467,14 @@ func (my *FinderImpl) QueryUseCondition(finderCondition *FinderCondition) Finder
 						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "?", "and", "?"), condition.Values...)
 					case "like":
 						// {key:"fieldName", operator:"like", values:["value"]}
-						// my.TryQuery(*query.Option, fmt.Sprintf("%s like ?", condition.Key), fmt.Sprintf("%%%s%%", condition.Values[0]))
-						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString("%", cast.ToString(condition.Values[0]), "%"))
+						// 前端值转义 %、_、\，防止用户控制通配符
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\'"), str.APP.Buffer.JoinString("%", EscapeLikeValue(cast.ToString(condition.Values[0])), "%"))
 					case "like%":
 						// {key:"fieldName", operator:"like%", values:["value"]}
-						// my.TryQuery(*query.Option, fmt.Sprintf("%s like ?", condition.Key), fmt.Sprintf("%s%%", condition.Values[0]))
-						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString(cast.ToString(condition.Values[0]), "%"))
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\'"), str.APP.Buffer.JoinString(EscapeLikeValue(cast.ToString(condition.Values[0])), "%"))
 					case "%like":
 						// {key:"fieldName", operator:"%like", values:["value"]}
-						// my.TryQuery(*query.Option, fmt.Sprintf("%s like ?", condition.Key), fmt.Sprintf("%%%s", condition.Values[0]))
-						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?"), str.APP.Buffer.JoinString("%", cast.ToString(condition.Values[0])))
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\'"), str.APP.Buffer.JoinString("%", EscapeLikeValue(cast.ToString(condition.Values[0]))))
 					}
 				}
 			}

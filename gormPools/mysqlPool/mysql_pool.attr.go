@@ -1,6 +1,9 @@
 package mysqlPool
 
-import "github.com/aid297/aid/v2/gormPools"
+import (
+	"github.com/aid297/aid/v2/gormPools"
+	_operations "github.com/aid297/aid/v2/operations"
+)
 
 type MySQLPoolAttr func(mysqlPool MySQLPool)
 
@@ -32,4 +35,9 @@ func MaxOpenConnections(maxOpenConnections int) MySQLPoolAttr {
 }
 func CostomDSNFormat(defaultDSNFormat string) MySQLPoolAttr {
 	return func(mysqlPool MySQLPool) { mysqlPool.SetCostomDSNFormat(defaultDSNFormat) }
+}
+func Loc(loc string) MySQLPoolAttr {
+	return func(mysqlPool MySQLPool) {
+		mysqlPool.SetLoc(_operations.NewTernary(_operations.TrueValue(loc), _operations.FalseValue("UTC")).GetByValue(loc != ""))
+	}
 }

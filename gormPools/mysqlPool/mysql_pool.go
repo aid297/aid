@@ -28,6 +28,7 @@ type (
 		SetMaxIdleConnections(maxIdleConnections int)
 		SetMaxOpenConnections(maxOpenConnections int)
 		SetCostomDSNFormat(costomDSNFormat string)
+		SetLoc(loc string)
 	}
 
 	MySQLPoolImpl struct {
@@ -46,12 +47,13 @@ type (
 		maxIdleConnections int
 		maxOpenConnections int
 		costomDSNFormat    string
+		loc                string
 	}
 )
 
 var (
 	_              MySQLPool = (*MySQLPoolImpl)(nil)
-	mysqlDSNFormat           = "%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True"
+	mysqlDSNFormat           = "%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=%s"
 )
 
 func New(database, charset string, rws bool, attrs ...MySQLPoolAttr) (MySQLPool, error) {
@@ -67,6 +69,7 @@ func New(database, charset string, rws bool, attrs ...MySQLPoolAttr) (MySQLPool,
 			charset:  charset,
 			sources:  nil,
 			replicas: nil,
+			loc:      "UTC",
 		}
 	)
 
@@ -75,7 +78,7 @@ func New(database, charset string, rws bool, attrs ...MySQLPoolAttr) (MySQLPool,
 	// 配置主库
 	ins.mainDsn = &gormPools.DSN{Name: "main", Content: fmt.Sprintf(
 		mysqlDSNFormat+ins.costomDSNFormat,
-		ins.username, ins.password, ins.host, ins.port, ins.database, ins.charset,
+		ins.username, ins.password, ins.host, ins.port, ins.database, ins.charset, ins.loc,
 	)}
 
 	// 数据库配置
@@ -141,6 +144,7 @@ func (my *MySQLPoolImpl) SetMaxOpenConnections(maxOpenConnections int) {
 func (my *MySQLPoolImpl) SetCostomDSNFormat(costomDSNFormat string) {
 	my.costomDSNFormat = costomDSNFormat
 }
+func (my *MySQLPoolImpl) SetLoc(loc string) { my.loc = loc }
 
 // GetConn 获取主数据库链接
 func (my *MySQLPoolImpl) GetConn() *gorm.DB { my.getRws(); return my.mainConn }
@@ -167,6 +171,7 @@ func (my *MySQLPoolImpl) getRws() *gorm.DB {
 					item.Port,
 					my.database,
 					my.charset,
+					my.loc,
 				),
 			})
 		}
@@ -186,6 +191,7 @@ func (my *MySQLPoolImpl) getRws() *gorm.DB {
 					item.Port,
 					my.database,
 					my.charset,
+					my.loc,
 				),
 			})
 		}

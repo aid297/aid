@@ -4,19 +4,19 @@ import "github.com/aid297/aid/v2/settings"
 
 type (
 	DBSetting struct {
-		Common    *Common       `yaml:"common,omitempty"`
-		MySQL     *MySQLSetting `yaml:"mysql,omitempty"`
-		Postgres  *PGSetting    `yaml:"postgres,omitempty"`
-		SQLServer *MSSQLSetting `yaml:"sql-server,omitempty"`
-		ArSQL     *ArSQLSetting `yaml:"ar-sql,omitempty"`
+		Common    *Common       `json:"common,omitempty" yaml:"common,omitempty"`
+		MySQL     *MySQLSetting `json:"mysql" yaml:"mysql,omitempty"`
+		Postgres  *PGSetting    `json:"postgres" yaml:"postgres,omitempty"`
+		SQLServer *MSSQLSetting `json:"sql-server" yaml:"sql-server,omitempty"`
+		ArSQL     *ArSQLSetting `json:"ar-sql" yaml:"ar-sql,omitempty"`
 	}
 
 	Common struct {
-		Driver             string `yaml:"driver"`
-		MaxOpenConnections int    `yaml:"max-open-connections"`
-		MaxIdleConnections int    `yaml:"max-idle-connections"`
-		MaxLifetime        int    `yaml:"max-lifetime"`
-		MaxIdleTime        int    `yaml:"max-idle-timers"`
+		Driver             string `json:"driver" yaml:"driver"`
+		MaxOpenConnections int    `json:"max-open-connections" yaml:"max-open-connections"`
+		MaxIdleConnections int    `json:"max-idle-connections" yaml:"max-idle-connections"`
+		MaxLifetime        int    `json:"max-lifetime" yaml:"max-lifetime"`
+		MaxIdleTime        int    `json:"max-idle-timers" yaml:"max-idle-timers"`
 	}
 
 	DSN struct {
@@ -25,61 +25,62 @@ type (
 	}
 
 	MySQLSetting struct {
-		Database  string                   `yaml:"database"`
-		Charset   string                   `yaml:"charset"`
-		Collation string                   `yaml:"collation"`
-		Rws       bool                     `yaml:"rws"`
-		Main      *MySQLEndpoint           `yaml:"main"`
-		Sources   map[string]MySQLEndpoint `yaml:"sources"`
-		Replicas  map[string]MySQLEndpoint `yaml:"replicas"`
+		Database  string                   `json:"database" yaml:"database"`
+		Charset   string                   `json:"charset" yaml:"charset"`
+		Collation string                   `json:"collation" yaml:"collation"`
+		Rws       bool                     `json:"rws" yaml:"rws"`
+		Main      *MySQLEndpoint           `json:"main" yaml:"main"`
+		Loc       string                   `json:"loc" yaml:"loc"`
+		Sources   map[string]MySQLEndpoint `json:"sources" yaml:"sources"`
+		Replicas  map[string]MySQLEndpoint `json:"replicas" yaml:"replicas"`
 	}
 
 	MySQLEndpoint struct {
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-		Host     string `yaml:"host"`
-		Port     uint16 `yaml:"port"`
+		Username string `json:"username" yaml:"username"`
+		Password string `json:"password" yaml:"password"`
+		Host     string `json:"host" yaml:"host"`
+		Port     uint16 `json:"port" yaml:"port"`
 	}
 
 	ArSQLSetting struct {
-		Database string                    `yaml:"database"`
-		Rws      bool                      `yaml:"rws"`
-		Main     *MySQLEndpoint            `yaml:"main"`
-		Sources  map[string]*ArSQLEndpoint `yaml:"sources"`
-		Replicas map[string]*ArSQLEndpoint `yaml:"replicas"`
+		Database string                    `json:"database" yaml:"database"`
+		Rws      bool                      `json:"rws" yaml:"rws"`
+		Main     *MySQLEndpoint            `json:"main" yaml:"main"`
+		Sources  map[string]*ArSQLEndpoint `json:"sources" yaml:"sources"`
+		Replicas map[string]*ArSQLEndpoint `json:"replicas" yaml:"replicas"`
 	}
 
 	ArSQLEndpoint struct {
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-		Host     string `yaml:"host"`
-		Port     uint16 `yaml:"port"`
+		Username string `json:"username" yaml:"username"`
+		Password string `json:"password" yaml:"password"`
+		Host     string `json:"host" yaml:"host"`
+		Port     uint16 `json:"port" yaml:"port"`
 	}
 
 	PGSetting struct {
-		Main *PGEndpoint `yaml:"main"`
+		Main *PGEndpoint `json:"main" yaml:"main"`
 	}
 
 	PGEndpoint struct {
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-		Host     string `yaml:"host"`
-		Port     uint16 `yaml:"port"`
-		Database string `yaml:"database"`
-		TimeZone string `yaml:"timezone"`
-		SSLMode  string `yaml:"ssl-mode"`
+		Username string `json:"username" yaml:"username"`
+		Password string `json:"password" yaml:"password"`
+		Host     string `json:"host" yaml:"host"`
+		Port     uint16 `json:"port" yaml:"port"`
+		Database string `json:"database" yaml:"database"`
+		TimeZone string `json:"timezone" yaml:"timezone"`
+		SSLMode  string `json:"ssl-mode" yaml:"ssl-mode"`
 	}
 
 	MSSQLSetting struct {
-		Main *MSSQLEndpoint `yaml:"main"`
+		Main *PGEndpoint `json:"main" yaml:"main"`
 	}
 
 	MSSQLEndpoint struct {
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-		Host     string `yaml:"host"`
-		Port     uint16 `yaml:"port"`
-		Database string `yaml:"database"`
+		Username string `json:"username" yaml:"username"`
+		Password string `json:"password" yaml:"password"`
+		Host     string `json:"host" yaml:"host"`
+		Port     uint16 `json:"port" yaml:"port"`
+		Database string `json:"database" yaml:"database"`
 	}
 )
 
@@ -112,6 +113,7 @@ mysql:
   database: "tbl_test"
   charset: "utf8mb4"
   collation: "utf8mb4_general_ci"
+  loc: "UTC"
   rws: true
   main:
     username: "root"
