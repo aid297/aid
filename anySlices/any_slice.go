@@ -402,11 +402,13 @@ func (my *AnySlice[T]) in(target T) bool {
 	return false
 }
 
-// In 检查值是否存在
-func (my *AnySlice[T]) In(targets ...T) bool { return slices.ContainsFunc(targets, my.in) }
+// In 检查 targets 中的元素是否全部存在于 my.data 中（targets ⊆ my.data）
+func (my *AnySlice[T]) In(targets ...T) bool {
+	return !slices.ContainsFunc(targets, func(t T) bool { return !my.in(t) })
+}
 
-// NotIn 检查值是否不存在
-func (my *AnySlice[T]) NotIn(targets ...T) bool { return !slices.ContainsFunc(targets, my.in) }
+// NotIn 检查 targets 中是否存在元素不在 my.data 中（targets ⊄ my.data，即超出范围就算命中）
+func (my *AnySlice[T]) NotIn(targets ...T) bool { return !my.In(targets...) }
 
 // IfIn 如果In 检查值是否存在：如果存在则执行回调
 func (my *AnySlice[T]) IfIn(fn func(array AnySlicer[T]), targets ...T) AnySlicer[T] {

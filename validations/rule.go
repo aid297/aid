@@ -11,7 +11,9 @@ import (
 	"github.com/aid297/aid/v2/points"
 )
 
-func getRuleRequired(rules anySlices.AnySlicer[string]) bool { return rules.In("required", "!") }
+func getRuleRequired(rules anySlices.AnySlicer[string]) bool {
+	return rules.In("required") || rules.In("!")
+}
 
 // getRuleTrim 解析裁剪规则：tb/tl/tr，可带自定义字符集 {a|b|c}。
 // 无字符集时表示清理全部 Unicode 空白（含全角空格）。
