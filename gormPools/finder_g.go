@@ -2,6 +2,7 @@ package gormPools
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/spf13/cast"
@@ -248,4 +249,152 @@ func (my *FinderG[T]) First(ctx context.Context) (T, error) {
 // Count 统计数量
 func (my *FinderG[T]) Count(ctx context.Context) (int64, error) {
 	return my.chain.Count(ctx, "*")
+}
+
+// setError 设置客户端校验错误并注入到 Statement，使后续 finisher 方法返回该错误
+func (my *FinderG[T]) setError(err error) {
+	my.err = err
+	my.chain = my.chain.Scopes(func(stmt *gorm.Statement) {
+		stmt.AddError(err)
+	})
+}
+
+// QueryUseCondition 从 FinderCondition 解析查询条件（与传统版逻辑一致）
+//
+// Table 字段被忽略：表名由服务端模型决定。
+// 启用 AllowFields 白名单时，字段名/排序字段必须在白名单内；raw、join 操作符一律拒绝。
+func (my *FinderG[T]) QueryUseCondition(finderCondition *FinderCondition) *FinderG[T] {
+	if finderCondition == nil {
+		return my
+	}
+
+	allow := finderCondition.allowSet()
+
+	// 设置查询条件
+	if len(finderCondition.Queries) > 0 {
+		for idx := range finderCondition.Queries {
+			for _, condition := range finderCondition.Queries[idx].Conditions {
+				if condition.Key != "" && len(condition.Values) > 0 {
+					switch condition.Operator {
+					case "join", "left join", "right join", "inner join", "outer join":
+						my.setError(fmt.Errorf("gormPools: 查询条件不支持 %q 操作符，请由服务端构造连接查询", condition.Operator))
+						return my
+					case "raw":
+						my.setError(fmt.Errorf("gormPools: 查询条件不支持 \"raw\" 操作符，请由服务端构造原生查询"))
+						return my
+					}
+
+					if err := validateFieldName(condition.Key, allow); err != nil {
+						my.setError(err)
+						return my
+					}
+
+					switch condition.Operator {
+					case "=", ">", "<", "!=", "<=", ">=", "<>":
+						// {key:"fieldName", operator:"=", values:["value"]}
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "?"), condition.Values[0])
+					case "in", "not in":
+						// {key:"fieldName", operator:"in", values:["value1", "value2"]}
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "(?)"), condition.Values[0])
+					case "between", "not between":
+						// {key:"fieldName", operator:"between", values:["value1", "value2"]}
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "?", "and", "?"), condition.Values...)
+					case "like":
+						// {key:"fieldName", operator:"like", values:["value"]}
+						// 前端值转义 %、_、\，防止用户控制通配符
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\'"), str.APP.Buffer.JoinString("%", EscapeLikeValue(cast.ToString(condition.Values[0])), "%"))
+					case "like%":
+						// {key:"fieldName", operator:"like%", values:["value"]}
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\'"), str.APP.Buffer.JoinString(EscapeLikeValue(cast.ToString(condition.Values[0])), "%"))
+					case "%like":
+						// {key:"fieldName", operator:"%like", values:["value"]}
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\'"), str.APP.Buffer.JoinString("%", EscapeLikeValue(cast.ToString(condition.Values[0]))))
+					}
+				}
+			}
+		}
+	}
+
+	// 设置排序（先用 allow 校验，再交由 TryOrder 应用）
+	for _, order := range finderCondition.Orders {
+		if err := validateOrder(order, allow); err != nil {
+			my.setError(err)
+			return my
+		}
+	}
+
+	if len(finderCondition.Orders) > 0 {
+		my.TryOrder(finderCondition.Orders...)
+	}
+
+	// 设置预加载
+	if len(finderCondition.Preloads) > 0 {
+		my.TryPreload(finderCondition.Preloads...)
+	}
+
+	return my
+}
+
+// FindUseCondition 自动填充查询条件并查询（使用 FinderCondition），支持外部传入分页参数
+//
+// 与传统 Finder.FindUseCondition 对应：直接返回 ([]T, error)，不再需要传入 ret any。
+// 若 finderCondition.Page / finderCondition.PageSize 有效，则覆盖外部 page/size。
+// 非分页时 total 自动设为结果条数。
+func (my *FinderG[T]) FindUseCondition(ctx context.Context, finderCondition *FinderCondition, page, size int) ([]T, error) {
+	if finderCondition != nil && finderCondition.Page > 0 && finderCondition.PageSize > 0 {
+		page = finderCondition.Page
+		size = finderCondition.PageSize
+	}
+
+	my.needPagination = page > 0 && size > 0
+
+	my.QueryUseCondition(finderCondition).TryPagination(page, size)
+
+	list, err := my.chain.Find(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !my.needPagination {
+		my.total = int64(len(list))
+	}
+
+	return list, nil
+}
+
+// FindOnlyCondition 自动填充查询条件并查询（使用 FinderCondition），分页取自 FinderCondition
+//
+// 与传统 Finder.FindOnlyCondition 对应：直接返回 ([]T, error)。
+// 非分页时 total 自动设为结果条数。
+func (my *FinderG[T]) FindOnlyCondition(ctx context.Context, finderCondition *FinderCondition) ([]T, error) {
+	if finderCondition == nil {
+		return my.chain.Find(ctx)
+	}
+
+	my.needPagination = finderCondition.Page > 0 && finderCondition.PageSize > 0
+
+	my.QueryUseCondition(finderCondition).TryPagination(finderCondition.Page, finderCondition.PageSize)
+
+	list, err := my.chain.Find(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !my.needPagination {
+		my.total = int64(len(list))
+	}
+
+	return list, nil
+}
+
+// StatisticOnlyCondition 自动填充查询条件并统计（使用 FinderCondition），结果扫描到 ret
+//
+// 与传统 Finder.StatisticOnlyCondition 对应：统计结果通常非 T 类型，故仍接收 ret any。
+func (my *FinderG[T]) StatisticOnlyCondition(ctx context.Context, finderCondition *FinderCondition, ret any) error {
+	if finderCondition == nil {
+		return my.chain.Scan(ctx, ret)
+	}
+
+	my.QueryUseCondition(finderCondition)
+	return my.chain.Scan(ctx, ret)
 }

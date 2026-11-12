@@ -2,7 +2,6 @@ package gormPools
 
 import (
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"github.com/aid297/aid/v2/str"
 )
@@ -57,13 +56,27 @@ func GDistinct[T any](args ...any) GenericAttr[T] {
 	}
 }
 
-// GJoins 连接查询
+// GJoins 连接查询，与传统 Joins(join string, args ...any) 用法统一
 //
-// jt 由 clause.Has(name) / clause.LeftJoin.Association(name) 等构造；
-// on 回调通过 JoinBuilder 构造连接条件。
-func GJoins[T any](jt clause.JoinTarget, on func(db gorm.JoinBuilder, joinTable clause.Table, curTable clause.Table) error) GenericAttr[T] {
+// 示例：
+//
+//	GJoins[TestTable1]("left join users on users.id = posts.user_id")
+//	GJoins[TestTable1]("articles", "articles.author_id = users.id")
+//
+// gorm 泛型 ChainInterface.Joins 仅支持结构化 JoinTarget（不接受裸 SQL 字符串），
+// 这里通过 Scopes 复用传统 *gorm.DB.Joins，保持与传统版一致的签名；
+// 由于 stmt.Joins(...) 会返回新 *DB，需将新增的 join 元素回写到原 Statement.Joins，
+// 以保证与已有 join 累积。
+func GJoins[T any](join string, args ...any) GenericAttr[T] {
 	return func(db gorm.ChainInterface[T]) gorm.ChainInterface[T] {
-		return db.Joins(jt, on)
+		return db.Scopes(func(stmt *gorm.Statement) {
+			// stmt.Joins 是字段 []join，与提升的 (*DB).Joins 方法同名，
+			// 需通过 stmt.DB 显式调用传统 Joins 方法。
+			tx := stmt.DB.Joins(join, args...)
+			if n := len(tx.Statement.Joins); n > 0 {
+				stmt.Joins = append(stmt.Joins, tx.Statement.Joins[n-1])
+			}
+		})
 	}
 }
 
