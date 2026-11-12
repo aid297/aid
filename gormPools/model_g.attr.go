@@ -84,9 +84,7 @@ func GJoins[T any](join string, args ...any) GenericAttr[T] {
 //
 // query 为 nil 时表示无额外条件。
 func GPreload[T any](association string, query func(db gorm.PreloadBuilder) error) GenericAttr[T] {
-	return func(db gorm.ChainInterface[T]) gorm.ChainInterface[T] {
-		return db.Preload(association, query)
-	}
+	return func(db gorm.ChainInterface[T]) gorm.ChainInterface[T] { return db.Preload(association, query) }
 }
 
 // GPreloadMap 批量预加载，等价于传统 PreloadMap 属性
