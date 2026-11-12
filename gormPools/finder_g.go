@@ -337,10 +337,11 @@ func (my *FinderG[T]) QueryUseCondition(finderCondition *FinderCondition) *Finde
 
 // FindUseCondition 自动填充查询条件并查询（使用 FinderCondition），支持外部传入分页参数
 //
-// 与传统 Finder.FindUseCondition 对应：直接返回 ([]T, error)，不再需要传入 ret any。
+// 与传统 Finder.FindUseCondition 对应：返回 ([]T, *FinderG[T], error)。
+// 第二个返回值为 finder 本身，便于链式获取 total（GetTotal）、错误（Error）等状态。
 // 若 finderCondition.Page / finderCondition.PageSize 有效，则覆盖外部 page/size。
 // 非分页时 total 自动设为结果条数。
-func (my *FinderG[T]) FindUseCondition(ctx context.Context, finderCondition *FinderCondition, page, size int) ([]T, error) {
+func (my *FinderG[T]) FindUseCondition(ctx context.Context, finderCondition *FinderCondition, page, size int) ([]T, *FinderG[T], error) {
 	if finderCondition != nil && finderCondition.Page > 0 && finderCondition.PageSize > 0 {
 		page = finderCondition.Page
 		size = finderCondition.PageSize
@@ -352,23 +353,25 @@ func (my *FinderG[T]) FindUseCondition(ctx context.Context, finderCondition *Fin
 
 	list, err := my.chain.Find(ctx)
 	if err != nil {
-		return nil, err
+		return nil, my, err
 	}
 
 	if !my.needPagination {
 		my.total = int64(len(list))
 	}
 
-	return list, nil
+	return list, my, nil
 }
 
 // FindOnlyCondition 自动填充查询条件并查询（使用 FinderCondition），分页取自 FinderCondition
 //
-// 与传统 Finder.FindOnlyCondition 对应：直接返回 ([]T, error)。
+// 与传统 Finder.FindOnlyCondition 对应：返回 ([]T, *FinderG[T], error)。
+// 第二个返回值为 finder 本身，便于链式获取 total（GetTotal）、错误（Error）等状态。
 // 非分页时 total 自动设为结果条数。
-func (my *FinderG[T]) FindOnlyCondition(ctx context.Context, finderCondition *FinderCondition) ([]T, error) {
+func (my *FinderG[T]) FindOnlyCondition(ctx context.Context, finderCondition *FinderCondition) ([]T, *FinderG[T], error) {
 	if finderCondition == nil {
-		return my.chain.Find(ctx)
+		list, err := my.chain.Find(ctx)
+		return list, my, err
 	}
 
 	my.needPagination = finderCondition.Page > 0 && finderCondition.PageSize > 0
@@ -377,14 +380,14 @@ func (my *FinderG[T]) FindOnlyCondition(ctx context.Context, finderCondition *Fi
 
 	list, err := my.chain.Find(ctx)
 	if err != nil {
-		return nil, err
+		return nil, my, err
 	}
 
 	if !my.needPagination {
 		my.total = int64(len(list))
 	}
 
-	return list, nil
+	return list, my, nil
 }
 
 // StatisticOnlyCondition 自动填充查询条件并统计（使用 FinderCondition），结果扫描到 ret
