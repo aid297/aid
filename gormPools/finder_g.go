@@ -295,7 +295,8 @@ func (my *FinderG[T]) QueryUseCondition(finderCondition *FinderCondition) *Finde
 						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "?"), condition.Values[0])
 					case "in", "not in":
 						// {key:"fieldName", operator:"in", values:["value1", "value2"]}
-						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "(?)"), condition.Values[0])
+						// 传整个 Values 切片由 GORM 展开占位符；只传 Values[0] 会丢失其余值
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "(?)"), condition.Values)
 					case "between", "not between":
 						// {key:"fieldName", operator:"between", values:["value1", "value2"]}
 						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, condition.Operator, "?", "and", "?"), condition.Values...)

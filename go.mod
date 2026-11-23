@@ -3,6 +3,7 @@ module github.com/aid297/aid/v2
 go 1.26.0
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/cyberdelia/lzo v1.0.0
 	github.com/dromara/carbon/v2 v2.6.16
 	github.com/fsnotify/fsnotify v1.9.0
