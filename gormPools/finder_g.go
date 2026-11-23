@@ -303,13 +303,13 @@ func (my *FinderG[T]) QueryUseCondition(finderCondition *FinderCondition) *Finde
 					case "like":
 						// {key:"fieldName", operator:"like", values:["value"]}
 						// 前端值转义 %、_、\，防止用户控制通配符
-						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\'"), str.APP.Buffer.JoinString("%", EscapeLikeValue(cast.ToString(condition.Values[0])), "%"))
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\\\'"), str.APP.Buffer.JoinString("%", EscapeLikeValue(cast.ToString(condition.Values[0])), "%"))
 					case "like%":
 						// {key:"fieldName", operator:"like%", values:["value"]}
-						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\'"), str.APP.Buffer.JoinString(EscapeLikeValue(cast.ToString(condition.Values[0])), "%"))
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\\\'"), str.APP.Buffer.JoinString(EscapeLikeValue(cast.ToString(condition.Values[0])), "%"))
 					case "%like":
 						// {key:"fieldName", operator:"%like", values:["value"]}
-						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\'"), str.APP.Buffer.JoinString("%", EscapeLikeValue(cast.ToString(condition.Values[0]))))
+						my.TryQuery(finderCondition.Queries[idx].Option, str.APP.Buffer.JoinStringLimit(" ", condition.Key, "like", "?", "escape '\\\\'"), str.APP.Buffer.JoinString("%", EscapeLikeValue(cast.ToString(condition.Values[0]))))
 					}
 				}
 			}
